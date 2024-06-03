@@ -1,11 +1,14 @@
-use {
-    self::types::{
-        jsonrpc::{JsonRpcError, JsonRpcResponse},
-        method_name::MethodName,
-    },
-    std::net::{Ipv4Addr, SocketAddr, SocketAddrV4},
-    warp::Filter,
+use self::types::{
+    jsonrpc::{JsonRpcError, JsonRpcResponse},
+    method_name::MethodName,
 };
+use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
+use std::str::from_utf8;
+use warp::hyper::{body::Bytes, Body, Response};
+use warp::path::FullPath;
+use warp::{Filter, Rejection};
+use warp_reverse_proxy::{extract_request_data_filter, proxy_to_and_forward_response, Headers};
+use warp_reverse_proxy::{Method, QueryParameters};
 
 mod json_utils;
 mod methods;
@@ -13,15 +16,46 @@ mod types;
 
 #[tokio::main]
 async fn main() {
-    let server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8545));
+    let http_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8545));
+    let http_route = warp::any().and(extract_request_data_filter()).and_then(
+        |path, query, method, headers, body: Bytes| {
+            println!("Http: {}", from_utf8(&body).expect("Conversion error"));
+            proxy(path, query, method, headers, body, "9545")
+        },
+    );
 
-    let json_rpc = warp::body::json().then(|request: serde_json::Value| async move {
-        let response = handle_request(request).await;
-        warp::reply::json(&response)
-    });
+    let auth_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8551));
+    let auth_route = warp::any().and(extract_request_data_filter()).and_then(
+        |path, query, method, headers, body: Bytes| {
+            println!("Auth: {}", from_utf8(&body).expect("Conversion error"));
+            proxy(path, query, method, headers, body, "9551")
+        },
+    );
 
-    let route = json_rpc.or(warp::any().map(warp::reply));
-    warp::serve(route).run(server_addr).await;
+    tokio::join!(
+        warp::serve(http_route).run(http_server_addr),
+        warp::serve(auth_route).run(auth_server_addr),
+    );
+}
+
+async fn proxy(
+    path: FullPath,
+    query: QueryParameters,
+    method: Method,
+    headers: Headers,
+    body: Bytes,
+    port: &str,
+) -> Result<Response<Body>, Rejection> {
+    proxy_to_and_forward_response(
+        format!("http://0.0.0.0:{}", port),
+        "".to_string(),
+        path,
+        query,
+        method,
+        headers,
+        body,
+    )
+    .await
 }
 
 async fn handle_request(request: serde_json::Value) -> JsonRpcResponse {
