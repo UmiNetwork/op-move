@@ -20,7 +20,12 @@ fn parse_params_v3(
     request: serde_json::Value,
 ) -> Result<(ExecutionPayloadV3, Vec<H256>, H256), JsonRpcError> {
     // Spec: https://github.com/ethereum/execution-apis/blob/main/src/engine/cancun.md#specification
-    todo!()
+    // TODO
+    Err(JsonRpcError {
+        code: 0,
+        data: serde_json::Value::Null,
+        message: "Unimplemented".into(),
+    })
 }
 
 fn inner_execute_v3(
@@ -28,5 +33,10 @@ fn inner_execute_v3(
     expected_blob_versioned_hashes: Vec<H256>,
     parent_beacon_block_root: H256,
 ) -> Result<PayloadStatusV1, JsonRpcError> {
-    todo!()
+    // TODO
+    Err(JsonRpcError {
+        code: 0,
+        data: serde_json::Value::Null,
+        message: "Unimplemented".into(),
+    })
 }

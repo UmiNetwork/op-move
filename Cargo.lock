@@ -1017,6 +1017,7 @@ dependencies = [
  "anyhow",
  "ethers-core",
  "hex",
+ "hyper",
  "serde",
  "serde_json",
  "tokio",

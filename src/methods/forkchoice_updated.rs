@@ -13,12 +13,22 @@ fn parse_params_v3(
     request: serde_json::Value,
 ) -> Result<(ForkchoiceStateV1, Option<PayloadAttributesV3>), JsonRpcError> {
     // Spec: https://github.com/ethereum/execution-apis/blob/main/src/engine/cancun.md#specification-1
-    todo!()
+    // TODO
+    Err(JsonRpcError {
+        code: 0,
+        data: serde_json::Value::Null,
+        message: "Unimplemented".into(),
+    })
 }
 
 fn inner_execute_v3(
     forkchoice_state: ForkchoiceStateV1,
     payload_attributes: Option<PayloadAttributesV3>,
 ) -> Result<ForkchoiceUpdatedResponseV1, JsonRpcError> {
-    todo!()
+    // TODO
+    Err(JsonRpcError {
+        code: 0,
+        data: serde_json::Value::Null,
+        message: "Unimplemented".into(),
+    })
 }
