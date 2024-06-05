@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1"
 ethers-core = "2.0"
+flate2 = "1"
 hex = "0.4"
 hyper = "0.14"
 serde = { version = "1", features = ["derive"] }

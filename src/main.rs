@@ -3,8 +3,9 @@ use self::types::{
     method_name::MethodName,
     mirror::MirrorLog,
 };
+use flate2::read::GzDecoder;
+use std::io::Read;
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
-use std::str::from_utf8;
 use warp::hyper::{body::Bytes, Body, Response};
 use warp::path::FullPath;
 use warp::{Filter, Rejection};
@@ -27,8 +28,7 @@ async fn main() {
     let auth_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8551));
     let auth_route = warp::any().and(extract_request_data_filter()).and_then(
         |path, query, method, headers, body: Bytes| {
-            println!("Auth: {}", from_utf8(&body).expect("Conversion error"));
-            proxy(path, query, method, headers, body, "9551")
+            mirror(path, query, method, headers, body, "9551")
         },
     );
 
@@ -45,17 +45,44 @@ async fn mirror(
     headers: Headers,
     body: Bytes,
     port: &str,
-) -> Result<warp::reply::Json, Rejection> {
+) -> Result<warp::reply::Response, Rejection> {
+    let is_zipped = headers
+        .get("accept-encoding")
+        .map(|x| x.to_str().unwrap().contains("gzip"))
+        .unwrap_or(false);
     let request: Result<serde_json::Value, _> = serde_json::from_slice(&body);
-    let geth_response: serde_json::Value =
-        match proxy(path, query, method, headers, body, port).await {
+    let (geth_response_parts, geth_response_bytes, parsed_geth_response) =
+        match proxy(path, query, method, headers.clone(), body, port).await {
             Ok(response) => {
-                let body = response.into_body();
-                let bytes = hyper::body::to_bytes(body)
+                let (parts, body) = response.into_parts();
+                let raw_bytes = hyper::body::to_bytes(body)
                     .await
                     .expect("Failed to get geth response");
-                // TODO: this doesn't work for the auth port because the response is encrypted somehow?
-                serde_json::from_slice(&bytes).expect("geth response not json")
+                let bytes = if is_zipped {
+                    match try_decompress(&raw_bytes) {
+                        Ok(x) => x,
+                        Err(e) => {
+                            println!("WARN: gz decompression failed: {e:?}");
+                            let body = hyper::Body::from(raw_bytes);
+                            return Ok(warp::reply::Response::from_parts(parts, body));
+                        }
+                    }
+                } else {
+                    raw_bytes.to_vec()
+                };
+                match serde_json::from_slice::<serde_json::Value>(&bytes) {
+                    Ok(parsed_response) => (parts, raw_bytes, parsed_response),
+                    Err(_) => {
+                        println!(
+                            "Request: {}",
+                            serde_json::to_string_pretty(&request.unwrap()).unwrap()
+                        );
+                        println!("headers: {headers:?}");
+                        println!("WARN: op-geth non-json response: {:?}", bytes);
+                        let body = hyper::Body::from(bytes);
+                        return Ok(warp::reply::Response::from_parts(parts, body));
+                    }
+                }
             }
             Err(e) => return Err(e),
         };
@@ -63,13 +90,14 @@ async fn mirror(
     let op_move_response = handle_request(request.clone());
     let log = MirrorLog {
         request: &request,
-        geth_response: &geth_response,
+        geth_response: &parsed_geth_response,
         op_move_response: &op_move_response,
         port,
     };
     println!("{}", serde_json::to_string_pretty(&log).unwrap());
     // TODO: use op_move_response
-    Ok(warp::reply::json(&geth_response))
+    let body = hyper::Body::from(geth_response_bytes);
+    Ok(warp::reply::Response::from_parts(geth_response_parts, body))
 }
 
 async fn proxy(
@@ -134,4 +162,9 @@ fn inner_handle_request(request: serde_json::Value) -> Result<serde_json::Value,
         MethodName::GetPayloadV2 => todo!(),
         MethodName::NewPayloadV2 => todo!(),
     }
+}
+
+fn try_decompress(raw_bytes: &[u8]) -> std::io::Result<Vec<u8>> {
+    let gz = GzDecoder::new(raw_bytes);
+    gz.bytes().collect()
 }
