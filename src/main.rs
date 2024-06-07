@@ -16,6 +16,9 @@ mod json_utils;
 mod methods;
 mod types;
 
+#[cfg(test)]
+mod tests;
+
 #[tokio::main]
 async fn main() {
     let http_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8545));

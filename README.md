@@ -1,3 +1,3 @@
 # op-move
 
-An execution layer for OP-Stack that uses MoveVM.
+A Move VM execution layer for OP Stack.

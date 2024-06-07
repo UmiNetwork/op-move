@@ -1,5 +1,4 @@
 use ethers_core::types::H256;
-
 use crate::types::{
     engine_api::{ExecutionPayloadV3, PayloadStatusV1},
     jsonrpc::JsonRpcError,
