@@ -1,8 +1,8 @@
-use ethers_core::types::H256;
 use crate::types::{
     engine_api::{ExecutionPayloadV3, PayloadStatusV1},
     jsonrpc::JsonRpcError,
 };
+use ethers_core::types::H256;
 
 pub fn execute_v3(request: serde_json::Value) -> Result<serde_json::Value, JsonRpcError> {
     let (execution_payload, expected_blob_versioned_hashes, parent_beacon_block_root) =
