@@ -4,6 +4,7 @@
 use {
     ethers_core::types::{Bytes, H160, H256, U256, U64},
     serde::{Deserialize, Serialize},
+    std::str::FromStr,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -109,11 +110,21 @@ pub struct PayloadAttributesV3 {
     pub suggested_fee_recipient: H160,
     pub withdrawals: Vec<WithdrawalV1>,
     pub parent_beacon_block_root: H256,
+    pub transactions: Vec<Bytes>,
+    pub gas_limit: U64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct PayloadId(pub U64);
+
+impl FromStr for PayloadId {
+    type Err = <U64 as FromStr>::Err;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self(U64::from_str(s)?))
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -155,4 +166,5 @@ pub struct GetPayloadResponseV3 {
     pub block_value: U256,
     pub blobs_bundle: BlobsBundleV1,
     pub should_override_builder: bool,
+    pub parent_beacon_block_root: H256,
 }

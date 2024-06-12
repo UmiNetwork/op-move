@@ -1,4 +1,8 @@
-use {crate::types::jsonrpc::JsonRpcError, serde::de::DeserializeOwned, std::any};
+use {
+    crate::types::jsonrpc::JsonRpcError,
+    serde::de::DeserializeOwned,
+    std::{any, fmt},
+};
 
 pub fn get_field(x: &serde_json::Value, name: &str) -> serde_json::Value {
     x.as_object()
@@ -21,4 +25,12 @@ pub fn deserialize<T: DeserializeOwned>(x: &serde_json::Value) -> Result<T, Json
         data: x.clone(),
         message: format!("Failed to parse type {}: {:?}", any::type_name::<T>(), e),
     })
+}
+
+pub fn access_state_error<E: fmt::Debug>(e: E) -> JsonRpcError {
+    JsonRpcError {
+        code: -1,
+        data: serde_json::Value::Null,
+        message: format!("Failed to access state: {e:?}"),
+    }
 }

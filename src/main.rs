@@ -2,10 +2,13 @@ use self::types::{
     jsonrpc::{JsonRpcError, JsonRpcResponse},
     method_name::MethodName,
     mirror::MirrorLog,
+    state::StateMessage,
 };
 use flate2::read::GzDecoder;
-use std::io::Read;
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
+use std::{io::Read, str::FromStr};
+use tokio::sync::mpsc;
+use types::engine_api::PayloadId;
 use warp::hyper::{body::Bytes, Body, Response};
 use warp::path::FullPath;
 use warp::{Filter, Rejection};
@@ -14,6 +17,7 @@ use warp_reverse_proxy::{Method, QueryParameters};
 
 mod json_utils;
 mod methods;
+mod state_actor;
 mod types;
 
 #[cfg(test)]
@@ -21,27 +25,38 @@ mod tests;
 
 #[tokio::main]
 async fn main() {
+    // TODO: think about channel size bound
+    let (state_channel, rx) = mpsc::channel(1_000);
+    let state = state_actor::StateActor::new(rx);
+
+    let http_state_channel = state_channel.clone();
     let http_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8545));
-    let http_route = warp::any().and(extract_request_data_filter()).and_then(
-        |path, query, method, headers, body: Bytes| {
-            mirror(path, query, method, headers, body, "9545")
-        },
-    );
+    let http_route = warp::any()
+        .map(move || http_state_channel.clone())
+        .and(extract_request_data_filter())
+        .and_then(|state_channel, path, query, method, headers, body: Bytes| {
+            mirror(state_channel, path, query, method, headers, body, "9545")
+        });
 
+    let auth_state_channel = state_channel;
     let auth_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8551));
-    let auth_route = warp::any().and(extract_request_data_filter()).and_then(
-        |path, query, method, headers, body: Bytes| {
-            mirror(path, query, method, headers, body, "9551")
-        },
-    );
+    let auth_route = warp::any()
+        .map(move || auth_state_channel.clone())
+        .and(extract_request_data_filter())
+        .and_then(|state_channel, path, query, method, headers, body: Bytes| {
+            mirror(state_channel, path, query, method, headers, body, "9551")
+        });
 
-    tokio::join!(
+    let (_, _, state_result) = tokio::join!(
         warp::serve(http_route).run(http_server_addr),
         warp::serve(auth_route).run(auth_server_addr),
+        state.spawn(),
     );
+    state_result.unwrap();
 }
 
 async fn mirror(
+    state_channel: mpsc::Sender<StateMessage>,
     path: FullPath,
     query: QueryParameters,
     method: Method,
@@ -89,8 +104,22 @@ async fn mirror(
             }
             Err(e) => return Err(e),
         };
+
+    // If the geth response contained a payload id then we will use it.
+    // TODO: replace this with our own way of generating payload ids.
+    let maybe_payload_id = json_utils::get_field(
+        &json_utils::get_field(&parsed_geth_response, "result"),
+        "payloadId",
+    );
+    if let serde_json::Value::String(id) = maybe_payload_id {
+        if let Ok(id) = PayloadId::from_str(&id) {
+            let msg = StateMessage::SetPayloadId { id };
+            state_channel.send(msg).await.ok();
+        }
+    }
+
     let request = request.expect("geth responded, so body must have been JSON");
-    let op_move_response = handle_request(request.clone());
+    let op_move_response = handle_request(request.clone(), state_channel).await;
     let log = MirrorLog {
         request: &request,
         geth_response: &parsed_geth_response,
@@ -123,10 +152,13 @@ async fn proxy(
     .await
 }
 
-fn handle_request(request: serde_json::Value) -> JsonRpcResponse {
+async fn handle_request(
+    request: serde_json::Value,
+    state_channel: mpsc::Sender<StateMessage>,
+) -> JsonRpcResponse {
     let id = json_utils::get_field(&request, "id");
     let jsonrpc = json_utils::get_field(&request, "jsonrpc");
-    let result = match inner_handle_request(request) {
+    let result = match inner_handle_request(request, state_channel).await {
         Ok(r) => r,
         Err(e) => {
             return JsonRpcResponse {
@@ -145,7 +177,10 @@ fn handle_request(request: serde_json::Value) -> JsonRpcResponse {
     }
 }
 
-fn inner_handle_request(request: serde_json::Value) -> Result<serde_json::Value, JsonRpcError> {
+async fn inner_handle_request(
+    request: serde_json::Value,
+    state_channel: mpsc::Sender<StateMessage>,
+) -> Result<serde_json::Value, JsonRpcError> {
     let method: MethodName = match json_utils::get_field(&request, "method") {
         serde_json::Value::String(m) => m.parse()?,
         _ => {
@@ -158,7 +193,9 @@ fn inner_handle_request(request: serde_json::Value) -> Result<serde_json::Value,
     };
 
     match method {
-        MethodName::ForkChoiceUpdatedV3 => methods::forkchoice_updated::execute_v3(request),
+        MethodName::ForkChoiceUpdatedV3 => {
+            methods::forkchoice_updated::execute_v3(request, state_channel).await
+        }
         MethodName::GetPayloadV3 => methods::get_payload::execute_v3(request),
         MethodName::NewPayloadV3 => methods::new_payload::execute_v3(request),
         MethodName::ForkChoiceUpdatedV2 => todo!(),
