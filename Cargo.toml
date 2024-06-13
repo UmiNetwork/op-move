@@ -7,13 +7,13 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1"
-aptos-types = { git = "https://github.com/aptos-labs/aptos-core" }
+aptos-types = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.13.3" }
 bcs = { git = "https://github.com/aptos-labs/bcs" }
 ethers-core = "2.0"
 flate2 = "1"
 hex = "0.4"
 hyper = "0.14"
-move-core-types = { git = "https://github.com/aptos-labs/aptos-core" }
+move-core-types = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.13.3" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["full"] }
@@ -22,3 +22,8 @@ warp-reverse-proxy = "1"
 
 [patch.crates-io]
 x25519-dalek = { git = "https://github.com/aptos-labs/x25519-dalek", branch = "zeroize_v1" }
+
+[dev-dependencies]
+alloy = { git = "https://github.com/alloy-rs/alloy", features = ["network", "providers", "rpc-types-eth", "signer-wallet", "transport-http"] }
+dotenvy = "0.15"
+openssl = "0.10"

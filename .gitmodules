@@ -1,0 +1,3 @@
+[submodule "src/tests/optimism"]
+	path = src/tests/optimism
+	url = https://github.com/ethereum-optimism/optimism

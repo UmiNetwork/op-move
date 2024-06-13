@@ -1,3 +1,5 @@
+mod integration;
+
 use aptos_types::account_address::AccountAddress;
 use aptos_types::transaction::{EntryFunction, TransactionPayload};
 use move_core_types::ident_str;
