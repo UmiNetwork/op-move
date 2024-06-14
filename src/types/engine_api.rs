@@ -115,7 +115,7 @@ pub struct PayloadAttributesV3 {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(transparent)]
+#[serde(from = "U64", into = "String")]
 pub struct PayloadId(pub U64);
 
 impl FromStr for PayloadId {
@@ -123,6 +123,19 @@ impl FromStr for PayloadId {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(Self(U64::from_str(s)?))
+    }
+}
+
+impl From<U64> for PayloadId {
+    fn from(value: U64) -> Self {
+        Self(value)
+    }
+}
+
+impl From<PayloadId> for String {
+    fn from(value: PayloadId) -> Self {
+        let inner: u64 = value.0 .0[0];
+        format!("{inner:#018x}")
     }
 }
 

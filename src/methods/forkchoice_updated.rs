@@ -246,7 +246,7 @@ async fn test_execute_v3() {
                 "latestValidHash": "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d",
                 "validationError": null
             },
-            "payloadId": "0x3421ee50df45cac"
+            "payloadId": "0x03421ee50df45cac"
         }
     "#).unwrap();
 
