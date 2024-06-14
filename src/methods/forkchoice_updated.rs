@@ -3,7 +3,7 @@ use {
         json_utils::{self, access_state_error},
         types::{
             engine_api::{
-                ForkchoiceStateV1, ForkchoiceUpdatedResponseV1, PayloadAttributesV3, PayloadId,
+                ForkchoiceStateV1, ForkchoiceUpdatedResponseV1, PayloadAttributesV3,
                 PayloadStatusV1, Status,
             },
             jsonrpc::JsonRpcError,
@@ -15,6 +15,7 @@ use {
 
 #[cfg(test)]
 use {
+    crate::types::engine_api::PayloadId,
     ethers_core::types::{Bytes, H160, H256, U64},
     std::str::FromStr,
 };
@@ -80,7 +81,7 @@ async fn inner_execute_v3(
     let payload_id = if let Some(attrs) = payload_attributes {
         let (tx, rx) = oneshot::channel();
         let msg = StateMessage::StartBlockBuild {
-            payload: attrs,
+            payload_attributes: attrs,
             response_channel: tx,
         };
         state_channel.send(msg).await.map_err(access_state_error)?;
@@ -201,6 +202,35 @@ fn test_parse_params_v3() {
     assert_eq!(params, expected_params);
 }
 
+#[cfg(test)]
+pub fn example_request() -> serde_json::Value {
+    serde_json::from_str(r#"
+    {
+        "id": 30053,
+        "jsonrpc": "2.0",
+        "method": "engine_forkchoiceUpdatedV3",
+        "params": [
+        {
+            "finalizedBlockHash": "0x2c7cb7e2f79c2fa31f2b4280e96c34f7de981c6ccf5d0e998b51f5dc798fa53d",
+            "headBlockHash": "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d",
+            "safeBlockHash": "0xc9488c812782fac769416f918718107ca8f44f98fd2fe7dbcc12b9f5afa276dd"
+        },
+        {
+            "gasLimit": "0x1c9c380",
+            "parentBeaconBlockRoot": "0x2bd857e239f7e5b5e6415608c76b90600d51fa0f7f0bbbc04e2d6861b3186f1c",
+            "prevRandao": "0xbde07f5d381bb84700433fe6c0ae077aa40eaad3a5de7abd298f0e3e27e6e4c9",
+            "suggestedFeeRecipient": "0x4200000000000000000000000000000000000011",
+            "timestamp": "0x6660737b",
+            "transactions": [
+                "0x7ef8f8a0de86bef815fc910df65a9459ccb2b9a35fa8596dfcfed1ff01bbf28891d86d5e94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000000558000c5fc50000000000000000000000006660735b00000000000001a9000000000000000000000000000000000000000000000000000000000000000700000000000000000000000000000000000000000000000000000000000000017ae3f74f0134521a7d62a387ac75a5153bcd1aab1c7e003e9b9e15a5d8846363000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425"
+            ],
+            "withdrawals": []
+        }
+        ]
+    }
+"#).unwrap()
+}
+
 #[tokio::test]
 async fn test_execute_v3() {
     let (state_channel, rx) = tokio::sync::mpsc::channel(10);
@@ -213,31 +243,7 @@ async fn test_execute_v3() {
     };
     state_channel.send(msg).await.unwrap();
 
-    let request: serde_json::Value = serde_json::from_str(r#"
-        {
-            "id": 30053,
-            "jsonrpc": "2.0",
-            "method": "engine_forkchoiceUpdatedV3",
-            "params": [
-            {
-                "finalizedBlockHash": "0x2c7cb7e2f79c2fa31f2b4280e96c34f7de981c6ccf5d0e998b51f5dc798fa53d",
-                "headBlockHash": "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d",
-                "safeBlockHash": "0xc9488c812782fac769416f918718107ca8f44f98fd2fe7dbcc12b9f5afa276dd"
-            },
-            {
-                "gasLimit": "0x1c9c380",
-                "parentBeaconBlockRoot": "0x2bd857e239f7e5b5e6415608c76b90600d51fa0f7f0bbbc04e2d6861b3186f1c",
-                "prevRandao": "0xbde07f5d381bb84700433fe6c0ae077aa40eaad3a5de7abd298f0e3e27e6e4c9",
-                "suggestedFeeRecipient": "0x4200000000000000000000000000000000000011",
-                "timestamp": "0x6660737b",
-                "transactions": [
-                    "0x7ef8f8a0de86bef815fc910df65a9459ccb2b9a35fa8596dfcfed1ff01bbf28891d86d5e94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000000558000c5fc50000000000000000000000006660735b00000000000001a9000000000000000000000000000000000000000000000000000000000000000700000000000000000000000000000000000000000000000000000000000000017ae3f74f0134521a7d62a387ac75a5153bcd1aab1c7e003e9b9e15a5d8846363000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425"
-                ],
-                "withdrawals": []
-            }
-            ]
-        }
-    "#).unwrap();
+    let request = example_request();
 
     let expected_response: serde_json::Value = serde_json::from_str(r#"
         {

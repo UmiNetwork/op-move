@@ -4,6 +4,7 @@ use self::types::{
     mirror::MirrorLog,
     state::StateMessage,
 };
+use ethers_core::types::{H256, U64};
 use flate2::read::GzDecoder;
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::{io::Read, str::FromStr};
@@ -118,6 +119,26 @@ async fn mirror(
         }
     }
 
+    // If geth knows about an execution payload, we extract some data from it
+    // TODO: remove reliance on geth
+    let maybe_execution_payload = json_utils::get_field(
+        &json_utils::get_field(&parsed_geth_response, "result"),
+        "executionPayload",
+    );
+    let block_height: Result<Option<U64>, _> = serde_json::from_value(json_utils::get_field(
+        &maybe_execution_payload,
+        "blockNumber",
+    ));
+    let block_hash: Result<Option<H256>, _> =
+        serde_json::from_value(json_utils::get_field(&maybe_execution_payload, "blockHash"));
+    if let (Ok(Some(block_height)), Ok(Some(block_hash))) = (block_height, block_hash) {
+        let msg = StateMessage::NewBlock {
+            block_hash,
+            block_height,
+        };
+        state_channel.send(msg).await.ok();
+    }
+
     let request = request.expect("geth responded, so body must have been JSON");
     let op_move_response = handle_request(request.clone(), state_channel).await;
     let log = MirrorLog {
@@ -196,7 +217,7 @@ async fn inner_handle_request(
         MethodName::ForkChoiceUpdatedV3 => {
             methods::forkchoice_updated::execute_v3(request, state_channel).await
         }
-        MethodName::GetPayloadV3 => methods::get_payload::execute_v3(request),
+        MethodName::GetPayloadV3 => methods::get_payload::execute_v3(request, state_channel).await,
         MethodName::NewPayloadV3 => methods::new_payload::execute_v3(request),
         MethodName::ForkChoiceUpdatedV2 => todo!(),
         MethodName::GetPayloadV2 => todo!(),

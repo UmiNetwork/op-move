@@ -4,8 +4,9 @@
 //! accepts.
 
 use {
+    super::engine_api::GetPayloadResponseV3,
     crate::types::engine_api::{PayloadAttributesV3, PayloadId},
-    ethers_core::types::H256,
+    ethers_core::types::{Bytes, H256, U64},
     tokio::sync::oneshot,
 };
 
@@ -15,11 +16,29 @@ pub enum StateMessage {
         block_hash: H256,
     },
     StartBlockBuild {
-        payload: PayloadAttributesV3,
+        payload_attributes: PayloadAttributesV3,
         response_channel: oneshot::Sender<PayloadId>,
     },
     // TODO: remove this in favour of generating our own PayloadIds
     SetPayloadId {
         id: PayloadId,
     },
+    GetPayload {
+        id: PayloadId,
+        response_channel: oneshot::Sender<Option<GetPayloadResponseV3>>,
+    },
+    // Tells the state to remember a new block hash/height correspondence.
+    // TODO: should be able to remove in the future
+    NewBlock {
+        block_hash: H256,
+        block_height: U64,
+    },
+}
+
+#[derive(Debug)]
+pub struct ExecutionOutcome {
+    pub receipts_root: H256,
+    pub state_root: H256,
+    pub logs_bloom: Bytes,
+    pub gas_used: U64,
 }
