@@ -32,7 +32,7 @@ config=$(cat << EOL
   "superchainConfigGuardian": "$ADMIN_ADDRESS",
   "l1StartingBlockTag": "$blockhash",
 
-  "l1ChainID": 3151908,
+  "l1ChainID": 1337,
   "l2ChainID": 42069,
   "l2BlockTime": 1,
   "l1BlockTime": 2,

@@ -1,9 +1,10 @@
-use alloy::network::{EthereumSigner, TransactionBuilder};
+use alloy::network::{EthereumWallet, TransactionBuilder};
 use alloy::primitives::utils::parse_ether;
 use alloy::primitives::{address, Address, U256};
 use alloy::providers::{Network, Provider, ProviderBuilder};
 use alloy::rpc::types::eth::TransactionRequest;
-use alloy::signers::wallet::LocalWallet;
+use alloy::signers::k256::ecdsa::SigningKey;
+use alloy::signers::local::{LocalSigner, PrivateKeySigner};
 use alloy::transports::http::reqwest::Url;
 use anyhow::{Context, Result};
 use openssl::rand::rand_bytes;
@@ -13,6 +14,14 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::Read;
 use std::process::{Child, Command, Output};
+use std::str::FromStr;
+use std::time::Duration;
+use tokio::fs;
+
+const L1_GETH_START_IN_MILLIS: u64 = 1_000; // 1 seconds to kick off L1 geth in dev mode
+const L2_RPC_URL: &str = "http://localhost:8545";
+const OP_BRIDGE_IN_SECONDS: u64 = 90;
+const OP_START_IN_SECONDS: u64 = 20;
 
 #[tokio::test]
 async fn test_on_ethereum() -> Result<()> {
@@ -20,14 +29,15 @@ async fn test_on_ethereum() -> Result<()> {
     // 1. Check the accounts in env vars and Optimism binaries
     check_env_vars();
     check_programs();
-    let _ = cleanup_files(); // No unwrap(), so it doesn't fail if files don't exist
+    let _ = cleanup_files(); // No unwrap(), so it doesn't fail if the files don't exist
+    let geth = start_geth().await?;
 
-    // 2. Execute config.sh to generate a quickstart configuration file
-    generate_config();
-
-    // 3. Fund all the OP and deployer accounts, then deploy the factory deployer contract
+    // 2. Fund all the OP and deployer accounts, then deploy the factory deployer contract
     fund_accounts().await?;
     check_factory_deployer().await?;
+
+    // 3. Execute config.sh to generate a quickstart configuration file
+    generate_config();
 
     // 4. Execute forge script to deploy the L1 contracts onto Ethereum
     deploy_l1_contracts();
@@ -39,17 +49,18 @@ async fn test_on_ethereum() -> Result<()> {
     generate_genesis();
     generate_jwt()?;
 
-    // 7. Init the op-geth and start accepting requests
-    let geth = init_and_start_geth()?;
+    // 7. Init op-geth to start accepting requests
+    let op_geth = init_and_start_op_geth()?;
 
     // 8. In separate threads run op-node, op-batcher, op-proposer
     let (op_node, op_batcher, op_proposer) = run_op()?;
 
-    pause(); // Pause to manually send transactions
+    // 9. Test out the OP bridge
+    use_optimism_bridge().await?;
 
-    // 9. Cleanup generated files and folders
+    // 10. Cleanup generated files and folders
     let _ = cleanup_files();
-    cleanup_processes(vec![geth, op_node, op_batcher, op_proposer])
+    cleanup_processes(vec![geth, op_geth, op_node, op_batcher, op_proposer])
 }
 
 fn check_env_vars() {
@@ -63,25 +74,28 @@ fn check_env_vars() {
     assert!(var("PROPOSER_PRIVATE_KEY").is_ok());
     assert!(var("SEQUENCER_ADDRESS").is_ok());
     assert!(var("SEQUENCER_PRIVATE_KEY").is_ok());
-    assert!(var("PRE_FUNDED_ADDRESS").is_ok());
-    assert!(var("PRE_FUNDED_PRIVATE_KEY").is_ok());
     assert!(var("L1_RPC_URL").is_ok());
 }
 
 fn check_programs() {
     assert!(is_program_in_path("geth"));
+    assert!(is_program_in_path("op-geth"));
     assert!(is_program_in_path("op-node"));
     assert!(is_program_in_path("op-batcher"));
     assert!(is_program_in_path("op-proposer"));
 }
 
 async fn fund_accounts() -> Result<()> {
-    let from_wallet: LocalWallet = var("PRE_FUNDED_PRIVATE_KEY")?.parse()?;
-    send_ethers(from_wallet.clone(), var("ADMIN_ADDRESS")?.parse()?, "10").await?;
-    send_ethers(from_wallet.clone(), var("BATCHER_ADDRESS")?.parse()?, "10").await?;
-    send_ethers(from_wallet.clone(), var("PROPOSER_ADDRESS")?.parse()?, "10").await?;
-    let factory_deployer_address = address!("3fAB184622Dc19b6109349B94811493BF2a45362");
-    send_ethers(from_wallet.clone(), factory_deployer_address, "1").await?;
+    let from_wallet = get_prefunded_wallet().await?;
+    // Normally we just fund these accounts once, but for some reason to generate a genesis file
+    // we need at least 98 transactions on geth. So we repeat the transactions just to catch up.
+    for _ in 0..10 {
+        send_ethers(&from_wallet, var("ADMIN_ADDRESS")?.parse()?, "10", true).await?;
+        send_ethers(&from_wallet, var("BATCHER_ADDRESS")?.parse()?, "10", true).await?;
+        send_ethers(&from_wallet, var("PROPOSER_ADDRESS")?.parse()?, "10", true).await?;
+        let factory_deployer_address = address!("3fAB184622Dc19b6109349B94811493BF2a45362");
+        send_ethers(&from_wallet, factory_deployer_address, "1", true).await?;
+    }
     Ok(())
 }
 
@@ -151,7 +165,7 @@ fn state_dump() {
         .current_dir("src/tests/optimism/packages/contracts-bedrock")
         // Include contract address path in env var only for the genesis script.
         // Globally setting this will make the L1 contracts deployment fail.
-        .env("CONTRACT_ADDRESSES_PATH", "deployments/3151908-deploy.json")
+        .env("CONTRACT_ADDRESSES_PATH", "deployments/1337-deploy.json")
         .env("DEPLOY_CONFIG_PATH", "deploy-config/moved.json")
         .args([
             "script",
@@ -174,7 +188,7 @@ fn generate_genesis() {
             "--deploy-config",
             "deploy-config/moved.json",
             "--l1-deployments",
-            "deployments/3151908-deploy.json",
+            "deployments/1337-deploy.json",
             "--l2-allocs",
             "state-dump-42069.json",
             "--outfile.l2",
@@ -198,9 +212,34 @@ fn generate_jwt() -> Result<()> {
     Ok(())
 }
 
-fn init_and_start_geth() -> Result<Child> {
+async fn start_geth() -> Result<Child> {
+    let geth_process = Command::new("geth")
+        .current_dir("src/tests/optimism/")
+        .args([
+            // Generates blocks as the transactions come in with the --dev flag
+            "--dev",
+            "--datadir",
+            "./l1_datadir",
+            "--rpc.allow-unprotected-txs",
+            "--http",
+            "--http.addr",
+            "0.0.0.0",
+            "--http.port",
+            "58138",
+            "--http.corsdomain",
+            "*",
+            "--http.api",
+            "web3,debug,eth,txpool,net,engine",
+        ])
+        .spawn()?;
+    // Give a second to settle geth
+    pause(Some(Duration::from_millis(L1_GETH_START_IN_MILLIS)));
+    Ok(geth_process)
+}
+
+fn init_and_start_op_geth() -> Result<Child> {
     // Initialize the datadir with genesis
-    let output = Command::new("geth")
+    let output = Command::new("op-geth")
         .current_dir("src/tests/optimism/packages/contracts-bedrock")
         .args([
             "init",
@@ -212,7 +251,7 @@ fn init_and_start_geth() -> Result<Child> {
         .context("Call to state dump failed")?;
     check_output(output);
     // Run geth as a child process, so we can continue with the test
-    let geth_process = Command::new("geth")
+    let op_geth_process = Command::new("op-geth")
         // Geth fails to start IPC when the directory name is too long, so simply keeping it short
         .current_dir("src/tests/optimism/packages/contracts-bedrock")
         .args([
@@ -258,7 +297,7 @@ fn init_and_start_geth() -> Result<Child> {
             "--rollup.disabletxpoolgossip",
         ])
         .spawn()?;
-    Ok(geth_process)
+    Ok(op_geth_process)
 }
 
 fn run_op() -> Result<(Child, Child, Child)> {
@@ -341,15 +380,29 @@ fn run_op() -> Result<(Child, Child, Child)> {
     Ok((op_node_process, op_batcher_process, op_proposer_process))
 }
 
+async fn use_optimism_bridge() -> Result<()> {
+    pause(Some(Duration::from_secs(OP_START_IN_SECONDS)));
+    let bridge_address = Address::from_str(&get_deployed_address("L1StandardBridgeProxy")?)?;
+    let prefunded_wallet = get_prefunded_wallet().await?;
+    send_ethers(&prefunded_wallet, bridge_address, "100", false).await?;
+
+    // The tokens sent to the bridge proxy should show up in OP node in over a minute
+    pause(Some(Duration::from_secs(OP_BRIDGE_IN_SECONDS)));
+    let balance = get_op_balance(prefunded_wallet.address()).await?;
+    assert_eq!(balance, parse_ether("100")?);
+    Ok(())
+}
+
 fn cleanup_files() -> Result<()> {
     let base = "src/tests/optimism/packages/contracts-bedrock";
+    std::fs::remove_dir_all("src/tests/optimism/l1_datadir")?;
     std::fs::remove_dir_all("src/tests/optimism/datadir")?;
     std::fs::remove_dir_all(format!("{}/broadcast", base))?;
     std::fs::remove_dir_all(format!("{}/cache", base))?;
     std::fs::remove_dir_all(format!("{}/forge-artifacts", base))?;
     std::fs::remove_file(format!("{}/deploy-config/moved.json", base))?;
     std::fs::remove_file(format!("{}/deployments/31337-deploy.json", base))?;
-    std::fs::remove_file(format!("{}/deployments/3151908-deploy.json", base))?;
+    std::fs::remove_file(format!("{}/deployments/1337-deploy.json", base))?;
     std::fs::remove_file(format!("{}/deployments/genesis.json", base))?;
     std::fs::remove_file(format!("{}/deployments/jwt.txt", base))?;
     std::fs::remove_file(format!("{}/deployments/rollup.json", base))?;
@@ -374,7 +427,12 @@ async fn get_code_size(address: Address) -> Result<usize> {
     Ok(bytecode.len())
 }
 
-async fn send_ethers(from_wallet: LocalWallet, to: Address, how_many_ethers: &str) -> Result<U256> {
+async fn send_ethers(
+    from_wallet: &PrivateKeySigner,
+    to: Address,
+    how_many_ethers: &str,
+    check_balance: bool,
+) -> Result<U256> {
     let from = from_wallet.address();
     let tx = TransactionRequest::default()
         .with_from(from)
@@ -383,16 +441,24 @@ async fn send_ethers(from_wallet: LocalWallet, to: Address, how_many_ethers: &st
 
     let provider = ProviderBuilder::new()
         .with_recommended_fillers()
-        .signer(EthereumSigner::from(from_wallet))
+        .wallet(EthereumWallet::from(from_wallet.to_owned()))
         .on_http(Url::parse(&var("L1_RPC_URL")?)?);
     let prev_balance = provider.get_balance(to).await?;
-    let receipt = provider.send_transaction(tx).await?.get_receipt().await?;
-    let new_balance = provider.get_balance(to).await?;
+    let receipt = provider.send_transaction(tx).await?;
+    receipt.watch().await?;
 
-    assert_eq!(receipt.from, from);
-    assert_eq!(receipt.to, Some(to));
-    assert_eq!(new_balance - prev_balance, parse_ether(how_many_ethers)?);
+    let new_balance = provider.get_balance(to).await?;
+    if check_balance {
+        assert_eq!(new_balance - prev_balance, parse_ether(how_many_ethers)?);
+    }
     Ok(new_balance)
+}
+
+async fn get_op_balance(account: Address) -> Result<U256> {
+    let provider = ProviderBuilder::new()
+        .with_recommended_fillers()
+        .on_http(Url::parse(L2_RPC_URL)?);
+    Ok(provider.get_balance(account).await?)
 }
 
 fn check_output(output: Output) {
@@ -415,7 +481,7 @@ fn is_program_in_path(program: &str) -> bool {
 
 fn get_deployed_address(field: &str) -> Result<String> {
     // Read the oracle address from the list of deployed contract addresses
-    let filename = "src/tests/optimism/packages/contracts-bedrock/deployments/3151908-deploy.json";
+    let filename = "src/tests/optimism/packages/contracts-bedrock/deployments/1337-deploy.json";
     let mut deploy_file = File::open(filename)?;
     let mut content = String::new();
     deploy_file.read_to_string(&mut content)?;
@@ -423,8 +489,25 @@ fn get_deployed_address(field: &str) -> Result<String> {
     Ok(root.get(field).unwrap().as_str().unwrap().to_string())
 }
 
-fn pause() {
-    // Read a single byte to keep the main process hanging
-    let mut stdin = std::io::stdin();
-    let _ = stdin.read(&mut [0u8]).unwrap();
+async fn get_prefunded_wallet() -> Result<LocalSigner<SigningKey>> {
+    // Decrypt the keystore file for L1 dev mode with a blank password
+    let keystore_folder = "src/tests/optimism/l1_datadir/keystore";
+    let keystore_path = fs::read_dir(keystore_folder).await?.next_entry().await?;
+    let wallet = LocalSigner::decrypt_keystore(keystore_path.expect("No keys").path(), "")?;
+    Ok(wallet)
+}
+
+/// Pause the main process for an optional duration or indefinitely.
+fn pause(how_long: Option<Duration>) {
+    if let Some(how_long) = how_long {
+        Command::new("sleep")
+            .arg(how_long.as_secs_f32().to_string())
+            .output()
+            .context("Pause timeout failed")
+            .unwrap();
+    } else {
+        // Read a single byte to keep the main process hanging
+        let mut stdin = std::io::stdin();
+        let _ = stdin.read(&mut [0u8]).unwrap();
+    }
 }
