@@ -175,7 +175,7 @@ fn validate_payload(
         return Ok(PayloadStatusV1 {
             status: Status::Invalid,
             latest_valid_hash: None,
-            validation_error: Some("Unexpected block hashes".into()),
+            validation_error: Some("Unexpected blob hashes".into()),
         });
     }
 
