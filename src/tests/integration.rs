@@ -1,7 +1,7 @@
 use alloy::network::{EthereumWallet, TransactionBuilder};
 use alloy::primitives::utils::parse_ether;
 use alloy::primitives::{address, Address, U256};
-use alloy::providers::{Network, Provider, ProviderBuilder};
+use alloy::providers::{Provider, ProviderBuilder};
 use alloy::rpc::types::eth::TransactionRequest;
 use alloy::signers::k256::ecdsa::SigningKey;
 use alloy::signers::local::{LocalSigner, PrivateKeySigner};
@@ -469,7 +469,7 @@ fn check_output(output: Output) {
 
 fn is_program_in_path(program: &str) -> bool {
     if let Ok(path) = var("PATH") {
-        for p in path.split(":") {
+        for p in path.split(':') {
             let p_str = format!("{}/{}", p, program);
             if std::fs::metadata(p_str).is_ok() {
                 return true;
