@@ -3622,6 +3622,7 @@ version = "0.1.0"
 dependencies = [
  "alloy",
  "alloy-consensus 0.1.2",
+ "alloy-primitives",
  "alloy-rlp",
  "anyhow",
  "aptos-types",

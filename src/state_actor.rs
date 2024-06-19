@@ -2,9 +2,9 @@ use {
     crate::types::{
         engine_api::{ExecutionPayloadV3, GetPayloadResponseV3, PayloadAttributesV3, PayloadId},
         state::{ExecutionOutcome, StateMessage},
+        transactions::ExtendedTxEnvelope,
     },
-    alloy_consensus::transaction::TxEnvelope,
-    alloy_rlp::Encodable,
+    alloy_rlp::{Decodable, Encodable},
     ethers_core::types::{Bytes, H256, U256, U64},
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
@@ -18,7 +18,7 @@ pub struct StateActor {
     block_heights: HashMap<H256, U64>,
     execution_payloads: HashMap<H256, GetPayloadResponseV3>,
     pending_payload: Option<(PayloadId, GetPayloadResponseV3)>,
-    mem_pool: HashMap<H256, TxEnvelope>,
+    mem_pool: HashMap<H256, ExtendedTxEnvelope>,
 }
 
 impl StateActor {
@@ -37,66 +37,71 @@ impl StateActor {
     pub fn spawn(mut self) -> JoinHandle<()> {
         tokio::spawn(async move {
             while let Some(msg) = self.rx.recv().await {
-                match msg {
-                    StateMessage::UpdateHead { block_hash } => {
-                        self.head = block_hash;
-                    }
-                    StateMessage::SetPayloadId { id } => {
-                        self.payload_id = id;
-                    }
-                    StateMessage::StartBlockBuild {
-                        payload_attributes,
-                        response_channel,
-                    } => {
-                        let id = self.payload_id.clone();
-                        response_channel.send(id.clone()).ok();
-                        let payload = self.create_execution_payload(payload_attributes);
-                        self.pending_payload = Some((id, payload));
-                    }
-                    StateMessage::GetPayload {
-                        id: request_id,
-                        response_channel,
-                    } => match self.pending_payload.take() {
-                        Some((id, payload)) => {
-                            if request_id == id {
-                                response_channel.send(Some(payload.clone())).ok();
-                                self.execution_payloads
-                                    .insert(payload.execution_payload.block_hash, payload);
-                            } else {
-                                let request_str: String = request_id.into();
-                                println!("WARN: unexpected PayloadId: {request_str}");
-                                response_channel.send(None).ok();
-                                self.pending_payload = Some((id, payload));
-                            }
-                        }
-                        None => {
-                            response_channel.send(None).ok();
-                        }
-                    },
-                    StateMessage::GetPayloadByBlockHash {
-                        block_hash,
-                        response_channel,
-                    } => {
-                        let response = self.execution_payloads.get(&block_hash).cloned();
-                        response_channel.send(response).ok();
-                    }
-                    StateMessage::AddTransaction { tx } => {
-                        let tx_hash = tx.tx_hash().0.into();
-                        self.mem_pool.insert(tx_hash, tx);
-                    }
-                    StateMessage::NewBlock {
-                        block_hash,
-                        block_height,
-                    } => {
-                        self.block_heights.insert(block_hash, block_height);
-                        if let Some((_, payload)) = self.pending_payload.as_mut() {
-                            payload.execution_payload.block_hash = block_hash;
-                            payload.execution_payload.block_number = block_height;
-                        }
-                    }
-                }
+                self.handle_msg(msg)
             }
         })
+    }
+
+    pub fn handle_msg(&mut self, msg: StateMessage) {
+        match msg {
+            StateMessage::UpdateHead { block_hash } => {
+                self.head = block_hash;
+            }
+            StateMessage::SetPayloadId { id } => {
+                self.payload_id = id;
+            }
+            StateMessage::StartBlockBuild {
+                payload_attributes,
+                response_channel,
+            } => {
+                let id = self.payload_id.clone();
+                response_channel.send(id.clone()).ok();
+                let payload = self.create_execution_payload(payload_attributes);
+                self.pending_payload = Some((id, payload));
+            }
+            StateMessage::GetPayload {
+                id: request_id,
+                response_channel,
+            } => match self.pending_payload.take() {
+                Some((id, payload)) => {
+                    if request_id == id {
+                        response_channel.send(Some(payload.clone())).ok();
+                        self.execution_payloads
+                            .insert(payload.execution_payload.block_hash, payload);
+                    } else {
+                        let request_str: String = request_id.into();
+                        println!("WARN: unexpected PayloadId: {request_str}");
+                        response_channel.send(None).ok();
+                        self.pending_payload = Some((id, payload));
+                    }
+                }
+                None => {
+                    response_channel.send(None).ok();
+                }
+            },
+            StateMessage::GetPayloadByBlockHash {
+                block_hash,
+                response_channel,
+            } => {
+                let response = self.execution_payloads.get(&block_hash).cloned();
+                response_channel.send(response).ok();
+            }
+            StateMessage::AddTransaction { tx } => {
+                let tx_hash = tx.tx_hash().0.into();
+                self.mem_pool
+                    .insert(tx_hash, ExtendedTxEnvelope::Canonical(tx));
+            }
+            StateMessage::NewBlock {
+                block_hash,
+                block_height,
+            } => {
+                self.block_heights.insert(block_hash, block_height);
+                if let Some((_, payload)) = self.pending_payload.as_mut() {
+                    payload.execution_payload.block_hash = block_hash;
+                    payload.execution_payload.block_number = block_height;
+                }
+            }
+        }
     }
 
     fn create_execution_payload(
@@ -104,12 +109,25 @@ impl StateActor {
         payload_attributes: PayloadAttributesV3,
     ) -> GetPayloadResponseV3 {
         // Include transactions from both `payload_attributes` and internal mem-pool
-        let mut transactions = payload_attributes.transactions;
+        let mut transactions =
+            Vec::with_capacity(payload_attributes.transactions.len() + self.mem_pool.len());
+        let mut transactions_ser = Vec::with_capacity(transactions.len());
+        for tx_bytes in payload_attributes.transactions {
+            let mut slice: &[u8] = tx_bytes.as_ref();
+            match ExtendedTxEnvelope::decode(&mut slice) {
+                Ok(tx) => transactions.push(tx),
+                Err(_) => {
+                    println!("WARN: Failed to RLP decode transaction in payload_attributes");
+                }
+            };
+            transactions_ser.push(tx_bytes);
+        }
         for (_, tx) in self.mem_pool.drain() {
             let capacity = tx.length();
             let mut bytes = Vec::with_capacity(capacity);
             tx.encode(&mut bytes);
-            transactions.push(bytes.into())
+            transactions_ser.push(bytes.into());
+            transactions.push(tx);
         }
         let execution_outcome = self.execute_transactions(&transactions);
         let head_height = self
@@ -132,7 +150,7 @@ impl StateActor {
                 extra_data: Bytes::default(),
                 base_fee_per_gas: U256::zero(), // TODO: gas pricing?
                 block_hash: H256::default(),    // TODO: proper block hash calculation
-                transactions,
+                transactions: transactions_ser,
                 withdrawals: payload_attributes.withdrawals,
                 blob_gas_used: U64::zero(),
                 excess_blob_gas: U64::zero(),
@@ -144,7 +162,7 @@ impl StateActor {
         }
     }
 
-    fn execute_transactions(&self, _transactions: &[Bytes]) -> ExecutionOutcome {
+    fn execute_transactions(&self, _transactions: &[ExtendedTxEnvelope]) -> ExecutionOutcome {
         // TODO: execution
         ExecutionOutcome {
             state_root: H256::default(),
