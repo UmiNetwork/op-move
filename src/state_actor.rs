@@ -3,6 +3,8 @@ use {
         engine_api::{ExecutionPayloadV3, GetPayloadResponseV3, PayloadAttributesV3, PayloadId},
         state::{ExecutionOutcome, StateMessage},
     },
+    alloy_consensus::transaction::TxEnvelope,
+    alloy_rlp::Encodable,
     ethers_core::types::{Bytes, H256, U256, U64},
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
@@ -16,6 +18,7 @@ pub struct StateActor {
     block_heights: HashMap<H256, U64>,
     execution_payloads: HashMap<H256, GetPayloadResponseV3>,
     pending_payload: Option<(PayloadId, GetPayloadResponseV3)>,
+    mem_pool: HashMap<H256, TxEnvelope>,
 }
 
 impl StateActor {
@@ -27,6 +30,7 @@ impl StateActor {
             block_heights: HashMap::new(),
             execution_payloads: HashMap::new(),
             pending_payload: None,
+            mem_pool: HashMap::new(),
         }
     }
 
@@ -76,6 +80,10 @@ impl StateActor {
                         let response = self.execution_payloads.get(&block_hash).cloned();
                         response_channel.send(response).ok();
                     }
+                    StateMessage::AddTransaction { tx } => {
+                        let tx_hash = tx.tx_hash().0.into();
+                        self.mem_pool.insert(tx_hash, tx);
+                    }
                     StateMessage::NewBlock {
                         block_hash,
                         block_height,
@@ -92,11 +100,17 @@ impl StateActor {
     }
 
     fn create_execution_payload(
-        &self,
+        &mut self,
         payload_attributes: PayloadAttributesV3,
     ) -> GetPayloadResponseV3 {
-        // TODO: additional transactions from internal mempool
-        let transactions = payload_attributes.transactions;
+        // Include transactions from both `payload_attributes` and internal mem-pool
+        let mut transactions = payload_attributes.transactions;
+        for (_, tx) in self.mem_pool.drain() {
+            let capacity = tx.length();
+            let mut bytes = Vec::with_capacity(capacity);
+            tx.encode(&mut bytes);
+            transactions.push(bytes.into())
+        }
         let execution_outcome = self.execute_transactions(&transactions);
         let head_height = self
             .block_heights

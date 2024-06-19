@@ -6,6 +6,7 @@
 use {
     super::engine_api::GetPayloadResponseV3,
     crate::types::engine_api::{PayloadAttributesV3, PayloadId},
+    alloy_consensus::transaction::TxEnvelope,
     ethers_core::types::{Bytes, H256, U64},
     tokio::sync::oneshot,
 };
@@ -30,6 +31,9 @@ pub enum StateMessage {
     GetPayloadByBlockHash {
         block_hash: H256,
         response_channel: oneshot::Sender<Option<GetPayloadResponseV3>>,
+    },
+    AddTransaction {
+        tx: TxEnvelope,
     },
     // Tells the state to remember a new block hash/height correspondence.
     // TODO: should be able to remove in the future

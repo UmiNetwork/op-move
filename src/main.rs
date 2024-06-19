@@ -219,6 +219,9 @@ async fn inner_handle_request(
         }
         MethodName::GetPayloadV3 => methods::get_payload::execute_v3(request, state_channel).await,
         MethodName::NewPayloadV3 => methods::new_payload::execute_v3(request, state_channel).await,
+        MethodName::SendRawTransaction => {
+            methods::send_raw_transaction::execute(request, state_channel).await
+        }
         MethodName::ForkChoiceUpdatedV2 => todo!(),
         MethodName::GetPayloadV2 => todo!(),
         MethodName::NewPayloadV2 => todo!(),
