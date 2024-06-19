@@ -27,6 +27,10 @@ pub enum StateMessage {
         id: PayloadId,
         response_channel: oneshot::Sender<Option<GetPayloadResponseV3>>,
     },
+    GetPayloadByBlockHash {
+        block_hash: H256,
+        response_channel: oneshot::Sender<Option<GetPayloadResponseV3>>,
+    },
     // Tells the state to remember a new block hash/height correspondence.
     // TODO: should be able to remove in the future
     NewBlock {

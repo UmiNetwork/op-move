@@ -69,11 +69,22 @@ impl StateActor {
                             response_channel.send(None).ok();
                         }
                     },
+                    StateMessage::GetPayloadByBlockHash {
+                        block_hash,
+                        response_channel,
+                    } => {
+                        let response = self.execution_payloads.get(&block_hash).cloned();
+                        response_channel.send(response).ok();
+                    }
                     StateMessage::NewBlock {
                         block_hash,
                         block_height,
                     } => {
                         self.block_heights.insert(block_hash, block_height);
+                        if let Some((_, payload)) = self.pending_payload.as_mut() {
+                            payload.execution_payload.block_hash = block_hash;
+                            payload.execution_payload.block_number = block_height;
+                        }
                     }
                 }
             }
