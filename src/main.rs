@@ -18,6 +18,7 @@ use warp_reverse_proxy::{Method, QueryParameters};
 
 mod json_utils;
 mod methods;
+mod move_execution;
 mod state_actor;
 mod types;
 

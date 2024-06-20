@@ -1,11 +1,17 @@
 use {
-    crate::types::{
-        engine_api::{ExecutionPayloadV3, GetPayloadResponseV3, PayloadAttributesV3, PayloadId},
-        state::{ExecutionOutcome, StateMessage},
-        transactions::ExtendedTxEnvelope,
+    crate::{
+        move_execution::execute_transaction,
+        types::{
+            engine_api::{
+                ExecutionPayloadV3, GetPayloadResponseV3, PayloadAttributesV3, PayloadId,
+            },
+            state::{ExecutionOutcome, StateMessage},
+            transactions::ExtendedTxEnvelope,
+        },
     },
     alloy_rlp::{Decodable, Encodable},
     ethers_core::types::{Bytes, H256, U256, U64},
+    move_vm_test_utils::InMemoryStorage,
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
 };
@@ -19,6 +25,8 @@ pub struct StateActor {
     execution_payloads: HashMap<H256, GetPayloadResponseV3>,
     pending_payload: Option<(PayloadId, GetPayloadResponseV3)>,
     mem_pool: HashMap<H256, ExtendedTxEnvelope>,
+    // TODO: proper storage backend
+    move_vm_state: InMemoryStorage,
 }
 
 impl StateActor {
@@ -31,6 +39,7 @@ impl StateActor {
             execution_payloads: HashMap::new(),
             pending_payload: None,
             mem_pool: HashMap::new(),
+            move_vm_state: InMemoryStorage::new(),
         }
     }
 
@@ -162,8 +171,19 @@ impl StateActor {
         }
     }
 
-    fn execute_transactions(&self, _transactions: &[ExtendedTxEnvelope]) -> ExecutionOutcome {
-        // TODO: execution
+    fn execute_transactions(&mut self, transactions: &[ExtendedTxEnvelope]) -> ExecutionOutcome {
+        // TODO: parallel transaction processing?
+        for tx in transactions {
+            if let Err(e) = execute_transaction(tx, &self.move_vm_state).and_then(|changes| {
+                self.move_vm_state.apply(changes)?;
+                Ok(())
+            }) {
+                // TODO: proper error handling
+                println!("WARN: execution error {e:?}");
+            }
+        }
+
+        // TODO: derive from execution above
         ExecutionOutcome {
             state_root: H256::default(),
             receipts_root: H256::default(),
