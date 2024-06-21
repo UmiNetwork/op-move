@@ -11,16 +11,6 @@ use {
     move_vm_test_utils::{gas_schedule::GasStatus, InMemoryStorage},
 };
 
-#[cfg(test)]
-use {
-    alloy::network::TxSignerSync,
-    alloy::signers::local::PrivateKeySigner,
-    alloy_consensus::{transaction::TxEip1559, SignableTransaction},
-    move_core_types::{
-        identifier::Identifier, language_storage::ModuleId, resolver::ModuleResolver,
-    },
-};
-
 // TODO: status return type
 // TODO: more careful error type
 pub fn execute_transaction(
@@ -120,42 +110,87 @@ fn evm_address_to_move_address(address: &alloy_primitives::Address) -> AccountAd
     AccountAddress::new(bytes)
 }
 
-#[test]
-fn test_execute_transaction() {
-    let mut state = InMemoryStorage::new();
-
-    // The address corresponding to this private key is 0x8fd379246834eac74B8419FfdA202CF8051F7A03
-    let sk = [0xaa; 32].into();
-    let address = evm_address_to_move_address(&alloy_primitives::address!(
-        "8fd379246834eac74b8419ffda202cf8051f7a03"
-    ));
-    let signer = PrivateKeySigner::from_bytes(&sk).unwrap();
-
-    let code_hex = "a11ceb0b06000000060100020302050507010708090811200c3107000000010000000003616464046d61696e0000000000000000000000008fd379246834eac74b8419ffda202cf8051f7a030001040000010200";
-    let module_bytes = hex::decode(code_hex).unwrap();
-    let mut tx = TxEip1559 {
-        chain_id: 0,
-        nonce: 0,
-        gas_limit: 0,
-        max_fee_per_gas: 0,
-        max_priority_fee_per_gas: 0,
-        to: TxKind::Create,
-        value: Default::default(),
-        access_list: Default::default(),
-        input: module_bytes.into(),
+#[cfg(test)]
+mod tests {
+    use {
+        super::*,
+        alloy::network::TxSignerSync,
+        alloy::signers::local::PrivateKeySigner,
+        alloy_consensus::{transaction::TxEip1559, SignableTransaction},
+        anyhow::Context,
+        move_compiler::{
+            shared::{NumberFormat, NumericalAddress},
+            Compiler, Flags,
+        },
+        move_core_types::{
+            identifier::Identifier, language_storage::ModuleId, resolver::ModuleResolver,
+        },
+        std::collections::BTreeSet,
     };
-    let signature = signer.sign_transaction_sync(&mut tx).unwrap();
-    let signed_tx = ExtendedTxEnvelope::Canonical(TxEnvelope::Eip1559(tx.into_signed(signature)));
 
-    let changes = execute_transaction(&signed_tx, &state).unwrap();
-    state.apply(changes).unwrap();
+    #[test]
+    fn test_execute_transaction() {
+        let mut state = InMemoryStorage::new();
 
-    // Code was deployed
-    let module_id = ModuleId::new(address, Identifier::new("add").unwrap());
-    assert!(
-        state.get_module(&module_id).unwrap().is_some(),
-        "Code should be deployed"
-    );
+        // The address corresponding to this private key is 0x8fd379246834eac74B8419FfdA202CF8051F7A03
+        let sk = [0xaa; 32].into();
+        let address = evm_address_to_move_address(&alloy_primitives::address!(
+            "8fd379246834eac74b8419ffda202cf8051f7a03"
+        ));
+        let signer = PrivateKeySigner::from_bytes(&sk).unwrap();
+        let module_name = "counter";
 
-    // TODO: test calling entry function
+        let module_bytes = move_compile(module_name, &address).unwrap();
+        let mut tx = TxEip1559 {
+            chain_id: 0,
+            nonce: 0,
+            gas_limit: 0,
+            max_fee_per_gas: 0,
+            max_priority_fee_per_gas: 0,
+            to: TxKind::Create,
+            value: Default::default(),
+            access_list: Default::default(),
+            input: module_bytes.into(),
+        };
+        let signature = signer.sign_transaction_sync(&mut tx).unwrap();
+        let signed_tx =
+            ExtendedTxEnvelope::Canonical(TxEnvelope::Eip1559(tx.into_signed(signature)));
+
+        let changes = execute_transaction(&signed_tx, &state).unwrap();
+        state.apply(changes).unwrap();
+
+        // Code was deployed
+        let module_id = ModuleId::new(address, Identifier::new(module_name).unwrap());
+        assert!(
+            state.get_module(&module_id).unwrap().is_some(),
+            "Code should be deployed"
+        );
+
+        // TODO: test calling entry function
+    }
+
+    fn move_compile(package_name: &str, address: &AccountAddress) -> anyhow::Result<Vec<u8>> {
+        let known_attributes = BTreeSet::new();
+        let named_address_mapping = [(
+            package_name,
+            NumericalAddress::new(address.into(), NumberFormat::Hex),
+        )]
+        .into_iter()
+        .collect();
+        let compiler = Compiler::from_files(
+            vec![format!(
+                "src/tests/move_sources/{package_name}/sources/{package_name}.move"
+            )],
+            Vec::new(),
+            named_address_mapping,
+            Flags::empty(),
+            &known_attributes,
+        );
+        let (_, result) = compiler
+            .build()
+            .context(format!("Failed to compile {package_name}.move"))?;
+        let compiled_unit = result.unwrap().0.pop().unwrap().into_compiled_unit();
+        let bytes = compiled_unit.serialize(None);
+        Ok(bytes)
+    }
 }
