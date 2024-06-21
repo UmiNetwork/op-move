@@ -114,8 +114,7 @@ fn evm_address_to_move_address(address: &alloy_primitives::Address) -> AccountAd
 mod tests {
     use {
         super::*,
-        alloy::network::TxSignerSync,
-        alloy::signers::local::PrivateKeySigner,
+        alloy::{network::TxSignerSync, signers::local::PrivateKeySigner},
         alloy_consensus::{transaction::TxEip1559, SignableTransaction},
         anyhow::Context,
         move_compiler::{
@@ -123,7 +122,10 @@ mod tests {
             Compiler, Flags,
         },
         move_core_types::{
-            identifier::Identifier, language_storage::ModuleId, resolver::ModuleResolver,
+            identifier::Identifier,
+            language_storage::{ModuleId, StructTag},
+            resolver::{ModuleResolver, MoveResolver},
+            value::MoveValue,
         },
         std::collections::BTreeSet,
     };
@@ -134,39 +136,107 @@ mod tests {
 
         // The address corresponding to this private key is 0x8fd379246834eac74B8419FfdA202CF8051F7A03
         let sk = [0xaa; 32].into();
-        let address = evm_address_to_move_address(&alloy_primitives::address!(
-            "8fd379246834eac74b8419ffda202cf8051f7a03"
-        ));
+        let evm_address = alloy_primitives::address!("8fd379246834eac74b8419ffda202cf8051f7a03");
+        let move_address = evm_address_to_move_address(&evm_address);
         let signer = PrivateKeySigner::from_bytes(&sk).unwrap();
         let module_name = "counter";
 
-        let module_bytes = move_compile(module_name, &address).unwrap();
+        let module_bytes = move_compile(module_name, &move_address).unwrap();
+        let signed_tx = create_transaction(&signer, TxKind::Create, module_bytes);
+
+        let changes = execute_transaction(&signed_tx, &state).unwrap();
+        state.apply(changes).unwrap();
+
+        // Code was deployed
+        let module_id = ModuleId::new(move_address, Identifier::new(module_name).unwrap());
+        assert!(
+            state.get_module(&module_id).unwrap().is_some(),
+            "Code should be deployed"
+        );
+
+        // Call entry function to create the `Counter` resource
+        let initial_value: u64 = 7;
+        let signer_arg = MoveValue::Signer(move_address);
+        let entry_fn = EntryFunction::new(
+            module_id.clone(),
+            Identifier::new("publish").unwrap(),
+            Vec::new(),
+            vec![
+                bcs::to_bytes(&signer_arg).unwrap(),
+                bcs::to_bytes(&initial_value).unwrap(),
+            ],
+        );
+        let signed_tx = create_transaction(
+            &signer,
+            TxKind::Call(evm_address),
+            bcs::to_bytes(&entry_fn).unwrap(),
+        );
+
+        let changes = execute_transaction(&signed_tx, &state).unwrap();
+        state.apply(changes).unwrap();
+
+        // Resource was created
+        let struct_tag = StructTag {
+            address: move_address,
+            module: Identifier::new(module_name).unwrap(),
+            name: Identifier::new("Counter").unwrap(),
+            type_args: Vec::new(),
+        };
+        let resource: u64 = bcs::from_bytes(
+            &state
+                .get_resource(&move_address, &struct_tag)
+                .unwrap()
+                .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(resource, initial_value);
+
+        // Call entry function to increment the counter
+        let address_arg = MoveValue::Address(move_address);
+        let entry_fn = EntryFunction::new(
+            module_id,
+            Identifier::new("increment").unwrap(),
+            Vec::new(),
+            vec![bcs::to_bytes(&address_arg).unwrap()],
+        );
+        let signed_tx = create_transaction(
+            &signer,
+            TxKind::Call(evm_address),
+            bcs::to_bytes(&entry_fn).unwrap(),
+        );
+
+        let changes = execute_transaction(&signed_tx, &state).unwrap();
+        state.apply(changes).unwrap();
+
+        // Resource was modified
+        let resource: u64 = bcs::from_bytes(
+            &state
+                .get_resource(&move_address, &struct_tag)
+                .unwrap()
+                .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(resource, initial_value + 1);
+    }
+
+    fn create_transaction(
+        signer: &PrivateKeySigner,
+        to: TxKind,
+        input: Vec<u8>,
+    ) -> ExtendedTxEnvelope {
         let mut tx = TxEip1559 {
             chain_id: 0,
             nonce: 0,
             gas_limit: 0,
             max_fee_per_gas: 0,
             max_priority_fee_per_gas: 0,
-            to: TxKind::Create,
+            to,
             value: Default::default(),
             access_list: Default::default(),
-            input: module_bytes.into(),
+            input: input.into(),
         };
         let signature = signer.sign_transaction_sync(&mut tx).unwrap();
-        let signed_tx =
-            ExtendedTxEnvelope::Canonical(TxEnvelope::Eip1559(tx.into_signed(signature)));
-
-        let changes = execute_transaction(&signed_tx, &state).unwrap();
-        state.apply(changes).unwrap();
-
-        // Code was deployed
-        let module_id = ModuleId::new(address, Identifier::new(module_name).unwrap());
-        assert!(
-            state.get_module(&module_id).unwrap().is_some(),
-            "Code should be deployed"
-        );
-
-        // TODO: test calling entry function
+        ExtendedTxEnvelope::Canonical(TxEnvelope::Eip1559(tx.into_signed(signature)))
     }
 
     fn move_compile(package_name: &str, address: &AccountAddress) -> anyhow::Result<Vec<u8>> {

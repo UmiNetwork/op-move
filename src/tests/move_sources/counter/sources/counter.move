@@ -4,7 +4,7 @@ module 0x8fd379246834eac74b8419ffda202cf8051f7a03::counter {
     struct Counter has key { i: u64 }
 
     /// Publish a `Counter` resource with value `i` under the given `account`
-    public fun publish(account: &signer, i: u64) {
+    public entry fun publish(account: &signer, i: u64) {
       // "Pack" (create) a Counter resource. This is a privileged operation that
       // can only be done inside the module that declares the `Counter` resource
       move_to(account, Counter { i })
@@ -16,7 +16,7 @@ module 0x8fd379246834eac74b8419ffda202cf8051f7a03::counter {
     }
 
     /// Increment the value of `addr`'s `Counter` resource
-    public fun increment(addr: address) acquires Counter {
+    public entry fun increment(addr: address) acquires Counter {
         let c_ref = &mut borrow_global_mut<Counter>(addr).i;
         *c_ref = *c_ref + 1
     }
