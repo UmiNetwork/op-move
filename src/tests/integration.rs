@@ -18,7 +18,7 @@ use std::str::FromStr;
 use std::time::Duration;
 use tokio::fs;
 
-const L1_GETH_START_IN_MILLIS: u64 = 1_000; // 1 seconds to kick off L1 geth in dev mode
+const GETH_START_IN_MILLIS: u64 = 1_000; // 1 seconds to kick off L1 geth in dev mode
 const L2_RPC_URL: &str = "http://localhost:8545";
 const OP_BRIDGE_IN_SECONDS: u64 = 90;
 const OP_START_IN_SECONDS: u64 = 20;
@@ -52,13 +52,16 @@ async fn test_on_ethereum() -> Result<()> {
     // 7. Init op-geth to start accepting requests
     let op_geth = init_and_start_op_geth()?;
 
-    // 8. In separate threads run op-node, op-batcher, op-proposer
+    // 8. Start op-move to accept requests from the sequencer
+    std::thread::spawn(crate::main);
+
+    // 9. In separate threads run op-node, op-batcher, op-proposer
     let (op_node, op_batcher, op_proposer) = run_op()?;
 
-    // 9. Test out the OP bridge
+    // 10. Test out the OP bridge
     use_optimism_bridge().await?;
 
-    // 10. Cleanup generated files and folders
+    // 11. Cleanup generated files and folders
     let _ = cleanup_files();
     cleanup_processes(vec![geth, op_geth, op_node, op_batcher, op_proposer])
 }
@@ -233,7 +236,7 @@ async fn start_geth() -> Result<Child> {
         ])
         .spawn()?;
     // Give a second to settle geth
-    pause(Some(Duration::from_millis(L1_GETH_START_IN_MILLIS)));
+    pause(Some(Duration::from_millis(GETH_START_IN_MILLIS)));
     Ok(geth_process)
 }
 
@@ -261,7 +264,7 @@ fn init_and_start_op_geth() -> Result<Child> {
             "--http.addr",
             "0.0.0.0",
             "--http.port",
-            "8545",
+            "9545",
             "--http.corsdomain",
             "*",
             "--http.vhosts",
@@ -272,7 +275,7 @@ fn init_and_start_op_geth() -> Result<Child> {
             "--ws.addr",
             "0.0.0.0",
             "--ws.port",
-            "8546",
+            "9546",
             "--ws.origins",
             "*",
             "--ws.api",
@@ -291,12 +294,14 @@ fn init_and_start_op_geth() -> Result<Child> {
             "--authrpc.addr",
             "0.0.0.0",
             "--authrpc.port",
-            "8551",
+            "9551",
             "--authrpc.jwtsecret",
             "deployments/jwt.txt",
             "--rollup.disabletxpoolgossip",
         ])
         .spawn()?;
+    // Give some time for op-geth to settle
+    pause(Some(Duration::from_millis(GETH_START_IN_MILLIS)));
     Ok(op_geth_process)
 }
 
