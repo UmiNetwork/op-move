@@ -3,12 +3,17 @@ use {
     alloy_consensus::TxEnvelope,
     alloy_primitives::TxKind,
     aptos_types::transaction::{EntryFunction, Module},
-    move_core_types::{account_address::AccountAddress, effects::ChangeSet},
+    move_core_types::{
+        account_address::AccountAddress,
+        effects::ChangeSet,
+        value::{MoveTypeLayout, MoveValue},
+    },
     move_vm_runtime::{
         module_traversal::{TraversalContext, TraversalStorage},
         move_vm::MoveVM,
     },
     move_vm_test_utils::{gas_schedule::GasStatus, InMemoryStorage},
+    move_vm_types::{loaded_data::runtime_types::Type, values::Value},
 };
 
 // TODO: status return type
@@ -25,6 +30,7 @@ pub fn execute_transaction(
         ExtendedTxEnvelope::Canonical(tx) => {
             // TODO: check tx chain_id
             let sender = tx.recover_signer()?;
+            let sender_move_address = evm_address_to_move_address(&sender);
             // TODO: check tx nonce
             let (to, payload) = match tx {
                 TxEnvelope::Eip1559(tx) => (tx.tx().to, &tx.tx().input),
@@ -38,10 +44,10 @@ pub fn execute_transaction(
             let changes = match to {
                 TxKind::Call(_to) => {
                     let entry_fn: EntryFunction = bcs::from_bytes(payload)?;
-                    // TODO: require `to` be somehow related to `entry_fn.module()`
-                    // TODO: if there are Signer types in the function,
-                    // make sure they correspond to the `sender` (for security).
-                    execute_entry_function(entry_fn, state)?
+                    if entry_fn.module().address() != &sender_move_address {
+                        anyhow::bail!("tx.to must match payload module address");
+                    }
+                    execute_entry_function(entry_fn, &sender_move_address, state)?
                 }
                 TxKind::Create => {
                     // Assume EVM create type transactions are module deployments in Move
@@ -54,8 +60,10 @@ pub fn execute_transaction(
     }
 }
 
+// TODO: more careful error type
 fn execute_entry_function(
     entry_fn: EntryFunction,
+    signer: &AccountAddress,
     state: &InMemoryStorage,
 ) -> anyhow::Result<ChangeSet> {
     let move_vm = create_move_vm()?;
@@ -66,6 +74,28 @@ fn execute_entry_function(
     let mut traversal_context = TraversalContext::new(&traversal_storage);
 
     let (module, function_name, ty_args, args) = entry_fn.into_inner();
+
+    // Validate signer params match the actual signer
+    let function = session.load_function(&module, &function_name, &ty_args)?;
+    if function.param_tys.len() != args.len() {
+        anyhow::bail!("Incorrect number of arguments");
+    }
+    for (ty, bytes) in function.param_tys.iter().zip(&args) {
+        let ty = strip_reference(ty)?;
+        // TODO: need to also handle structs that contain signer types
+        if let Type::Signer = ty {
+            let arg = Value::simple_deserialize(bytes, &MoveTypeLayout::Signer)
+                .ok_or_else(|| anyhow::Error::msg("Wrong param type; expected signer"))?
+                .as_move_value(&MoveTypeLayout::Signer);
+            if let MoveValue::Signer(given_signer) = arg {
+                if &given_signer != signer {
+                    anyhow::bail!("Signer does not match transaction signature");
+                }
+            } else {
+                anyhow::bail!("Wrong param type; expected signer");
+            }
+        }
+    }
 
     // TODO: is this the right way to be using the VM?
     // Maybe there is some higher level entry point we should be using instead?
@@ -80,6 +110,24 @@ fn execute_entry_function(
     let changes = session.finish()?;
 
     Ok(changes)
+}
+
+// If `t` is wrapped in `Type::Reference` or `Type::MutableReference`,
+// return the inner type
+fn strip_reference(t: &Type) -> anyhow::Result<&Type> {
+    match t {
+        Type::Reference(inner) | Type::MutableReference(inner) => {
+            match inner.as_ref() {
+                Type::Reference(_) | Type::MutableReference(_) => {
+                    // Based on Aptos code, it looks like references are not allowed to be nested.
+                    // TODO: check this assumption.
+                    anyhow::bail!("Invalid nested references");
+                }
+                other => Ok(other),
+            }
+        }
+        other => Ok(other),
+    }
 }
 
 fn deploy_module(
@@ -125,7 +173,6 @@ mod tests {
             identifier::Identifier,
             language_storage::{ModuleId, StructTag},
             resolver::{ModuleResolver, MoveResolver},
-            value::MoveValue,
         },
         std::collections::BTreeSet,
     };
@@ -174,6 +221,28 @@ mod tests {
 
         let changes = execute_transaction(&signed_tx, &state).unwrap();
         state.apply(changes).unwrap();
+
+        // Calling the function with an incorrect signer causes an error
+        let signer_arg = MoveValue::Signer(AccountAddress::new([0x00; 32]));
+        let entry_fn = EntryFunction::new(
+            module_id.clone(),
+            Identifier::new("publish").unwrap(),
+            Vec::new(),
+            vec![
+                bcs::to_bytes(&signer_arg).unwrap(),
+                bcs::to_bytes(&initial_value).unwrap(),
+            ],
+        );
+        let signed_tx = create_transaction(
+            &signer,
+            TxKind::Call(evm_address),
+            bcs::to_bytes(&entry_fn).unwrap(),
+        );
+        let err = execute_transaction(&signed_tx, &state).unwrap_err();
+        assert_eq!(
+            format!("{err:?}").as_str(),
+            "Signer does not match transaction signature"
+        );
 
         // Resource was created
         let struct_tag = StructTag {

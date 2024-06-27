@@ -3916,6 +3916,7 @@ dependencies = [
  "move-core-types",
  "move-vm-runtime",
  "move-vm-test-utils",
+ "move-vm-types",
  "openssl",
  "serde",
  "serde_json",
