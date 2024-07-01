@@ -2,7 +2,10 @@ use {
     crate::types::transactions::ExtendedTxEnvelope,
     alloy_consensus::TxEnvelope,
     alloy_primitives::TxKind,
+    aptos_gas_schedule::{MiscGasParameters, NativeGasParameters, LATEST_GAS_FEATURE_VERSION},
+    aptos_types::on_chain_config::{Features, TimedFeaturesBuilder},
     aptos_types::transaction::{EntryFunction, Module},
+    aptos_vm::natives::aptos_natives,
     move_core_types::{
         account_address::AccountAddress,
         effects::ChangeSet,
@@ -145,9 +148,15 @@ fn deploy_module(
 }
 
 fn create_move_vm() -> anyhow::Result<MoveVM> {
-    // TODO: natives
     // TODO: error handling
-    let vm = MoveVM::new(Vec::new())?;
+    let natives = aptos_natives(
+        LATEST_GAS_FEATURE_VERSION,
+        NativeGasParameters::zeros(),
+        MiscGasParameters::zeros(),
+        TimedFeaturesBuilder::enable_all().build(),
+        Features::default(),
+    );
+    let vm = MoveVM::new(natives)?;
     Ok(vm)
 }
 
@@ -162,6 +171,7 @@ fn evm_address_to_move_address(address: &alloy_primitives::Address) -> AccountAd
 mod tests {
     use {
         super::*,
+        crate::state_actor::head_release_bundle,
         alloy::{network::TxSignerSync, signers::local::PrivateKeySigner},
         alloy_consensus::{transaction::TxEip1559, SignableTransaction},
         anyhow::Context,
@@ -180,6 +190,10 @@ mod tests {
     #[test]
     fn test_execute_transaction() {
         let mut state = InMemoryStorage::new();
+        // TODO: Also inject the created resource and table data
+        for (bytes, module) in head_release_bundle().code_and_compiled_modules() {
+            state.publish_or_overwrite_module(module.self_id(), bytes.to_vec());
+        }
 
         // The address corresponding to this private key is 0x8fd379246834eac74B8419FfdA202CF8051F7A03
         let sk = [0xaa; 32].into();
@@ -240,7 +254,7 @@ mod tests {
         );
         let err = execute_transaction(&signed_tx, &state).unwrap_err();
         assert_eq!(
-            format!("{err:?}").as_str(),
+            err.to_string(),
             "Signer does not match transaction signature"
         );
 
@@ -310,17 +324,23 @@ mod tests {
 
     fn move_compile(package_name: &str, address: &AccountAddress) -> anyhow::Result<Vec<u8>> {
         let known_attributes = BTreeSet::new();
-        let named_address_mapping = [(
-            package_name,
+        let named_address_mapping: std::collections::BTreeMap<_, _> = [(
+            package_name.to_string(),
             NumericalAddress::new(address.into(), NumberFormat::Hex),
         )]
         .into_iter()
+        .chain(aptos_framework::named_addresses().clone())
         .collect();
+
+        let base_dir = format!("src/tests/res/{package_name}");
         let compiler = Compiler::from_files(
-            vec![format!(
-                "src/tests/move_sources/{package_name}/sources/{package_name}.move"
-            )],
-            Vec::new(),
+            vec![format!("{base_dir}/sources/{package_name}.move")],
+            // Project is compiled with the move tool to have these dependencies available
+            vec![
+                format!("{base_dir}/build/{package_name}/sources/dependencies/AptosFramework"),
+                format!("{base_dir}/build/{package_name}/sources/dependencies/AptosStdlib"),
+                format!("{base_dir}/build/{package_name}/sources/dependencies/MoveStdlib"),
+            ],
             named_address_mapping,
             Flags::empty(),
             &known_attributes,
