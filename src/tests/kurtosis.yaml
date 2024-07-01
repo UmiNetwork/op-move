@@ -1,8 +1,0 @@
-# Full configuration details: https://github.com/kurtosis-tech/ethereum-package?tab=readme-ov-file#configuration
-participants:
-  - el_type: geth
-    cl_type: lighthouse
-network_params:
-  deneb_fork_epoch: 0
-  seconds_per_slot: 2
-snooper_enabled: false

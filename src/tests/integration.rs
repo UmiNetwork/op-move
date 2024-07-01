@@ -5,6 +5,7 @@ use alloy::providers::{Provider, ProviderBuilder};
 use alloy::rpc::types::eth::TransactionRequest;
 use alloy::signers::k256::ecdsa::SigningKey;
 use alloy::signers::local::{LocalSigner, PrivateKeySigner};
+use alloy::sol;
 use alloy::transports::http::reqwest::Url;
 use anyhow::{Context, Result};
 use openssl::rand::rand_bytes;
@@ -22,6 +23,12 @@ const GETH_START_IN_MILLIS: u64 = 1_000; // 1 seconds to kick off L1 geth in dev
 const L2_RPC_URL: &str = "http://localhost:8545";
 const OP_BRIDGE_IN_SECONDS: u64 = 90;
 const OP_START_IN_SECONDS: u64 = 20;
+
+sol!(
+    #[sol(rpc)]
+    ERC20,
+    "src/tests/res/ERC20.json"
+);
 
 #[tokio::test]
 async fn test_on_ethereum() -> Result<()> {
@@ -61,7 +68,10 @@ async fn test_on_ethereum() -> Result<()> {
     // 10. Test out the OP bridge
     use_optimism_bridge().await?;
 
-    // 11. Cleanup generated files and folders
+    // 11. Test out an ERC20 token
+    deploy_erc20_token().await?;
+
+    // 12. Cleanup generated files and folders
     let _ = cleanup_files();
     cleanup_processes(vec![geth, op_geth, op_node, op_batcher, op_proposer])
 }
@@ -395,6 +405,28 @@ async fn use_optimism_bridge() -> Result<()> {
     pause(Some(Duration::from_secs(OP_BRIDGE_IN_SECONDS)));
     let balance = get_op_balance(prefunded_wallet.address()).await?;
     assert_eq!(balance, parse_ether("100")?);
+    Ok(())
+}
+
+async fn deploy_erc20_token() -> Result<()>{
+    let from_wallet = get_prefunded_wallet().await?;
+    let provider = ProviderBuilder::new()
+        .with_recommended_fillers()
+        .wallet(EthereumWallet::from(from_wallet.to_owned()))
+        .on_http(Url::parse(L2_RPC_URL)?);
+
+    // Any address can be the initial owner of tokens, use Admin address for simplicity
+    let admin_address = var("ADMIN_ADDRESS")?.parse()?;
+    let contract = ERC20::deploy(
+        &provider,
+        "Gold".to_string(),
+        "AU".to_string(),
+        admin_address,
+        parse_ether("1000")?,
+    )
+    .await?;
+    let balance = contract.balanceOf(admin_address).call().await?._0;
+    assert_eq!(balance, parse_ether("1000")?);
     Ok(())
 }
 
