@@ -408,7 +408,7 @@ async fn use_optimism_bridge() -> Result<()> {
     Ok(())
 }
 
-async fn deploy_erc20_token() -> Result<()>{
+async fn deploy_erc20_token() -> Result<()> {
     let from_wallet = get_prefunded_wallet().await?;
     let provider = ProviderBuilder::new()
         .with_recommended_fillers()
