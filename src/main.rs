@@ -96,14 +96,7 @@ pub fn validate_jwt() -> impl Filter<Extract = (String,), Error = Rejection> + C
             &DecodingKey::from_secret(&JWTSECRET),
             &validation,
         );
-
-        if decoded.is_err() {
-            return Err(warp::reject::reject());
-        }
-        let iat = decoded
-            .expect("Token text should be JWT decodable")
-            .claims
-            .iat;
+        let iat = decoded.map_err(|_| warp::reject::reject())?.claims.iat;
         let now = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .expect("Current system time should be available")

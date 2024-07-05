@@ -1,9 +1,53 @@
 mod integration;
 
+use crate::{validate_jwt, Claims};
 use aptos_types::transaction::{EntryFunction, TransactionPayload};
+use jsonwebtoken::{EncodingKey, Header};
 use move_core_types::account_address::AccountAddress;
 use move_core_types::ident_str;
 use move_core_types::language_storage::{ModuleId, StructTag, TypeTag};
+use std::time::SystemTime;
+
+#[tokio::test]
+async fn test_authorized_request() -> anyhow::Result<()> {
+    std::env::set_var("JWT_SECRET", "00");
+    let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)?;
+    let token = jsonwebtoken::encode(
+        &Header::default(),
+        &Claims { iat: now.as_secs() },
+        &EncodingKey::from_secret(&hex::decode("00")?),
+    )?;
+    let filter = validate_jwt();
+    let res = warp::test::request()
+        .header("authorization", ["Bearer", &token].join(" "))
+        .filter(&filter)
+        .await;
+    assert_eq!(res.unwrap(), token);
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_unauthorized_requests() -> anyhow::Result<()> {
+    std::env::set_var("JWT_SECRET", "00");
+    let filter = validate_jwt();
+    let res = warp::test::request().filter(&filter).await;
+    assert!(res.is_err()); // Missing JWT token in the header
+
+    let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)?;
+    let token = jsonwebtoken::encode(
+        &Header::default(),
+        &Claims {
+            iat: now.as_secs() - 100, // 100 seconds ago
+        },
+        &EncodingKey::from_secret(&hex::decode("00")?),
+    )?;
+    let res = warp::test::request()
+        .header("authorization", ["Bearer", &token].join(" "))
+        .filter(&filter)
+        .await;
+    assert!(res.is_err()); // Expired JWT token error
+    Ok(())
+}
 
 #[tokio::test]
 async fn test_entry_function_payload() -> anyhow::Result<()> {
