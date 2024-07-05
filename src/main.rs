@@ -4,10 +4,14 @@ use self::types::{
     mirror::MirrorLog,
     state::StateMessage,
 };
+use clap::Parser;
 use ethers_core::types::{H256, U64};
 use flate2::read::GzDecoder;
+use jsonwebtoken::{DecodingKey, Validation};
+use once_cell::sync::Lazy;
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
-use std::{io::Read, str::FromStr};
+use std::time::SystemTime;
+use std::{fs, io::Read, str::FromStr};
 use tokio::sync::mpsc;
 use types::engine_api::PayloadId;
 use warp::hyper::{body::Bytes, Body, Response};
@@ -25,6 +29,28 @@ mod types;
 #[cfg(test)]
 mod tests;
 
+#[derive(Parser)]
+struct Args {
+    #[arg(short, long)]
+    jwtsecret: String,
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+struct Claims {
+    iat: u64,
+}
+
+const JWT_VALID_DURATION_IN_SECS: u64 = 60;
+/// JWT secret key is either passed in as an env var `JWT_SECRET` or file path arg `--jwtsecret`
+static JWTSECRET: Lazy<Vec<u8>> = Lazy::new(|| {
+    let mut jwt = std::env::var("JWT_SECRET").unwrap_or_default();
+    if jwt.is_empty() {
+        let args = Args::parse();
+        jwt = fs::read_to_string(args.jwtsecret).expect("JWT file should exist");
+    }
+    hex::decode(jwt).expect("JWT secret should be a hex string")
+});
+
 #[tokio::main]
 async fn main() {
     // TODO: think about channel size bound
@@ -36,7 +62,8 @@ async fn main() {
     let http_route = warp::any()
         .map(move || http_state_channel.clone())
         .and(extract_request_data_filter())
-        .and_then(|state_channel, path, query, method, headers, body: Bytes| {
+        .and_then(|state_channel, path, query, method, headers, body| {
+            // TODO: Limit engine API access to only authenticated endpoint
             mirror(state_channel, path, query, method, headers, body, "9545")
         });
 
@@ -45,7 +72,8 @@ async fn main() {
     let auth_route = warp::any()
         .map(move || auth_state_channel.clone())
         .and(extract_request_data_filter())
-        .and_then(|state_channel, path, query, method, headers, body: Bytes| {
+        .and(validate_jwt())
+        .and_then(|state_channel, path, query, method, headers, body, _| {
             mirror(state_channel, path, query, method, headers, body, "9551")
         });
 
@@ -55,6 +83,30 @@ async fn main() {
         state.spawn(),
     );
     state_result.unwrap();
+}
+
+pub fn validate_jwt() -> impl Filter<Extract = (String,), Error = Rejection> + Clone {
+    warp::header::<String>("authorization").and_then(|token: String| async move {
+        // Token is embedded as a string in the form of `Bearer the.actual.token`
+        let token = token.trim_start_matches("Bearer ").to_string();
+        let mut validation = Validation::default();
+        // OP node only sends `issued at` claims in the JWT token
+        validation.set_required_spec_claims(&["iat"]);
+        let decoded = jsonwebtoken::decode::<Claims>(
+            &token,
+            &DecodingKey::from_secret(&JWTSECRET),
+            &validation,
+        );
+        let iat = decoded.map_err(|_| warp::reject::reject())?.claims.iat;
+        let now = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .expect("Current system time should be available")
+            .as_secs();
+        if now > iat + JWT_VALID_DURATION_IN_SECS {
+            return Err(warp::reject::reject());
+        }
+        Ok(token)
+    })
 }
 
 async fn mirror(

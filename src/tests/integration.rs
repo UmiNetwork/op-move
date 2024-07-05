@@ -10,7 +10,7 @@ use alloy::transports::http::reqwest::Url;
 use anyhow::{Context, Result};
 use openssl::rand::rand_bytes;
 use serde_json::Value;
-use std::env::var;
+use std::env::{set_var, var};
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::Read;
@@ -222,6 +222,8 @@ fn generate_jwt() -> Result<()> {
     rand_bytes(&mut jwt).unwrap();
     let mut f = File::create("src/tests/optimism/packages/contracts-bedrock/deployments/jwt.txt")?;
     f.write_all(hex::encode(jwt).as_bytes())?;
+    // Set the env var to read the same secret key from the op-move main method
+    set_var("JWT_SECRET", hex::encode(jwt));
     Ok(())
 }
 
