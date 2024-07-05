@@ -63,6 +63,7 @@ async fn main() {
         .map(move || http_state_channel.clone())
         .and(extract_request_data_filter())
         .and_then(|state_channel, path, query, method, headers, body| {
+            // TODO: Limit engine API access to only authenticated endpoint
             mirror(state_channel, path, query, method, headers, body, "9545")
         });
 
