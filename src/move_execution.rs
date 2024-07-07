@@ -169,6 +169,7 @@ fn evm_address_to_move_address(address: &alloy_primitives::Address) -> AccountAd
 
 #[cfg(test)]
 mod tests {
+    use alloy_primitives::{address, Address};
     use {
         super::*,
         crate::state_actor::head_release_bundle,
@@ -187,35 +188,18 @@ mod tests {
         std::collections::BTreeSet,
     };
 
+    const EVM_ADDRESS: Address = address!("8fd379246834eac74b8419ffda202cf8051f7a03");
+    // The address corresponding to this private key is 0x8fd379246834eac74B8419FfdA202CF8051F7A03
+    const PRIVATE_KEY: [u8; 32] = [0xaa; 32];
+
     #[test]
-    fn test_execute_transaction() {
-        let mut state = InMemoryStorage::new();
-        // TODO: Also inject the created resource and table data
-        for (bytes, module) in head_release_bundle().code_and_compiled_modules() {
-            state.publish_or_overwrite_module(module.self_id(), bytes.to_vec());
-        }
-
-        // The address corresponding to this private key is 0x8fd379246834eac74B8419FfdA202CF8051F7A03
-        let sk = [0xaa; 32].into();
-        let evm_address = alloy_primitives::address!("8fd379246834eac74b8419ffda202cf8051f7a03");
-        let move_address = evm_address_to_move_address(&evm_address);
-        let signer = PrivateKeySigner::from_bytes(&sk).unwrap();
+    fn test_execute_counter_contract() {
         let module_name = "counter";
-
-        let module_bytes = move_compile(module_name, &move_address).unwrap();
-        let signed_tx = create_transaction(&signer, TxKind::Create, module_bytes);
-
-        let changes = execute_transaction(&signed_tx, &state).unwrap();
-        state.apply(changes).unwrap();
-
-        // Code was deployed
-        let module_id = ModuleId::new(move_address, Identifier::new(module_name).unwrap());
-        assert!(
-            state.get_module(&module_id).unwrap().is_some(),
-            "Code should be deployed"
-        );
+        let (module_id, mut state) = deploy_contract(module_name);
 
         // Call entry function to create the `Counter` resource
+        let move_address = evm_address_to_move_address(&EVM_ADDRESS);
+        let signer = PrivateKeySigner::from_bytes(&PRIVATE_KEY.into()).unwrap();
         let initial_value: u64 = 7;
         let signer_arg = MoveValue::Signer(move_address);
         let entry_fn = EntryFunction::new(
@@ -229,7 +213,7 @@ mod tests {
         );
         let signed_tx = create_transaction(
             &signer,
-            TxKind::Call(evm_address),
+            TxKind::Call(EVM_ADDRESS),
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
@@ -249,7 +233,7 @@ mod tests {
         );
         let signed_tx = create_transaction(
             &signer,
-            TxKind::Call(evm_address),
+            TxKind::Call(EVM_ADDRESS),
             bcs::to_bytes(&entry_fn).unwrap(),
         );
         let err = execute_transaction(&signed_tx, &state).unwrap_err();
@@ -284,7 +268,7 @@ mod tests {
         );
         let signed_tx = create_transaction(
             &signer,
-            TxKind::Call(evm_address),
+            TxKind::Call(EVM_ADDRESS),
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
@@ -300,6 +284,54 @@ mod tests {
         )
         .unwrap();
         assert_eq!(resource, initial_value + 1);
+    }
+
+    #[test]
+    fn test_execute_natives_contract() {
+        let (module_id, state) = deploy_contract("natives");
+
+        // Call entry function to run the internal native hashing methods
+        let move_address = evm_address_to_move_address(&EVM_ADDRESS);
+        let signer = PrivateKeySigner::from_bytes(&PRIVATE_KEY.into()).unwrap();
+        let entry_fn = EntryFunction::new(
+            module_id,
+            Identifier::new("hashing").unwrap(),
+            Vec::new(),
+            vec![],
+        );
+        let signed_tx = create_transaction(
+            &signer,
+            TxKind::Call(EVM_ADDRESS),
+            bcs::to_bytes(&entry_fn).unwrap(),
+        );
+
+        let changes = execute_transaction(&signed_tx, &state);
+        assert!(changes.is_ok());
+    }
+
+    fn deploy_contract(module_name: &str) -> (ModuleId, InMemoryStorage) {
+        let mut state = InMemoryStorage::new();
+        // TODO: Also inject the created resource and table data
+        for (bytes, module) in head_release_bundle().code_and_compiled_modules() {
+            state.publish_or_overwrite_module(module.self_id(), bytes.to_vec());
+        }
+
+        let move_address = evm_address_to_move_address(&EVM_ADDRESS);
+        let signer = PrivateKeySigner::from_bytes(&PRIVATE_KEY.into()).unwrap();
+
+        let module_bytes = move_compile(module_name, &move_address).unwrap();
+        let signed_tx = create_transaction(&signer, TxKind::Create, module_bytes);
+
+        let changes = execute_transaction(&signed_tx, &state).unwrap();
+        state.apply(changes).unwrap();
+
+        // Code was deployed
+        let module_id = ModuleId::new(move_address, Identifier::new(module_name).unwrap());
+        assert!(
+            state.get_module(&module_id).unwrap().is_some(),
+            "Code should be deployed"
+        );
+        (module_id, state)
     }
 
     fn create_transaction(
@@ -335,12 +367,8 @@ mod tests {
         let base_dir = format!("src/tests/res/{package_name}");
         let compiler = Compiler::from_files(
             vec![format!("{base_dir}/sources/{package_name}.move")],
-            // Project is compiled with the move tool to have these dependencies available
-            vec![
-                format!("{base_dir}/build/{package_name}/sources/dependencies/AptosFramework"),
-                format!("{base_dir}/build/{package_name}/sources/dependencies/AptosStdlib"),
-                format!("{base_dir}/build/{package_name}/sources/dependencies/MoveStdlib"),
-            ],
+            // Project needs access to the framework source files to compile
+            aptos_framework::testnet_release_bundle().files()?,
             named_address_mapping,
             Flags::empty(),
             &known_attributes,
