@@ -17,4 +17,4 @@ jobs:
           default: true
           toolchain: stable
       - name: Run Unit Tests
-        run: cargo test --bins
+        run: cargo test -- --skip integration
