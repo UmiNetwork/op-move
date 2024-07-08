@@ -1,24 +1,24 @@
-# name: Build and Run Tests
+name: Build and Run Tests
 
-# on:
-#   push:
-#     branches:
-#       - main
-#   pull_request:
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 
-# env: 
-#   CARGO_TERM_COLOR: always
+env: 
+  CARGO_TERM_COLOR: always
 
 
-# jobs:
-#   build_and_run_tests:
-#     name: latest
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v4
-#       - uses: actions-rs/toolchain@v1
-#         with:
-#           default: true
-#           toolchain: stable
-#       - name: test
-#         run: cargo test -- --skip integration
+jobs:
+  build_and_run_tests:
+    name: latest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          default: true
+          toolchain: stable
+      - name: test
+        run: cargo test -- --skip integration
