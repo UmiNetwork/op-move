@@ -19,4 +19,5 @@ jobs:
         with:
           default: true
           toolchain: stable
+      - name: format
         run: cargo fmt -- --check
