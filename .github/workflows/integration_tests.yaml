@@ -1,8 +1,10 @@
 name: Build and Run Integration Tests
+
 on:
   push:
     branches:
       - main
+  pull_request:
 
 jobs:
   integration_tests:

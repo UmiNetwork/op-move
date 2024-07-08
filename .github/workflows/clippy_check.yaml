@@ -1,8 +1,10 @@
-name: Clippy check
+name: Clippy Check
+
 on: 
   push:
     branches:
       - main
+  pull_request:
 
 # Make sure CI fails on all warnings, including Clippy lints
 env:
@@ -12,6 +14,6 @@ jobs:
   clippy_check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Run Clippy
         run: cargo clippy --all-targets --all-features
