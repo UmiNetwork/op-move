@@ -22,8 +22,7 @@ use tokio::fs;
 const GETH_START_IN_MILLIS: u64 = 1_000; // 1 seconds to kick off L1 geth in dev mode
 const L2_RPC_URL: &str = "http://localhost:8545";
 const OP_BRIDGE_IN_SECONDS: u64 = 90;
-const OP_START_IN_SECONDS
-: u64 = 20;
+const OP_START_IN_SECONDS: u64 = 20;
 
 sol!(
     #[sol(rpc)]
