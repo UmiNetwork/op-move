@@ -169,12 +169,12 @@ fn evm_address_to_move_address(address: &alloy_primitives::Address) -> AccountAd
 
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{address, Address};
     use {
         super::*,
         crate::state_actor::head_release_bundle,
         alloy::{network::TxSignerSync, signers::local::PrivateKeySigner},
         alloy_consensus::{transaction::TxEip1559, SignableTransaction},
+        alloy_primitives::{address, Address},
         anyhow::Context,
         move_compiler::{
             shared::{NumberFormat, NumericalAddress},
@@ -291,7 +291,6 @@ mod tests {
         let (module_id, state) = deploy_contract("natives");
 
         // Call entry function to run the internal native hashing methods
-        let move_address = evm_address_to_move_address(&EVM_ADDRESS);
         let signer = PrivateKeySigner::from_bytes(&PRIVATE_KEY.into()).unwrap();
         let entry_fn = EntryFunction::new(
             module_id,
