@@ -1,4 +1,4 @@
-name: Build and Run Integration Tests
+name: Format Check
 
 on:
   push:
@@ -7,8 +7,7 @@ on:
   pull_request:
 
 jobs:
-  integration_tests:
-    name: Integration Tests
+  format_check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,5 +15,5 @@ jobs:
         with:
           default: true
           toolchain: stable
-      - name: Run Integration Tests
-        run: cargo test --test '*'
+      - name: Run Format
+        run: cargo fmt -- --check
