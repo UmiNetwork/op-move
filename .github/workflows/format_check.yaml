@@ -11,7 +11,7 @@ env:
 
 jobs:
   format_check:
-   name: latest
+    name: latest
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
