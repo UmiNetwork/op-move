@@ -13,7 +13,7 @@ env:
 
 jobs:
     clippy_check:
-      name: latest,
+      name: latest
       permissions: write-all
       runs-on: ubuntu-latest
       steps:
