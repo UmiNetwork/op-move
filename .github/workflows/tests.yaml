@@ -1,4 +1,4 @@
-name: Tests
+name: Build and Run Unit Tests
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
   pull_request:
 
 jobs:
-  rust_test:
-    name: Tests
+  unit_tests:
+    name: Unit Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -16,5 +16,5 @@ jobs:
         with:
           default: true
           toolchain: stable
-      - name: Run tests
-        run: cargo test
+      - name: Run Unit Tests
+        run: cargo test --lib --bins
