@@ -17,4 +17,4 @@ jobs:
           default: true
           toolchain: stable
       - name: Run Integration Tests
-        run: cargo test --test *
+        run: cargo test --test '*'
