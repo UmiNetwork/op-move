@@ -20,5 +20,5 @@ jobs:
         with:
           default: true
           toolchain: stable
-      -name: test
+      - name: test
         run: cargo test -- --skip integration
