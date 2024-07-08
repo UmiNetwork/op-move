@@ -1,20 +1,18 @@
-name: Build and Run Unit Tests
-
+name: Build and Run Integration Tests
 on:
   push:
     branches:
       - main
-  pull_request:
 
 jobs:
   unit_tests:
-    name: Unit Tests
+    name: Integration Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions-rs/toolchain@v1
         with:
           default: true
           toolchain: stable
-      - name: Run Unit Tests
-        run: cargo test -- --skip integration
+      - name: Run Integration Tests
+        run: cargo test --test *

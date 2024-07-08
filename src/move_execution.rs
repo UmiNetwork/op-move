@@ -188,7 +188,6 @@ mod tests {
     };
 
     #[test]
-    #[ignore]
     fn test_execute_transaction() {
         let mut state = InMemoryStorage::new();
         // TODO: Also inject the created resource and table data
