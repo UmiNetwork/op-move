@@ -1,22 +1,22 @@
-# name: Format Check
+name: Format Check
 
-# on:
-#   push:
-#     branches:
-#       - main
-#   pull_request:
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 
-# env: 
-#   CARGO_TERM_COLOR: always
+env: 
+  CARGO_TERM_COLOR: always
 
-# jobs:
-#   format_check:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v4
-#       - uses: actions-rs/toolchain@v1
-#         with:
-#           default: true
-#           toolchain: stable
-#       - name: Run Format
-#         run: cargo fmt -- --check
+jobs:
+  format_check:
+   name: latest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          default: true
+          toolchain: stable
+        run: cargo fmt -- --check
