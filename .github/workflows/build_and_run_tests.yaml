@@ -1,4 +1,4 @@
-name: Build and Run Unit Tests
+name: Build and Run Tests
 
 on:
   push:
@@ -6,8 +6,12 @@ on:
       - main
   pull_request:
 
+env: 
+  CARGO_TERM_COLOR: always
+
+
 jobs:
-  build_and_run_unit_tests:
+  build_and_run_tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,5 +19,6 @@ jobs:
         with:
           default: true
           toolchain: stable
-      - name: Run Unit Tests
+      - name: Run Tests
+        # We skip integration tests for now
         run: cargo test -- --skip integration
