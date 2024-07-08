@@ -17,4 +17,4 @@ jobs:
           default: true
           toolchain: stable
       - name: Run Unit Tests
-        run: cargo test --lib --bins
+        run: cargo test --bins
