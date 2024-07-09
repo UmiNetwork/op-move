@@ -1,0 +1,29 @@
+name: Clippy Check
+
+on: 
+  push:
+    branches:
+      - main
+  pull_request:
+
+# Make sure CI fails on all warnings, including Clippy lints
+env:
+  RUSTFLAGS: "-Dwarnings --cfg tokio_unstable"
+  CARGO_TERM_COLOR: always
+
+jobs:
+    clippy_check:
+      name: latest
+      permissions: write-all
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - uses: actions-rs/toolchain@v1
+          with:
+            toolchain: stable
+            components: clippy
+            default: true
+        - uses: actions-rs/clippy-check@v1
+          with:
+            token: ${{ secrets.GITHUB_TOKEN }}
+            args: --all-features
