@@ -1,19 +1,15 @@
 ### Description
 <!-- What does this PR do? -->
-_Lorem ipsum dolor sit amet_
-
-### Related Issues
+Insert description here
 <!-- Fixes #123 -->
-N/A
 
 ### Changes
 <!-- Key changes -->
-- lorem ipsum dolor sit amet
+- Change 1
+- Change 2
 
 ### Testing
 <!-- How was it tested? -->
-N/A
 
 ### Notes
 <!-- Additional info -->
-N/A
