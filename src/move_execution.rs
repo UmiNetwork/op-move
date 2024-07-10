@@ -3,14 +3,12 @@ use {
     alloy_consensus::TxEnvelope,
     alloy_primitives::TxKind,
     aptos_gas_schedule::{MiscGasParameters, NativeGasParameters, LATEST_GAS_FEATURE_VERSION},
-    aptos_types::on_chain_config::{Features, TimedFeaturesBuilder},
-    aptos_types::transaction::{EntryFunction, Module},
-    aptos_vm::natives::aptos_natives,
-    move_core_types::{
-        account_address::AccountAddress,
-        effects::ChangeSet,
-        value::{MoveTypeLayout, MoveValue},
+    aptos_types::{
+        on_chain_config::{Features, TimedFeaturesBuilder},
+        transaction::{EntryFunction, Module},
     },
+    aptos_vm::natives::aptos_natives,
+    move_core_types::{account_address::AccountAddress, effects::ChangeSet, value::MoveValue},
     move_vm_runtime::{
         module_traversal::{TraversalContext, TraversalStorage},
         move_vm::MoveVM,
@@ -76,34 +74,35 @@ fn execute_entry_function(
     let traversal_storage = TraversalStorage::new();
     let mut traversal_context = TraversalContext::new(&traversal_storage);
 
-    let (module, function_name, ty_args, args) = entry_fn.into_inner();
+    let (module_id, function_name, ty_args, args) = entry_fn.into_inner();
 
     // Validate signer params match the actual signer
-    let function = session.load_function(&module, &function_name, &ty_args)?;
+    let function = session.load_function(&module_id, &function_name, &ty_args)?;
     if function.param_tys.len() != args.len() {
         anyhow::bail!("Incorrect number of arguments");
     }
     for (ty, bytes) in function.param_tys.iter().zip(&args) {
+        // References are ignored in entry function signatures because the
+        // values are actualized in the serialized arguments.
         let ty = strip_reference(ty)?;
-        // TODO: need to also handle structs that contain signer types
-        if let Type::Signer = ty {
-            let arg = Value::simple_deserialize(bytes, &MoveTypeLayout::Signer)
-                .ok_or_else(|| anyhow::Error::msg("Wrong param type; expected signer"))?
-                .as_move_value(&MoveTypeLayout::Signer);
-            if let MoveValue::Signer(given_signer) = arg {
-                if &given_signer != signer {
-                    anyhow::bail!("Signer does not match transaction signature");
-                }
-            } else {
-                anyhow::bail!("Wrong param type; expected signer");
-            }
-        }
+        let tag = session.get_type_tag(ty)?;
+        let layout = session.get_type_layout(&tag)?;
+        // TODO: Potential optimization -- could check layout for Signer type
+        // and only deserialize if necessary. The tricky part here is we would need
+        // to keep track of the recursive path through the type.
+        let arg = Value::simple_deserialize(bytes, &layout)
+            .ok_or_else(|| anyhow::Error::msg("Wrong param type; expected signer"))?
+            .as_move_value(&layout);
+        // Note: no recursion limit is needed in this function because we have already
+        // constructed the recursive types `Type`, `TypeTag`, `MoveTypeLayout` and `MoveValue` so
+        // the values must have respected whatever recursion limit is present in MoveVM.
+        check_signer(&arg, signer)?;
     }
 
     // TODO: is this the right way to be using the VM?
     // Maybe there is some higher level entry point we should be using instead?
     session.execute_entry_function(
-        &module,
+        &module_id,
         &function_name,
         ty_args,
         args,
@@ -131,6 +130,32 @@ fn strip_reference(t: &Type) -> anyhow::Result<&Type> {
         }
         other => Ok(other),
     }
+}
+
+// Check that any instances of `MoveValue::Signer` contained within the given `arg`
+// are the `expected_signer`; return an error if not.
+fn check_signer(arg: &MoveValue, expected_signer: &AccountAddress) -> anyhow::Result<()> {
+    let mut stack = Vec::with_capacity(10);
+    stack.push(arg);
+    while let Some(arg) = stack.pop() {
+        match arg {
+            MoveValue::Signer(given_signer) if given_signer != expected_signer => {
+                anyhow::bail!("Signer does not match transaction signature");
+            }
+            MoveValue::Vector(values) => {
+                for v in values {
+                    stack.push(v);
+                }
+            }
+            MoveValue::Struct(s) => {
+                for v in s.fields() {
+                    stack.push(v);
+                }
+            }
+            _ => (),
+        }
+    }
+    Ok(())
 }
 
 fn deploy_module(
