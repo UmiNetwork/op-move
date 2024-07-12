@@ -60,7 +60,7 @@ impl StateActor {
             pending_payload: None,
             mem_pool: HashMap::new(),
             // TODO: Initialize with framework release bundle modules and resources
-            move_vm_state: InMemoryStorage::new(),
+            move_vm_state: crate::move_execution::genesis_ceremony(),
         }
     }
 

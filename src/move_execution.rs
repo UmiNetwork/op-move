@@ -167,7 +167,7 @@ fn check_signer(arg: &MoveValue, expected_signer: &AccountAddress) -> anyhow::Re
     Ok(())
 }
 
-fn genesis_ceremony() {
+pub fn genesis_ceremony() -> InMemoryStorage {
     let mut state = InMemoryStorage::new();
 
     // Integrate aptos framework into the state
@@ -176,6 +176,8 @@ fn genesis_ceremony() {
     // transaction ? or just apply the changeset
 
     state.apply(framework_change_set).unwrap();
+
+    state
 }
 
 fn framework_change_set() -> anyhow::Result<ChangeSet> {
