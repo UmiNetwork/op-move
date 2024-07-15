@@ -490,6 +490,21 @@ mod tests {
 
     #[test]
     fn test_init_storage() {
-        let _storage = init_storage();
+        let framework = head_release_bundle();
+        let storage = InMemoryStorage::new();
+
+        for package in &framework.packages {
+            let code_and_modules = package.sorted_code_and_modules();
+            let address = *code_and_modules.first().unwrap().1.self_id().address();
+
+            let struct_tag = StructTag {
+                address: address,
+                module: Identifier::new("code").unwrap(),
+                name: Identifier::new("PackageRegistry").unwrap(),
+                type_args: Vec::new(),
+            };
+
+            assert!(storage.get_resource(&address, &struct_tag).is_ok())
+        }
     }
 }
