@@ -24,6 +24,7 @@ mod json_utils;
 mod methods;
 mod move_execution;
 mod state_actor;
+mod storage;
 mod types;
 
 #[cfg(test)]
@@ -55,7 +56,7 @@ static JWTSECRET: Lazy<Vec<u8>> = Lazy::new(|| {
 async fn main() {
     // TODO: think about channel size bound
     let (state_channel, rx) = mpsc::channel(1_000);
-    let state = state_actor::StateActor::new(rx);
+    let state = state_actor::StateActor::new_in_memory(rx);
 
     let http_state_channel = state_channel.clone();
     let http_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8545));

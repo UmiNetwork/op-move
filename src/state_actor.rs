@@ -3,6 +3,7 @@
 use {
     crate::{
         move_execution::execute_transaction,
+        storage::Storage,
         types::{
             engine_api::{
                 ExecutionPayloadV3, GetPayloadResponseV3, PayloadAttributesV3, PayloadId,
@@ -14,6 +15,8 @@ use {
     alloy_rlp::{Decodable, Encodable},
     aptos_framework::ReleaseBundle,
     ethers_core::types::{Bytes, H256, U256, U64},
+    move_binary_format::errors::PartialVMError,
+    move_core_types::resolver::MoveResolver,
     move_vm_test_utils::InMemoryStorage,
     once_cell::sync::Lazy,
     std::collections::HashMap,
@@ -37,7 +40,7 @@ pub fn head_release_bundle() -> &'static ReleaseBundle {
 }
 
 #[derive(Debug)]
-pub struct StateActor {
+pub struct StateActor<S: Storage> {
     rx: Receiver<StateMessage>,
     head: H256,
     payload_id: PayloadId,
@@ -45,12 +48,27 @@ pub struct StateActor {
     execution_payloads: HashMap<H256, GetPayloadResponseV3>,
     pending_payload: Option<(PayloadId, GetPayloadResponseV3)>,
     mem_pool: HashMap<H256, ExtendedTxEnvelope>,
-    // TODO: proper storage backend
-    move_vm_state: InMemoryStorage,
+    move_vm_state: S,
 }
 
-impl StateActor {
-    pub fn new(rx: Receiver<StateMessage>) -> Self {
+impl StateActor<InMemoryStorage> {
+    pub fn new_in_memory(rx: Receiver<StateMessage>) -> Self {
+        Self::new(rx, InMemoryStorage::new())
+    }
+}
+
+impl<S: Storage<Err = PartialVMError> + Send + Sync + 'static> StateActor<S> {
+    pub fn spawn(mut self) -> JoinHandle<()> {
+        tokio::spawn(async move {
+            while let Some(msg) = self.rx.recv().await {
+                self.handle_msg(msg)
+            }
+        })
+    }
+}
+
+impl<S: Storage<Err = PartialVMError>> StateActor<S> {
+    pub fn new(rx: Receiver<StateMessage>, storage: S) -> Self {
         Self {
             rx,
             head: Default::default(),
@@ -59,17 +77,8 @@ impl StateActor {
             execution_payloads: HashMap::new(),
             pending_payload: None,
             mem_pool: HashMap::new(),
-            // TODO: Initialize with framework release bundle modules and resources
-            move_vm_state: InMemoryStorage::new(),
+            move_vm_state: storage,
         }
-    }
-
-    pub fn spawn(mut self) -> JoinHandle<()> {
-        tokio::spawn(async move {
-            while let Some(msg) = self.rx.recv().await {
-                self.handle_msg(msg)
-            }
-        })
     }
 
     pub fn handle_msg(&mut self, msg: StateMessage) {
