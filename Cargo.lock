@@ -5237,6 +5237,7 @@ dependencies = [
  "move-binary-format",
  "move-compiler",
  "move-core-types",
+ "move-table-extension",
  "move-vm-runtime",
  "move-vm-test-utils",
  "move-vm-types",
