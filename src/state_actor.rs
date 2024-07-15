@@ -2,7 +2,7 @@
 
 use {
     crate::{
-        move_execution::execute_transaction,
+        move_execution::{execute_transaction, init_storage},
         types::{
             engine_api::{
                 ExecutionPayloadV3, GetPayloadResponseV3, PayloadAttributesV3, PayloadId,
@@ -59,8 +59,7 @@ impl StateActor {
             execution_payloads: HashMap::new(),
             pending_payload: None,
             mem_pool: HashMap::new(),
-            // TODO: Initialize with framework release bundle modules and resources
-            move_vm_state: crate::move_execution::genesis_ceremony(),
+            move_vm_state: init_storage(),
         }
     }
 

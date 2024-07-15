@@ -2,7 +2,7 @@ use {
     crate::{state_actor::head_release_bundle, types::transactions::ExtendedTxEnvelope},
     alloy_consensus::TxEnvelope,
     alloy_primitives::TxKind,
-    aptos_framework::{ReleaseBundle, ReleasePackage},
+    aptos_framework::ReleasePackage,
     aptos_gas_schedule::{MiscGasParameters, NativeGasParameters, LATEST_GAS_FEATURE_VERSION},
     aptos_types::{
         account_config::CORE_CODE_ADDRESS,
@@ -167,105 +167,6 @@ fn check_signer(arg: &MoveValue, expected_signer: &AccountAddress) -> anyhow::Re
     Ok(())
 }
 
-pub fn genesis_ceremony() -> InMemoryStorage {
-    let mut state = InMemoryStorage::new();
-
-    // Integrate aptos framework into the state
-    let framework_change_set = framework_change_set().unwrap();
-
-    // transaction ? or just apply the changeset
-
-    state.apply(framework_change_set).unwrap();
-
-    state
-}
-
-fn framework_change_set() -> anyhow::Result<ChangeSet> {
-    // We should pass the state in as an argument
-    let state = InMemoryStorage::new();
-    let move_vm = create_move_vm().unwrap();
-    let framework = head_release_bundle();
-
-    let mut session = move_vm.new_session(&state);
-
-    publish_framework(&mut session, framework);
-
-    let change_set = session.finish()?;
-
-    Ok(change_set)
-}
-
-/// Publish the framework release bundle.
-fn publish_framework(session: &mut Session, framework: &ReleaseBundle) {
-    for pack in &framework.packages {
-        publish_package(session, pack)
-    }
-}
-
-const CODE_MODULE_NAME: &str = "code";
-
-/// Publish the given package.
-fn publish_package(session: &mut Session, pack: &ReleasePackage) {
-    let modules = pack.sorted_code_and_modules();
-    let addr = *modules.first().unwrap().1.self_id().address();
-    let code = modules
-        .into_iter()
-        .map(|(c, _)| c.to_vec())
-        .collect::<Vec<_>>();
-    session
-        .publish_module_bundle(code, addr, &mut UnmeteredGasMeter)
-        .unwrap_or_else(|e| {
-            panic!(
-                "Failure publishing package `{}`: {:?}",
-                pack.package_metadata().name,
-                e
-            )
-        });
-
-    // Call the initialize function with the metadata.
-    exec_function(
-        session,
-        CODE_MODULE_NAME,
-        "initialize",
-        vec![],
-        vec![
-            MoveValue::Signer(CORE_CODE_ADDRESS)
-                .simple_serialize()
-                .unwrap(),
-            MoveValue::Signer(addr).simple_serialize().unwrap(),
-            bcs::to_bytes(pack.package_metadata()).unwrap(),
-        ],
-    );
-}
-
-fn exec_function(
-    session: &mut Session,
-    module_name: &str,
-    function_name: &str,
-    ty_args: Vec<TypeTag>,
-    args: Vec<Vec<u8>>,
-) {
-    let storage = TraversalStorage::new();
-    session
-        .execute_function_bypass_visibility(
-            &ModuleId::new(CORE_CODE_ADDRESS, Identifier::new(module_name).unwrap()),
-            &Identifier::new(function_name).unwrap(),
-            ty_args,
-            args,
-            &mut UnmeteredGasMeter,
-            &mut TraversalContext::new(&storage),
-        )
-        .unwrap_or_else(|e| {
-            panic!(
-                "Error calling {}.{}: ({:#x}) {}",
-                module_name,
-                function_name,
-                e.sub_status().unwrap_or_default(),
-                e,
-            )
-        });
-}
-
 fn deploy_module(
     code: Module,
     address: AccountAddress,
@@ -298,6 +199,80 @@ fn evm_address_to_move_address(address: &alloy_primitives::Address) -> AccountAd
     let mut bytes = [0; 32];
     bytes[12..32].copy_from_slice(address.as_slice());
     AccountAddress::new(bytes)
+}
+
+pub fn init_storage() -> InMemoryStorage {
+    let mut storage = InMemoryStorage::new();
+
+    let _ = storage.apply(init_framework().unwrap());
+
+    storage
+}
+
+fn init_framework() -> anyhow::Result<ChangeSet> {
+    let framework = head_release_bundle();
+    let mut storage = InMemoryStorage::new();
+
+    for (blob, module) in framework.code_and_compiled_modules() {
+        storage.publish_or_overwrite_module(module.self_id(), blob.to_vec());
+    }
+
+    let vm = create_move_vm().unwrap();
+    let mut session = vm.new_session(&storage);
+
+    for pack in &framework.packages {
+        init_package(&mut session, pack)
+    }
+
+    Ok(session.finish()?)
+}
+
+fn init_package(session: &mut Session, package: &ReleasePackage) {
+    let code_and_modules = package.sorted_code_and_modules();
+    let address = *code_and_modules.first().unwrap().1.self_id().address();
+
+    exec_function(
+        session,
+        "code",
+        "initialize",
+        vec![],
+        vec![
+            MoveValue::Signer(CORE_CODE_ADDRESS)
+                .simple_serialize()
+                .unwrap(),
+            MoveValue::Signer(address).simple_serialize().unwrap(),
+            bcs::to_bytes(package.package_metadata()).unwrap(),
+        ],
+    );
+}
+
+fn exec_function(
+    session: &mut Session,
+    module_name: &str,
+    function_name: &str,
+    ty_args: Vec<TypeTag>,
+    args: Vec<Vec<u8>>,
+) {
+    let storage = TraversalStorage::new();
+
+    session
+        .execute_function_bypass_visibility(
+            &ModuleId::new(CORE_CODE_ADDRESS, Identifier::new(module_name).unwrap()),
+            &Identifier::new(function_name).unwrap(),
+            ty_args,
+            args,
+            &mut UnmeteredGasMeter,
+            &mut TraversalContext::new(&storage),
+        )
+        .unwrap_or_else(|e| {
+            panic!(
+                "Error calling {}.{}: ({:#x}) {}",
+                module_name,
+                function_name,
+                e.sub_status().unwrap_or_default(),
+                e,
+            )
+        });
 }
 
 #[cfg(test)]
@@ -511,5 +486,10 @@ mod tests {
         let compiled_unit = result.unwrap().0.pop().unwrap().into_compiled_unit();
         let bytes = compiled_unit.serialize(None);
         Ok(bytes)
+    }
+
+    #[test]
+    fn test_init_storage() {
+        let _storage = init_storage();
     }
 }

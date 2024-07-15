@@ -4926,6 +4926,7 @@ dependencies = [
  "move-binary-format",
  "move-bytecode-utils",
  "move-core-types",
+ "move-table-extension",
  "move-vm-types",
  "once_cell",
  "serde",
