@@ -205,6 +205,14 @@ mod tests {
         alloy_primitives::{address, Address},
         anyhow::Context,
         aptos_table_natives::NativeTableContext,
+        move_binary_format::{
+            file_format::{
+                AbilitySet, FieldDefinition, IdentifierIndex, ModuleHandleIndex, SignatureToken,
+                StructDefinition, StructFieldInformation, StructHandle, StructHandleIndex,
+                TypeSignature,
+            },
+            CompiledModule,
+        },
         move_compiler::{
             shared::{NumberFormat, NumericalAddress},
             Compiler, Flags,
@@ -213,6 +221,7 @@ mod tests {
             identifier::Identifier,
             language_storage::{ModuleId, StructTag},
             resolver::{ModuleResolver, MoveResolver},
+            value::MoveStruct,
         },
         move_vm_runtime::native_extensions::NativeContextExtensions,
         move_vm_test_utils::InMemoryStorage,
@@ -222,6 +231,127 @@ mod tests {
     const EVM_ADDRESS: Address = address!("8fd379246834eac74b8419ffda202cf8051f7a03");
     // The address corresponding to this private key is 0x8fd379246834eac74B8419FfdA202CF8051F7A03
     const PRIVATE_KEY: [u8; 32] = [0xaa; 32];
+
+    #[test]
+    fn test_check_signer() {
+        let correct_signer = evm_address_to_move_address(&EVM_ADDRESS);
+        let incorrect_signer =
+            evm_address_to_move_address(&address!("c104f4840573bed437190daf5d2898c2bdf928ac"));
+        type CheckSignerOutcome = Result<(), ()>;
+
+        let test_cases: &[(MoveValue, CheckSignerOutcome)] = &[
+            (MoveValue::Address(incorrect_signer), Ok(())),
+            (MoveValue::Address(correct_signer), Ok(())),
+            (MoveValue::Signer(incorrect_signer), Err(())),
+            (MoveValue::Signer(correct_signer), Ok(())),
+            (MoveValue::Vector(vec![]), Ok(())),
+            (
+                MoveValue::Vector(vec![
+                    MoveValue::Signer(correct_signer),
+                    MoveValue::Signer(correct_signer),
+                ]),
+                Ok(()),
+            ),
+            (
+                MoveValue::Vector(vec![
+                    MoveValue::Signer(correct_signer),
+                    MoveValue::Signer(correct_signer),
+                    MoveValue::Signer(correct_signer),
+                ]),
+                Ok(()),
+            ),
+            (
+                MoveValue::Vector(vec![
+                    MoveValue::Signer(incorrect_signer),
+                    MoveValue::Signer(correct_signer),
+                ]),
+                Err(()),
+            ),
+            (
+                MoveValue::Vector(vec![
+                    MoveValue::Signer(correct_signer),
+                    MoveValue::Signer(incorrect_signer),
+                ]),
+                Err(()),
+            ),
+            (
+                MoveValue::Vector(vec![
+                    MoveValue::Signer(correct_signer),
+                    MoveValue::Signer(correct_signer),
+                    MoveValue::Signer(incorrect_signer),
+                ]),
+                Err(()),
+            ),
+            (
+                MoveValue::Vector(vec![
+                    MoveValue::U32(0),
+                    MoveValue::U32(1),
+                    MoveValue::U32(2),
+                    MoveValue::U32(3),
+                ]),
+                Ok(()),
+            ),
+            (MoveValue::Struct(MoveStruct::new(vec![])), Ok(())),
+            (
+                MoveValue::Struct(MoveStruct::new(vec![
+                    MoveValue::U8(0),
+                    MoveValue::U16(1),
+                    MoveValue::U32(2),
+                    MoveValue::U64(3),
+                    MoveValue::U128(4),
+                    MoveValue::U256(5u64.into()),
+                ])),
+                Ok(()),
+            ),
+            (
+                MoveValue::Struct(MoveStruct::new(vec![
+                    MoveValue::Bool(true),
+                    MoveValue::Bool(false),
+                    MoveValue::Signer(correct_signer),
+                ])),
+                Ok(()),
+            ),
+            (
+                MoveValue::Struct(MoveStruct::new(vec![
+                    MoveValue::Signer(correct_signer),
+                    MoveValue::Vector(vec![MoveValue::Struct(MoveStruct::new(vec![
+                        MoveValue::Vector(vec![
+                            MoveValue::Struct(MoveStruct::new(vec![
+                                MoveValue::Signer(correct_signer),
+                                MoveValue::Address(correct_signer),
+                            ])),
+                            MoveValue::Struct(MoveStruct::new(vec![
+                                MoveValue::Signer(correct_signer),
+                                MoveValue::Address(incorrect_signer),
+                            ])),
+                        ]),
+                    ]))]),
+                ])),
+                Ok(()),
+            ),
+            (
+                MoveValue::Struct(MoveStruct::new(vec![
+                    MoveValue::Signer(correct_signer),
+                    MoveValue::Vector(vec![MoveValue::Struct(MoveStruct::new(vec![
+                        MoveValue::Vector(vec![
+                            MoveValue::Signer(correct_signer),
+                            MoveValue::Signer(incorrect_signer),
+                        ]),
+                    ]))]),
+                ])),
+                Err(()),
+            ),
+        ];
+
+        for (test_case, expected_outcome) in test_cases {
+            let actual_outcome = check_signer(test_case, &correct_signer).map_err(|_| ());
+            assert_eq!(
+                &actual_outcome,
+                expected_outcome,
+                "check_signer test case {test_case:?} failed. Expected={expected_outcome:?} Actual={actual_outcome:?}"
+            );
+        }
+    }
 
     #[test]
     fn test_execute_counter_contract() {
@@ -318,6 +448,56 @@ mod tests {
     }
 
     #[test]
+    fn test_execute_signer_struct_contract() {
+        let module_name = "signer_struct";
+        let (module_id, state) = deploy_contract(module_name);
+
+        // Call main function with correct signer
+        let move_address = evm_address_to_move_address(&EVM_ADDRESS);
+        let signer = PrivateKeySigner::from_bytes(&PRIVATE_KEY.into()).unwrap();
+        let input_arg = MoveValue::Struct(MoveStruct::new(vec![MoveValue::Signer(move_address)]));
+        let entry_fn = EntryFunction::new(
+            module_id.clone(),
+            Identifier::new("main").unwrap(),
+            Vec::new(),
+            vec![bcs::to_bytes(&input_arg).unwrap()],
+        );
+        let signed_tx = create_transaction(
+            &signer,
+            TxKind::Call(EVM_ADDRESS),
+            bcs::to_bytes(&entry_fn).unwrap(),
+        );
+
+        let changes = execute_transaction(&signed_tx, &state).unwrap();
+        assert!(
+            changes.into_inner().is_empty(),
+            "main does not cause state changes"
+        );
+
+        // Call main function with incorrect signer (get an error)
+        let input_arg = MoveValue::Struct(MoveStruct::new(vec![MoveValue::Signer(
+            AccountAddress::new([0x11; 32]),
+        )]));
+        let entry_fn = EntryFunction::new(
+            module_id.clone(),
+            Identifier::new("main").unwrap(),
+            Vec::new(),
+            vec![bcs::to_bytes(&input_arg).unwrap()],
+        );
+        let signed_tx = create_transaction(
+            &signer,
+            TxKind::Call(EVM_ADDRESS),
+            bcs::to_bytes(&entry_fn).unwrap(),
+        );
+
+        let err = execute_transaction(&signed_tx, &state).unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            "Signer does not match transaction signature"
+        );
+    }
+
+    #[test]
     fn test_execute_natives_contract() {
         let (module_id, state) = deploy_contract("natives");
 
@@ -389,6 +569,143 @@ mod tests {
         assert_eq!(table_change_set.changes.len(), TABLE_CHANGE_SET_CHANGES_LEN);
     }
 
+    #[test]
+    fn test_recursive_struct() {
+        // This test intentionally modifies a module to have a cycle in a struct definition
+        // then tries to deploy it. The MoveVM returns an error in this case.
+
+        // Load a real module
+        let module_name = "signer_struct";
+        let move_address = evm_address_to_move_address(&EVM_ADDRESS);
+        let mut module_bytes = move_compile(module_name, &move_address).unwrap();
+        let mut compiled_module = CompiledModule::deserialize(&module_bytes).unwrap();
+
+        // Modify to include a recursive struct (it has one field which has type
+        // equal to itself).
+        let struct_name: Identifier = "RecursiveStruct".parse().unwrap();
+        let struct_name_index = IdentifierIndex::new(compiled_module.identifiers.len() as u16);
+        compiled_module.identifiers.push(struct_name);
+        let struct_handle_index =
+            StructHandleIndex::new(compiled_module.struct_handles.len() as u16);
+        let struct_handle = StructHandle {
+            module: ModuleHandleIndex::new(0),
+            name: struct_name_index,
+            abilities: AbilitySet::EMPTY,
+            type_parameters: Vec::new(),
+        };
+        compiled_module.struct_handles.push(struct_handle);
+        let struct_def = StructDefinition {
+            struct_handle: struct_handle_index,
+            field_information: StructFieldInformation::Declared(vec![FieldDefinition {
+                name: struct_name_index,
+                signature: TypeSignature(SignatureToken::Struct(struct_handle_index)),
+            }]),
+        };
+        compiled_module.struct_defs.push(struct_def);
+        *compiled_module
+            .signatures
+            .first_mut()
+            .unwrap()
+            .0
+            .first_mut()
+            .unwrap() = SignatureToken::Struct(struct_handle_index);
+
+        // Re-serialize the new module
+        module_bytes.clear();
+        compiled_module.serialize(&mut module_bytes).unwrap();
+
+        // Attempt to deploy the module, but get an error.
+        let signer = PrivateKeySigner::from_bytes(&PRIVATE_KEY.into()).unwrap();
+        let signed_tx = create_transaction(&signer, TxKind::Create, module_bytes);
+        let state = InMemoryStorage::new();
+        let err = execute_transaction(&signed_tx, &state).unwrap_err();
+        assert!(format!("{err:?}").contains("RECURSIVE_STRUCT_DEFINITION"));
+    }
+
+    #[test]
+    fn test_deeply_nested_type() {
+        // This test intentionally modifies a module to include a type
+        // which is very deeply nested (it is a struct which contains a field that
+        // is a struct, which itself contains a different struct, and so on).
+        // Then the test tries to run a function with this deeply nested type
+        // as an input and the VM returns an error.
+
+        // Load a real module
+        let module_name = "signer_struct";
+        let move_address = evm_address_to_move_address(&EVM_ADDRESS);
+        let mut module_bytes = move_compile(module_name, &move_address).unwrap();
+        let mut compiled_module = CompiledModule::deserialize(&module_bytes).unwrap();
+
+        // Define a procedure which includes a new struct which uses the previous
+        // struct as its field
+        let mut depth: u16 = 1;
+        let mut define_new_struct = || {
+            let struct_name: Identifier = format!("DeepStruct{depth}").parse().unwrap();
+            let struct_name_index = IdentifierIndex::new(compiled_module.identifiers.len() as u16);
+            compiled_module.identifiers.push(struct_name);
+            let previous_struct_handle_index = StructHandleIndex::new(depth - 1);
+            let current_struct_handle_index = StructHandleIndex::new(depth);
+            let struct_handle = StructHandle {
+                module: ModuleHandleIndex::new(0),
+                name: struct_name_index,
+                abilities: AbilitySet::FUNCTIONS,
+                type_parameters: Vec::new(),
+            };
+            compiled_module.struct_handles.push(struct_handle);
+            let struct_def = StructDefinition {
+                struct_handle: current_struct_handle_index,
+                field_information: StructFieldInformation::Declared(vec![FieldDefinition {
+                    name: struct_name_index,
+                    signature: TypeSignature(SignatureToken::Struct(previous_struct_handle_index)),
+                }]),
+            };
+            compiled_module.struct_defs.push(struct_def);
+            *compiled_module
+                .signatures
+                .first_mut()
+                .unwrap()
+                .0
+                .first_mut()
+                .unwrap() = SignatureToken::Struct(current_struct_handle_index);
+            depth += 1;
+        };
+
+        // Run this procedure many times
+        for _ in 0..200 {
+            define_new_struct();
+        }
+
+        // Re-serialize the new module
+        module_bytes.clear();
+        compiled_module.serialize(&mut module_bytes).unwrap();
+
+        // Deploy the module.
+        let signer = PrivateKeySigner::from_bytes(&PRIVATE_KEY.into()).unwrap();
+        let signed_tx = create_transaction(&signer, TxKind::Create, module_bytes);
+        // Deploy some other contract to ensure the state is properly initialized.
+        let (_, mut state) = deploy_contract("natives");
+        let changes = execute_transaction(&signed_tx, &state).unwrap();
+        state.apply(changes).unwrap();
+        let module_id = ModuleId::new(move_address, Identifier::new(module_name).unwrap());
+
+        // Call the main function
+        let input_arg = MoveValue::Struct(MoveStruct::new(vec![MoveValue::Signer(move_address)]));
+        let entry_fn = EntryFunction::new(
+            module_id.clone(),
+            Identifier::new("main").unwrap(),
+            Vec::new(),
+            vec![bcs::to_bytes(&input_arg).unwrap()],
+        );
+        let signed_tx = create_transaction(
+            &signer,
+            TxKind::Call(EVM_ADDRESS),
+            bcs::to_bytes(&entry_fn).unwrap(),
+        );
+
+        let err = execute_transaction(&signed_tx, &state).unwrap_err();
+        assert!(format!("{err:?}").contains("VM_MAX_VALUE_DEPTH_REACHED"));
+    }
+
     fn deploy_contract(module_name: &str) -> (ModuleId, InMemoryStorage) {
         let mut state = InMemoryStorage::new();
 
@@ -444,7 +761,7 @@ mod tests {
         .chain(aptos_framework::named_addresses().clone())
         .collect();
 
-        let base_dir = format!("src/tests/res/{package_name}").replace("_", "-");
+        let base_dir = format!("src/tests/res/{package_name}").replace('_', "-");
         let compiler = Compiler::from_files(
             vec![format!("{base_dir}/sources/{package_name}.move")],
             // Project needs access to the framework source files to compile
