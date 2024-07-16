@@ -304,6 +304,50 @@ mod tests {
     const PRIVATE_KEY: [u8; 32] = [0xaa; 32];
 
     #[test]
+    fn test_execute_table_test_data_contract() {
+        let module_name = "TableTestData";
+        let (module_id, storage) = deploy_contract(module_name);
+        let vm = create_move_vm().unwrap();
+        let mut extensions = NativeContextExtensions::default();
+        extensions.add(NativeTableContext::new([0; 32], &storage));
+        let mut session = vm.new_session_with_extensions(&storage, extensions);
+
+        let mut gas_meter = GasStatus::new_unmetered();
+        let traversal_storage = TraversalStorage::new();
+        let mut traversal_context = TraversalContext::new(&traversal_storage);
+
+        let move_address = evm_address_to_move_address(&EVM_ADDRESS);
+        let signer_arg = MoveValue::Signer(move_address);
+        let entry_fn = EntryFunction::new(
+            module_id.clone(),
+            Identifier::new("make_test_tables").unwrap(),
+            Vec::new(),
+            vec![bcs::to_bytes(&signer_arg).unwrap()],
+        );
+
+        let (module_id, function_name, ty_args, args) = entry_fn.into_inner();
+
+        session
+            .execute_entry_function(
+                &module_id,
+                &function_name,
+                ty_args,
+                args,
+                &mut gas_meter,
+                &mut traversal_context,
+            )
+            .unwrap();
+
+        let (_change_set, mut extensions) = session.finish_with_extensions().unwrap();
+        let _table_change_set = extensions
+            .remove::<NativeTableContext>()
+            .into_change_set()
+            .unwrap();
+
+        assert!(true);
+    }
+
+    #[test]
     fn test_execute_counter_contract() {
         let module_name = "counter";
         let (module_id, mut state) = deploy_contract(module_name);

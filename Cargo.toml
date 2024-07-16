@@ -46,3 +46,4 @@ alloy = { version = "0.1", features = ["full", "signer-keystore"] }
 dotenvy = "0.15"
 openssl = "0.10"
 move-compiler = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
+move-table-extension = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
