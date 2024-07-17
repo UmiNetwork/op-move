@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use {
     crate::{state_actor::head_release_bundle, types::transactions::ExtendedTxEnvelope},
     alloy_consensus::TxEnvelope,
@@ -13,7 +15,8 @@ use {
     move_core_types::{
         account_address::AccountAddress,
         effects::{ChangeSet, Op},
-        resolver::MoveResolver, value::MoveValue,
+        resolver::MoveResolver,
+        value::MoveValue,
     },
     move_vm_runtime::{
         module_traversal::{TraversalContext, TraversalStorage},
