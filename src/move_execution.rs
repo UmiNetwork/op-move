@@ -208,18 +208,19 @@ pub fn init_storage() -> InMemoryStorage {
     let (change_set, table_change_set) = deploy_framework(&mut storage).unwrap();
 
     // Convert aptos table change to move extension table change
-    let convert_to_move_extension_table_change = |aptos_table_change: &TableChange| {
-        let mut entries = BTreeMap::new();
-
-        for (key, op) in &aptos_table_change.entries {
-            let new_op = match op {
-                Op::New((bytes, _)) => Op::New(bytes.clone()),
-                Op::Modify((bytes, _)) => Op::Modify(bytes.clone()),
-                Op::Delete => Op::Delete,
-            };
-
-            entries.insert(key.clone(), new_op);
-        }
+    let convert_to_move_extension_table_change = |aptos_table_change: TableChange| {
+        let entries = aptos_table_change
+            .entries
+            .into_iter()
+            .map(|(key, op)| {
+                let new_op = match op {
+                    Op::New((bytes, _)) => Op::New(bytes),
+                    Op::Modify((bytes, _)) => Op::Modify(bytes),
+                    Op::Delete => Op::Delete,
+                };
+                (key, new_op)
+            })
+            .collect::<BTreeMap<_, _>>();
 
         move_table_extension::TableChange { entries }
     };
@@ -229,7 +230,7 @@ pub fn init_storage() -> InMemoryStorage {
         changes: table_change_set
             .changes
             .into_iter()
-            .map(|(k, v)| (k, convert_to_move_extension_table_change(&v)))
+            .map(|(k, v)| (k, convert_to_move_extension_table_change(v)))
             .collect(),
     };
 
@@ -464,7 +465,10 @@ mod tests {
         let (change_set, _) = deploy_framework(&mut storage).unwrap();
 
         assert_eq!(framework.code_and_compiled_modules().len(), 113);
-        assert!(framework.code_and_compiled_modules().len() == change_set.modules().count());
+        assert_eq!(
+            framework.code_and_compiled_modules().len(),
+            change_set.modules().count(),
+        );
     }
 
     fn deploy_contract(module_name: &str) -> (ModuleId, InMemoryStorage) {

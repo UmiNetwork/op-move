@@ -1,5 +1,3 @@
-#![allow(unused)]
-
 use {
     crate::{
         move_execution::{execute_transaction, init_storage},
@@ -16,7 +14,6 @@ use {
     aptos_framework::ReleaseBundle,
     ethers_core::types::{Bytes, H256, U256, U64},
     move_binary_format::errors::PartialVMError,
-    move_core_types::resolver::MoveResolver,
     move_vm_test_utils::InMemoryStorage,
     once_cell::sync::Lazy,
     std::collections::HashMap,
