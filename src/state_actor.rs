@@ -1,7 +1,6 @@
-#![allow(unused)]
-
 use {
     crate::{
+        genesis::init_storage,
         move_execution::execute_transaction,
         storage::Storage,
         types::{
@@ -16,7 +15,6 @@ use {
     aptos_framework::ReleaseBundle,
     ethers_core::types::{Bytes, H256, U256, U64},
     move_binary_format::errors::PartialVMError,
-    move_core_types::resolver::MoveResolver,
     move_vm_test_utils::InMemoryStorage,
     once_cell::sync::Lazy,
     std::collections::HashMap,
@@ -48,12 +46,12 @@ pub struct StateActor<S: Storage> {
     execution_payloads: HashMap<H256, GetPayloadResponseV3>,
     pending_payload: Option<(PayloadId, GetPayloadResponseV3)>,
     mem_pool: HashMap<H256, ExtendedTxEnvelope>,
-    move_vm_state: S,
+    storage: S,
 }
 
 impl StateActor<InMemoryStorage> {
     pub fn new_in_memory(rx: Receiver<StateMessage>) -> Self {
-        Self::new(rx, InMemoryStorage::new())
+        Self::new(rx, init_storage())
     }
 }
 
@@ -77,7 +75,7 @@ impl<S: Storage<Err = PartialVMError>> StateActor<S> {
             execution_payloads: HashMap::new(),
             pending_payload: None,
             mem_pool: HashMap::new(),
-            move_vm_state: storage,
+            storage,
         }
     }
 
@@ -204,8 +202,8 @@ impl<S: Storage<Err = PartialVMError>> StateActor<S> {
     fn execute_transactions(&mut self, transactions: &[ExtendedTxEnvelope]) -> ExecutionOutcome {
         // TODO: parallel transaction processing?
         for tx in transactions {
-            if let Err(e) = execute_transaction(tx, &self.move_vm_state).and_then(|changes| {
-                self.move_vm_state.apply(changes)?;
+            if let Err(e) = execute_transaction(tx, &self.storage).and_then(|changes| {
+                self.storage.apply(changes)?;
                 Ok(())
             }) {
                 // TODO: proper error handling

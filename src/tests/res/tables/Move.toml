@@ -1,0 +1,8 @@
+[package]
+name = "tables"
+version = "0.0.0"
+
+[addresses]
+
+[dependencies]
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework", rev = "aptos-node-v1.14.0" }

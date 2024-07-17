@@ -18,8 +18,21 @@ use {
         move_vm::MoveVM,
     },
     move_vm_test_utils::gas_schedule::GasStatus,
-    move_vm_types::{loaded_data::runtime_types::Type, values::Value},
+    move_vm_types::{gas::UnmeteredGasMeter, loaded_data::runtime_types::Type, values::Value},
 };
+
+pub fn create_move_vm() -> anyhow::Result<MoveVM> {
+    // TODO: error handling
+    let natives = aptos_natives(
+        LATEST_GAS_FEATURE_VERSION,
+        NativeGasParameters::zeros(),
+        MiscGasParameters::zeros(),
+        TimedFeaturesBuilder::enable_all().build(),
+        Features::default(),
+    );
+    let vm = MoveVM::new(natives)?;
+    Ok(vm)
+}
 
 // TODO: status return type
 // TODO: more careful error type
@@ -169,24 +182,10 @@ fn deploy_module(
 ) -> anyhow::Result<ChangeSet> {
     let move_vm = create_move_vm()?;
     let mut session = move_vm.new_session(state);
-    let mut gas_meter = GasStatus::new_unmetered();
 
-    session.publish_module(code.into_inner(), address, &mut gas_meter)?;
-    let change_set = session.finish()?;
-    Ok(change_set)
-}
+    session.publish_module(code.into_inner(), address, &mut UnmeteredGasMeter)?;
 
-fn create_move_vm() -> anyhow::Result<MoveVM> {
-    // TODO: error handling
-    let natives = aptos_natives(
-        LATEST_GAS_FEATURE_VERSION,
-        NativeGasParameters::zeros(),
-        MiscGasParameters::zeros(),
-        TimedFeaturesBuilder::enable_all().build(),
-        Features::default(),
-    );
-    let vm = MoveVM::new(natives)?;
-    Ok(vm)
+    Ok(session.finish()?)
 }
 
 // TODO: is there a way to make Move use 32-byte addresses?
@@ -205,6 +204,7 @@ mod tests {
         alloy_consensus::{transaction::TxEip1559, SignableTransaction},
         alloy_primitives::{address, Address},
         anyhow::Context,
+        aptos_table_natives::NativeTableContext,
         move_compiler::{
             shared::{NumberFormat, NumericalAddress},
             Compiler, Flags,
@@ -214,6 +214,7 @@ mod tests {
             language_storage::{ModuleId, StructTag},
             resolver::{ModuleResolver, MoveResolver},
         },
+        move_vm_runtime::native_extensions::NativeContextExtensions,
         move_vm_test_utils::InMemoryStorage,
         std::collections::BTreeSet,
     };
@@ -338,9 +339,59 @@ mod tests {
         assert!(changes.is_ok());
     }
 
+    #[test]
+    fn test_execute_tables_contract() {
+        let module_name = "tables";
+        let (module_id, storage) = deploy_contract(module_name);
+        let vm = create_move_vm().unwrap();
+        let traversal_storage = TraversalStorage::new();
+
+        let mut extensions = NativeContextExtensions::default();
+        extensions.add(NativeTableContext::new([0; 32], &storage));
+        let mut session = vm.new_session_with_extensions(&storage, extensions);
+        let mut traversal_context = TraversalContext::new(&traversal_storage);
+
+        let move_address = evm_address_to_move_address(&EVM_ADDRESS);
+        let signer_arg = MoveValue::Signer(move_address);
+        let entry_fn = EntryFunction::new(
+            module_id.clone(),
+            Identifier::new("make_test_tables").unwrap(),
+            Vec::new(),
+            vec![bcs::to_bytes(&signer_arg).unwrap()],
+        );
+        let (module_id, function_name, ty_args, args) = entry_fn.into_inner();
+
+        session
+            .execute_entry_function(
+                &module_id,
+                &function_name,
+                ty_args,
+                args,
+                &mut UnmeteredGasMeter,
+                &mut traversal_context,
+            )
+            .unwrap();
+
+        let (_change_set, mut extensions) = session.finish_with_extensions().unwrap();
+        let table_change_set = extensions
+            .remove::<NativeTableContext>()
+            .into_change_set()
+            .unwrap();
+
+        // tables.move creates 11 new tables and makes 11 changes
+        const TABLE_CHANGE_SET_NEW_TABLES_LEN: usize = 11;
+        const TABLE_CHANGE_SET_CHANGES_LEN: usize = 11;
+
+        assert_eq!(
+            table_change_set.new_tables.len(),
+            TABLE_CHANGE_SET_NEW_TABLES_LEN
+        );
+        assert_eq!(table_change_set.changes.len(), TABLE_CHANGE_SET_CHANGES_LEN);
+    }
+
     fn deploy_contract(module_name: &str) -> (ModuleId, InMemoryStorage) {
         let mut state = InMemoryStorage::new();
-        // TODO: Also inject the created resource and table data
+
         for (bytes, module) in head_release_bundle().code_and_compiled_modules() {
             state.publish_or_overwrite_module(module.self_id(), bytes.to_vec());
         }
@@ -393,7 +444,7 @@ mod tests {
         .chain(aptos_framework::named_addresses().clone())
         .collect();
 
-        let base_dir = format!("src/tests/res/{package_name}");
+        let base_dir = format!("src/tests/res/{package_name}").replace("_", "-");
         let compiler = Compiler::from_files(
             vec![format!("{base_dir}/sources/{package_name}.move")],
             // Project needs access to the framework source files to compile
