@@ -5224,6 +5224,7 @@ dependencies = [
  "anyhow",
  "aptos-framework",
  "aptos-gas-schedule",
+ "aptos-table-natives",
  "aptos-types",
  "aptos-vm",
  "bcs 0.1.3",

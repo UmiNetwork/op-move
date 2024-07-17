@@ -3,14 +3,18 @@ use {
     alloy_consensus::TxEnvelope,
     alloy_primitives::TxKind,
     aptos_gas_schedule::{MiscGasParameters, NativeGasParameters, LATEST_GAS_FEATURE_VERSION},
+    aptos_table_natives::{TableChange, TableChangeSet},
     aptos_types::{
         on_chain_config::{Features, TimedFeaturesBuilder},
         transaction::{EntryFunction, Module},
     },
     aptos_vm::natives::aptos_natives,
     move_binary_format::access::ModuleAccess,
-    move_core_types::{account_address::AccountAddress, effects::ChangeSet, value::MoveValue},
-    move_table_extension::{NativeTableContext, TableChangeSet},
+    move_core_types::{
+        account_address::AccountAddress,
+        effects::{ChangeSet, Op},
+        value::MoveValue,
+    },
     move_vm_runtime::{
         module_traversal::{TraversalContext, TraversalStorage},
         move_vm::MoveVM,
@@ -18,6 +22,7 @@ use {
     },
     move_vm_test_utils::{gas_schedule::GasStatus, InMemoryStorage},
     move_vm_types::{gas::UnmeteredGasMeter, loaded_data::runtime_types::Type, values::Value},
+    std::collections::BTreeMap,
 };
 
 // TODO: status return type
@@ -208,49 +213,57 @@ pub fn init_storage() -> InMemoryStorage {
     }
 
     // Integrate Aptos framework
-    let (change_set, table_change_set) = deploy_framework_ext(&mut storage).unwrap();
+    let (change_set, table_change_set) = deploy_framework(&mut storage).unwrap();
+    println!(
+        r"# of compiled modules in release bundle {} and after framework deployment {}
+        # of new tables {}, removed tables {} and changes {}",
+        framework.code_and_compiled_modules().len(),
+        change_set.modules().count(),
+        table_change_set.new_tables.len(),
+        table_change_set.removed_tables.len(),
+        table_change_set.changes.len(),
+    );
+
+    let table_change_set = move_table_extension::TableChangeSet {
+        new_tables: table_change_set.new_tables,
+        removed_tables: table_change_set.removed_tables,
+        changes: table_change_set
+            .changes
+            .into_iter()
+            .map(|(k, v)| (k, extract_table_change(&v)))
+            .collect(),
+    };
+
     storage
         .apply_extended(change_set, table_change_set)
         .unwrap();
 
-    // Integrate Aptos framework without table extensions
-    // storage.apply(deploy_framework().unwrap()).unwrap();
-
     storage
 }
 
-#[allow(dead_code)]
-fn deploy_framework(storage: &mut InMemoryStorage) -> anyhow::Result<ChangeSet> {
-    let framework = head_release_bundle();
-    let vm = create_move_vm()?;
-    let mut session = vm.new_session(storage);
+fn extract_table_change(aptos_table_change: &TableChange) -> move_table_extension::TableChange {
+    let mut entries = BTreeMap::new();
 
-    for package in &framework.packages {
-        let modules = package.sorted_code_and_modules();
-        let sender = *modules.first().unwrap().1.self_id().address();
-        let code = modules
-            .into_iter()
-            .map(|(code, _)| code.to_vec())
-            .collect::<Vec<_>>();
+    for (key, op) in &aptos_table_change.entries {
+        let new_op = match op {
+            Op::New((bytes, _)) => Op::New(bytes.clone()),
+            Op::Modify((bytes, _)) => Op::Modify(bytes.clone()),
+            Op::Delete => Op::Delete,
+        };
 
-        println!(
-            "Deploying package {} with sender: {:#?}",
-            package.name(),
-            sender
-        );
-        session.publish_module_bundle(code, sender, &mut UnmeteredGasMeter)?;
+        entries.insert(key.clone(), new_op);
     }
 
-    Ok(session.finish()?)
+    move_table_extension::TableChange { entries }
 }
 
-fn deploy_framework_ext(
-    storage: &mut InMemoryStorage,
-) -> anyhow::Result<(ChangeSet, TableChangeSet)> {
+fn deploy_framework(storage: &mut InMemoryStorage) -> anyhow::Result<(ChangeSet, TableChangeSet)> {
     let framework = head_release_bundle();
     let vm = create_move_vm().unwrap();
     let mut extensions = NativeContextExtensions::default();
-    extensions.add(NativeTableContext::new([0; 32], storage));
+    extensions.add(aptos_table_natives::NativeTableContext::new(
+        [0; 32], storage,
+    ));
     let mut session = vm.new_session_with_extensions(storage, extensions);
 
     for package in &framework.packages {
@@ -267,12 +280,67 @@ fn deploy_framework_ext(
             sender
         );
         session.publish_module_bundle(code, sender, &mut UnmeteredGasMeter)?;
+
+        let storage = TraversalStorage::new();
+        session
+            .execute_function_bypass_visibility(
+                &move_core_types::language_storage::ModuleId::new(
+                    AccountAddress::ONE,
+                    move_core_types::identifier::Identifier::new("code").unwrap(),
+                ),
+                &move_core_types::identifier::Identifier::new("initialize").unwrap(),
+                vec![],
+                vec![
+                    MoveValue::Signer(AccountAddress::ONE)
+                        .simple_serialize()
+                        .unwrap(),
+                    MoveValue::Signer(sender).simple_serialize().unwrap(),
+                    bcs::to_bytes(package.package_metadata()).unwrap(),
+                ],
+                &mut UnmeteredGasMeter,
+                &mut TraversalContext::new(&storage),
+            )
+            .unwrap_or_else(|e| {
+                panic!(
+                    "Error calling {}.{}: ({:#x}) {}",
+                    "code",
+                    "initialize",
+                    e.sub_status().unwrap_or_default(),
+                    e,
+                )
+            });
     }
+
+    // account initialize actually creates a new table
+    let storage = TraversalStorage::new();
+    session
+        .execute_function_bypass_visibility(
+            &move_core_types::language_storage::ModuleId::new(
+                AccountAddress::ONE,
+                move_core_types::identifier::Identifier::new("account").unwrap(),
+            ),
+            &move_core_types::identifier::Identifier::new("initialize").unwrap(),
+            vec![],
+            vec![MoveValue::Signer(AccountAddress::ONE)
+                .simple_serialize()
+                .unwrap()],
+            &mut UnmeteredGasMeter,
+            &mut TraversalContext::new(&storage),
+        )
+        .unwrap_or_else(|e| {
+            panic!(
+                "Error calling {}.{}: ({:#x}) {}",
+                "account",
+                "initialize",
+                e.sub_status().unwrap_or_default(),
+                e,
+            )
+        });
 
     let (change_set, mut extensions) = session.finish_with_extensions()?;
 
     let table_change_set = extensions
-        .remove::<NativeTableContext>()
+        .remove::<aptos_table_natives::NativeTableContext>()
         .into_change_set()?;
 
     Ok((change_set, table_change_set))
@@ -287,6 +355,7 @@ mod tests {
         alloy_consensus::{transaction::TxEip1559, SignableTransaction},
         alloy_primitives::{address, Address},
         anyhow::Context,
+        aptos_table_natives::NativeTableContext,
         move_compiler::{
             shared::{NumberFormat, NumericalAddress},
             Compiler, Flags,
@@ -339,12 +408,13 @@ mod tests {
             .unwrap();
 
         let (_change_set, mut extensions) = session.finish_with_extensions().unwrap();
-        let _table_change_set = extensions
+        let table_change_set = extensions
             .remove::<NativeTableContext>()
             .into_change_set()
             .unwrap();
 
-        assert!(true);
+        assert_eq!(table_change_set.new_tables.len(), 11);
+        assert_eq!(table_change_set.changes.len(), 11);
     }
 
     #[test]
@@ -537,12 +607,6 @@ mod tests {
 
     #[test]
     fn test_init_storage() {
-        // TODO: Create custom ReleaseBundle for testing
-        let _empty_storage = InMemoryStorage::new();
         let _storage = init_storage();
-
-        // TODO: Check modules, resources and table extensions
-
-        assert!(true)
     }
 }
