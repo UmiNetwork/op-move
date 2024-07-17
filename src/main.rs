@@ -20,6 +20,7 @@ use warp::{Filter, Rejection};
 use warp_reverse_proxy::{extract_request_data_filter, proxy_to_and_forward_response, Headers};
 use warp_reverse_proxy::{Method, QueryParameters};
 
+mod genesis;
 mod json_utils;
 mod methods;
 mod move_execution;

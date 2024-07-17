@@ -1,6 +1,7 @@
 use {
     crate::{
-        move_execution::{execute_transaction, init_storage},
+        genesis::init_storage,
+        move_execution::execute_transaction,
         storage::Storage,
         types::{
             engine_api::{

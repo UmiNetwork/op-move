@@ -1,9 +1,8 @@
 use {
-    crate::{state_actor::head_release_bundle, types::transactions::ExtendedTxEnvelope},
+    crate::types::transactions::ExtendedTxEnvelope,
     alloy_consensus::TxEnvelope,
     alloy_primitives::TxKind,
     aptos_gas_schedule::{MiscGasParameters, NativeGasParameters, LATEST_GAS_FEATURE_VERSION},
-    aptos_table_natives::{TableChange, TableChangeSet},
     aptos_types::{
         on_chain_config::{Features, TimedFeaturesBuilder},
         transaction::{EntryFunction, Module},
@@ -11,20 +10,29 @@ use {
     aptos_vm::natives::aptos_natives,
     move_binary_format::errors::PartialVMError,
     move_core_types::{
-        account_address::AccountAddress,
-        effects::{ChangeSet, Op},
-        resolver::MoveResolver,
+        account_address::AccountAddress, effects::ChangeSet, resolver::MoveResolver,
         value::MoveValue,
     },
     move_vm_runtime::{
         module_traversal::{TraversalContext, TraversalStorage},
         move_vm::MoveVM,
-        native_extensions::NativeContextExtensions,
     },
-    move_vm_test_utils::{gas_schedule::GasStatus, InMemoryStorage},
+    move_vm_test_utils::gas_schedule::GasStatus,
     move_vm_types::{gas::UnmeteredGasMeter, loaded_data::runtime_types::Type, values::Value},
-    std::collections::BTreeMap,
 };
+
+pub fn create_move_vm() -> anyhow::Result<MoveVM> {
+    // TODO: error handling
+    let natives = aptos_natives(
+        LATEST_GAS_FEATURE_VERSION,
+        NativeGasParameters::zeros(),
+        MiscGasParameters::zeros(),
+        TimedFeaturesBuilder::enable_all().build(),
+        Features::default(),
+    );
+    let vm = MoveVM::new(natives)?;
+    Ok(vm)
+}
 
 // TODO: status return type
 // TODO: more careful error type
@@ -180,100 +188,11 @@ fn deploy_module(
     Ok(session.finish()?)
 }
 
-fn create_move_vm() -> anyhow::Result<MoveVM> {
-    // TODO: error handling
-    let natives = aptos_natives(
-        LATEST_GAS_FEATURE_VERSION,
-        NativeGasParameters::zeros(),
-        MiscGasParameters::zeros(),
-        TimedFeaturesBuilder::enable_all().build(),
-        Features::default(),
-    );
-    let vm = MoveVM::new(natives)?;
-    Ok(vm)
-}
-
 // TODO: is there a way to make Move use 32-byte addresses?
 fn evm_address_to_move_address(address: &alloy_primitives::Address) -> AccountAddress {
     let mut bytes = [0; 32];
     bytes[12..32].copy_from_slice(address.as_slice());
     AccountAddress::new(bytes)
-}
-
-/// Initializes the in-memory storage and integrate the Aptos framework.
-pub fn init_storage() -> InMemoryStorage {
-    let mut storage = InMemoryStorage::new();
-
-    // Integrate Aptos framework
-    let (change_set, table_change_set) =
-        deploy_framework(&mut storage).expect("all bundle modules should be valid");
-
-    // Convert aptos table change to move extension table change
-    let convert_to_move_extension_table_change = |aptos_table_change: TableChange| {
-        let entries = aptos_table_change
-            .entries
-            .into_iter()
-            .map(|(key, op)| {
-                let new_op = match op {
-                    Op::New((bytes, _)) => Op::New(bytes),
-                    Op::Modify((bytes, _)) => Op::Modify(bytes),
-                    Op::Delete => Op::Delete,
-                };
-                (key, new_op)
-            })
-            .collect::<BTreeMap<_, _>>();
-
-        move_table_extension::TableChange { entries }
-    };
-    let table_change_set = move_table_extension::TableChangeSet {
-        new_tables: table_change_set.new_tables,
-        removed_tables: table_change_set.removed_tables,
-        changes: table_change_set
-            .changes
-            .into_iter()
-            .map(|(k, v)| (k, convert_to_move_extension_table_change(v)))
-            .collect(),
-    };
-
-    storage
-        .apply_extended(change_set, table_change_set)
-        .unwrap();
-
-    storage
-}
-
-fn deploy_framework(storage: &mut InMemoryStorage) -> anyhow::Result<(ChangeSet, TableChangeSet)> {
-    let framework = head_release_bundle();
-    let vm = create_move_vm().unwrap();
-
-    let mut extensions = NativeContextExtensions::default();
-    extensions.add(aptos_table_natives::NativeTableContext::new(
-        [0; 32], storage,
-    ));
-    let mut session = vm.new_session_with_extensions(storage, extensions);
-
-    for package in &framework.packages {
-        let modules = package.sorted_code_and_modules();
-        let sender = *modules
-            .first()
-            .expect("the package has at least one module")
-            .1
-            .self_id()
-            .address();
-        let code = modules
-            .into_iter()
-            .map(|(code, _)| code.to_vec())
-            .collect::<Vec<_>>();
-
-        session.publish_module_bundle(code, sender, &mut UnmeteredGasMeter)?;
-    }
-
-    let (change_set, mut extensions) = session.finish_with_extensions()?;
-    let table_change_set = extensions
-        .remove::<aptos_table_natives::NativeTableContext>()
-        .into_change_set()?;
-
-    Ok((change_set, table_change_set))
 }
 
 #[cfg(test)]
@@ -295,6 +214,7 @@ mod tests {
             language_storage::{ModuleId, StructTag},
             resolver::{ModuleResolver, MoveResolver},
         },
+        move_vm_runtime::native_extensions::NativeContextExtensions,
         move_vm_test_utils::InMemoryStorage,
         std::collections::BTreeSet,
     };
@@ -420,8 +340,8 @@ mod tests {
     }
 
     #[test]
-    fn test_execute_table_test_data_contract() {
-        let module_name = "test_tables";
+    fn test_execute_tables_contract() {
+        let module_name = "tables";
         let (module_id, storage) = deploy_contract(module_name);
         let vm = create_move_vm().unwrap();
         let traversal_storage = TraversalStorage::new();
@@ -460,21 +380,6 @@ mod tests {
 
         assert_eq!(table_change_set.new_tables.len(), 11);
         assert_eq!(table_change_set.changes.len(), 11);
-    }
-
-    #[test]
-    fn test_deploy_framework() {
-        let framework = head_release_bundle();
-
-        let mut storage = InMemoryStorage::new();
-
-        let (change_set, _) = deploy_framework(&mut storage).unwrap();
-
-        assert_eq!(framework.code_and_compiled_modules().len(), 113);
-        assert_eq!(
-            framework.code_and_compiled_modules().len(),
-            change_set.modules().count(),
-        );
     }
 
     fn deploy_contract(module_name: &str) -> (ModuleId, InMemoryStorage) {
