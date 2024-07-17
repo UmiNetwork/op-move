@@ -9,13 +9,11 @@ use {
         transaction::{EntryFunction, Module},
     },
     aptos_vm::natives::aptos_natives,
-    move_binary_format::access::ModuleAccess,
+    move_binary_format::{access::ModuleAccess, errors::PartialVMError},
     move_core_types::{
         account_address::AccountAddress,
         effects::{ChangeSet, Op},
-    move_binary_format::errors::PartialVMError,
-    move_core_types::{
-        value::MoveValue,
+        resolver::MoveResolver, value::MoveValue,
     },
     move_vm_runtime::{
         module_traversal::{TraversalContext, TraversalStorage},
@@ -25,8 +23,6 @@ use {
     move_vm_test_utils::{gas_schedule::GasStatus, InMemoryStorage},
     move_vm_types::{gas::UnmeteredGasMeter, loaded_data::runtime_types::Type, values::Value},
     std::collections::BTreeMap,
-    move_vm_test_utils::gas_schedule::GasStatus,
-    move_vm_types::{loaded_data::runtime_types::Type, values::Value},
 };
 
 // TODO: status return type
