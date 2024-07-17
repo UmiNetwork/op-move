@@ -8,15 +8,15 @@ use move_vm_types::gas::UnmeteredGasMeter;
 
 use crate::{move_execution::create_move_vm, state_actor::head_release_bundle};
 
-/// Initializes the in-memory storage and integrate the Aptos framework.
+/// Initializes the in-memory storage and integrates the Aptos framework.
 pub fn init_storage() -> InMemoryStorage {
     let mut storage = InMemoryStorage::new();
 
-    // Integrate Aptos framework
     let (change_set, table_change_set) =
-        deploy_framework(&mut storage).expect("all bundle modules should be valid");
+        deploy_framework(&mut storage).expect("All bundle modules should be valid");
 
-    // Convert aptos table change to move extension table change
+    // This function converts a Aptos TableChange to a move table extension struct.
+    // InMemoryStorage relies on this conversion to apply storage changes correctly.
     let convert_to_move_extension_table_change = |aptos_table_change: TableChange| {
         let entries = aptos_table_change
             .entries
@@ -60,14 +60,19 @@ fn deploy_framework(storage: &mut InMemoryStorage) -> anyhow::Result<(ChangeSet,
     ));
     let mut session = vm.new_session_with_extensions(storage, extensions);
 
+    // Iterate over the bundled packages in the Aptos framework
     for package in &framework.packages {
+        // Get the sorted list of code and modules from the package
         let modules = package.sorted_code_and_modules();
+        // Retrieve the address of the account from the first module
+        // Assume the package has at least one module, otherwise, it will panic
         let sender = *modules
             .first()
-            .expect("the package has at least one module")
+            .expect("The package has at least one module")
             .1
             .self_id()
             .address();
+
         let code = modules
             .into_iter()
             .map(|(code, _)| code.to_vec())
@@ -92,13 +97,19 @@ mod tests {
 
     #[test]
     fn test_deploy_framework() {
+        // Aptos framework has 113 modules in the head release bundle
+        const HEAD_RELEASE_BUNDLE_MODULES_LEN: usize = 113;
+
         let framework = head_release_bundle();
 
         let mut storage = InMemoryStorage::new();
 
         let (change_set, _) = deploy_framework(&mut storage).unwrap();
 
-        assert_eq!(framework.code_and_compiled_modules().len(), 113);
+        assert_eq!(
+            framework.code_and_compiled_modules().len(),
+            HEAD_RELEASE_BUNDLE_MODULES_LEN
+        );
         assert_eq!(
             framework.code_and_compiled_modules().len(),
             change_set.modules().count(),

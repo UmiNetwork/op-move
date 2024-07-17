@@ -378,13 +378,20 @@ mod tests {
             .into_change_set()
             .unwrap();
 
-        assert_eq!(table_change_set.new_tables.len(), 11);
-        assert_eq!(table_change_set.changes.len(), 11);
+        // tables.move creates 11 new tables and makes 11 changes
+        const TABLE_CHANGE_SET_NEW_TABLES_LEN: usize = 11;
+        const TABLE_CHANGE_SET_CHANGES_LEN: usize = 11;
+
+        assert_eq!(
+            table_change_set.new_tables.len(),
+            TABLE_CHANGE_SET_NEW_TABLES_LEN
+        );
+        assert_eq!(table_change_set.changes.len(), TABLE_CHANGE_SET_CHANGES_LEN);
     }
 
     fn deploy_contract(module_name: &str) -> (ModuleId, InMemoryStorage) {
         let mut state = InMemoryStorage::new();
-        // TODO: Also inject the created resource and table data
+
         for (bytes, module) in head_release_bundle().code_and_compiled_modules() {
             state.publish_or_overwrite_module(module.self_id(), bytes.to_vec());
         }
