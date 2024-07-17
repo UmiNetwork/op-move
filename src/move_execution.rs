@@ -13,6 +13,8 @@ use {
     move_core_types::{
         account_address::AccountAddress,
         effects::{ChangeSet, Op},
+    move_binary_format::errors::PartialVMError,
+    move_core_types::{
         value::MoveValue,
     },
     move_vm_runtime::{
@@ -23,13 +25,15 @@ use {
     move_vm_test_utils::{gas_schedule::GasStatus, InMemoryStorage},
     move_vm_types::{gas::UnmeteredGasMeter, loaded_data::runtime_types::Type, values::Value},
     std::collections::BTreeMap,
+    move_vm_test_utils::gas_schedule::GasStatus,
+    move_vm_types::{loaded_data::runtime_types::Type, values::Value},
 };
 
 // TODO: status return type
 // TODO: more careful error type
 pub fn execute_transaction(
     tx: &ExtendedTxEnvelope,
-    state: &InMemoryStorage,
+    state: &impl MoveResolver<PartialVMError>,
 ) -> anyhow::Result<ChangeSet> {
     match tx {
         ExtendedTxEnvelope::DepositedTx(_) => {
@@ -73,7 +77,7 @@ pub fn execute_transaction(
 fn execute_entry_function(
     entry_fn: EntryFunction,
     signer: &AccountAddress,
-    state: &InMemoryStorage,
+    state: &impl MoveResolver<PartialVMError>,
 ) -> anyhow::Result<ChangeSet> {
     let move_vm = create_move_vm()?;
     let mut session = move_vm.new_session(state);
@@ -169,7 +173,7 @@ fn check_signer(arg: &MoveValue, expected_signer: &AccountAddress) -> anyhow::Re
 fn deploy_module(
     code: Module,
     address: AccountAddress,
-    state: &InMemoryStorage,
+    state: &impl MoveResolver<PartialVMError>,
 ) -> anyhow::Result<ChangeSet> {
     let move_vm = create_move_vm()?;
     let mut session = move_vm.new_session(state);
@@ -365,6 +369,7 @@ mod tests {
             language_storage::{ModuleId, StructTag},
             resolver::{ModuleResolver, MoveResolver},
         },
+        move_vm_test_utils::InMemoryStorage,
         std::collections::BTreeSet,
     };
 
