@@ -1,5 +1,5 @@
 [package]
-name = "TableTestData"
+name = "test-tables"
 version = "0.0.0"
 
 [addresses]

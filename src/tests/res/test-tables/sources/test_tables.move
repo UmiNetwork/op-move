@@ -1,5 +1,5 @@
 /// This module provides test tables of various key / value types, for use in API tests
-module 0x8fd379246834eac74b8419ffda202cf8051f7a03::TableTestData {
+module 0x8fd379246834eac74b8419ffda202cf8051f7a03::test_tables {
     use 0x1::table::{Self, Table};
     use 0x1::string;
     use 0x1::guid::{Self, ID};

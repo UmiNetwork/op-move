@@ -205,7 +205,8 @@ pub fn init_storage() -> InMemoryStorage {
     let mut storage = InMemoryStorage::new();
 
     // Integrate Aptos framework
-    let (change_set, table_change_set) = deploy_framework(&mut storage).unwrap();
+    let (change_set, table_change_set) =
+        deploy_framework(&mut storage).expect("all bundle modules should be valid");
 
     // Convert aptos table change to move extension table change
     let convert_to_move_extension_table_change = |aptos_table_change: TableChange| {
@@ -253,7 +254,12 @@ fn deploy_framework(storage: &mut InMemoryStorage) -> anyhow::Result<(ChangeSet,
 
     for package in &framework.packages {
         let modules = package.sorted_code_and_modules();
-        let sender = *modules.first().unwrap().1.self_id().address();
+        let sender = *modules
+            .first()
+            .expect("the package has at least one module")
+            .1
+            .self_id()
+            .address();
         let code = modules
             .into_iter()
             .map(|(code, _)| code.to_vec())
@@ -415,7 +421,7 @@ mod tests {
 
     #[test]
     fn test_execute_table_test_data_contract() {
-        let module_name = "TableTestData";
+        let module_name = "test_tables";
         let (module_id, storage) = deploy_contract(module_name);
         let vm = create_move_vm().unwrap();
         let traversal_storage = TraversalStorage::new();
@@ -526,7 +532,7 @@ mod tests {
         .chain(aptos_framework::named_addresses().clone())
         .collect();
 
-        let base_dir = format!("src/tests/res/{package_name}");
+        let base_dir = format!("src/tests/res/{package_name}").replace("_", "-");
         let compiler = Compiler::from_files(
             vec![format!("{base_dir}/sources/{package_name}.move")],
             // Project needs access to the framework source files to compile
