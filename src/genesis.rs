@@ -1,19 +1,18 @@
 use std::collections::BTreeMap;
 
 use aptos_table_natives::{TableChange, TableChangeSet};
+use move_binary_format::errors::PartialVMError;
 use move_core_types::effects::{ChangeSet, Op};
 use move_vm_runtime::native_extensions::NativeContextExtensions;
-use move_vm_test_utils::InMemoryStorage;
 use move_vm_types::gas::UnmeteredGasMeter;
 
+use crate::storage::Storage;
 use crate::{move_execution::create_move_vm, state_actor::head_release_bundle};
 
 /// Initializes the in-memory storage and integrates the Aptos framework.
-pub fn init_storage() -> InMemoryStorage {
-    let mut storage = InMemoryStorage::new();
-
+pub fn init_storage(storage: &mut impl Storage<Err = PartialVMError>) {
     let (change_set, table_change_set) =
-        deploy_framework(&mut storage).expect("All bundle modules should be valid");
+        deploy_framework(storage).expect("All bundle modules should be valid");
 
     // This function converts a Aptos TableChange to a move table extension struct.
     // InMemoryStorage relies on this conversion to apply storage changes correctly.
@@ -44,13 +43,13 @@ pub fn init_storage() -> InMemoryStorage {
     };
 
     storage
-        .apply_extended(change_set, table_change_set)
+        .apply_with_tables(change_set, table_change_set)
         .unwrap();
-
-    storage
 }
 
-fn deploy_framework(storage: &mut InMemoryStorage) -> anyhow::Result<(ChangeSet, TableChangeSet)> {
+fn deploy_framework(
+    storage: &mut impl Storage<Err = PartialVMError>,
+) -> anyhow::Result<(ChangeSet, TableChangeSet)> {
     let framework = head_release_bundle();
     let vm = create_move_vm().unwrap();
 

@@ -51,7 +51,7 @@ pub struct StateActor<S: Storage> {
 
 impl StateActor<InMemoryStorage> {
     pub fn new_in_memory(rx: Receiver<StateMessage>) -> Self {
-        Self::new(rx, init_storage())
+        Self::new(rx, InMemoryStorage::new())
     }
 }
 
@@ -66,7 +66,9 @@ impl<S: Storage<Err = PartialVMError> + Send + Sync + 'static> StateActor<S> {
 }
 
 impl<S: Storage<Err = PartialVMError>> StateActor<S> {
-    pub fn new(rx: Receiver<StateMessage>, storage: S) -> Self {
+    pub fn new(rx: Receiver<StateMessage>, mut storage: S) -> Self {
+        init_storage(&mut storage);
+
         Self {
             rx,
             head: Default::default(),
