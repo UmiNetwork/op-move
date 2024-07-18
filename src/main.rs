@@ -1,3 +1,5 @@
+pub use error::*;
+
 use self::types::{
     jsonrpc::{JsonRpcError, JsonRpcResponse},
     method_name::MethodName,
@@ -20,6 +22,7 @@ use warp::{Filter, Rejection};
 use warp_reverse_proxy::{extract_request_data_filter, proxy_to_and_forward_response, Headers};
 use warp_reverse_proxy::{Method, QueryParameters};
 
+mod error;
 mod genesis;
 mod json_utils;
 mod methods;
@@ -119,7 +122,9 @@ async fn mirror(
     headers: Headers,
     body: Bytes,
     port: &str,
-) -> Result<warp::reply::Response, Rejection> {
+) -> std::result::Result<warp::reply::Response, Rejection> {
+    use std::result::Result;
+
     let is_zipped = headers
         .get("accept-encoding")
         .map(|x| x.to_str().unwrap().contains("gzip"))
@@ -215,7 +220,7 @@ async fn proxy(
     headers: Headers,
     body: Bytes,
     port: &str,
-) -> Result<Response<Body>, Rejection> {
+) -> std::result::Result<Response<Body>, Rejection> {
     proxy_to_and_forward_response(
         format!("http://0.0.0.0:{}", port),
         "".to_string(),
@@ -256,7 +261,7 @@ async fn handle_request(
 async fn inner_handle_request(
     request: serde_json::Value,
     state_channel: mpsc::Sender<StateMessage>,
-) -> Result<serde_json::Value, JsonRpcError> {
+) -> std::result::Result<serde_json::Value, JsonRpcError> {
     let method: MethodName = match json_utils::get_field(&request, "method") {
         serde_json::Value::String(m) => m.parse()?,
         _ => {
