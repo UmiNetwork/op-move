@@ -1,7 +1,7 @@
 use {
     crate::{
         types::transactions::{ExtendedTxEnvelope, TransactionExecutionOutcome},
-        InvalidTransactionCause,
+        InvalidTransactionCause, NonceChecking,
     },
     alloy_consensus::TxEnvelope,
     alloy_primitives::TxKind,
@@ -12,7 +12,10 @@ use {
     },
     aptos_vm::natives::aptos_natives,
     move_binary_format::errors::PartialVMError,
-    move_core_types::{account_address::AccountAddress, resolver::MoveResolver, value::MoveValue},
+    move_core_types::{
+        account_address::AccountAddress, ident_str, identifier::IdentStr,
+        language_storage::ModuleId, resolver::MoveResolver, value::MoveValue,
+    },
     move_vm_runtime::{
         module_traversal::{TraversalContext, TraversalStorage},
         move_vm::MoveVM,
@@ -21,6 +24,16 @@ use {
     move_vm_test_utils::gas_schedule::GasStatus,
     move_vm_types::{gas::UnmeteredGasMeter, loaded_data::runtime_types::Type, values::Value},
 };
+
+const FRAMEWORK_ADDRESS: AccountAddress = {
+    let mut buf = [0u8; 32];
+    buf[31] = 1;
+    AccountAddress::new(buf)
+};
+const ACCOUNT_MODULE_NAME: &IdentStr = ident_str!("account");
+const CREATE_ACCOUNT_FUNCTION_NAME: &IdentStr = ident_str!("create_account_if_does_not_exist");
+const GET_NONCE_FUNCTION_NAME: &IdentStr = ident_str!("get_sequence_number");
+const INCREMENT_NONCE_FUNCTION_NAME: &IdentStr = ident_str!("increment_sequence_number");
 
 pub fn create_move_vm() -> crate::Result<MoveVM> {
     let natives = aptos_natives(
@@ -47,17 +60,27 @@ pub fn execute_transaction(
             // TODO: check tx chain_id
             let sender = tx.recover_signer()?;
             let sender_move_address = evm_address_to_move_address(&sender);
-            // TODO: check tx nonce
-            let (to, payload) = match tx {
-                TxEnvelope::Eip1559(tx) => (tx.tx().to, &tx.tx().input),
-                TxEnvelope::Eip2930(tx) => (tx.tx().to, &tx.tx().input),
-                TxEnvelope::Legacy(tx) => (tx.tx().to, &tx.tx().input),
+            // TODO: use other tx fields (value, gas limit, etc).
+            let (to, nonce, payload) = match tx {
+                TxEnvelope::Eip1559(tx) => (tx.tx().to, tx.tx().nonce, &tx.tx().input),
+                TxEnvelope::Eip2930(tx) => (tx.tx().to, tx.tx().nonce, &tx.tx().input),
+                TxEnvelope::Legacy(tx) => (tx.tx().to, tx.tx().nonce, &tx.tx().input),
                 TxEnvelope::Eip4844(_) => Err(InvalidTransactionCause::UnsupportedType)?,
                 t => Err(InvalidTransactionCause::UnknownType(t.tx_type()))?,
             };
-            // TODO: use other tx fields (value, gas limit, etc).
+
             let move_vm = create_move_vm()?;
             let mut session = move_vm.new_session(state);
+            let traversal_storage = TraversalStorage::new();
+            let mut traversal_context = TraversalContext::new(&traversal_storage);
+
+            check_nonce(
+                nonce,
+                &sender_move_address,
+                &mut session,
+                &mut traversal_context,
+            )?;
+
             // TODO: How to model script-type transactions?
             let vm_outcome = match to {
                 TxKind::Call(_to) => {
@@ -65,7 +88,12 @@ pub fn execute_transaction(
                     if entry_fn.module().address() != &sender_move_address {
                         Err(InvalidTransactionCause::InvalidDestination)?
                     }
-                    execute_entry_function(entry_fn, &sender_move_address, &mut session)
+                    execute_entry_function(
+                        entry_fn,
+                        &sender_move_address,
+                        &mut session,
+                        &mut traversal_context,
+                    )
                 }
                 TxKind::Create => {
                     // Assume EVM create type transactions are module deployments in Move
@@ -79,15 +107,98 @@ pub fn execute_transaction(
     }
 }
 
+fn check_nonce(
+    tx_nonce: u64,
+    signer: &AccountAddress,
+    session: &mut Session,
+    traversal_context: &mut TraversalContext,
+) -> Result<(), crate::Error> {
+    let account_module_id = ModuleId::new(FRAMEWORK_ADDRESS, ACCOUNT_MODULE_NAME.into());
+    let addr_arg = bcs::to_bytes(signer).expect("address can serialize");
+    let mut gas_meter = UnmeteredGasMeter;
+
+    session
+        .execute_function_bypass_visibility(
+            &account_module_id,
+            CREATE_ACCOUNT_FUNCTION_NAME,
+            Vec::new(),
+            vec![addr_arg.as_slice()],
+            &mut gas_meter,
+            traversal_context,
+        )
+        .map_err(|_| {
+            crate::Error::nonce_invariant_violation(NonceChecking::AnyAccountCanBeCreated)
+        })?;
+
+    let account_nonce = {
+        let return_values = session
+            .execute_function_bypass_visibility(
+                &account_module_id,
+                GET_NONCE_FUNCTION_NAME,
+                Vec::new(),
+                vec![addr_arg.as_slice()],
+                &mut gas_meter,
+                traversal_context,
+            )
+            .map_err(|_| {
+                crate::Error::nonce_invariant_violation(NonceChecking::GetNonceAlwaysSucceeds)
+            })?
+            .return_values;
+        let (raw_output, layout) =
+            return_values
+                .first()
+                .ok_or(crate::Error::nonce_invariant_violation(
+                    NonceChecking::GetNonceReturnsAValue,
+                ))?;
+        let value = Value::simple_deserialize(raw_output, layout)
+            .ok_or(crate::Error::nonce_invariant_violation(
+                NonceChecking::GetNoneReturnDeserializes,
+            ))?
+            .as_move_value(layout);
+        match value {
+            MoveValue::U64(nonce) => nonce,
+            _ => {
+                return Err(crate::Error::nonce_invariant_violation(
+                    NonceChecking::GetNonceReturnsU64,
+                ));
+            }
+        }
+    };
+
+    if tx_nonce != account_nonce {
+        Err(InvalidTransactionCause::IncorrectNonce {
+            expected: account_nonce,
+            given: tx_nonce,
+        })?;
+    }
+    if account_nonce == u64::MAX {
+        Err(InvalidTransactionCause::ExhaustedAccount)?;
+    }
+
+    session
+        .execute_function_bypass_visibility(
+            &account_module_id,
+            INCREMENT_NONCE_FUNCTION_NAME,
+            Vec::new(),
+            vec![addr_arg.as_slice()],
+            &mut gas_meter,
+            traversal_context,
+        )
+        .map_err(|_| {
+            crate::Error::nonce_invariant_violation(NonceChecking::IncrementNonceAlwaysSucceeds)
+        })?;
+
+    Ok(())
+}
+
 fn execute_entry_function(
     entry_fn: EntryFunction,
     signer: &AccountAddress,
     session: &mut Session,
+    traversal_context: &mut TraversalContext,
 ) -> crate::Result<()> {
     // TODO: gas metering
     let mut gas_meter = GasStatus::new_unmetered();
-    let traversal_storage = TraversalStorage::new();
-    let mut traversal_context = TraversalContext::new(&traversal_storage);
 
     let (module_id, function_name, ty_args, args) = entry_fn.into_inner();
 
@@ -122,7 +233,7 @@ fn execute_entry_function(
         ty_args,
         args,
         &mut gas_meter,
-        &mut traversal_context,
+        traversal_context,
     )?;
     Ok(())
 }
@@ -349,11 +460,11 @@ mod tests {
     #[test]
     fn test_execute_counter_contract() {
         let module_name = "counter";
-        let (module_id, mut state) = deploy_contract(module_name);
+        let mut signer = Signer::new(&PRIVATE_KEY);
+        let (module_id, mut state) = deploy_contract(module_name, &mut signer);
 
         // Call entry function to create the `Counter` resource
         let move_address = evm_address_to_move_address(&EVM_ADDRESS);
-        let signer = PrivateKeySigner::from_bytes(&PRIVATE_KEY.into()).unwrap();
         let initial_value: u64 = 7;
         let signer_arg = MoveValue::Signer(move_address);
         let entry_fn = EntryFunction::new(
@@ -366,7 +477,7 @@ mod tests {
             ],
         );
         let signed_tx = create_transaction(
-            &signer,
+            &mut signer,
             TxKind::Call(EVM_ADDRESS),
             bcs::to_bytes(&entry_fn).unwrap(),
         );
@@ -386,7 +497,7 @@ mod tests {
             ],
         );
         let signed_tx = create_transaction(
-            &signer,
+            &mut signer,
             TxKind::Call(EVM_ADDRESS),
             bcs::to_bytes(&entry_fn).unwrap(),
         );
@@ -396,6 +507,7 @@ mod tests {
             err.to_string(),
             "Signer does not match transaction signature"
         );
+        state.apply(outcome.changes).unwrap(); // Still increment the nonce
 
         // Resource was created
         let struct_tag = StructTag {
@@ -422,7 +534,7 @@ mod tests {
             vec![bcs::to_bytes(&address_arg).unwrap()],
         );
         let signed_tx = create_transaction(
-            &signer,
+            &mut signer,
             TxKind::Call(EVM_ADDRESS),
             bcs::to_bytes(&entry_fn).unwrap(),
         );
@@ -444,11 +556,11 @@ mod tests {
     #[test]
     fn test_execute_signer_struct_contract() {
         let module_name = "signer_struct";
-        let (module_id, storage) = deploy_contract(module_name);
+        let mut signer = Signer::new(&PRIVATE_KEY);
+        let (module_id, mut storage) = deploy_contract(module_name, &mut signer);
 
         // Call main function with correct signer
         let move_address = evm_address_to_move_address(&EVM_ADDRESS);
-        let signer = PrivateKeySigner::from_bytes(&PRIVATE_KEY.into()).unwrap();
         let input_arg = MoveValue::Struct(MoveStruct::new(vec![MoveValue::Signer(move_address)]));
         let entry_fn = EntryFunction::new(
             module_id.clone(),
@@ -457,16 +569,14 @@ mod tests {
             vec![bcs::to_bytes(&input_arg).unwrap()],
         );
         let signed_tx = create_transaction(
-            &signer,
+            &mut signer,
             TxKind::Call(EVM_ADDRESS),
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
         let outcome = execute_transaction(&signed_tx, &storage).unwrap();
-        assert!(
-            outcome.changes.into_inner().is_empty(),
-            "main does not cause state changes"
-        );
+        assert!(outcome.vm_outcome.is_ok());
+        storage.apply(outcome.changes).unwrap();
 
         // Call main function with incorrect signer (get an error)
         let input_arg = MoveValue::Struct(MoveStruct::new(vec![MoveValue::Signer(
@@ -479,7 +589,7 @@ mod tests {
             vec![bcs::to_bytes(&input_arg).unwrap()],
         );
         let signed_tx = create_transaction(
-            &signer,
+            &mut signer,
             TxKind::Call(EVM_ADDRESS),
             bcs::to_bytes(&entry_fn).unwrap(),
         );
@@ -494,10 +604,10 @@ mod tests {
 
     #[test]
     fn test_execute_natives_contract() {
-        let (module_id, state) = deploy_contract("natives");
+        let mut signer = Signer::new(&PRIVATE_KEY);
+        let (module_id, state) = deploy_contract("natives", &mut signer);
 
         // Call entry function to run the internal native hashing methods
-        let signer = PrivateKeySigner::from_bytes(&PRIVATE_KEY.into()).unwrap();
         let entry_fn = EntryFunction::new(
             module_id,
             Identifier::new("hashing").unwrap(),
@@ -505,7 +615,7 @@ mod tests {
             vec![],
         );
         let signed_tx = create_transaction(
-            &signer,
+            &mut signer,
             TxKind::Call(EVM_ADDRESS),
             bcs::to_bytes(&entry_fn).unwrap(),
         );
@@ -515,9 +625,39 @@ mod tests {
     }
 
     #[test]
+    fn test_transaction_replay() {
+        // Transaction replay is forbidden by the nonce checking.
+
+        // Deploy a contract
+        let mut signer = Signer::new(&PRIVATE_KEY);
+        let (module_id, mut storage) = deploy_contract("natives", &mut signer);
+
+        // Use a transaction to call a function; this passes
+        let entry_fn = EntryFunction::new(
+            module_id,
+            Identifier::new("hashing").unwrap(),
+            Vec::new(),
+            vec![],
+        );
+        let signed_tx = create_transaction(
+            &mut signer,
+            TxKind::Call(EVM_ADDRESS),
+            bcs::to_bytes(&entry_fn).unwrap(),
+        );
+
+        let outcome = execute_transaction(&signed_tx, &storage).unwrap();
+        storage.apply(outcome.changes).unwrap();
+
+        // Send the same transaction again; this fails with a nonce error
+        let err = execute_transaction(&signed_tx, &storage).unwrap_err();
+        assert_eq!(err.to_string(), "Incorrect nonce: given=1 expected=2");
+    }
+
+    #[test]
     fn test_execute_tables_contract() {
         let module_name = "tables";
-        let (module_id, storage) = deploy_contract(module_name);
+        let mut signer = Signer::new(&PRIVATE_KEY);
+        let (module_id, storage) = deploy_contract(module_name, &mut signer);
         let vm = create_move_vm().unwrap();
         let traversal_storage = TraversalStorage::new();
 
@@ -610,9 +750,10 @@ mod tests {
         compiled_module.serialize(&mut module_bytes).unwrap();
 
         // Attempt to deploy the module, but get an error.
-        let signer = PrivateKeySigner::from_bytes(&PRIVATE_KEY.into()).unwrap();
-        let signed_tx = create_transaction(&signer, TxKind::Create, module_bytes);
-        let storage = InMemoryStorage::new();
+        let mut signer = Signer::new(&PRIVATE_KEY);
+        // Deploy some other contract to ensure the state is properly initialized.
+        let (_, storage) = deploy_contract("natives", &mut signer);
+        let signed_tx = create_transaction(&mut signer, TxKind::Create, module_bytes);
         let outcome = execute_transaction(&signed_tx, &storage).unwrap();
         let err = outcome.vm_outcome.unwrap_err();
         assert!(format!("{err:?}").contains("RECURSIVE_STRUCT_DEFINITION"));
@@ -676,10 +817,10 @@ mod tests {
         compiled_module.serialize(&mut module_bytes).unwrap();
 
         // Deploy the module.
-        let signer = PrivateKeySigner::from_bytes(&PRIVATE_KEY.into()).unwrap();
-        let signed_tx = create_transaction(&signer, TxKind::Create, module_bytes);
+        let mut signer = Signer::new(&PRIVATE_KEY);
         // Deploy some other contract to ensure the state is properly initialized.
-        let (_, mut storage) = deploy_contract("natives");
+        let (_, mut storage) = deploy_contract("natives", &mut signer);
+        let signed_tx = create_transaction(&mut signer, TxKind::Create, module_bytes);
         let outcome = execute_transaction(&signed_tx, &storage).unwrap();
         storage.apply(outcome.changes).unwrap();
         let module_id = ModuleId::new(move_address, Identifier::new(module_name).unwrap());
@@ -693,7 +834,7 @@ mod tests {
             vec![bcs::to_bytes(&input_arg).unwrap()],
         );
         let signed_tx = create_transaction(
-            &signer,
+            &mut signer,
             TxKind::Call(EVM_ADDRESS),
             bcs::to_bytes(&entry_fn).unwrap(),
         );
@@ -703,7 +844,7 @@ mod tests {
         assert!(format!("{err:?}").contains("VM_MAX_VALUE_DEPTH_REACHED"));
     }
 
-    fn deploy_contract(module_name: &str) -> (ModuleId, InMemoryStorage) {
+    fn deploy_contract(module_name: &str, signer: &mut Signer) -> (ModuleId, InMemoryStorage) {
         let mut state = InMemoryStorage::new();
 
         for (bytes, module) in head_release_bundle().code_and_compiled_modules() {
@@ -711,10 +852,9 @@ mod tests {
         }
 
         let move_address = evm_address_to_move_address(&EVM_ADDRESS);
-        let signer = PrivateKeySigner::from_bytes(&PRIVATE_KEY.into()).unwrap();
 
         let module_bytes = move_compile(module_name, &move_address).unwrap();
-        let signed_tx = create_transaction(&signer, TxKind::Create, module_bytes);
+        let signed_tx = create_transaction(signer, TxKind::Create, module_bytes);
 
         let outcome = execute_transaction(&signed_tx, &state).unwrap();
         state.apply(outcome.changes).unwrap();
@@ -728,14 +868,10 @@ mod tests {
         (module_id, state)
     }
 
-    fn create_transaction(
-        signer: &PrivateKeySigner,
-        to: TxKind,
-        input: Vec<u8>,
-    ) -> ExtendedTxEnvelope {
+    fn create_transaction(signer: &mut Signer, to: TxKind, input: Vec<u8>) -> ExtendedTxEnvelope {
         let mut tx = TxEip1559 {
             chain_id: 0,
-            nonce: 0,
+            nonce: signer.nonce,
             gas_limit: 0,
             max_fee_per_gas: 0,
             max_priority_fee_per_gas: 0,
@@ -744,7 +880,8 @@ mod tests {
             access_list: Default::default(),
             input: input.into(),
         };
-        let signature = signer.sign_transaction_sync(&mut tx).unwrap();
+        signer.nonce += 1;
+        let signature = signer.inner.sign_transaction_sync(&mut tx).unwrap();
         ExtendedTxEnvelope::Canonical(TxEnvelope::Eip1559(tx.into_signed(signature)))
     }
 
@@ -775,5 +912,20 @@ mod tests {
         let compiled_unit = result.unwrap().0.pop().unwrap().into_compiled_unit();
         let bytes = compiled_unit.serialize(None);
         Ok(bytes)
+    }
+
+    #[derive(Debug)]
+    struct Signer {
+        inner: PrivateKeySigner,
+        nonce: u64,
+    }
+
+    impl Signer {
+        pub fn new(key_bytes: &[u8; 32]) -> Self {
+            Self {
+                inner: PrivateKeySigner::from_bytes(&key_bytes.into()).unwrap(),
+                nonce: 0,
+            }
+        }
     }
 }
