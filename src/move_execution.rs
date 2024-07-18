@@ -450,7 +450,7 @@ mod tests {
     #[test]
     fn test_execute_signer_struct_contract() {
         let module_name = "signer_struct";
-        let (module_id, state) = deploy_contract(module_name);
+        let (module_id, storage) = deploy_contract(module_name);
 
         // Call main function with correct signer
         let move_address = evm_address_to_move_address(&EVM_ADDRESS);
@@ -468,7 +468,7 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let changes = execute_transaction(&signed_tx, &state).unwrap();
+        let changes = execute_transaction(&signed_tx, &storage).unwrap();
         assert!(
             changes.into_inner().is_empty(),
             "main does not cause state changes"
@@ -490,7 +490,7 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let err = execute_transaction(&signed_tx, &state).unwrap_err();
+        let err = execute_transaction(&signed_tx, &storage).unwrap_err();
         assert_eq!(
             err.to_string(),
             "Signer does not match transaction signature"
@@ -617,8 +617,8 @@ mod tests {
         // Attempt to deploy the module, but get an error.
         let signer = PrivateKeySigner::from_bytes(&PRIVATE_KEY.into()).unwrap();
         let signed_tx = create_transaction(&signer, TxKind::Create, module_bytes);
-        let state = InMemoryStorage::new();
-        let err = execute_transaction(&signed_tx, &state).unwrap_err();
+        let storage = InMemoryStorage::new();
+        let err = execute_transaction(&signed_tx, &storage).unwrap_err();
         assert!(format!("{err:?}").contains("RECURSIVE_STRUCT_DEFINITION"));
     }
 
@@ -683,9 +683,9 @@ mod tests {
         let signer = PrivateKeySigner::from_bytes(&PRIVATE_KEY.into()).unwrap();
         let signed_tx = create_transaction(&signer, TxKind::Create, module_bytes);
         // Deploy some other contract to ensure the state is properly initialized.
-        let (_, mut state) = deploy_contract("natives");
-        let changes = execute_transaction(&signed_tx, &state).unwrap();
-        state.apply(changes).unwrap();
+        let (_, mut storage) = deploy_contract("natives");
+        let changes = execute_transaction(&signed_tx, &storage).unwrap();
+        storage.apply(changes).unwrap();
         let module_id = ModuleId::new(move_address, Identifier::new(module_name).unwrap());
 
         // Call the main function
@@ -702,7 +702,7 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let err = execute_transaction(&signed_tx, &state).unwrap_err();
+        let err = execute_transaction(&signed_tx, &storage).unwrap_err();
         assert!(format!("{err:?}").contains("VM_MAX_VALUE_DEPTH_REACHED"));
     }
 
