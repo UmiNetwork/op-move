@@ -1,5 +1,5 @@
 use {
-    crate::types::transactions::ExtendedTxEnvelope,
+    crate::{types::transactions::ExtendedTxEnvelope, InvalidTransactionCause},
     alloy_consensus::TxEnvelope,
     alloy_primitives::TxKind,
     aptos_gas_schedule::{MiscGasParameters, NativeGasParameters, LATEST_GAS_FEATURE_VERSION},
@@ -21,8 +21,7 @@ use {
     move_vm_types::{gas::UnmeteredGasMeter, loaded_data::runtime_types::Type, values::Value},
 };
 
-pub fn create_move_vm() -> anyhow::Result<MoveVM> {
-    // TODO: error handling
+pub fn create_move_vm() -> crate::Result<MoveVM> {
     let natives = aptos_natives(
         LATEST_GAS_FEATURE_VERSION,
         NativeGasParameters::zeros(),
@@ -35,11 +34,10 @@ pub fn create_move_vm() -> anyhow::Result<MoveVM> {
 }
 
 // TODO: status return type
-// TODO: more careful error type
 pub fn execute_transaction(
     tx: &ExtendedTxEnvelope,
     state: &impl MoveResolver<PartialVMError>,
-) -> anyhow::Result<ChangeSet> {
+) -> crate::Result<ChangeSet> {
     match tx {
         ExtendedTxEnvelope::DepositedTx(_) => {
             // TODO: handle DepositedTx case
@@ -54,8 +52,8 @@ pub fn execute_transaction(
                 TxEnvelope::Eip1559(tx) => (tx.tx().to, &tx.tx().input),
                 TxEnvelope::Eip2930(tx) => (tx.tx().to, &tx.tx().input),
                 TxEnvelope::Legacy(tx) => (tx.tx().to, &tx.tx().input),
-                TxEnvelope::Eip4844(_) => anyhow::bail!("Blob transactions not supported"),
-                _ => anyhow::bail!("Unknown transaction type"),
+                TxEnvelope::Eip4844(_) => Err(InvalidTransactionCause::UnsupportedType)?,
+                t => Err(InvalidTransactionCause::UnknownType(t.tx_type()))?,
             };
             // TODO: use other tx fields (value, gas limit, etc).
             // TODO: How to model script-type transactions?
@@ -63,7 +61,7 @@ pub fn execute_transaction(
                 TxKind::Call(_to) => {
                     let entry_fn: EntryFunction = bcs::from_bytes(payload)?;
                     if entry_fn.module().address() != &sender_move_address {
-                        anyhow::bail!("tx.to must match payload module address");
+                        Err(InvalidTransactionCause::InvalidDestination)?
                     }
                     execute_entry_function(entry_fn, &sender_move_address, state)?
                 }
@@ -78,12 +76,11 @@ pub fn execute_transaction(
     }
 }
 
-// TODO: more careful error type
 fn execute_entry_function(
     entry_fn: EntryFunction,
     signer: &AccountAddress,
     state: &impl MoveResolver<PartialVMError>,
-) -> anyhow::Result<ChangeSet> {
+) -> crate::Result<ChangeSet> {
     let move_vm = create_move_vm()?;
     let mut session = move_vm.new_session(state);
     // TODO: gas metering
@@ -96,7 +93,7 @@ fn execute_entry_function(
     // Validate signer params match the actual signer
     let function = session.load_function(&module_id, &function_name, &ty_args)?;
     if function.param_tys.len() != args.len() {
-        anyhow::bail!("Incorrect number of arguments");
+        Err(InvalidTransactionCause::MismatchedArgumentCount)?;
     }
     for (ty, bytes) in function.param_tys.iter().zip(&args) {
         // References are ignored in entry function signatures because the
@@ -108,7 +105,7 @@ fn execute_entry_function(
         // and only deserialize if necessary. The tricky part here is we would need
         // to keep track of the recursive path through the type.
         let arg = Value::simple_deserialize(bytes, &layout)
-            .ok_or_else(|| anyhow::Error::msg("Wrong param type; expected signer"))?
+            .ok_or(InvalidTransactionCause::FailedArgumentDeserialization)?
             .as_move_value(&layout);
         // Note: no recursion limit is needed in this function because we have already
         // constructed the recursive types `Type`, `TypeTag`, `MoveTypeLayout` and `MoveValue` so
@@ -133,14 +130,14 @@ fn execute_entry_function(
 
 // If `t` is wrapped in `Type::Reference` or `Type::MutableReference`,
 // return the inner type
-fn strip_reference(t: &Type) -> anyhow::Result<&Type> {
+fn strip_reference(t: &Type) -> crate::Result<&Type> {
     match t {
         Type::Reference(inner) | Type::MutableReference(inner) => {
             match inner.as_ref() {
                 Type::Reference(_) | Type::MutableReference(_) => {
                     // Based on Aptos code, it looks like references are not allowed to be nested.
                     // TODO: check this assumption.
-                    anyhow::bail!("Invalid nested references");
+                    Err(InvalidTransactionCause::UnsupportedNestedReference)?
                 }
                 other => Ok(other),
             }
@@ -151,13 +148,13 @@ fn strip_reference(t: &Type) -> anyhow::Result<&Type> {
 
 // Check that any instances of `MoveValue::Signer` contained within the given `arg`
 // are the `expected_signer`; return an error if not.
-fn check_signer(arg: &MoveValue, expected_signer: &AccountAddress) -> anyhow::Result<()> {
+fn check_signer(arg: &MoveValue, expected_signer: &AccountAddress) -> crate::Result<()> {
     let mut stack = Vec::with_capacity(10);
     stack.push(arg);
     while let Some(arg) = stack.pop() {
         match arg {
             MoveValue::Signer(given_signer) if given_signer != expected_signer => {
-                anyhow::bail!("Signer does not match transaction signature");
+                Err(InvalidTransactionCause::InvalidSigner)?
             }
             MoveValue::Vector(values) => {
                 for v in values {
@@ -179,7 +176,7 @@ fn deploy_module(
     code: Module,
     address: AccountAddress,
     state: &impl MoveResolver<PartialVMError>,
-) -> anyhow::Result<ChangeSet> {
+) -> crate::Result<ChangeSet> {
     let move_vm = create_move_vm()?;
     let mut session = move_vm.new_session(state);
 
@@ -765,7 +762,9 @@ mod tests {
         let compiler = Compiler::from_files(
             vec![format!("{base_dir}/sources/{package_name}.move")],
             // Project needs access to the framework source files to compile
-            aptos_framework::testnet_release_bundle().files()?,
+            aptos_framework::testnet_release_bundle()
+                .files()
+                .context(format!("Failed to compile {package_name}.move"))?,
             named_address_mapping,
             Flags::empty(),
             &known_attributes,
