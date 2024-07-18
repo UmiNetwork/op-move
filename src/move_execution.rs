@@ -1,5 +1,8 @@
 use {
-    crate::{types::transactions::ExtendedTxEnvelope, InvalidTransactionCause},
+    crate::{
+        types::transactions::{ExtendedTxEnvelope, TransactionExecutionOutcome},
+        InvalidTransactionCause,
+    },
     alloy_consensus::TxEnvelope,
     alloy_primitives::TxKind,
     aptos_gas_schedule::{MiscGasParameters, NativeGasParameters, LATEST_GAS_FEATURE_VERSION},
@@ -9,13 +12,11 @@ use {
     },
     aptos_vm::natives::aptos_natives,
     move_binary_format::errors::PartialVMError,
-    move_core_types::{
-        account_address::AccountAddress, effects::ChangeSet, resolver::MoveResolver,
-        value::MoveValue,
-    },
+    move_core_types::{account_address::AccountAddress, resolver::MoveResolver, value::MoveValue},
     move_vm_runtime::{
         module_traversal::{TraversalContext, TraversalStorage},
         move_vm::MoveVM,
+        session::Session,
     },
     move_vm_test_utils::gas_schedule::GasStatus,
     move_vm_types::{gas::UnmeteredGasMeter, loaded_data::runtime_types::Type, values::Value},
@@ -33,15 +34,14 @@ pub fn create_move_vm() -> crate::Result<MoveVM> {
     Ok(vm)
 }
 
-// TODO: status return type
 pub fn execute_transaction(
     tx: &ExtendedTxEnvelope,
     state: &impl MoveResolver<PartialVMError>,
-) -> crate::Result<ChangeSet> {
+) -> crate::Result<TransactionExecutionOutcome> {
     match tx {
         ExtendedTxEnvelope::DepositedTx(_) => {
             // TODO: handle DepositedTx case
-            Ok(ChangeSet::new())
+            Ok(TransactionExecutionOutcome::empty_success())
         }
         ExtendedTxEnvelope::Canonical(tx) => {
             // TODO: check tx chain_id
@@ -56,22 +56,25 @@ pub fn execute_transaction(
                 t => Err(InvalidTransactionCause::UnknownType(t.tx_type()))?,
             };
             // TODO: use other tx fields (value, gas limit, etc).
+            let move_vm = create_move_vm()?;
+            let mut session = move_vm.new_session(state);
             // TODO: How to model script-type transactions?
-            let changes = match to {
+            let vm_outcome = match to {
                 TxKind::Call(_to) => {
                     let entry_fn: EntryFunction = bcs::from_bytes(payload)?;
                     if entry_fn.module().address() != &sender_move_address {
                         Err(InvalidTransactionCause::InvalidDestination)?
                     }
-                    execute_entry_function(entry_fn, &sender_move_address, state)?
+                    execute_entry_function(entry_fn, &sender_move_address, &mut session)
                 }
                 TxKind::Create => {
                     // Assume EVM create type transactions are module deployments in Move
                     let module = Module::new(payload.to_vec());
-                    deploy_module(module, evm_address_to_move_address(&sender), state)?
+                    deploy_module(module, evm_address_to_move_address(&sender), &mut session)
                 }
             };
-            Ok(changes)
+            let changes = session.finish()?;
+            Ok(TransactionExecutionOutcome::new(vm_outcome, changes))
         }
     }
 }
@@ -79,10 +82,8 @@ pub fn execute_transaction(
 fn execute_entry_function(
     entry_fn: EntryFunction,
     signer: &AccountAddress,
-    state: &impl MoveResolver<PartialVMError>,
-) -> crate::Result<ChangeSet> {
-    let move_vm = create_move_vm()?;
-    let mut session = move_vm.new_session(state);
+    session: &mut Session,
+) -> crate::Result<()> {
     // TODO: gas metering
     let mut gas_meter = GasStatus::new_unmetered();
     let traversal_storage = TraversalStorage::new();
@@ -123,9 +124,7 @@ fn execute_entry_function(
         &mut gas_meter,
         &mut traversal_context,
     )?;
-    let changes = session.finish()?;
-
-    Ok(changes)
+    Ok(())
 }
 
 // If `t` is wrapped in `Type::Reference` or `Type::MutableReference`,
@@ -175,14 +174,11 @@ fn check_signer(arg: &MoveValue, expected_signer: &AccountAddress) -> crate::Res
 fn deploy_module(
     code: Module,
     address: AccountAddress,
-    state: &impl MoveResolver<PartialVMError>,
-) -> crate::Result<ChangeSet> {
-    let move_vm = create_move_vm()?;
-    let mut session = move_vm.new_session(state);
-
+    session: &mut Session,
+) -> crate::Result<()> {
     session.publish_module(code.into_inner(), address, &mut UnmeteredGasMeter)?;
 
-    Ok(session.finish()?)
+    Ok(())
 }
 
 // TODO: is there a way to make Move use 32-byte addresses?
@@ -375,8 +371,8 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let changes = execute_transaction(&signed_tx, &state).unwrap();
-        state.apply(changes).unwrap();
+        let outcome = execute_transaction(&signed_tx, &state).unwrap();
+        state.apply(outcome.changes).unwrap();
 
         // Calling the function with an incorrect signer causes an error
         let signer_arg = MoveValue::Signer(AccountAddress::new([0x00; 32]));
@@ -394,7 +390,8 @@ mod tests {
             TxKind::Call(EVM_ADDRESS),
             bcs::to_bytes(&entry_fn).unwrap(),
         );
-        let err = execute_transaction(&signed_tx, &state).unwrap_err();
+        let outcome = execute_transaction(&signed_tx, &state).unwrap();
+        let err = outcome.vm_outcome.unwrap_err();
         assert_eq!(
             err.to_string(),
             "Signer does not match transaction signature"
@@ -430,8 +427,8 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let changes = execute_transaction(&signed_tx, &state).unwrap();
-        state.apply(changes).unwrap();
+        let outcome = execute_transaction(&signed_tx, &state).unwrap();
+        state.apply(outcome.changes).unwrap();
 
         // Resource was modified
         let resource: u64 = bcs::from_bytes(
@@ -465,9 +462,9 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let changes = execute_transaction(&signed_tx, &storage).unwrap();
+        let outcome = execute_transaction(&signed_tx, &storage).unwrap();
         assert!(
-            changes.into_inner().is_empty(),
+            outcome.changes.into_inner().is_empty(),
             "main does not cause state changes"
         );
 
@@ -487,7 +484,8 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let err = execute_transaction(&signed_tx, &storage).unwrap_err();
+        let outcome = execute_transaction(&signed_tx, &storage).unwrap();
+        let err = outcome.vm_outcome.unwrap_err();
         assert_eq!(
             err.to_string(),
             "Signer does not match transaction signature"
@@ -615,7 +613,8 @@ mod tests {
         let signer = PrivateKeySigner::from_bytes(&PRIVATE_KEY.into()).unwrap();
         let signed_tx = create_transaction(&signer, TxKind::Create, module_bytes);
         let storage = InMemoryStorage::new();
-        let err = execute_transaction(&signed_tx, &storage).unwrap_err();
+        let outcome = execute_transaction(&signed_tx, &storage).unwrap();
+        let err = outcome.vm_outcome.unwrap_err();
         assert!(format!("{err:?}").contains("RECURSIVE_STRUCT_DEFINITION"));
     }
 
@@ -681,8 +680,8 @@ mod tests {
         let signed_tx = create_transaction(&signer, TxKind::Create, module_bytes);
         // Deploy some other contract to ensure the state is properly initialized.
         let (_, mut storage) = deploy_contract("natives");
-        let changes = execute_transaction(&signed_tx, &storage).unwrap();
-        storage.apply(changes).unwrap();
+        let outcome = execute_transaction(&signed_tx, &storage).unwrap();
+        storage.apply(outcome.changes).unwrap();
         let module_id = ModuleId::new(move_address, Identifier::new(module_name).unwrap());
 
         // Call the main function
@@ -699,7 +698,8 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let err = execute_transaction(&signed_tx, &storage).unwrap_err();
+        let outcome = execute_transaction(&signed_tx, &storage).unwrap();
+        let err = outcome.vm_outcome.unwrap_err();
         assert!(format!("{err:?}").contains("VM_MAX_VALUE_DEPTH_REACHED"));
     }
 
@@ -716,8 +716,8 @@ mod tests {
         let module_bytes = move_compile(module_name, &move_address).unwrap();
         let signed_tx = create_transaction(&signer, TxKind::Create, module_bytes);
 
-        let changes = execute_transaction(&signed_tx, &state).unwrap();
-        state.apply(changes).unwrap();
+        let outcome = execute_transaction(&signed_tx, &state).unwrap();
+        state.apply(outcome.changes).unwrap();
 
         // Code was deployed
         let module_id = ModuleId::new(move_address, Identifier::new(module_name).unwrap());

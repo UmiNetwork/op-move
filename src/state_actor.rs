@@ -204,8 +204,9 @@ impl<S: Storage<Err = PartialVMError>> StateActor<S> {
     fn execute_transactions(&mut self, transactions: &[ExtendedTxEnvelope]) -> ExecutionOutcome {
         // TODO: parallel transaction processing?
         for tx in transactions {
-            if let Err(e) = execute_transaction(tx, &self.storage).and_then(|changes| {
-                self.storage.apply(changes)?;
+            if let Err(e) = execute_transaction(tx, &self.storage).and_then(|outcome| {
+                // TODO: record success or failure from outcome.vm_outcome
+                self.storage.apply(outcome.changes)?;
                 Ok(())
             }) {
                 // TODO: proper error handling

@@ -2,6 +2,7 @@ use {
     alloy_consensus::TxEnvelope,
     alloy_primitives::{Address, Bytes, B256, U256, U64},
     alloy_rlp::{Buf, Decodable, Encodable, RlpDecodable, RlpEncodable},
+    move_core_types::effects::ChangeSet,
     serde::{Deserialize, Serialize},
 };
 
@@ -68,6 +69,29 @@ impl Decodable for ExtendedTxEnvelope {
                 let tx = TxEnvelope::decode(buf)?;
                 Ok(Self::Canonical(tx))
             }
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct TransactionExecutionOutcome {
+    pub vm_outcome: Result<(), crate::Error>,
+    pub changes: ChangeSet,
+    // TODO: gas used
+}
+
+impl TransactionExecutionOutcome {
+    pub fn empty_success() -> Self {
+        Self {
+            vm_outcome: Ok(()),
+            changes: ChangeSet::new(),
+        }
+    }
+
+    pub fn new(vm_outcome: Result<(), crate::Error>, changes: ChangeSet) -> Self {
+        Self {
+            vm_outcome,
+            changes,
         }
     }
 }
