@@ -96,6 +96,7 @@ mod tests {
     use aptos_framework::ReleaseBundle;
     use move_vm_test_utils::InMemoryStorage;
     use once_cell::sync::Lazy;
+    use std::process::Command;
 
     #[test]
     fn test_deploy_framework() {
@@ -119,9 +120,11 @@ mod tests {
     }
 
     #[cfg(unix)]
-    const CUSTOM_RELEASE_BUNDLE_BYTES: &[u8] = include_bytes!("../custom.mrb");
+    // const CUSTOM_RELEASE_BUNDLE_BYTES: &[u8] = include_bytes!("../custom/custom.mrb");
+    const CUSTOM_RELEASE_BUNDLE_BYTES: &[u8] = include_bytes!("../custom/bin/head.mrb");
+
     #[cfg(windows)]
-    const CUSTOM_RELEASE_BUNDLE_BYTES: &[u8] = include_bytes!("..\\head.mrb");
+    const CUSTOM_RELEASE_BUNDLE_BYTES: &[u8] = include_bytes!("../custom/custom.mrb");
 
     static CUSTOM_RELEASE_BUNDLE: Lazy<ReleaseBundle> = Lazy::new(|| {
         bcs::from_bytes::<ReleaseBundle>(CUSTOM_RELEASE_BUNDLE_BYTES).expect("bcs succeeds")
@@ -141,5 +144,24 @@ mod tests {
             framework.code_and_compiled_modules().len(),
             CUSTOM_RELEASE_BUNDLE_MODULES_LEN
         );
+    }
+
+    #[test]
+    fn test_cargo_command() {
+        // Define the cargo command and its arguments
+        let output = Command::new("aptos-framework")
+            .current_dir("custom/bin")
+            .args(["release"])
+            .output()
+            .expect("Failed to execute cargo command");
+
+        // Check if the command was successful
+        if output.status.success() {
+            // Print the stdout
+            println!("Output: {}", String::from_utf8_lossy(&output.stdout));
+        } else {
+            // Print the stderr
+            eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+        }
     }
 }
