@@ -133,7 +133,7 @@ mod tests {
 
     #[test]
     fn test_deploy_custom_framework() {
-        const CUSTOM_RELEASE_BUNDLE_MODULES_LEN: usize = 45;
+        const CUSTOM_RELEASE_BUNDLE_MODULES_LEN: usize = 77;
 
         let framework = custom_release_bundle();
 
