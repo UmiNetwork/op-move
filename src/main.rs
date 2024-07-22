@@ -10,7 +10,7 @@ use clap::Parser;
 use ethers_core::types::{H256, U64};
 use flate2::read::GzDecoder;
 use jsonwebtoken::{DecodingKey, Validation};
-use once_cell::sync::Lazy;
+use lazy_static::lazy_static;
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::time::SystemTime;
 use std::{fs, io::Read, str::FromStr};
@@ -46,15 +46,17 @@ struct Claims {
 }
 
 const JWT_VALID_DURATION_IN_SECS: u64 = 60;
-/// JWT secret key is either passed in as an env var `JWT_SECRET` or file path arg `--jwtsecret`
-static JWTSECRET: Lazy<Vec<u8>> = Lazy::new(|| {
-    let mut jwt = std::env::var("JWT_SECRET").unwrap_or_default();
-    if jwt.is_empty() {
-        let args = Args::parse();
-        jwt = fs::read_to_string(args.jwtsecret).expect("JWT file should exist");
-    }
-    hex::decode(jwt).expect("JWT secret should be a hex string")
-});
+lazy_static! {
+    /// JWT secret key is either passed in as an env var `JWT_SECRET` or file path arg `--jwtsecret`
+    static ref JWTSECRET: Vec<u8> = {
+        let mut jwt = std::env::var("JWT_SECRET").unwrap_or_default();
+        if jwt.is_empty() {
+            let args = Args::parse();
+            jwt = fs::read_to_string(args.jwtsecret).expect("JWT file should exist");
+        }
+        hex::decode(jwt).expect("JWT secret should be a hex string")
+    };
+}
 
 #[tokio::main]
 async fn main() {

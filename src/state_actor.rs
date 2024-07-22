@@ -1,3 +1,4 @@
+use lazy_static::lazy_static;
 use {
     crate::{
         genesis::init_storage,
@@ -16,7 +17,6 @@ use {
     ethers_core::types::{Bytes, H256, U256, U64},
     move_binary_format::errors::PartialVMError,
     move_vm_test_utils::InMemoryStorage,
-    once_cell::sync::Lazy,
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
 };
@@ -28,9 +28,10 @@ const HEAD_RELEASE_BUNDLE_BYTES: &[u8] = include_bytes!("../head.mrb");
 #[cfg(windows)]
 const HEAD_RELEASE_BUNDLE_BYTES: &[u8] = include_bytes!("..\\head.mrb");
 
-static HEAD_RELEASE_BUNDLE: Lazy<ReleaseBundle> = Lazy::new(|| {
-    bcs::from_bytes::<ReleaseBundle>(HEAD_RELEASE_BUNDLE_BYTES).expect("bcs succeeds")
-});
+lazy_static! {
+    static ref HEAD_RELEASE_BUNDLE: ReleaseBundle =
+        bcs::from_bytes::<ReleaseBundle>(HEAD_RELEASE_BUNDLE_BYTES).expect("bcs succeeds");
+}
 
 /// Returns the release bundle for the current code.
 pub fn head_release_bundle() -> &'static ReleaseBundle {
