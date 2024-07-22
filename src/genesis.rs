@@ -2,15 +2,14 @@ use {
     crate::storage::Storage,
     crate::{move_execution::create_move_vm, state_actor::head_release_bundle},
     aptos_table_natives::{NativeTableContext, TableChange, TableChangeSet},
-    move_binary_format::{access::ModuleAccess, errors::PartialVMError},
+    lazy_static::lazy_static,
+    move_binary_format::errors::PartialVMError,
     move_core_types::{
         account_address::AccountAddress,
         effects::{ChangeSet, Op},
     },
     move_vm_runtime::{native_extensions::NativeContextExtensions, session::Session},
-    move_vm_test_utils::InMemoryStorage,
     move_vm_types::gas::UnmeteredGasMeter,
-    once_cell::sync::Lazy,
     std::collections::BTreeMap,
     std::fs,
     std::path::PathBuf,
@@ -21,12 +20,16 @@ use {
 
 const CRATE_ROOT: &str = env!("CARGO_MANIFEST_DIR");
 const SUI_SNAPSHOT_NAME: &str = "sui.mrb";
-const SUI_STDLIB_ADDRESS: Lazy<AccountAddress> =
-    Lazy::new(|| AccountAddress::from_str("0x21").unwrap());
-const SUI_FRAMEWORK_ADDRESS: Lazy<AccountAddress> =
-    Lazy::new(|| AccountAddress::from_str("0x22").unwrap());
-const SUI_STDLIB_PACKAGE_ID: Lazy<ObjectID> = Lazy::new(|| ObjectID::from_str("0x21").unwrap());
-const SUI_FRAMEWORK_PACKAGE_ID: Lazy<ObjectID> = Lazy::new(|| ObjectID::from_str("0x22").unwrap());
+pub const FRAMEWORK_ADDRESS: AccountAddress = AccountAddress::ONE;
+pub const TOKEN_ADDRESS: AccountAddress = AccountAddress::THREE;
+pub const TOKEN_OBJECT_ADDRESS: AccountAddress = AccountAddress::FOUR;
+
+lazy_static! {
+    static ref SUI_STDLIB_ADDRESS: AccountAddress = AccountAddress::from_str("0x21").unwrap();
+    static ref SUI_FRAMEWORK_ADDRESS: AccountAddress = AccountAddress::from_str("0x22").unwrap();
+    static ref SUI_STDLIB_PACKAGE_ID: ObjectID = ObjectID::from_str("0x21").unwrap();
+    static ref SUI_FRAMEWORK_PACKAGE_ID: ObjectID = ObjectID::from_str("0x22").unwrap();
+}
 
 /// Initializes the in-memory storage with integrates the Aptos and Sui frameworks.
 pub fn init_storage(storage: &mut impl Storage<Err = PartialVMError>) {
@@ -86,17 +89,26 @@ fn deploy_framework(
 }
 
 fn deploy_aptos_framework(session: &mut Session) -> anyhow::Result<()> {
-    let mut framework = head_release_bundle();
+    let framework = head_release_bundle();
     // Iterate over the bundled packages in the Aptos framework
     for package in &framework.packages {
         let modules = package.sorted_code_and_modules();
         // Address from the first module is sufficient as they're the same within the package
         let sender = modules.first().expect("Package has at least one module");
         let sender = *sender.1.self_id().address();
+
+        assert!(
+            sender == FRAMEWORK_ADDRESS
+                || sender == TOKEN_ADDRESS
+                || sender == TOKEN_OBJECT_ADDRESS,
+            "The framework should be deployed to a statically known address. {sender} not known."
+        );
+
         let code = modules
             .into_iter()
             .map(|(code, _)| code.to_vec())
             .collect::<Vec<_>>();
+
         session.publish_module_bundle(code, sender, &mut UnmeteredGasMeter)?;
     }
     Ok(())
@@ -122,7 +134,7 @@ fn deploy_sui_framework(session: &mut Session) -> anyhow::Result<()> {
 
 fn load_bytecode_snapshot() -> anyhow::Result<BTreeMap<ObjectID, SystemPackage>> {
     let snapshot_path = PathBuf::from(CRATE_ROOT).join(SUI_SNAPSHOT_NAME);
-    let binary = fs::read(&snapshot_path)?;
+    let binary = fs::read(snapshot_path)?;
     let snapshots: Vec<SystemPackage> = bcs::from_bytes(&binary)?;
     let packages = snapshots.into_iter().map(|pkg| (pkg.id, pkg)).collect();
     Ok(packages)
