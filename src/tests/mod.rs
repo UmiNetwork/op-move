@@ -1,4 +1,5 @@
 mod integration;
+pub mod signer;
 
 use crate::{validate_jwt, Claims};
 use aptos_types::transaction::{EntryFunction, TransactionPayload};

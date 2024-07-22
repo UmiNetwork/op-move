@@ -303,8 +303,8 @@ fn evm_address_to_move_address(address: &alloy_primitives::Address) -> AccountAd
 mod tests {
     use {
         super::*,
-        crate::state_actor::head_release_bundle,
-        alloy::{network::TxSignerSync, signers::local::PrivateKeySigner},
+        crate::{state_actor::head_release_bundle, tests::signer::Signer},
+        alloy::network::TxSignerSync,
         alloy_consensus::{transaction::TxEip1559, SignableTransaction},
         alloy_primitives::{address, Address},
         anyhow::Context,
@@ -912,20 +912,5 @@ mod tests {
         let compiled_unit = result.unwrap().0.pop().unwrap().into_compiled_unit();
         let bytes = compiled_unit.serialize(None);
         Ok(bytes)
-    }
-
-    #[derive(Debug)]
-    struct Signer {
-        inner: PrivateKeySigner,
-        nonce: u64,
-    }
-
-    impl Signer {
-        pub fn new(key_bytes: &[u8; 32]) -> Self {
-            Self {
-                inner: PrivateKeySigner::from_bytes(&key_bytes.into()).unwrap(),
-                nonce: 0,
-            }
-        }
     }
 }
