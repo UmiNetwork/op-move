@@ -13,6 +13,8 @@ use crate::storage::Storage;
 use crate::{move_execution::create_move_vm, state_actor::head_release_bundle};
 
 pub const FRAMEWORK_ADDRESS: AccountAddress = AccountAddress::ONE;
+pub const TOKEN_ADDRESS: AccountAddress = AccountAddress::THREE;
+pub const TOKEN_OBJECT_ADDRESS: AccountAddress = AccountAddress::FOUR;
 
 /// Initializes the in-memory storage and integrates the Aptos framework.
 pub fn init_storage(storage: &mut impl Storage<Err = PartialVMError>) {
@@ -77,9 +79,11 @@ fn deploy_framework(
             .self_id()
             .address();
 
-        assert_eq!(
-            sender, FRAMEWORK_ADDRESS,
-            "The framework should be deployed to a statically known address"
+        assert!(
+            sender == FRAMEWORK_ADDRESS
+                || sender == TOKEN_ADDRESS
+                || sender == TOKEN_OBJECT_ADDRESS,
+            "The framework should be deployed to a statically known address. {sender} not known."
         );
 
         let code = modules
