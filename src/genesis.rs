@@ -2,12 +2,19 @@ use std::collections::BTreeMap;
 
 use aptos_table_natives::{TableChange, TableChangeSet};
 use move_binary_format::errors::PartialVMError;
-use move_core_types::effects::{ChangeSet, Op};
+use move_core_types::{
+    account_address::AccountAddress,
+    effects::{ChangeSet, Op},
+};
 use move_vm_runtime::native_extensions::NativeContextExtensions;
 use move_vm_types::gas::UnmeteredGasMeter;
 
 use crate::storage::Storage;
 use crate::{move_execution::create_move_vm, state_actor::head_release_bundle};
+
+pub const FRAMEWORK_ADDRESS: AccountAddress = AccountAddress::ONE;
+pub const TOKEN_ADDRESS: AccountAddress = AccountAddress::THREE;
+pub const TOKEN_OBJECT_ADDRESS: AccountAddress = AccountAddress::FOUR;
 
 /// Initializes the in-memory storage and integrates the Aptos framework.
 pub fn init_storage(storage: &mut impl Storage<Err = PartialVMError>) {
@@ -71,6 +78,13 @@ fn deploy_framework(
             .1
             .self_id()
             .address();
+
+        assert!(
+            sender == FRAMEWORK_ADDRESS
+                || sender == TOKEN_ADDRESS
+                || sender == TOKEN_OBJECT_ADDRESS,
+            "The framework should be deployed to a statically known address. {sender} not known."
+        );
 
         let code = modules
             .into_iter()

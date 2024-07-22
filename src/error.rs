@@ -25,6 +25,14 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     #[error("{0}")]
     User(UserError),
+    #[error("{0}")]
+    InvariantViolation(InvariantViolation),
+}
+
+impl Error {
+    pub const fn nonce_invariant_violation(invariant: NonceChecking) -> Self {
+        Self::InvariantViolation(InvariantViolation::NonceChecking(invariant))
+    }
 }
 
 impl<T> From<T> for Error
@@ -76,6 +84,32 @@ pub enum InvalidTransactionCause {
     UnsupportedType,
     #[error("Unknown transaction type: {0}")]
     UnknownType(TxType),
+    #[error("Incorrect nonce: given={given} expected={expected}")]
+    IncorrectNonce { expected: u64, given: u64 },
+    #[error("Account exhausted, no more nonce values remain")]
+    ExhaustedAccount,
+}
+
+#[derive(Debug, Error)]
+pub enum InvariantViolation {
+    #[error("Nonce check invariant violation: {0}")]
+    NonceChecking(NonceChecking),
+}
+
+#[derive(Debug, Error)]
+pub enum NonceChecking {
+    #[error("Any account can be created")]
+    AnyAccountCanBeCreated,
+    #[error("Function get_sequence_number always succeeds")]
+    GetNonceAlwaysSucceeds,
+    #[error("Function get_sequence_number has a return value")]
+    GetNonceReturnsAValue,
+    #[error("Function get_sequence_number return value can be deserialized")]
+    GetNoneReturnDeserializes,
+    #[error("Function get_sequence_number returns a value of type u64")]
+    GetNonceReturnsU64,
+    #[error("Function increment_sequence_number always succeeds")]
+    IncrementNonceAlwaysSucceeds,
 }
 
 #[cfg(test)]
@@ -125,6 +159,14 @@ mod tests {
     #[test_case(
         PartialVMError::new(StatusCode::ABORTED).finish(Location::Undefined),
         "VMError with status ABORTED at location UNDEFINED"
+    )]
+    #[test_case(
+        InvalidTransactionCause::IncorrectNonce{ expected: 1, given: 2 },
+        "Incorrect nonce: given=2 expected=1"
+    )]
+    #[test_case(
+        InvalidTransactionCause::ExhaustedAccount,
+        "Account exhausted, no more nonce values remain"
     )]
     fn test_error_converts_and_displays(actual: impl Into<Error>, expected: impl Into<String>) {
         let actual = actual.into().to_string();
