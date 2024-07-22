@@ -625,7 +625,7 @@ mod tests {
     }
 
     #[test]
-    fn test_transaction_replay() {
+    fn test_transaction_replay_is_forbidden() {
         // Transaction replay is forbidden by the nonce checking.
 
         // Deploy a contract
