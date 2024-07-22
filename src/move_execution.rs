@@ -1,5 +1,6 @@
 use {
     crate::{
+        genesis::FRAMEWORK_ADDRESS,
         types::transactions::{ExtendedTxEnvelope, TransactionExecutionOutcome},
         InvalidTransactionCause, NonceChecking,
     },
@@ -25,11 +26,6 @@ use {
     move_vm_types::{gas::UnmeteredGasMeter, loaded_data::runtime_types::Type, values::Value},
 };
 
-const FRAMEWORK_ADDRESS: AccountAddress = {
-    let mut buf = [0u8; 32];
-    buf[31] = 1;
-    AccountAddress::new(buf)
-};
 const ACCOUNT_MODULE_NAME: &IdentStr = ident_str!("account");
 const CREATE_ACCOUNT_FUNCTION_NAME: &IdentStr = ident_str!("create_account_if_does_not_exist");
 const GET_NONCE_FUNCTION_NAME: &IdentStr = ident_str!("get_sequence_number");
