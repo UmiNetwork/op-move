@@ -25,7 +25,7 @@ jobs:
       with:
         default: true
         profile: minimal
-        toolchain: stabl
+        toolchain: stable
       # Run cargo fmt to check code formatting
     - name: Run cargo fmt
       run: cargo fmt -- --check

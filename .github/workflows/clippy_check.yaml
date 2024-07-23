@@ -17,23 +17,23 @@ jobs:
     clippy_check:
       name: Clippy Check
       runs-on: macos-latest
-    permissions:
-      contents: write
-    steps:
-      # Checkout the repository
-      - name: Checkout Code
-        uses: actions/checkout@v4.1.7
-      # Set up the Rust toolchain with clippy
-      - name: Set Up Rust Toolchain With Clippy
-        uses: actions-rs/toolchain@v1.0.6
-        with:
-          components: clippy
-          default: true
-          profile: minimal
-          toolchain: stable
-      # Run clippy to check code for lints
-      - name: Run Clippy Check
-        uses: actions-rs/clippy-check@v1.0.7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-features
+      permissions:
+        contents: write
+      steps:
+        # Checkout the repository
+        - name: Checkout Code
+          uses: actions/checkout@v4.1.7
+        # Set up the Rust toolchain with clippy
+        - name: Set Up Rust Toolchain With Clippy
+          uses: actions-rs/toolchain@v1.0.6
+          with:
+            components: clippy
+            default: true
+            profile: minimal
+            toolchain: stable
+        # Run clippy to check code for lints
+        - name: Run Clippy Check
+          uses: actions-rs/clippy-check@v1.0.7
+          with:
+            token: ${{ secrets.GITHUB_TOKEN }}
+            args: --all-features
