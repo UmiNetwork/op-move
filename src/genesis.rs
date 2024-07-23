@@ -96,7 +96,7 @@ mod tests {
     use aptos_framework::ReleaseBundle;
     use move_vm_test_utils::InMemoryStorage;
     use once_cell::sync::Lazy;
-    use std::process::Command;
+    use std::{path::PathBuf, process::Command};
 
     #[test]
     fn test_deploy_framework() {
@@ -120,9 +120,7 @@ mod tests {
     }
 
     #[cfg(unix)]
-    // const CUSTOM_RELEASE_BUNDLE_BYTES: &[u8] = include_bytes!("../custom/custom.mrb");
-    const CUSTOM_RELEASE_BUNDLE_BYTES: &[u8] = include_bytes!("../custom/bin/head.mrb");
-
+    const CUSTOM_RELEASE_BUNDLE_BYTES: &[u8] = include_bytes!("../custom/custom.mrb");
     #[cfg(windows)]
     const CUSTOM_RELEASE_BUNDLE_BYTES: &[u8] = include_bytes!("../custom/custom.mrb");
 
@@ -135,33 +133,42 @@ mod tests {
     }
 
     #[test]
-    fn test_deploy_custom_framework() {
+    fn test_aptos_framework_custom_release() {
+        let packages = vec![
+            PathBuf::from("move-stdlib"),
+            PathBuf::from("aptos-stdlib"),
+            PathBuf::from("aptos-framework"),
+            PathBuf::from("aptos-token"),
+            PathBuf::from("aptos-token-objects"),
+        ];
+
+        let rust_bindings = vec!["".to_string(); 5];
+        let output = PathBuf::from("custom.mrb");
+        let mut command = Command::new("../custom/bin/aptos-framework");
+
+        command
+            .current_dir("custom")
+            .arg("custom")
+            .arg("--skip-attribute-checks")
+            .arg("--output")
+            .arg(output);
+
+        for package in &packages {
+            command.arg("--packages").arg(package);
+        }
+        for binding in &rust_bindings {
+            command.arg("--rust-bindings").arg(binding);
+        }
+
+        let output = command.output().expect("Failed to execute command");
+        println!("Status: {}", output.status);
+        println!("Stdout: {}", String::from_utf8_lossy(&output.stdout));
+        println!("Stderr: {}", String::from_utf8_lossy(&output.stderr));
+
         const CUSTOM_RELEASE_BUNDLE_MODULES_LEN: usize = 77;
-
-        let framework = custom_release_bundle();
-
         assert_eq!(
-            framework.code_and_compiled_modules().len(),
+            custom_release_bundle().code_and_compiled_modules().len(),
             CUSTOM_RELEASE_BUNDLE_MODULES_LEN
         );
-    }
-
-    #[test]
-    fn test_cargo_command() {
-        // Define the cargo command and its arguments
-        let output = Command::new("aptos-framework")
-            .current_dir("custom/bin")
-            .args(["release"])
-            .output()
-            .expect("Failed to execute cargo command");
-
-        // Check if the command was successful
-        if output.status.success() {
-            // Print the stdout
-            println!("Output: {}", String::from_utf8_lossy(&output.stdout));
-        } else {
-            // Print the stderr
-            eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-        }
     }
 }
