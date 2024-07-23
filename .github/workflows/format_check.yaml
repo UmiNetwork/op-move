@@ -22,10 +22,10 @@ jobs:
       # Set up the Rust toolchain
     - name: Set Up Rust Toolchain
       uses: actions-rs/toolchain@v1.0.6
-        with:
-          default: true
-          profile: minimal
-          toolchain: stabl
+      with:
+        default: true
+        profile: minimal
+        toolchain: stabl
       # Run cargo fmt to check code formatting
     - name: Run cargo fmt
       run: cargo fmt -- --check
