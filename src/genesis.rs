@@ -54,7 +54,7 @@ const fn small_object_id(value: u8) -> ObjectID {
     ObjectID::from_single_byte(value)
 }
 
-/// Initializes the in-memory storage with integrates the Aptos and Sui frameworks.
+/// Initializes the in-memory storage with Aptos and Sui frameworks.
 pub fn init_storage(storage: &mut impl Storage<Err = PartialVMError>) {
     let (change_set, table_change_set) =
         deploy_framework(storage).expect("All bundle modules should be valid");
