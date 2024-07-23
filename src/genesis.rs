@@ -2,7 +2,6 @@ use {
     crate::storage::Storage,
     crate::{move_execution::create_move_vm, state_actor::head_release_bundle},
     aptos_table_natives::{NativeTableContext, TableChange, TableChangeSet},
-    lazy_static::lazy_static,
     move_binary_format::errors::PartialVMError,
     move_core_types::{
         account_address::AccountAddress,
@@ -13,7 +12,6 @@ use {
     std::collections::BTreeMap,
     std::fs,
     std::path::PathBuf,
-    std::str::FromStr,
     sui_framework::SystemPackage,
     sui_types::base_types::ObjectID,
 };
@@ -23,12 +21,19 @@ const SUI_SNAPSHOT_NAME: &str = "sui.mrb";
 pub const FRAMEWORK_ADDRESS: AccountAddress = AccountAddress::ONE;
 pub const TOKEN_ADDRESS: AccountAddress = AccountAddress::THREE;
 pub const TOKEN_OBJECT_ADDRESS: AccountAddress = AccountAddress::FOUR;
+pub const SUI_STDLIB_ADDRESS: AccountAddress = small_account_address(0x21);
+pub const SUI_FRAMEWORK_ADDRESS: AccountAddress = small_account_address(0x22);
+pub const SUI_STDLIB_PACKAGE_ID: ObjectID = small_object_id(0x21);
+pub const SUI_FRAMEWORK_PACKAGE_ID: ObjectID = small_object_id(0x22);
 
-lazy_static! {
-    static ref SUI_STDLIB_ADDRESS: AccountAddress = AccountAddress::from_str("0x21").unwrap();
-    static ref SUI_FRAMEWORK_ADDRESS: AccountAddress = AccountAddress::from_str("0x22").unwrap();
-    static ref SUI_STDLIB_PACKAGE_ID: ObjectID = ObjectID::from_str("0x21").unwrap();
-    static ref SUI_FRAMEWORK_PACKAGE_ID: ObjectID = ObjectID::from_str("0x22").unwrap();
+const fn small_account_address(value: u8) -> AccountAddress {
+    let mut buf = [0u8; 32];
+    buf[31] = value;
+    AccountAddress::new(buf)
+}
+
+const fn small_object_id(value: u8) -> ObjectID {
+    ObjectID::from_single_byte(value)
 }
 
 /// Initializes the in-memory storage with integrates the Aptos and Sui frameworks.
@@ -127,8 +132,8 @@ fn deploy_sui_framework(session: &mut Session) -> anyhow::Result<()> {
         .to_owned();
 
     let mut gas = UnmeteredGasMeter;
-    session.publish_module_bundle(stdlib.bytes, *SUI_STDLIB_ADDRESS, &mut gas)?;
-    session.publish_module_bundle(framework.bytes, *SUI_FRAMEWORK_ADDRESS, &mut gas)?;
+    session.publish_module_bundle(stdlib.bytes, SUI_STDLIB_ADDRESS, &mut gas)?;
+    session.publish_module_bundle(framework.bytes, SUI_FRAMEWORK_ADDRESS, &mut gas)?;
     Ok(())
 }
 
