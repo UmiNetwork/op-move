@@ -1,8 +1,7 @@
-use aptos_framework::ReleaseBundle;
-use once_cell::sync::Lazy;
 use {
     crate::move_execution::create_move_vm,
     crate::storage::Storage,
+    aptos_framework::ReleaseBundle,
     aptos_table_natives::{NativeTableContext, TableChange, TableChangeSet},
     move_binary_format::errors::PartialVMError,
     move_core_types::{
@@ -11,6 +10,7 @@ use {
     },
     move_vm_runtime::{native_extensions::NativeContextExtensions, session::Session},
     move_vm_types::gas::UnmeteredGasMeter,
+    once_cell::sync::Lazy,
     std::collections::BTreeMap,
     std::fs,
     std::path::PathBuf,
@@ -18,8 +18,8 @@ use {
     sui_types::base_types::ObjectID,
 };
 
-const CRATE_ROOT: &str = env!("CARGO_MANIFEST_DIR");
-const SUI_SNAPSHOT_NAME: &str = "sui.mrb";
+pub const CRATE_ROOT: &str = env!("CARGO_MANIFEST_DIR");
+pub const SUI_SNAPSHOT_NAME: &str = "sui.mrb";
 pub const FRAMEWORK_ADDRESS: AccountAddress = AccountAddress::ONE;
 pub const TOKEN_ADDRESS: AccountAddress = AccountAddress::THREE;
 pub const TOKEN_OBJECT_ADDRESS: AccountAddress = AccountAddress::FOUR;
@@ -39,11 +39,6 @@ static APTOS_RELEASE_BUNDLE: Lazy<ReleaseBundle> = Lazy::new(|| {
     bcs::from_bytes::<ReleaseBundle>(APTOS_RELEASE_BUNDLE_BYTES).expect("bcs should succeed")
 });
 
-/// Returns the release bundle for the current code.
-pub fn load_aptos_framework_snapshot() -> &'static ReleaseBundle {
-    &APTOS_RELEASE_BUNDLE
-}
-
 const fn small_account_address(value: u8) -> AccountAddress {
     let mut buf = [0u8; 32];
     buf[31] = value;
@@ -52,6 +47,20 @@ const fn small_account_address(value: u8) -> AccountAddress {
 
 const fn small_object_id(value: u8) -> ObjectID {
     ObjectID::from_single_byte(value)
+}
+
+/// Returns the Aptos framework release bundle
+pub fn load_aptos_framework_snapshot() -> &'static ReleaseBundle {
+    &APTOS_RELEASE_BUNDLE
+}
+
+/// Returns the Sui framework release bundle
+pub fn load_sui_framework_snapshot() -> anyhow::Result<BTreeMap<ObjectID, SystemPackage>> {
+    let snapshot_path = PathBuf::from(CRATE_ROOT).join(SUI_SNAPSHOT_NAME);
+    let binary = fs::read(snapshot_path)?;
+    let snapshots: Vec<SystemPackage> = bcs::from_bytes(&binary)?;
+    let packages = snapshots.into_iter().map(|pkg| (pkg.id, pkg)).collect();
+    Ok(packages)
 }
 
 /// Initializes the in-memory storage with Aptos and Sui frameworks.
@@ -139,7 +148,7 @@ fn deploy_aptos_framework(session: &mut Session) -> anyhow::Result<()> {
 
 fn deploy_sui_framework(session: &mut Session) -> anyhow::Result<()> {
     // Load the framework packages from the framework snapshot
-    let snapshots = load_sui_bytecode_snapshot()?;
+    let snapshots = load_sui_framework_snapshot()?;
     let stdlib = snapshots
         .get(&SUI_STDLIB_PACKAGE_ID)
         .expect("Sui Move Stdlib package should exist in snapshot")
@@ -153,14 +162,6 @@ fn deploy_sui_framework(session: &mut Session) -> anyhow::Result<()> {
     session.publish_module_bundle(stdlib.bytes, SUI_STDLIB_ADDRESS, &mut gas)?;
     session.publish_module_bundle(framework.bytes, SUI_FRAMEWORK_ADDRESS, &mut gas)?;
     Ok(())
-}
-
-fn load_sui_bytecode_snapshot() -> anyhow::Result<BTreeMap<ObjectID, SystemPackage>> {
-    let snapshot_path = PathBuf::from(CRATE_ROOT).join(SUI_SNAPSHOT_NAME);
-    let binary = fs::read(snapshot_path)?;
-    let snapshots: Vec<SystemPackage> = bcs::from_bytes(&binary)?;
-    let packages = snapshots.into_iter().map(|pkg| (pkg.id, pkg)).collect();
-    Ok(packages)
 }
 
 #[cfg(test)]
@@ -179,7 +180,7 @@ mod tests {
             .code_and_compiled_modules()
             .len();
         assert_eq!(aptos_framework_len, APTOS_MODULES_LEN);
-        let sui_framework_len = load_sui_bytecode_snapshot()
+        let sui_framework_len = load_sui_framework_snapshot()
             .unwrap()
             .iter()
             .map(|(_id, pkg)| pkg.modules())

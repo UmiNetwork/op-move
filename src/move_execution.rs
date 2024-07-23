@@ -299,7 +299,7 @@ fn evm_address_to_move_address(address: &alloy_primitives::Address) -> AccountAd
 mod tests {
     use {
         super::*,
-        crate::{genesis::load_aptos_framework_snapshot, tests::signer::Signer},
+        crate::{genesis::init_storage, tests::signer::Signer},
         alloy::network::TxSignerSync,
         alloy_consensus::{transaction::TxEip1559, SignableTransaction},
         alloy_primitives::{address, Address},
@@ -842,10 +842,7 @@ mod tests {
 
     fn deploy_contract(module_name: &str, signer: &mut Signer) -> (ModuleId, InMemoryStorage) {
         let mut state = InMemoryStorage::new();
-
-        for (bytes, module) in load_aptos_framework_snapshot().code_and_compiled_modules() {
-            state.publish_or_overwrite_module(module.self_id(), bytes.to_vec());
-        }
+        init_storage(&mut state);
 
         let move_address = evm_address_to_move_address(&EVM_ADDRESS);
 
