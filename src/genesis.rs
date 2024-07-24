@@ -92,7 +92,6 @@ fn deploy_framework(storage: &mut InMemoryStorage) -> anyhow::Result<(ChangeSet,
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::state_actor::head_release_bundle;
     use aptos_framework::ReleaseBundle;
     use move_vm_test_utils::InMemoryStorage;
     use once_cell::sync::Lazy;

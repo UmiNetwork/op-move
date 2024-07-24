@@ -5,35 +5,25 @@ on:
     branches:
       - main
   pull_request:
-    branches:
-      - '*'
 
-# Make sure CI fails on all warnings, including clippy lints
+# Make sure CI fails on all warnings, including Clippy lints
 env:
-  CARGO_TERM_COLOR: always
   RUSTFLAGS: "-Dwarnings --cfg tokio_unstable"
+  CARGO_TERM_COLOR: always
 
 jobs:
     clippy_check:
-      name: Clippy Check
-      runs-on: macos-latest
-      permissions:
-        contents: write
+      name: latest
+      permissions: write-all
+      runs-on: ubuntu-latest
       steps:
-        # Checkout the repository
-        - name: Checkout Code
-          uses: actions/checkout@v4.1.7
-        # Set up the Rust toolchain with clippy
-        - name: Set Up Rust Toolchain With Clippy
-          uses: actions-rs/toolchain@v1.0.6
+        - uses: actions/checkout@v4
+        - uses: actions-rs/toolchain@v1
           with:
+            toolchain: stable
             components: clippy
             default: true
-            profile: minimal
-            toolchain: stable
-        # Run clippy to check code for lints
-        - name: Run Clippy Check
-          uses: actions-rs/clippy-check@v1.0.7
+        - uses: actions-rs/clippy-check@v1
           with:
             token: ${{ secrets.GITHUB_TOKEN }}
             args: --all-features

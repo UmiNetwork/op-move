@@ -1,4 +1,4 @@
-name: Format Check
+name: Build and Run Tests
 
 on:
   push:
@@ -6,11 +6,12 @@ on:
       - main
   pull_request:
 
-env:
+env: 
   CARGO_TERM_COLOR: always
 
+
 jobs:
-  format_check:
+  build_and_run_tests:
     name: latest
     runs-on: ubuntu-latest
     steps:
@@ -19,5 +20,5 @@ jobs:
         with:
           default: true
           toolchain: stable
-      - name: format
-        run: cargo fmt -- --check
+      - name: test
+        run: cargo test -- --skip integration
