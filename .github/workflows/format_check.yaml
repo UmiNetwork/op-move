@@ -5,19 +5,27 @@ on:
     branches:
       - main
   pull_request:
+    branches:
+      - '*'
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   format_check:
-    name: latest
-    runs-on: ubuntu-latest
+    name: Format Check
+    runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
-        with:
-          default: true
-          toolchain: stable
-      - name: format
-        run: cargo fmt -- --check
+      # Checkout the repository
+    - name: Checkout Code
+      uses: actions/checkout@v4.1.7
+      # Set up the Rust toolchain
+    - name: Set Up Rust Toolchain
+      uses: actions-rs/toolchain@v1.0.6
+      with:
+        default: true
+        profile: minimal
+        toolchain: stable
+      # Run cargo fmt to check code formatting
+    - name: Run cargo fmt
+      run: cargo fmt -- --check
