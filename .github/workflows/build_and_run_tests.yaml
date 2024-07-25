@@ -1,4 +1,4 @@
-name: Rust CI
+name: Build And Run Tests
 
 on:
   push:
@@ -13,14 +13,14 @@ env:
 
 jobs:
   test:
-    name: Rust CI
+    name: Build And Run Tests
     runs-on: macos-latest
     steps:
       # Checkout the repository
-    - name: Checkout code
+    - name: Checkout Code
       uses: actions/checkout@v4.1.7
       # Set up the Rust toolchain
-    - name: Set up Rust Toolchain
+    - name: Set Up Rust Toolchain
       uses: actions-rs/toolchain@v1.0.6
       with:
         toolchain: stable
@@ -29,6 +29,6 @@ jobs:
       # Install dependencies
     - name: Install Dependencies
       run: cargo fetch
-      # Run tests, skipping integration tests
+      # Bulild and run tests, skipping integration tests
     - name: Run Tests
       run: cargo test -- --skip integration
