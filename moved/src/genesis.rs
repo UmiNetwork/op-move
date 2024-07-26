@@ -169,7 +169,6 @@ fn deploy_sui_framework(session: &mut Session) -> anyhow::Result<()> {
 #[cfg(test)]
 mod tests {
     use std::process::Command;
-
     use super::*;
     use aptos_framework::{BuildOptions, BuiltPackage, ReleasePackage};
     use move_vm_test_utils::InMemoryStorage;
