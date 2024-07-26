@@ -168,7 +168,10 @@ fn deploy_sui_framework(session: &mut Session) -> anyhow::Result<()> {
 
 #[cfg(test)]
 mod tests {
+    use std::process::Command;
+
     use super::*;
+    use aptos_framework::{BuildOptions, BuiltPackage, ReleasePackage};
     use move_vm_test_utils::InMemoryStorage;
 
     // Aptos framework has 113 modules and Sui has 70. They are kept mutually exclusive.
@@ -192,5 +195,111 @@ mod tests {
         let mut storage = InMemoryStorage::new();
         let (change_set, _) = deploy_framework(&mut storage).unwrap();
         assert_eq!(change_set.modules().count(), TOTAL_MODULES_LEN);
+    }
+
+    #[cfg(unix)]
+    const CUSTOM_RELEASE_BUNDLE_BYTES: &[u8] = include_bytes!("../../custom/custom.mrb");
+    #[cfg(windows)]
+    const CUSTOM_RELEASE_BUNDLE_BYTES: &[u8] = include_bytes!("../../custom/custom.mrb");
+
+    static CUSTOM_RELEASE_BUNDLE: Lazy<ReleaseBundle> = Lazy::new(|| {
+        bcs::from_bytes::<ReleaseBundle>(CUSTOM_RELEASE_BUNDLE_BYTES).expect("bcs succeeds")
+    });
+
+    fn custom_release_bundle() -> &'static ReleaseBundle {
+        &CUSTOM_RELEASE_BUNDLE
+    }
+
+    #[test]
+    fn test_aptos_framework_custom_release() {
+        let packages = vec![
+            PathBuf::from("move-stdlib"),
+            PathBuf::from("aptos-stdlib"),
+            PathBuf::from("aptos-framework"),
+            PathBuf::from("aptos-token"),
+            PathBuf::from("aptos-token-objects"),
+        ];
+
+        let rust_bindings = vec!["".to_string(); 5];
+        let output = PathBuf::from("custom.mrb");
+        let mut command = Command::new("../custom/bin/aptos-framework");
+
+        command
+            .current_dir("../custom")
+            .arg("custom")
+            .arg("--skip-attribute-checks")
+            .arg("--output")
+            .arg(output);
+
+        for package in &packages {
+            command.arg("--packages").arg(package);
+        }
+        for binding in &rust_bindings {
+            command.arg("--rust-bindings").arg(binding);
+        }
+
+        let output = command.output().expect("Failed to execute command");
+        println!("Status: {}", output.status);
+        println!("Stdout: {}", String::from_utf8_lossy(&output.stdout));
+        println!("Stderr: {}", String::from_utf8_lossy(&output.stderr));
+
+        const CUSTOM_RELEASE_BUNDLE_MODULES_LEN: usize = 77;
+        assert_eq!(
+            custom_release_bundle().code_and_compiled_modules().len(),
+            CUSTOM_RELEASE_BUNDLE_MODULES_LEN
+        );
+    }
+
+    #[test]
+    fn test_genesis_builder() {
+        const APTOS_RELEASE_BUNDLE_BYTES: &[u8] = include_bytes!("../aptos.mrb");
+
+        static APTOS_RELEASE_BUNDLE: Lazy<ReleaseBundle> = Lazy::new(|| {
+            bcs::from_bytes::<ReleaseBundle>(APTOS_RELEASE_BUNDLE_BYTES).expect("bcs succeeds")
+        });
+
+        fn aptos_release_bundle() -> &'static ReleaseBundle {
+            &APTOS_RELEASE_BUNDLE
+        }
+
+        const APTOS_RELEASE_BUNDLE_MODULES_LEN: usize = 77;
+        assert_eq!(
+            aptos_release_bundle().code_and_compiled_modules().len(),
+            APTOS_RELEASE_BUNDLE_MODULES_LEN
+        );
+    }
+
+    // TODO: move to own crate
+    // This is the entire functionaly of the genesis builder crate
+    fn _genesis_builder() {
+        let packages_path = vec![
+            PathBuf::from("../custom/move-stdlib"),
+            PathBuf::from("../custom/aptos-stdlib"),
+            PathBuf::from("../custom/aptos-framework"),
+            PathBuf::from("../custom/aptos-token"),
+            PathBuf::from("../custom/aptos-token-objects"),
+        ];
+
+        let packages = packages_path
+            .iter()
+            .map(|path| {
+                ReleasePackage::new(
+                    BuiltPackage::build(path.to_path_buf(), BuildOptions::default()).unwrap(),
+                )
+                .unwrap()
+            })
+            .collect::<Vec<_>>();
+
+        let release_bundle = ReleaseBundle::new(
+            packages,
+            packages_path
+                .into_iter()
+                .map(|path| path.to_string_lossy().into_owned())
+                .collect(),
+        );
+
+        let binary = bcs::to_bytes(&release_bundle).unwrap();
+        fs::write("aptos.mrb", binary).unwrap();
+        println!("Generated release bundle");
     }
 }
