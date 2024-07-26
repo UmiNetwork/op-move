@@ -19,10 +19,11 @@ use std::str::FromStr;
 use std::time::Duration;
 use tokio::fs;
 
-const GETH_START_IN_MILLIS: u64 = 1_000; // 1 seconds to kick off L1 geth in dev mode
+const GETH_START_IN_SECS: u64 = 1; // 1 seconds to kick off L1 geth in dev mode
 const L2_RPC_URL: &str = "http://localhost:8545";
-const OP_BRIDGE_IN_SECONDS: u64 = 90;
-const OP_START_IN_SECONDS: u64 = 20;
+const OP_BRIDGE_IN_SECS: u64 = 90;
+const OP_START_IN_SECS: u64 = 20;
+const TXN_RECEIPT_WAIT_IN_MILLIS: u64 = 100;
 
 sol!(
     #[sol(rpc)]
@@ -248,7 +249,7 @@ async fn start_geth() -> Result<Child> {
         ])
         .spawn()?;
     // Give a second to settle geth
-    pause(Some(Duration::from_millis(GETH_START_IN_MILLIS)));
+    pause(Some(Duration::from_secs(GETH_START_IN_SECS)));
     Ok(geth_process)
 }
 
@@ -313,7 +314,7 @@ fn init_and_start_op_geth() -> Result<Child> {
         ])
         .spawn()?;
     // Give some time for op-geth to settle
-    pause(Some(Duration::from_millis(GETH_START_IN_MILLIS)));
+    pause(Some(Duration::from_secs(GETH_START_IN_SECS)));
     Ok(op_geth_process)
 }
 
@@ -398,13 +399,13 @@ fn run_op() -> Result<(Child, Child, Child)> {
 }
 
 async fn use_optimism_bridge() -> Result<()> {
-    pause(Some(Duration::from_secs(OP_START_IN_SECONDS)));
+    pause(Some(Duration::from_secs(OP_START_IN_SECS)));
     let bridge_address = Address::from_str(&get_deployed_address("L1StandardBridgeProxy")?)?;
     let prefunded_wallet = get_prefunded_wallet().await?;
     send_ethers(&prefunded_wallet, bridge_address, "100", false).await?;
 
     // The tokens sent to the bridge proxy should show up in OP node in over a minute
-    pause(Some(Duration::from_secs(OP_BRIDGE_IN_SECONDS)));
+    pause(Some(Duration::from_secs(OP_BRIDGE_IN_SECS)));
     let balance = get_op_balance(prefunded_wallet.address()).await?;
     assert_eq!(balance, parse_ether("100")?);
     Ok(())
@@ -484,6 +485,7 @@ async fn send_ethers(
         .on_http(Url::parse(&var("L1_RPC_URL")?)?);
     let prev_balance = provider.get_balance(to).await?;
     let receipt = provider.send_transaction(tx).await?;
+    pause(Some(Duration::from_millis(TXN_RECEIPT_WAIT_IN_MILLIS)));
     receipt.watch().await?;
 
     let new_balance = provider.get_balance(to).await?;
