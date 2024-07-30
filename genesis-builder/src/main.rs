@@ -67,14 +67,14 @@ fn bring_in_sui_packages() -> anyhow::Result<()> {
         &ORIGINAL_SUI_STDLIB_PACKAGE_ID.to_hex_literal(),
         &SUI_STDLIB_PACKAGE_ID.to_hex_literal(),
     );
-    fs::write(&move_toml_file, content)?;
+    fs::write(move_toml_file, content)?;
     let move_toml_file = &DIR.join(SUI_FRAMEWORK_FOLDER_NAME).join(MOVE_TOML);
     let content = fs::read_to_string(move_toml_file)?;
     let content = content.replace(
         &ORIGINAL_SUI_FRAMEWORK_PACKAGE_ID.to_hex_literal(),
         &SUI_FRAMEWORK_PACKAGE_ID.to_hex_literal(),
     );
-    fs::write(&move_toml_file, content)?;
+    fs::write(move_toml_file, content)?;
 
     // Remove #[deprecated(..)] annotations as they cause Move compilation issues
     let file = fs::OpenOptions::new()
