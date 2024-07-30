@@ -171,10 +171,10 @@ mod tests {
     use super::*;
     use move_vm_test_utils::InMemoryStorage;
 
-    // Aptos framework has 113 modules and Sui has 70. They are kept mutually exclusive.
+    // Aptos framework has 113 modules and Sui has 69. They are kept mutually exclusive.
     const APTOS_MODULES_LEN: usize = 113;
-    const SUI_MODULES_LEN: usize = 70;
-    const TOTAL_MODULES_LEN: usize = 183;
+    const SUI_MODULES_LEN: usize = 69;
+    const TOTAL_MODULES_LEN: usize = 182;
 
     #[test]
     fn test_deploy_framework() {
