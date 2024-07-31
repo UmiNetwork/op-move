@@ -19,7 +19,7 @@ use {
 };
 
 pub const CRATE_ROOT: &str = env!("CARGO_MANIFEST_DIR");
-pub const APTOS_SNAPSHOT_NAME: &str = "head.mrb";
+pub const APTOS_SNAPSHOT_NAME: &str = "aptos.mrb";
 pub const SUI_SNAPSHOT_NAME: &str = "sui.mrb";
 pub const FRAMEWORK_ADDRESS: AccountAddress = AccountAddress::ONE;
 pub const TOKEN_ADDRESS: AccountAddress = AccountAddress::THREE;
