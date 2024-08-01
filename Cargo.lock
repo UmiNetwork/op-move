@@ -3913,6 +3913,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "genesis-builder"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "aptos-framework",
+ "bcs 0.1.3",
+ "move-compiler 0.0.1 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
+ "move-core-types 0.0.4 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
+ "move-package 0.1.0 (git+https://github.com/MystenLabs/sui?tag=testnet-v1.28.3)",
+ "once_cell",
+ "sui-framework",
+ "sui-move-build",
+ "sui-types",
+]
+
+[[package]]
 name = "getrandom"
 version = "0.1.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"

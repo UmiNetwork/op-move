@@ -19,11 +19,11 @@ use {
 };
 
 pub const CRATE_ROOT: &str = env!("CARGO_MANIFEST_DIR");
-pub const APTOS_SNAPSHOT_NAME: &str = "head.mrb";
+pub const APTOS_SNAPSHOT_NAME: &str = "aptos.mrb";
 pub const SUI_SNAPSHOT_NAME: &str = "sui.mrb";
 pub const FRAMEWORK_ADDRESS: AccountAddress = AccountAddress::ONE;
-pub const TOKEN_ADDRESS: AccountAddress = AccountAddress::THREE;
-pub const TOKEN_OBJECT_ADDRESS: AccountAddress = AccountAddress::FOUR;
+pub const TOKEN_ADDRESS: AccountAddress = small_account_address(0x13);
+pub const TOKEN_OBJECT_ADDRESS: AccountAddress = small_account_address(0x14);
 pub const SUI_STDLIB_ADDRESS: AccountAddress = small_account_address(0x21);
 pub const SUI_FRAMEWORK_ADDRESS: AccountAddress = small_account_address(0x22);
 pub const SUI_STDLIB_PACKAGE_ID: ObjectID = small_object_id(0x21);
@@ -171,10 +171,10 @@ mod tests {
     use super::*;
     use move_vm_test_utils::InMemoryStorage;
 
-    // Aptos framework has 113 modules and Sui has 70. They are kept mutually exclusive.
+    // Aptos framework has 113 modules and Sui has 69. They are kept mutually exclusive.
     const APTOS_MODULES_LEN: usize = 113;
-    const SUI_MODULES_LEN: usize = 70;
-    const TOTAL_MODULES_LEN: usize = 183;
+    const SUI_MODULES_LEN: usize = 69;
+    const TOTAL_MODULES_LEN: usize = 182;
 
     #[test]
     fn test_deploy_framework() {
