@@ -31,8 +31,8 @@ mv build/bin/geth ~/go/bin/op-geth # make sure it's saved as op-geth instead of 
 Build and install the Ethereum L1 runner from the [`geth` project](https://github.com/ethereum/go-ethereum).
 ```bash
 git clone https://github.com/ethereum/go-ethereum.git
-git checkout tags/v1.14.5 # or higher
 cd go-ethereum
+git checkout tags/v1.14.5 # or higher
 make geth
 mv build/bin/geth ~/go/bin/geth
 ```
