@@ -14,7 +14,7 @@ git submodule update --init --recursive
 
 Make sure the Optimism binaries are built and are in the PATH, ie under the `go` path.
 ```bash
-cd src/tests/optimism
+cd moved/src/tests/optimism
 make op-node op-batcher op-proposer
 mv op-node/bin/op-node ~/go/bin/
 mv op-batcher/bin/op-batcher ~/go/bin/
