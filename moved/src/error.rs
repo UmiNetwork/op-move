@@ -33,6 +33,10 @@ impl Error {
     pub const fn nonce_invariant_violation(invariant: NonceChecking) -> Self {
         Self::InvariantViolation(InvariantViolation::NonceChecking(invariant))
     }
+
+    pub const fn eth_token_invariant_violation(invariant: EthToken) -> Self {
+        Self::InvariantViolation(InvariantViolation::EthToken(invariant))
+    }
 }
 
 impl<T> From<T> for Error
@@ -94,6 +98,8 @@ pub enum InvalidTransactionCause {
 pub enum InvariantViolation {
     #[error("Nonce check invariant violation: {0}")]
     NonceChecking(NonceChecking),
+    #[error("ETH token invariant violation: {0}")]
+    EthToken(EthToken),
 }
 
 #[derive(Debug, Error)]
@@ -110,6 +116,20 @@ pub enum NonceChecking {
     GetNonceReturnsU64,
     #[error("Function increment_sequence_number always succeeds")]
     IncrementNonceAlwaysSucceeds,
+}
+
+#[derive(Debug, Error)]
+pub enum EthToken {
+    #[error("Function mint always succeeds")]
+    MintAlwaysSucceeds,
+    #[error("Function get_balance always succeeds")]
+    GetBalanceAlwaysSucceeds,
+    #[error("Function get_balance has a return value")]
+    GetBalanceReturnsAValue,
+    #[error("Function get_balance return value can be deserialized")]
+    GetBalanceReturnDeserializes,
+    #[error("Function get_balance returns a value of type u64")]
+    GetBalanceReturnsU64,
 }
 
 #[cfg(test)]

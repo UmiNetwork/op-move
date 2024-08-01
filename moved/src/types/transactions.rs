@@ -81,13 +81,6 @@ pub struct TransactionExecutionOutcome {
 }
 
 impl TransactionExecutionOutcome {
-    pub fn empty_success() -> Self {
-        Self {
-            vm_outcome: Ok(()),
-            changes: ChangeSet::new(),
-        }
-    }
-
     pub fn new(vm_outcome: Result<(), crate::Error>, changes: ChangeSet) -> Self {
         Self {
             vm_outcome,

@@ -6,7 +6,9 @@ use {
     },
     alloy_consensus::TxEnvelope,
     alloy_primitives::TxKind,
+    aptos_framework::natives::event::NativeEventContext,
     aptos_gas_schedule::{MiscGasParameters, NativeGasParameters, LATEST_GAS_FEATURE_VERSION},
+    aptos_table_natives::{NativeTableContext, TableResolver},
     aptos_types::{
         on_chain_config::{Features, TimedFeaturesBuilder},
         transaction::{EntryFunction, Module},
@@ -20,11 +22,14 @@ use {
     move_vm_runtime::{
         module_traversal::{TraversalContext, TraversalStorage},
         move_vm::MoveVM,
+        native_extensions::NativeContextExtensions,
         session::Session,
     },
     move_vm_test_utils::gas_schedule::GasStatus,
     move_vm_types::{gas::UnmeteredGasMeter, loaded_data::runtime_types::Type, values::Value},
 };
+
+mod eth_token;
 
 const ACCOUNT_MODULE_NAME: &IdentStr = ident_str!("account");
 const CREATE_ACCOUNT_FUNCTION_NAME: &IdentStr = ident_str!("create_account_if_does_not_exist");
@@ -43,14 +48,47 @@ pub fn create_move_vm() -> crate::Result<MoveVM> {
     Ok(vm)
 }
 
+pub fn create_vm_session<'l, 'r, S>(vm: &'l MoveVM, state: &'r S) -> Session<'r, 'l>
+where
+    S: MoveResolver<PartialVMError> + TableResolver,
+{
+    let mut native_extensions = NativeContextExtensions::default();
+
+    // Events are used in `eth_token` because it depends on `fungible_asset`.
+    native_extensions.add(NativeEventContext::default());
+
+    // Tables can be used
+    // TODO: what is the right value for txn_hash?
+    native_extensions.add(NativeTableContext::new([0; 32], state));
+
+    vm.new_session_with_extensions(state, native_extensions)
+}
+
 pub fn execute_transaction(
     tx: &ExtendedTxEnvelope,
-    state: &impl MoveResolver<PartialVMError>,
+    state: &(impl MoveResolver<PartialVMError> + TableResolver),
 ) -> crate::Result<TransactionExecutionOutcome> {
     match tx {
-        ExtendedTxEnvelope::DepositedTx(_) => {
-            // TODO: handle DepositedTx case
-            Ok(TransactionExecutionOutcome::empty_success())
+        ExtendedTxEnvelope::DepositedTx(tx) => {
+            // TODO: handle U256 properly
+            let amount = tx.mint.as_limbs()[0].saturating_add(tx.value.as_limbs()[0]);
+            let to = evm_address_to_move_address(&tx.to);
+
+            let move_vm = create_move_vm()?;
+            let mut session = create_vm_session(&move_vm, state);
+            let traversal_storage = TraversalStorage::new();
+            let mut traversal_context = TraversalContext::new(&traversal_storage);
+
+            eth_token::mint_eth(&to, amount, &mut session, &mut traversal_context)?;
+
+            debug_assert!(
+                eth_token::get_eth_balance(&to, &mut session, &mut traversal_context).unwrap()
+                    >= amount,
+                "tokens were minted"
+            );
+
+            let changes = session.finish()?;
+            Ok(TransactionExecutionOutcome::new(Ok(()), changes))
         }
         ExtendedTxEnvelope::Canonical(tx) => {
             // TODO: check tx chain_id
@@ -66,7 +104,7 @@ pub fn execute_transaction(
             };
 
             let move_vm = create_move_vm()?;
-            let mut session = move_vm.new_session(state);
+            let mut session = create_vm_session(&move_vm, state);
             let traversal_storage = TraversalStorage::new();
             let mut traversal_context = TraversalContext::new(&traversal_storage);
 
@@ -299,12 +337,11 @@ fn evm_address_to_move_address(address: &alloy_primitives::Address) -> AccountAd
 mod tests {
     use {
         super::*,
-        crate::{genesis::init_storage, tests::signer::Signer},
+        crate::{genesis::init_storage, tests::signer::Signer, types::transactions::DepositedTx},
         alloy::network::TxSignerSync,
         alloy_consensus::{transaction::TxEip1559, SignableTransaction},
-        alloy_primitives::{address, Address},
+        alloy_primitives::{address, Address, FixedBytes, U256, U64},
         anyhow::Context,
-        aptos_table_natives::NativeTableContext,
         move_binary_format::{
             file_format::{
                 AbilitySet, FieldDefinition, IdentifierIndex, ModuleHandleIndex, SignatureToken,
@@ -323,7 +360,6 @@ mod tests {
             resolver::{ModuleResolver, MoveResolver},
             value::MoveStruct,
         },
-        move_vm_runtime::native_extensions::NativeContextExtensions,
         move_vm_test_utils::InMemoryStorage,
         std::collections::BTreeSet,
     };
@@ -620,6 +656,30 @@ mod tests {
         assert!(changes.is_ok());
     }
 
+    /// Deposits can be made to the L2.
+    #[test]
+    fn test_deposit_tx() {
+        let mut signer = Signer::new(&PRIVATE_KEY);
+        let (_, state) = deploy_contract("natives", &mut signer);
+
+        let mint_amount = U256::from(123u64);
+        let tx = ExtendedTxEnvelope::DepositedTx(DepositedTx {
+            to: EVM_ADDRESS,
+            value: mint_amount,
+            source_hash: FixedBytes::default(),
+            from: EVM_ADDRESS,
+            mint: U256::ZERO,
+            gas: U64::ZERO,
+            is_system_tx: false,
+            data: Vec::new().into(),
+        });
+
+        execute_transaction(&tx, &state)
+            .unwrap()
+            .vm_outcome
+            .unwrap();
+    }
+
     #[test]
     fn test_transaction_replay_is_forbidden() {
         // Transaction replay is forbidden by the nonce checking.
@@ -657,9 +717,7 @@ mod tests {
         let vm = create_move_vm().unwrap();
         let traversal_storage = TraversalStorage::new();
 
-        let mut extensions = NativeContextExtensions::default();
-        extensions.add(NativeTableContext::new([0; 32], &storage));
-        let mut session = vm.new_session_with_extensions(&storage, extensions);
+        let mut session = create_vm_session(&vm, &storage);
         let mut traversal_context = TraversalContext::new(&traversal_storage);
 
         let move_address = evm_address_to_move_address(&EVM_ADDRESS);
