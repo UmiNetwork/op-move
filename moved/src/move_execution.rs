@@ -1,8 +1,7 @@
 use {
     crate::{
-        genesis::FRAMEWORK_ADDRESS,
         types::transactions::{ExtendedTxEnvelope, TransactionExecutionOutcome},
-        InvalidTransactionCause, NonceChecking,
+        InvalidTransactionCause,
     },
     alloy_consensus::TxEnvelope,
     alloy_primitives::TxKind,
@@ -15,10 +14,7 @@ use {
     },
     aptos_vm::natives::aptos_natives,
     move_binary_format::errors::PartialVMError,
-    move_core_types::{
-        account_address::AccountAddress, ident_str, identifier::IdentStr,
-        language_storage::ModuleId, resolver::MoveResolver, value::MoveValue,
-    },
+    move_core_types::{account_address::AccountAddress, resolver::MoveResolver, value::MoveValue},
     move_vm_runtime::{
         module_traversal::{TraversalContext, TraversalStorage},
         move_vm::MoveVM,
@@ -27,14 +23,11 @@ use {
     },
     move_vm_test_utils::gas_schedule::GasStatus,
     move_vm_types::{gas::UnmeteredGasMeter, loaded_data::runtime_types::Type, values::Value},
+    nonces::check_nonce,
 };
 
 mod eth_token;
-
-const ACCOUNT_MODULE_NAME: &IdentStr = ident_str!("account");
-const CREATE_ACCOUNT_FUNCTION_NAME: &IdentStr = ident_str!("create_account_if_does_not_exist");
-const GET_NONCE_FUNCTION_NAME: &IdentStr = ident_str!("get_sequence_number");
-const INCREMENT_NONCE_FUNCTION_NAME: &IdentStr = ident_str!("increment_sequence_number");
+mod nonces;
 
 pub fn create_move_vm() -> crate::Result<MoveVM> {
     let natives = aptos_natives(
@@ -139,90 +132,6 @@ pub fn execute_transaction(
             Ok(TransactionExecutionOutcome::new(vm_outcome, changes))
         }
     }
-}
-
-fn check_nonce(
-    tx_nonce: u64,
-    signer: &AccountAddress,
-    session: &mut Session,
-    traversal_context: &mut TraversalContext,
-) -> Result<(), crate::Error> {
-    let account_module_id = ModuleId::new(FRAMEWORK_ADDRESS, ACCOUNT_MODULE_NAME.into());
-    let addr_arg = bcs::to_bytes(signer).expect("address can serialize");
-    let mut gas_meter = UnmeteredGasMeter;
-
-    session
-        .execute_function_bypass_visibility(
-            &account_module_id,
-            CREATE_ACCOUNT_FUNCTION_NAME,
-            Vec::new(),
-            vec![addr_arg.as_slice()],
-            &mut gas_meter,
-            traversal_context,
-        )
-        .map_err(|_| {
-            crate::Error::nonce_invariant_violation(NonceChecking::AnyAccountCanBeCreated)
-        })?;
-
-    let account_nonce = {
-        let return_values = session
-            .execute_function_bypass_visibility(
-                &account_module_id,
-                GET_NONCE_FUNCTION_NAME,
-                Vec::new(),
-                vec![addr_arg.as_slice()],
-                &mut gas_meter,
-                traversal_context,
-            )
-            .map_err(|_| {
-                crate::Error::nonce_invariant_violation(NonceChecking::GetNonceAlwaysSucceeds)
-            })?
-            .return_values;
-        let (raw_output, layout) =
-            return_values
-                .first()
-                .ok_or(crate::Error::nonce_invariant_violation(
-                    NonceChecking::GetNonceReturnsAValue,
-                ))?;
-        let value = Value::simple_deserialize(raw_output, layout)
-            .ok_or(crate::Error::nonce_invariant_violation(
-                NonceChecking::GetNoneReturnDeserializes,
-            ))?
-            .as_move_value(layout);
-        match value {
-            MoveValue::U64(nonce) => nonce,
-            _ => {
-                return Err(crate::Error::nonce_invariant_violation(
-                    NonceChecking::GetNonceReturnsU64,
-                ));
-            }
-        }
-    };
-
-    if tx_nonce != account_nonce {
-        Err(InvalidTransactionCause::IncorrectNonce {
-            expected: account_nonce,
-            given: tx_nonce,
-        })?;
-    }
-    if account_nonce == u64::MAX {
-        Err(InvalidTransactionCause::ExhaustedAccount)?;
-    }
-
-    session
-        .execute_function_bypass_visibility(
-            &account_module_id,
-            INCREMENT_NONCE_FUNCTION_NAME,
-            Vec::new(),
-            vec![addr_arg.as_slice()],
-            &mut gas_meter,
-            traversal_context,
-        )
-        .map_err(|_| {
-            crate::Error::nonce_invariant_violation(NonceChecking::IncrementNonceAlwaysSucceeds)
-        })?;
-
-    Ok(())
 }
 
 fn execute_entry_function(
@@ -365,7 +274,8 @@ mod tests {
     };
 
     const EVM_ADDRESS: Address = address!("8fd379246834eac74b8419ffda202cf8051f7a03");
-    // The address corresponding to this private key is 0x8fd379246834eac74B8419FfdA202CF8051F7A03
+
+    /// The address corresponding to this private key is 0x8fd379246834eac74B8419FfdA202CF8051F7A03
     const PRIVATE_KEY: [u8; 32] = [0xaa; 32];
 
     #[test]
