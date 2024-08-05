@@ -38,7 +38,7 @@ static TARGET_ROOT: Lazy<PathBuf> = Lazy::new(|| {
         .join("target")
 });
 static MOVED_FRAMEWORK_DIR: Lazy<PathBuf> =
-    Lazy::new(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("moved-framework"));
+    Lazy::new(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("framework"));
 static APTOS_DIR: Lazy<PathBuf> = Lazy::new(|| TARGET_ROOT.join("aptos-core"));
 static APTOS_FRAMEWORK_DIR: Lazy<PathBuf> =
     Lazy::new(|| APTOS_DIR.join("aptos-move").join("framework"));
