@@ -14,7 +14,7 @@ git submodule update --init --recursive
 
 Make sure the Optimism binaries are built and are in the PATH, ie under the `go` path.
 ```bash
-cd src/tests/optimism
+cd moved/src/tests/optimism
 make op-node op-batcher op-proposer
 mv op-node/bin/op-node ~/go/bin/
 mv op-batcher/bin/op-batcher ~/go/bin/
@@ -31,8 +31,8 @@ mv build/bin/geth ~/go/bin/op-geth # make sure it's saved as op-geth instead of 
 Build and install the Ethereum L1 runner from the [`geth` project](https://github.com/ethereum/go-ethereum).
 ```bash
 git clone https://github.com/ethereum/go-ethereum.git
-git checkout tags/v1.14.5 # or higher
 cd go-ethereum
+git checkout tags/v1.14.5 # or higher
 make geth
 mv build/bin/geth ~/go/bin/geth
 ```
