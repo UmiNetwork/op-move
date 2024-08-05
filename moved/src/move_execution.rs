@@ -888,7 +888,7 @@ mod tests {
         .chain(aptos_framework::named_addresses().clone())
         .collect();
 
-        let base_dir = format!("src/tests/res/{package_name}").replace('_', "-");
+        let base_dir = format!("tests/res/{package_name}").replace('_', "-");
         let compiler = Compiler::from_files(
             vec![format!("{base_dir}/sources/{package_name}.move")],
             // Project needs access to the framework source files to compile

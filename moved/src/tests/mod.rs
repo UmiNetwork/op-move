@@ -1,4 +1,3 @@
-mod integration;
 pub mod signer;
 
 use crate::{validate_jwt, Claims};

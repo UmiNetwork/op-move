@@ -1,3 +1,3 @@
 [submodule "moved/src/tests/optimism"]
-	path = moved/src/tests/optimism
+	path = moved/tests/optimism
 	url = https://github.com/ethereum-optimism/optimism

@@ -28,7 +28,7 @@ const TXN_RECEIPT_WAIT_IN_MILLIS: u64 = 100;
 sol!(
     #[sol(rpc)]
     ERC20,
-    "src/tests/res/ERC20.json"
+    "tests/res/ERC20.json"
 );
 
 #[tokio::test]
@@ -61,7 +61,7 @@ async fn test_on_ethereum() -> Result<()> {
     let op_geth = init_and_start_op_geth()?;
 
     // 8. Start op-move to accept requests from the sequencer
-    std::thread::spawn(crate::main);
+    std::thread::spawn(moved::run);
 
     // 9. In separate threads run op-node, op-batcher, op-proposer
     let (op_node, op_batcher, op_proposer) = run_op()?;
@@ -142,7 +142,7 @@ async fn check_factory_deployer() -> Result<()> {
 fn generate_config() {
     let genesis_file = "optimism/packages/contracts-bedrock/deploy-config/moved.json";
     let output = Command::new("./config.sh")
-        .current_dir("src/tests")
+        .current_dir("tests")
         .env("DEPLOY_CONFIG_PATH", genesis_file)
         .output()
         .context("Call to config failed")
@@ -154,7 +154,7 @@ fn deploy_l1_contracts() {
     let mut salt = [0; 32]; // 32 byte, u256 random salt for CREATE2 contract deployments
     rand_bytes(&mut salt).unwrap();
     let child_process = Command::new("forge")
-        .current_dir("src/tests/optimism/packages/contracts-bedrock")
+        .current_dir("tests/optimism/packages/contracts-bedrock")
         .env("DEPLOYMENT_CONTEXT", "moved")
         .env("DEPLOY_CONFIG_PATH", "deploy-config/moved.json")
         .env("IMPL_SALT", hex::encode(salt))
@@ -176,7 +176,7 @@ fn deploy_l1_contracts() {
 
 fn state_dump() {
     let output = Command::new("forge")
-        .current_dir("src/tests/optimism/packages/contracts-bedrock")
+        .current_dir("tests/optimism/packages/contracts-bedrock")
         // Include contract address path in env var only for the genesis script.
         // Globally setting this will make the L1 contracts deployment fail.
         .env("CONTRACT_ADDRESSES_PATH", "deployments/1337-deploy.json")
@@ -195,7 +195,7 @@ fn state_dump() {
 
 fn generate_genesis() {
     let output = Command::new("op-node")
-        .current_dir("src/tests/optimism/packages/contracts-bedrock")
+        .current_dir("tests/optimism/packages/contracts-bedrock")
         .args([
             "genesis",
             "l2",
@@ -221,7 +221,7 @@ fn generate_genesis() {
 fn generate_jwt() -> Result<()> {
     let mut jwt = [0; 32]; // 32 byte, u256 random authentication key
     rand_bytes(&mut jwt).unwrap();
-    let mut f = File::create("src/tests/optimism/packages/contracts-bedrock/deployments/jwt.txt")?;
+    let mut f = File::create("tests/optimism/packages/contracts-bedrock/deployments/jwt.txt")?;
     f.write_all(hex::encode(jwt).as_bytes())?;
     // Set the env var to read the same secret key from the op-move main method
     set_var("JWT_SECRET", hex::encode(jwt));
@@ -230,7 +230,7 @@ fn generate_jwt() -> Result<()> {
 
 async fn start_geth() -> Result<Child> {
     let geth_process = Command::new("geth")
-        .current_dir("src/tests/optimism/")
+        .current_dir("tests/optimism/")
         .args([
             // Generates blocks as the transactions come in with the --dev flag
             "--dev",
@@ -256,7 +256,7 @@ async fn start_geth() -> Result<Child> {
 fn init_and_start_op_geth() -> Result<Child> {
     // Initialize the datadir with genesis
     let output = Command::new("op-geth")
-        .current_dir("src/tests/optimism/packages/contracts-bedrock")
+        .current_dir("tests/optimism/packages/contracts-bedrock")
         .args([
             "init",
             "--datadir",
@@ -269,7 +269,7 @@ fn init_and_start_op_geth() -> Result<Child> {
     // Run geth as a child process, so we can continue with the test
     let op_geth_process = Command::new("op-geth")
         // Geth fails to start IPC when the directory name is too long, so simply keeping it short
-        .current_dir("src/tests/optimism/packages/contracts-bedrock")
+        .current_dir("tests/optimism/packages/contracts-bedrock")
         .args([
             "--datadir",
             "../../datadir",
@@ -320,7 +320,7 @@ fn init_and_start_op_geth() -> Result<Child> {
 
 fn run_op() -> Result<(Child, Child, Child)> {
     let op_node_process = Command::new("op-node")
-        .current_dir("src/tests/optimism/packages/contracts-bedrock")
+        .current_dir("tests/optimism/packages/contracts-bedrock")
         .args([
             "--l1.beacon.ignore",
             "--l2",
@@ -434,9 +434,9 @@ async fn deploy_erc20_token() -> Result<()> {
 }
 
 fn cleanup_files() -> Result<()> {
-    let base = "src/tests/optimism/packages/contracts-bedrock";
-    std::fs::remove_dir_all("src/tests/optimism/l1_datadir")?;
-    std::fs::remove_dir_all("src/tests/optimism/datadir")?;
+    let base = "tests/optimism/packages/contracts-bedrock";
+    std::fs::remove_dir_all("tests/optimism/l1_datadir")?;
+    std::fs::remove_dir_all("tests/optimism/datadir")?;
     std::fs::remove_dir_all(format!("{}/broadcast", base))?;
     std::fs::remove_dir_all(format!("{}/cache", base))?;
     std::fs::remove_dir_all(format!("{}/forge-artifacts", base))?;
@@ -522,7 +522,7 @@ fn is_program_in_path(program: &str) -> bool {
 
 fn get_deployed_address(field: &str) -> Result<String> {
     // Read the oracle address from the list of deployed contract addresses
-    let filename = "src/tests/optimism/packages/contracts-bedrock/deployments/1337-deploy.json";
+    let filename = "tests/optimism/packages/contracts-bedrock/deployments/1337-deploy.json";
     let mut deploy_file = File::open(filename)?;
     let mut content = String::new();
     deploy_file.read_to_string(&mut content)?;
@@ -532,7 +532,7 @@ fn get_deployed_address(field: &str) -> Result<String> {
 
 async fn get_prefunded_wallet() -> Result<LocalSigner<SigningKey>> {
     // Decrypt the keystore file for L1 dev mode with a blank password
-    let keystore_folder = "src/tests/optimism/l1_datadir/keystore";
+    let keystore_folder = "tests/optimism/l1_datadir/keystore";
     let keystore_path = fs::read_dir(keystore_folder).await?.next_entry().await?;
     let wallet = LocalSigner::decrypt_keystore(keystore_path.expect("No keys").path(), "")?;
     Ok(wallet)

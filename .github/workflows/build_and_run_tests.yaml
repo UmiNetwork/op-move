@@ -6,7 +6,7 @@ on:
       - main
   pull_request:
 
-env: 
+env:
   CARGO_TERM_COLOR: always
 
 
@@ -21,4 +21,4 @@ jobs:
           default: true
           toolchain: stable
       - name: test
-        run: cargo test -- --skip integration
+        run: cargo test -- --skip test_on_ethereum
