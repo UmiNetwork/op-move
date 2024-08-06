@@ -1,19 +1,23 @@
 use {
-    crate::move_execution::create_move_vm,
-    crate::storage::Storage,
+    crate::{move_execution::create_move_vm, storage::Storage},
     aptos_framework::ReleaseBundle,
     aptos_table_natives::{NativeTableContext, TableChange, TableChangeSet},
     move_binary_format::errors::PartialVMError,
     move_core_types::{
         account_address::AccountAddress,
         effects::{ChangeSet, Op},
+        ident_str,
+        language_storage::ModuleId,
+        value::MoveValue,
     },
-    move_vm_runtime::{native_extensions::NativeContextExtensions, session::Session},
+    move_vm_runtime::{
+        module_traversal::{TraversalContext, TraversalStorage},
+        native_extensions::NativeContextExtensions,
+        session::Session,
+    },
     move_vm_types::gas::UnmeteredGasMeter,
     once_cell::sync::Lazy,
-    std::collections::BTreeMap,
-    std::fs,
-    std::path::PathBuf,
+    std::{collections::BTreeMap, fs, path::PathBuf},
     sui_framework::SystemPackage,
     sui_types::base_types::ObjectID,
 };
@@ -110,9 +114,12 @@ fn deploy_framework(
     let mut extensions = NativeContextExtensions::default();
     extensions.add(NativeTableContext::new([0u8; 32], storage));
     let mut session = vm.new_session_with_extensions(storage, extensions);
+    let traversal_storage = TraversalStorage::new();
+    let mut traversal_context = TraversalContext::new(&traversal_storage);
 
     deploy_aptos_framework(&mut session)?;
     deploy_sui_framework(&mut session)?;
+    initialize_eth_token(&mut session, &mut traversal_context)?;
 
     let (change_set, mut extensions) = session.finish_with_extensions()?;
     let table_change_set = extensions
@@ -120,6 +127,25 @@ fn deploy_framework(
         .into_change_set()?;
 
     Ok((change_set, table_change_set))
+}
+
+fn initialize_eth_token(
+    session: &mut Session,
+    traversal_context: &mut TraversalContext,
+) -> anyhow::Result<()> {
+    let module = ModuleId::new(FRAMEWORK_ADDRESS, ident_str!("eth_token").into());
+    let function_name = ident_str!("init_module");
+    let args = bcs::to_bytes(&MoveValue::Signer(FRAMEWORK_ADDRESS))
+        .expect("Serialization of constant must succeed");
+    session.execute_function_bypass_visibility(
+        &module,
+        function_name,
+        Vec::new(),
+        vec![args],
+        &mut UnmeteredGasMeter,
+        traversal_context,
+    )?;
+    Ok(())
 }
 
 fn deploy_aptos_framework(session: &mut Session) -> anyhow::Result<()> {
@@ -171,10 +197,10 @@ mod tests {
     use super::*;
     use move_vm_test_utils::InMemoryStorage;
 
-    // Aptos framework has 113 modules and Sui has 69. They are kept mutually exclusive.
-    const APTOS_MODULES_LEN: usize = 113;
+    // Aptos framework has 114 modules and Sui has 69. They are kept mutually exclusive.
+    const APTOS_MODULES_LEN: usize = 114;
     const SUI_MODULES_LEN: usize = 69;
-    const TOTAL_MODULES_LEN: usize = 182;
+    const TOTAL_MODULES_LEN: usize = APTOS_MODULES_LEN + SUI_MODULES_LEN;
 
     #[test]
     fn test_deploy_framework() {
@@ -184,8 +210,7 @@ mod tests {
         assert_eq!(aptos_framework_len, APTOS_MODULES_LEN);
         let sui_framework_len = load_sui_framework_snapshot()
             .iter()
-            .map(|(_id, pkg)| pkg.modules())
-            .flatten()
+            .flat_map(|(_id, pkg)| pkg.modules())
             .count();
         assert_eq!(sui_framework_len, SUI_MODULES_LEN);
 
