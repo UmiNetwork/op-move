@@ -2,12 +2,18 @@ mod integration;
 pub mod signer;
 
 use crate::{validate_jwt, Claims};
+use alloy_primitives::{address, Address};
 use aptos_types::transaction::{EntryFunction, TransactionPayload};
 use jsonwebtoken::{EncodingKey, Header};
 use move_core_types::account_address::AccountAddress;
 use move_core_types::ident_str;
 use move_core_types::language_storage::{ModuleId, StructTag, TypeTag};
 use std::time::SystemTime;
+
+pub(crate) const EVM_ADDRESS: Address = address!("8fd379246834eac74b8419ffda202cf8051f7a03");
+
+/// The address corresponding to this private key is 0x8fd379246834eac74B8419FfdA202CF8051F7A03
+pub(crate) const PRIVATE_KEY: [u8; 32] = [0xaa; 32];
 
 #[tokio::test]
 async fn test_authorized_request() -> anyhow::Result<()> {
