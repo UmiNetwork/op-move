@@ -895,6 +895,8 @@ dependencies = [
  "once_cell",
  "p256",
  "poseidon-ark",
+ "proptest",
+ "proptest-derive 0.4.0",
  "rand 0.7.3",
  "rand_core 0.5.1",
  "ring 0.16.20",
@@ -1094,6 +1096,34 @@ version = "0.1.0"
 source = "git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0#17cfcf956debafc24392dc47037109036ccdefb9"
 
 [[package]]
+name = "aptos-jellyfish-merkle"
+version = "0.1.0"
+source = "git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0#17cfcf956debafc24392dc47037109036ccdefb9"
+dependencies = [
+ "anyhow",
+ "aptos-crypto",
+ "aptos-crypto-derive",
+ "aptos-experimental-runtimes",
+ "aptos-infallible",
+ "aptos-logger",
+ "aptos-metrics-core",
+ "aptos-storage-interface",
+ "aptos-types",
+ "arr_macro",
+ "bcs 0.1.4",
+ "byteorder",
+ "itertools 0.12.1",
+ "num-derive",
+ "num-traits",
+ "once_cell",
+ "proptest",
+ "proptest-derive 0.4.0",
+ "rayon",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "aptos-log-derive"
 version = "0.1.0"
 source = "git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0#17cfcf956debafc24392dc47037109036ccdefb9"
@@ -1214,12 +1244,42 @@ dependencies = [
 ]
 
 [[package]]
+name = "aptos-protos"
+version = "1.3.0"
+source = "git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0#17cfcf956debafc24392dc47037109036ccdefb9"
+dependencies = [
+ "futures-core",
+ "pbjson",
+ "prost",
+ "serde",
+ "tonic",
+]
+
+[[package]]
 name = "aptos-runtimes"
 version = "0.1.0"
 source = "git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0#17cfcf956debafc24392dc47037109036ccdefb9"
 dependencies = [
  "rayon",
  "tokio",
+]
+
+[[package]]
+name = "aptos-scratchpad"
+version = "0.1.0"
+source = "git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0#17cfcf956debafc24392dc47037109036ccdefb9"
+dependencies = [
+ "aptos-crypto",
+ "aptos-drop-helper",
+ "aptos-experimental-runtimes",
+ "aptos-infallible",
+ "aptos-metrics-core",
+ "aptos-types",
+ "bitvec 1.0.1",
+ "itertools 0.12.1",
+ "once_cell",
+ "rayon",
+ "thiserror",
 ]
 
 [[package]]
@@ -1241,6 +1301,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "aptos-secure-net"
+version = "0.1.0"
+source = "git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0#17cfcf956debafc24392dc47037109036ccdefb9"
+dependencies = [
+ "aptos-logger",
+ "aptos-metrics-core",
+ "aptos-protos",
+ "bcs 0.1.4",
+ "crossbeam-channel",
+ "once_cell",
+ "serde",
+ "thiserror",
+ "tokio",
+ "tonic",
+ "tonic-reflection",
+]
+
+[[package]]
 name = "aptos-speculative-state-helper"
 version = "0.1.0"
 source = "git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0#17cfcf956debafc24392dc47037109036ccdefb9"
@@ -1249,6 +1327,33 @@ dependencies = [
  "aptos-infallible",
  "crossbeam",
  "rayon",
+]
+
+[[package]]
+name = "aptos-storage-interface"
+version = "0.1.0"
+source = "git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0#17cfcf956debafc24392dc47037109036ccdefb9"
+dependencies = [
+ "anyhow",
+ "aptos-crypto",
+ "aptos-experimental-runtimes",
+ "aptos-logger",
+ "aptos-metrics-core",
+ "aptos-scratchpad",
+ "aptos-secure-net",
+ "aptos-types",
+ "aptos-vm",
+ "bcs 0.1.4",
+ "crossbeam-channel",
+ "dashmap",
+ "once_cell",
+ "parking_lot",
+ "proptest",
+ "proptest-derive 0.4.0",
+ "rayon",
+ "serde",
+ "thiserror",
+ "threadpool",
 ]
 
 [[package]]
@@ -1306,6 +1411,8 @@ dependencies = [
  "num-traits",
  "once_cell",
  "passkey-types",
+ "proptest",
+ "proptest-derive 0.4.0",
  "quick_cache",
  "rand 0.7.3",
  "rayon",
@@ -1411,6 +1518,15 @@ dependencies = [
  "move-vm-types 0.1.0 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
  "rand 0.7.3",
  "serde",
+]
+
+[[package]]
+name = "arbitrary"
+version = "1.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d5a26814d8dcb93b0e5a0ff3c6d80a8843bafb21b39e8e18a6f05471870e110"
+dependencies = [
+ "derive_arbitrary",
 ]
 
 [[package]]
@@ -2406,6 +2522,10 @@ name = "cc"
 version = "1.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2aba8f4e9906c7ce3c73463f62a7f0c65183ada1a2d47e397cc8810827f9694f"
+dependencies = [
+ "jobserver",
+ "libc",
+]
 
 [[package]]
 name = "cfg-if"
@@ -3145,6 +3265,17 @@ dependencies = [
  "proc-macro2 1.0.86",
  "quote 1.0.36",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "derive_arbitrary"
+version = "1.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67e77553c4162a157adbf834ebae5b415acbecbeafc7a74b0e886657506a7611"
+dependencies = [
+ "proc-macro2 1.0.86",
+ "quote 1.0.36",
+ "syn 2.0.72",
 ]
 
 [[package]]
@@ -4365,7 +4496,7 @@ dependencies = [
  "hyper 0.14.30",
  "log",
  "rustls 0.20.9",
- "rustls-native-certs",
+ "rustls-native-certs 0.6.3",
  "tokio",
  "tokio-rustls 0.23.4",
  "webpki-roots 0.22.6",
@@ -4762,6 +4893,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "jobserver"
+version = "0.1.32"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "48d1dbcbbeb6a7fec7e059840aa538bd62aaccf972c7346c4d9d2059312853d0"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "js-sys"
 version = "0.3.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4794,7 +4934,7 @@ dependencies = [
  "jsonrpsee-core",
  "jsonrpsee-types",
  "pin-project",
- "rustls-native-certs",
+ "rustls-native-certs 0.6.3",
  "soketto",
  "thiserror",
  "tokio",
@@ -5565,6 +5705,7 @@ version = "0.0.4"
 source = "git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0#17cfcf956debafc24392dc47037109036ccdefb9"
 dependencies = [
  "anyhow",
+ "arbitrary",
  "bcs 0.1.4",
  "bytes",
  "ethnum",
@@ -5573,6 +5714,8 @@ dependencies = [
  "num",
  "once_cell",
  "primitive-types 0.10.1",
+ "proptest",
+ "proptest-derive 0.4.0",
  "rand 0.8.5",
  "ref-cast",
  "serde",
@@ -6249,8 +6392,11 @@ dependencies = [
  "alloy-rlp",
  "alloy-serde",
  "anyhow",
+ "aptos-crypto",
  "aptos-framework",
  "aptos-gas-schedule",
+ "aptos-jellyfish-merkle",
+ "aptos-storage-interface",
  "aptos-table-natives",
  "aptos-types",
  "aptos-vm",
@@ -7037,6 +7183,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
+name = "pbjson"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "048f9ac93c1eab514f9470c4bc8d97ca2a0a236b84f45cc19d69a59fc11467f6"
+dependencies = [
+ "base64 0.13.1",
+ "serde",
+]
+
+[[package]]
 name = "pbkdf2"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7523,6 +7679,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "proptest-derive"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9cf16337405ca084e9c78985114633b6827711d22b9e6ef6c6c0d665eb3f0b6e"
+dependencies = [
+ "proc-macro2 1.0.86",
+ "quote 1.0.36",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "prost"
 version = "0.12.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7543,6 +7710,15 @@ dependencies = [
  "proc-macro2 1.0.86",
  "quote 1.0.36",
  "syn 2.0.72",
+]
+
+[[package]]
+name = "prost-types"
+version = "0.12.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9091c90b0a32608e984ff2fa4091273cbdd755d54935c51d520887f4a1dbd5b0"
+dependencies = [
+ "prost",
 ]
 
 [[package]]
@@ -8211,6 +8387,20 @@ dependencies = [
 
 [[package]]
 name = "rustls"
+version = "0.22.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf4ef73721ac7bcd79b2b315da7779d8fc09718c6b3d2d1b2d94850eb8c18432"
+dependencies = [
+ "log",
+ "ring 0.17.8",
+ "rustls-pki-types",
+ "rustls-webpki 0.102.6",
+ "subtle",
+ "zeroize",
+]
+
+[[package]]
+name = "rustls"
 version = "0.23.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c58f8c84392efc0a126acce10fa59ff7b3d2ac06ab451a33f2741989b806b044"
@@ -8231,6 +8421,19 @@ checksum = "a9aace74cb666635c918e9c12bc0d348266037aa8eb599b5cba565709a8dff00"
 dependencies = [
  "openssl-probe",
  "rustls-pemfile 1.0.4",
+ "schannel",
+ "security-framework",
+]
+
+[[package]]
+name = "rustls-native-certs"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a88d6d420651b496bdd98684116959239430022a115c1240e6c3993be0b15fba"
+dependencies = [
+ "openssl-probe",
+ "rustls-pemfile 2.1.2",
+ "rustls-pki-types",
  "schannel",
  "security-framework",
 ]
@@ -9343,7 +9546,7 @@ dependencies = [
  "parking_lot",
  "prometheus",
  "proptest",
- "proptest-derive",
+ "proptest-derive 0.3.0",
  "rand 0.8.5",
  "roaring",
  "schemars",
@@ -9772,6 +9975,17 @@ dependencies = [
 
 [[package]]
 name = "tokio-rustls"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "775e0c0f0adb3a2f22a00c4745d728b479985fc15ee7ca6a2608388c5569860f"
+dependencies = [
+ "rustls 0.22.4",
+ "rustls-pki-types",
+ "tokio",
+]
+
+[[package]]
+name = "tokio-rustls"
 version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c7bc40d0e5a97695bb96e27995cd3a08538541b0a846f65bba7a359f36700d4"
@@ -9924,6 +10138,7 @@ dependencies = [
  "axum",
  "base64 0.21.7",
  "bytes",
+ "flate2",
  "h2",
  "http 0.2.12",
  "http-body 0.4.6",
@@ -9932,12 +10147,17 @@ dependencies = [
  "percent-encoding",
  "pin-project",
  "prost",
+ "rustls-native-certs 0.7.1",
+ "rustls-pemfile 2.1.2",
+ "rustls-pki-types",
  "tokio",
+ "tokio-rustls 0.25.0",
  "tokio-stream",
  "tower",
  "tower-layer",
  "tower-service",
  "tracing",
+ "zstd",
 ]
 
 [[package]]
@@ -9948,6 +10168,19 @@ checksum = "2cef6e24bc96871001a7e48e820ab240b3de2201e59b517cf52835df2f1d2350"
 dependencies = [
  "async-stream",
  "prost",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+]
+
+[[package]]
+name = "tonic-reflection"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "548c227bd5c0fae5925812c4ec6c66ffcfced23ea370cb823f4d18f0fc1cb6a7"
+dependencies = [
+ "prost",
+ "prost-types",
  "tokio",
  "tokio-stream",
  "tonic",
@@ -11062,4 +11295,33 @@ dependencies = [
  "proc-macro2 1.0.86",
  "quote 1.0.36",
  "syn 2.0.72",
+]
+
+[[package]]
+name = "zstd"
+version = "0.12.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a27595e173641171fc74a1232b7b1c7a7cb6e18222c11e9dfb9888fa424c53c"
+dependencies = [
+ "zstd-safe",
+]
+
+[[package]]
+name = "zstd-safe"
+version = "6.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee98ffd0b48ee95e6c5168188e44a54550b1564d9d530ee21d5f0eaed1069581"
+dependencies = [
+ "libc",
+ "zstd-sys",
+]
+
+[[package]]
+name = "zstd-sys"
+version = "2.0.12+zstd.1.5.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a4e40c320c3cb459d9a9ff6de98cff88f4751ee9275d140e2be94a2b74e4c13"
+dependencies = [
+ "cc",
+ "pkg-config",
 ]
