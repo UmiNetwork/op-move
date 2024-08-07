@@ -1,3 +1,4 @@
+use aptos_jellyfish_merkle::JellyfishMerkleTree;
 use {
     crate::{
         genesis::{config::GenesisConfig, init_storage},
@@ -202,7 +203,7 @@ impl<S: Storage<Err = PartialVMError>> StateActor<S> {
 
         // TODO: derive from execution above
         ExecutionOutcome {
-            state_root: H256::default(),
+            state_root: self.storage.state_root(),
             receipts_root: H256::default(),
             logs_bloom: Bytes::from(vec![0; 256]),
             gas_used: U64::zero(),

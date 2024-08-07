@@ -28,6 +28,9 @@ aptos-gas-schedule = { git = "https://github.com/aptos-labs/aptos-core", tag = "
 aptos-table-natives = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 aptos-types = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 aptos-vm = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
+aptos-jellyfish-merkle = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0", features = ["fuzzing"] }
+aptos-crypto = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
+aptos-storage-interface = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 bcs = { git = "https://github.com/aptos-labs/bcs" }
 clap = { version = "4.5", features = ["derive"] }
 dotenvy = "0.15"
