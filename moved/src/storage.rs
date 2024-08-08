@@ -39,31 +39,7 @@ pub trait Storage {
     fn state_root(&self, block_height: u64) -> H256;
 }
 
-impl Storage for InMemoryStorage {
-    type Err = PartialVMError;
-
-    fn apply(&mut self, changes: ChangeSet) -> Result<(), PartialVMError> {
-        InMemoryStorage::apply(self, changes)
-    }
-
-    fn apply_with_tables(
-        &mut self,
-        changes: ChangeSet,
-        table_changes: TableChangeSet,
-    ) -> Result<(), PartialVMError> {
-        InMemoryStorage::apply_extended(self, changes, table_changes)
-    }
-
-    fn resolver(&self) -> &(impl MoveResolver<Self::Err> + TableResolver) {
-        self
-    }
-
-    fn state_root(&self, _: u64) -> H256 {
-        H256::zero()
-    }
-}
-
-struct InMemoryState {
+pub struct InMemoryState {
     storage: InMemoryStorage,
     tree: MockTreeStore<StateKey>,
 }
@@ -97,7 +73,7 @@ impl Storage for InMemoryState {
         changes: ChangeSet,
         table_changes: TableChangeSet,
     ) -> Result<(), Self::Err> {
-        self.storage.apply_with_tables(changes, table_changes)?;
+        self.storage.apply_extended(changes, table_changes)?;
 
         Ok(())
     }

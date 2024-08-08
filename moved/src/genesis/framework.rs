@@ -196,7 +196,7 @@ fn deploy_sui_framework(session: &mut Session) -> anyhow::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use {super::*, move_vm_test_utils::InMemoryStorage};
+    use {super::*, crate::storage::InMemoryState};
 
     // Aptos framework has 114 modules and Sui has 69. They are kept mutually exclusive.
     const APTOS_MODULES_LEN: usize = 114;
@@ -215,8 +215,8 @@ mod tests {
             .count();
         assert_eq!(sui_framework_len, SUI_MODULES_LEN);
 
-        let mut storage = InMemoryStorage::new();
-        let (change_set, _) = deploy_framework(&mut storage).unwrap();
+        let mut state = InMemoryState::new();
+        let (change_set, _) = deploy_framework(&mut state).unwrap();
         assert_eq!(change_set.modules().count(), TOTAL_MODULES_LEN);
     }
 }

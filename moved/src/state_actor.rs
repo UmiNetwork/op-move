@@ -2,7 +2,7 @@ use {
     crate::{
         genesis::{config::GenesisConfig, init_storage},
         move_execution::execute_transaction,
-        storage::Storage,
+        storage::{InMemoryState, Storage},
         types::{
             engine_api::{
                 ExecutionPayloadV3, GetPayloadResponseV3, PayloadAttributesV3, PayloadId,
@@ -14,7 +14,6 @@ use {
     alloy_rlp::{Decodable, Encodable},
     ethers_core::types::{Bytes, H256, U256, U64},
     move_binary_format::errors::PartialVMError,
-    move_vm_test_utils::InMemoryStorage,
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
 };
@@ -32,9 +31,9 @@ pub struct StateActor<S: Storage> {
     storage: S,
 }
 
-impl StateActor<InMemoryStorage> {
+impl StateActor<InMemoryState> {
     pub fn new_in_memory(rx: Receiver<StateMessage>, genesis_config: GenesisConfig) -> Self {
-        Self::new(rx, InMemoryStorage::new(), genesis_config)
+        Self::new(rx, InMemoryState::new(), genesis_config)
     }
 }
 
