@@ -228,6 +228,7 @@ fn evm_address_to_move_address(address: &alloy_primitives::Address) -> AccountAd
 
 #[cfg(test)]
 mod tests {
+    use crate::storage::{InMemoryState, Storage};
     use {
         super::*,
         crate::{
@@ -254,10 +255,9 @@ mod tests {
         move_core_types::{
             identifier::Identifier,
             language_storage::{ModuleId, StructTag},
-            resolver::{ModuleResolver, MoveResolver},
+            resolver::ModuleResolver,
             value::{MoveStruct, MoveValue},
         },
-        move_vm_test_utils::InMemoryStorage,
         std::collections::BTreeSet,
     };
 
@@ -287,7 +287,7 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let outcome = execute_transaction(&signed_tx, &state, &genesis_config).unwrap();
+        let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
         state.apply(outcome.changes).unwrap();
 
         // Calling the function with an incorrect signer causes an error
@@ -306,7 +306,7 @@ mod tests {
             TxKind::Call(EVM_ADDRESS),
             bcs::to_bytes(&entry_fn).unwrap(),
         );
-        let outcome = execute_transaction(&signed_tx, &state, &genesis_config).unwrap();
+        let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
         let err = outcome.vm_outcome.unwrap_err();
         assert_eq!(
             err.to_string(),
@@ -323,6 +323,7 @@ mod tests {
         };
         let resource: u64 = bcs::from_bytes(
             &state
+                .resolver()
                 .get_resource(&move_address, &struct_tag)
                 .unwrap()
                 .unwrap(),
@@ -344,12 +345,13 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let outcome = execute_transaction(&signed_tx, &state, &genesis_config).unwrap();
+        let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
         state.apply(outcome.changes).unwrap();
 
         // Resource was modified
         let resource: u64 = bcs::from_bytes(
             &state
+                .resolver()
                 .get_resource(&move_address, &struct_tag)
                 .unwrap()
                 .unwrap(),
@@ -363,7 +365,7 @@ mod tests {
         let genesis_config = GenesisConfig::default();
         let module_name = "signer_struct";
         let mut signer = Signer::new(&PRIVATE_KEY);
-        let (module_id, mut storage) = deploy_contract(module_name, &mut signer, &genesis_config);
+        let (module_id, mut state) = deploy_contract(module_name, &mut signer, &genesis_config);
 
         // Call main function with correct signer
         let move_address = evm_address_to_move_address(&EVM_ADDRESS);
@@ -380,9 +382,9 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let outcome = execute_transaction(&signed_tx, &storage, &genesis_config).unwrap();
+        let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
         assert!(outcome.vm_outcome.is_ok());
-        storage.apply(outcome.changes).unwrap();
+        state.apply(outcome.changes).unwrap();
 
         // Call main function with incorrect signer (get an error)
         let input_arg = MoveValue::Struct(MoveStruct::new(vec![MoveValue::Signer(
@@ -400,7 +402,7 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let outcome = execute_transaction(&signed_tx, &storage, &genesis_config).unwrap();
+        let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
         let err = outcome.vm_outcome.unwrap_err();
         assert_eq!(
             err.to_string(),
@@ -427,7 +429,7 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let changes = execute_transaction(&signed_tx, &state, &genesis_config);
+        let changes = execute_transaction(&signed_tx, state.resolver(), &genesis_config);
         assert!(changes.is_ok());
     }
 
@@ -450,7 +452,7 @@ mod tests {
             data: Vec::new().into(),
         });
 
-        execute_transaction(&tx, &state, &genesis_config)
+        execute_transaction(&tx, state.resolver(), &genesis_config)
             .unwrap()
             .vm_outcome
             .unwrap();
@@ -464,7 +466,7 @@ mod tests {
 
         // Deploy a contract
         let mut signer = Signer::new(&PRIVATE_KEY);
-        let (module_id, mut storage) = deploy_contract("natives", &mut signer, &genesis_config);
+        let (module_id, mut state) = deploy_contract("natives", &mut signer, &genesis_config);
 
         // Use a transaction to call a function; this passes
         let entry_fn = EntryFunction::new(
@@ -479,11 +481,11 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let outcome = execute_transaction(&signed_tx, &storage, &genesis_config).unwrap();
-        storage.apply(outcome.changes).unwrap();
+        let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
+        state.apply(outcome.changes).unwrap();
 
         // Send the same transaction again; this fails with a nonce error
-        let err = execute_transaction(&signed_tx, &storage, &genesis_config).unwrap_err();
+        let err = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap_err();
         assert_eq!(err.to_string(), "Incorrect nonce: given=1 expected=2");
     }
 
@@ -528,11 +530,11 @@ mod tests {
         let genesis_config = GenesisConfig::default();
         let module_name = "tables";
         let mut signer = Signer::new(&PRIVATE_KEY);
-        let (module_id, storage) = deploy_contract(module_name, &mut signer, &genesis_config);
+        let (module_id, state) = deploy_contract(module_name, &mut signer, &genesis_config);
         let vm = create_move_vm().unwrap();
         let traversal_storage = TraversalStorage::new();
 
-        let mut session = create_vm_session(&vm, &storage);
+        let mut session = create_vm_session(&vm, state.resolver());
         let mut traversal_context = TraversalContext::new(&traversal_storage);
 
         let move_address = evm_address_to_move_address(&EVM_ADDRESS);
@@ -623,9 +625,9 @@ mod tests {
         // Attempt to deploy the module, but get an error.
         let mut signer = Signer::new(&PRIVATE_KEY);
         // Deploy some other contract to ensure the state is properly initialized.
-        let (_, storage) = deploy_contract("natives", &mut signer, &genesis_config);
+        let (_, state) = deploy_contract("natives", &mut signer, &genesis_config);
         let signed_tx = create_transaction(&mut signer, TxKind::Create, module_bytes);
-        let outcome = execute_transaction(&signed_tx, &storage, &genesis_config).unwrap();
+        let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
         let err = outcome.vm_outcome.unwrap_err();
         assert!(format!("{err:?}").contains("RECURSIVE_STRUCT_DEFINITION"));
     }
@@ -692,10 +694,10 @@ mod tests {
         // Deploy the module.
         let mut signer = Signer::new(&PRIVATE_KEY);
         // Deploy some other contract to ensure the state is properly initialized.
-        let (_, mut storage) = deploy_contract("natives", &mut signer, &genesis_config);
+        let (_, mut state) = deploy_contract("natives", &mut signer, &genesis_config);
         let signed_tx = create_transaction(&mut signer, TxKind::Create, module_bytes);
-        let outcome = execute_transaction(&signed_tx, &storage, &genesis_config).unwrap();
-        storage.apply(outcome.changes).unwrap();
+        let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
+        state.apply(outcome.changes).unwrap();
         let module_id = ModuleId::new(move_address, Identifier::new(module_name).unwrap());
 
         // Call the main function
@@ -712,7 +714,7 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let outcome = execute_transaction(&signed_tx, &storage, &genesis_config).unwrap();
+        let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
         let err = outcome.vm_outcome.unwrap_err();
         assert!(format!("{err:?}").contains("VM_MAX_VALUE_DEPTH_REACHED"));
     }
@@ -721,8 +723,8 @@ mod tests {
         module_name: &str,
         signer: &mut Signer,
         genesis_config: &GenesisConfig,
-    ) -> (ModuleId, InMemoryStorage) {
-        let mut state = InMemoryStorage::new();
+    ) -> (ModuleId, InMemoryState) {
+        let mut state = InMemoryState::new();
         init_storage(genesis_config, &mut state);
 
         let move_address = evm_address_to_move_address(&EVM_ADDRESS);
@@ -730,13 +732,13 @@ mod tests {
         let module_bytes = move_compile(module_name, &move_address).unwrap();
         let signed_tx = create_transaction(signer, TxKind::Create, module_bytes);
 
-        let outcome = execute_transaction(&signed_tx, &state, genesis_config).unwrap();
+        let outcome = execute_transaction(&signed_tx, state.resolver(), genesis_config).unwrap();
         state.apply(outcome.changes).unwrap();
 
         // Code was deployed
         let module_id = ModuleId::new(move_address, Identifier::new(module_name).unwrap());
         assert!(
-            state.get_module(&module_id).unwrap().is_some(),
+            state.resolver().get_module(&module_id).unwrap().is_some(),
             "Code should be deployed"
         );
         (module_id, state)
