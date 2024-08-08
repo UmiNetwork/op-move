@@ -1,4 +1,6 @@
+use aptos_crypto::HashValue;
 use aptos_jellyfish_merkle::mock_tree_store::MockTreeStore;
+use aptos_jellyfish_merkle::{JellyfishMerkleTree, TreeReader};
 use aptos_types::state_store::state_key::StateKey;
 use ethers_core::types::H256;
 use {
@@ -15,7 +17,7 @@ use {
 /// with the [`apply`] operation.
 ///
 /// [`apply`]: Self::apply
-pub trait Storage: MoveResolver<Self::Err> + TableResolver {
+pub trait Storage {
     /// The associated error that can occur on storage operations.
     type Err: Debug;
 
@@ -30,7 +32,11 @@ pub trait Storage: MoveResolver<Self::Err> + TableResolver {
         table_changes: TableChangeSet,
     ) -> Result<(), Self::Err>;
 
-    fn state_root(&self) -> H256;
+    /// Returns a reference to a [`MoveResolver`] that can resolve both resources and modules.
+    fn resolver(&self) -> &(impl MoveResolver<Self::Err> + TableResolver);
+
+    /// Retrieves a state root at `block_height`.
+    fn state_root(&self, block_height: u64) -> H256;
 }
 
 impl Storage for InMemoryStorage {
@@ -48,17 +54,21 @@ impl Storage for InMemoryStorage {
         InMemoryStorage::apply_extended(self, changes, table_changes)
     }
 
-    fn state_root(&self) -> H256 {
+    fn resolver(&self) -> &(impl MoveResolver<Self::Err> + TableResolver) {
+        self
+    }
+
+    fn state_root(&self, _: u64) -> H256 {
         H256::zero()
     }
 }
 
-struct InMemoryBaba {
+struct InMemoryState {
     storage: InMemoryStorage,
     tree: MockTreeStore<StateKey>,
 }
 
-impl InMemoryBaba {
+impl InMemoryState {
     const ALLOW_OVERWRITE: bool = true;
 
     pub fn new() -> Self {
@@ -67,27 +77,68 @@ impl InMemoryBaba {
             tree: MockTreeStore::new(Self::ALLOW_OVERWRITE),
         }
     }
+
+    fn tree(&self) -> JellyfishMerkleTree<impl TreeReader<StateKey>, StateKey> {
+        JellyfishMerkleTree::new(&self.tree)
+    }
+}
+
+impl Storage for InMemoryState {
+    type Err = PartialVMError;
+
+    fn apply(&mut self, changes: ChangeSet) -> Result<(), Self::Err> {
+        self.storage.apply(changes)?;
+
+        Ok(())
+    }
+
+    fn apply_with_tables(
+        &mut self,
+        changes: ChangeSet,
+        table_changes: TableChangeSet,
+    ) -> Result<(), Self::Err> {
+        self.storage.apply_with_tables(changes, table_changes)?;
+
+        Ok(())
+    }
+
+    fn resolver(&self) -> &(impl MoveResolver<Self::Err> + TableResolver) {
+        &self.storage
+    }
+
+    fn state_root(&self, block_height: u64) -> H256 {
+        self.tree().get_root_hash(block_height).unwrap().as_h256()
+    }
+}
+
+trait AsH256 {
+    fn as_h256(&self) -> H256;
+}
+
+impl AsH256 for HashValue {
+    fn as_h256(&self) -> H256 {
+        H256::from_slice(self.as_slice())
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use aptos_crypto::hash::SPARSE_MERKLE_PLACEHOLDER_HASH;
     use aptos_crypto::HashValue;
-    use aptos_jellyfish_merkle::test_helper::ValueBlob;
-    use aptos_jellyfish_merkle::{JellyfishMerkleTree, TreeUpdateBatch};
+    use aptos_jellyfish_merkle::TreeUpdateBatch;
     use aptos_storage_interface::AptosDbError;
     use aptos_types::transaction::Version;
 
-    impl InMemoryBaba {
+    impl InMemoryState {
         pub fn put_value_set_test(
             &self,
             value_set: Vec<(HashValue, Option<&(HashValue, StateKey)>)>,
             version: Version,
         ) -> Result<(HashValue, TreeUpdateBatch<StateKey>), AptosDbError> {
-            let tree = JellyfishMerkleTree::new(&self.tree);
+            let tree = self.tree();
             let mut tree_update_batch = TreeUpdateBatch::new();
             let mut shard_root_nodes = Vec::with_capacity(16);
+
             for shard_id in 0..16 {
                 let value_set_for_shard = value_set
                     .iter()
@@ -112,52 +163,38 @@ mod tests {
 
             Ok((root_hash, tree_update_batch))
         }
-
-        pub fn get(
-            &self,
-            key: HashValue,
-            version: Version,
-        ) -> aptos_storage_interface::Result<Option<HashValue>> {
-            Ok(JellyfishMerkleTree::new(&self.tree)
-                .get_with_proof(key, version)?
-                .0
-                .map(|x| x.0))
-        }
     }
 
     #[test]
-    fn test_insert_to_empty_tree() {
-        let baba = InMemoryBaba::new();
-        let tree = JellyfishMerkleTree::new(&baba.tree);
+    fn test_insert_to_empty_tree_produces_new_state_root() {
+        let state = InMemoryState::new();
 
-        // Tree is initially empty. Root is a null node. We'll insert a key-value pair which creates a
-        // leaf node.
-        let key = HashValue::random();
+        let key = HashValue::zero();
         let state_key = StateKey::raw(&[1u8, 2u8, 3u8, 4u8]);
-        let value_hash = HashValue::random();
+        let value_hash = HashValue::zero();
+        let version = 0;
 
-        // batch version
-        let (_new_root_hash, batch) = baba
-            .put_value_set_test(
-                vec![(key, Some(&(value_hash, state_key)))],
-                0, /* version */
-            )
+        let (new_root_hash, batch) = state
+            .put_value_set_test(vec![(key, Some(&(value_hash, state_key)))], version)
             .unwrap();
-        assert!(batch
-            .stale_node_index_batch
-            .iter()
-            .flatten()
-            .next()
-            .is_none());
 
-        baba.tree.write_tree_update_batch(batch).unwrap();
-        assert_eq!(baba.get(key, 0).unwrap().unwrap(), value_hash);
+        state.tree.write_tree_update_batch(batch).unwrap();
 
-        let (empty_root_hash, batch) = baba
-            .put_value_set_test(vec![(key, None)], 1 /* version */)
+        let actual_state_root = state.state_root(version);
+        let expected_state_root = new_root_hash.as_h256();
+
+        assert_eq!(actual_state_root, expected_state_root);
+
+        let version = 1;
+        let (empty_root_hash, batch) = state
+            .put_value_set_test(vec![(key, None)], version)
             .unwrap();
-        baba.tree.write_tree_update_batch(batch).unwrap();
-        assert_eq!(baba.get(key, 1).unwrap(), None);
-        assert_eq!(empty_root_hash, *SPARSE_MERKLE_PLACEHOLDER_HASH);
+
+        state.tree.write_tree_update_batch(batch).unwrap();
+
+        let actual_state_root = state.state_root(version);
+        let expected_state_root = empty_root_hash.as_h256();
+
+        assert_eq!(actual_state_root, expected_state_root);
     }
 }

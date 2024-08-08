@@ -114,8 +114,8 @@ fn deploy_framework(
 ) -> anyhow::Result<(ChangeSet, TableChangeSet)> {
     let vm = create_move_vm()?;
     let mut extensions = NativeContextExtensions::default();
-    extensions.add(NativeTableContext::new([0u8; 32], storage));
-    let mut session = vm.new_session_with_extensions(storage, extensions);
+    extensions.add(NativeTableContext::new([0u8; 32], storage.resolver()));
+    let mut session = vm.new_session_with_extensions(storage.resolver(), extensions);
     let traversal_storage = TraversalStorage::new();
     let mut traversal_context = TraversalContext::new(&traversal_storage);
 

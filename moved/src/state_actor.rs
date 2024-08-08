@@ -1,4 +1,3 @@
-use aptos_jellyfish_merkle::JellyfishMerkleTree;
 use {
     crate::{
         genesis::{config::GenesisConfig, init_storage},
@@ -190,7 +189,7 @@ impl<S: Storage<Err = PartialVMError>> StateActor<S> {
         // TODO: parallel transaction processing?
         for tx in transactions {
             if let Err(e) =
-                execute_transaction(tx, &self.storage, &self.genesis_config).and_then(|outcome| {
+                execute_transaction(tx, self.storage.resolver(), &self.genesis_config).and_then(|outcome| {
                     // TODO: record success or failure from outcome.vm_outcome
                     self.storage.apply(outcome.changes)?;
                     Ok(())
@@ -200,10 +199,16 @@ impl<S: Storage<Err = PartialVMError>> StateActor<S> {
                 println!("WARN: execution error {e:?}");
             }
         }
+        let block_height = self
+            .block_heights
+            .get(&self.head)
+            .copied()
+            .unwrap_or(U64::one())
+            .as_u64();
 
         // TODO: derive from execution above
         ExecutionOutcome {
-            state_root: self.storage.state_root(),
+            state_root: self.storage.state_root(block_height),
             receipts_root: H256::default(),
             logs_bloom: Bytes::from(vec![0; 256]),
             gas_used: U64::zero(),
