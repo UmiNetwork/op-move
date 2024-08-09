@@ -17,7 +17,7 @@ use {
     },
     aptos_vm::natives::aptos_natives,
     move_binary_format::errors::PartialVMError,
-    move_core_types::{account_address::AccountAddress, resolver::MoveResolver, value::MoveValue},
+    move_core_types::{account_address::AccountAddress, resolver::MoveResolver},
     move_vm_runtime::{
         module_traversal::{TraversalContext, TraversalStorage},
         move_vm::MoveVM,
@@ -248,7 +248,7 @@ mod tests {
             identifier::Identifier,
             language_storage::{ModuleId, StructTag},
             resolver::{ModuleResolver, MoveResolver},
-            value::MoveStruct,
+            value::{MoveStruct, MoveValue},
         },
         move_vm_test_utils::InMemoryStorage,
         std::collections::BTreeSet,
