@@ -1,10 +1,13 @@
 pub use error::*;
 
-use self::types::{
-    jsonrpc::{JsonRpcError, JsonRpcResponse},
-    method_name::MethodName,
-    mirror::MirrorLog,
-    state::StateMessage,
+use self::{
+    genesis::config::GenesisConfig,
+    types::{
+        jsonrpc::{JsonRpcError, JsonRpcResponse},
+        method_name::MethodName,
+        mirror::MirrorLog,
+        state::StateMessage,
+    },
 };
 use clap::Parser;
 use ethers_core::types::{H256, U64};
@@ -60,7 +63,8 @@ static JWTSECRET: Lazy<Vec<u8>> = Lazy::new(|| {
 async fn main() {
     // TODO: think about channel size bound
     let (state_channel, rx) = mpsc::channel(1_000);
-    let state = state_actor::StateActor::new_in_memory(rx);
+    let genesis_config = GenesisConfig::default();
+    let state = state_actor::StateActor::new_in_memory(rx, genesis_config);
 
     let http_state_channel = state_channel.clone();
     let http_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8545));

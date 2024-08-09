@@ -1,6 +1,6 @@
 use {
     crate::{
-        genesis::init_storage,
+        genesis::{config::GenesisConfig, init_storage},
         move_execution::execute_transaction,
         storage::Storage,
         types::{
@@ -21,6 +21,7 @@ use {
 
 #[derive(Debug)]
 pub struct StateActor<S: Storage> {
+    genesis_config: GenesisConfig,
     rx: Receiver<StateMessage>,
     head: H256,
     payload_id: PayloadId,
@@ -32,8 +33,8 @@ pub struct StateActor<S: Storage> {
 }
 
 impl StateActor<InMemoryStorage> {
-    pub fn new_in_memory(rx: Receiver<StateMessage>) -> Self {
-        Self::new(rx, InMemoryStorage::new())
+    pub fn new_in_memory(rx: Receiver<StateMessage>, genesis_config: GenesisConfig) -> Self {
+        Self::new(rx, InMemoryStorage::new(), genesis_config)
     }
 }
 
@@ -48,10 +49,11 @@ impl<S: Storage<Err = PartialVMError> + Send + Sync + 'static> StateActor<S> {
 }
 
 impl<S: Storage<Err = PartialVMError>> StateActor<S> {
-    pub fn new(rx: Receiver<StateMessage>, mut storage: S) -> Self {
-        init_storage(&mut storage);
+    pub fn new(rx: Receiver<StateMessage>, mut storage: S, genesis_config: GenesisConfig) -> Self {
+        init_storage(&genesis_config, &mut storage);
 
         Self {
+            genesis_config,
             rx,
             head: Default::default(),
             payload_id: PayloadId(Default::default()),
@@ -186,11 +188,13 @@ impl<S: Storage<Err = PartialVMError>> StateActor<S> {
     fn execute_transactions(&mut self, transactions: &[ExtendedTxEnvelope]) -> ExecutionOutcome {
         // TODO: parallel transaction processing?
         for tx in transactions {
-            if let Err(e) = execute_transaction(tx, &self.storage).and_then(|outcome| {
-                // TODO: record success or failure from outcome.vm_outcome
-                self.storage.apply(outcome.changes)?;
-                Ok(())
-            }) {
+            if let Err(e) =
+                execute_transaction(tx, &self.storage, &self.genesis_config).and_then(|outcome| {
+                    // TODO: record success or failure from outcome.vm_outcome
+                    self.storage.apply(outcome.changes)?;
+                    Ok(())
+                })
+            {
                 // TODO: proper error handling
                 println!("WARN: execution error {e:?}");
             }

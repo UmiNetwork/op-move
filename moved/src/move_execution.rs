@@ -2,11 +2,12 @@ mod signers;
 
 use {
     crate::{
+        genesis::config::GenesisConfig,
         move_execution::signers::check_signer,
         types::transactions::{ExtendedTxEnvelope, TransactionExecutionOutcome},
         InvalidTransactionCause,
     },
-    alloy_consensus::TxEnvelope,
+    alloy_consensus::{Transaction, TxEnvelope},
     alloy_primitives::TxKind,
     aptos_framework::natives::event::NativeEventContext,
     aptos_gas_schedule::{MiscGasParameters, NativeGasParameters, LATEST_GAS_FEATURE_VERSION},
@@ -17,7 +18,7 @@ use {
     },
     aptos_vm::natives::aptos_natives,
     move_binary_format::errors::PartialVMError,
-    move_core_types::{account_address::AccountAddress, resolver::MoveResolver, value::MoveValue},
+    move_core_types::{account_address::AccountAddress, resolver::MoveResolver},
     move_vm_runtime::{
         module_traversal::{TraversalContext, TraversalStorage},
         move_vm::MoveVM,
@@ -63,6 +64,7 @@ where
 pub fn execute_transaction(
     tx: &ExtendedTxEnvelope,
     state: &(impl MoveResolver<PartialVMError> + TableResolver),
+    genesis_config: &GenesisConfig,
 ) -> crate::Result<TransactionExecutionOutcome> {
     match tx {
         ExtendedTxEnvelope::DepositedTx(tx) => {
@@ -87,7 +89,12 @@ pub fn execute_transaction(
             Ok(TransactionExecutionOutcome::new(Ok(()), changes))
         }
         ExtendedTxEnvelope::Canonical(tx) => {
-            // TODO: check tx chain_id
+            if let Some(chain_id) = tx.chain_id() {
+                if chain_id != genesis_config.chain_id {
+                    return Err(InvalidTransactionCause::IncorrectChainId.into());
+                }
+            }
+
             let sender = tx.recover_signer()?;
             let sender_move_address = evm_address_to_move_address(&sender);
             // TODO: use other tx fields (value, gas limit, etc).
@@ -224,7 +231,7 @@ mod tests {
     use {
         super::*,
         crate::{
-            genesis::init_storage,
+            genesis::{config::CHAIN_ID, init_storage},
             tests::{signer::Signer, EVM_ADDRESS, PRIVATE_KEY},
             types::transactions::DepositedTx,
         },
@@ -248,7 +255,7 @@ mod tests {
             identifier::Identifier,
             language_storage::{ModuleId, StructTag},
             resolver::{ModuleResolver, MoveResolver},
-            value::MoveStruct,
+            value::{MoveStruct, MoveValue},
         },
         move_vm_test_utils::InMemoryStorage,
         std::collections::BTreeSet,
@@ -256,9 +263,10 @@ mod tests {
 
     #[test]
     fn test_execute_counter_contract() {
+        let genesis_config = GenesisConfig::default();
         let module_name = "counter";
         let mut signer = Signer::new(&PRIVATE_KEY);
-        let (module_id, mut state) = deploy_contract(module_name, &mut signer);
+        let (module_id, mut state) = deploy_contract(module_name, &mut signer, &genesis_config);
 
         // Call entry function to create the `Counter` resource
         let move_address = evm_address_to_move_address(&EVM_ADDRESS);
@@ -279,7 +287,7 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let outcome = execute_transaction(&signed_tx, &state).unwrap();
+        let outcome = execute_transaction(&signed_tx, &state, &genesis_config).unwrap();
         state.apply(outcome.changes).unwrap();
 
         // Calling the function with an incorrect signer causes an error
@@ -298,7 +306,7 @@ mod tests {
             TxKind::Call(EVM_ADDRESS),
             bcs::to_bytes(&entry_fn).unwrap(),
         );
-        let outcome = execute_transaction(&signed_tx, &state).unwrap();
+        let outcome = execute_transaction(&signed_tx, &state, &genesis_config).unwrap();
         let err = outcome.vm_outcome.unwrap_err();
         assert_eq!(
             err.to_string(),
@@ -336,7 +344,7 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let outcome = execute_transaction(&signed_tx, &state).unwrap();
+        let outcome = execute_transaction(&signed_tx, &state, &genesis_config).unwrap();
         state.apply(outcome.changes).unwrap();
 
         // Resource was modified
@@ -352,9 +360,10 @@ mod tests {
 
     #[test]
     fn test_execute_signer_struct_contract() {
+        let genesis_config = GenesisConfig::default();
         let module_name = "signer_struct";
         let mut signer = Signer::new(&PRIVATE_KEY);
-        let (module_id, mut storage) = deploy_contract(module_name, &mut signer);
+        let (module_id, mut storage) = deploy_contract(module_name, &mut signer, &genesis_config);
 
         // Call main function with correct signer
         let move_address = evm_address_to_move_address(&EVM_ADDRESS);
@@ -371,7 +380,7 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let outcome = execute_transaction(&signed_tx, &storage).unwrap();
+        let outcome = execute_transaction(&signed_tx, &storage, &genesis_config).unwrap();
         assert!(outcome.vm_outcome.is_ok());
         storage.apply(outcome.changes).unwrap();
 
@@ -391,7 +400,7 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let outcome = execute_transaction(&signed_tx, &storage).unwrap();
+        let outcome = execute_transaction(&signed_tx, &storage, &genesis_config).unwrap();
         let err = outcome.vm_outcome.unwrap_err();
         assert_eq!(
             err.to_string(),
@@ -401,8 +410,9 @@ mod tests {
 
     #[test]
     fn test_execute_natives_contract() {
+        let genesis_config = GenesisConfig::default();
         let mut signer = Signer::new(&PRIVATE_KEY);
-        let (module_id, state) = deploy_contract("natives", &mut signer);
+        let (module_id, state) = deploy_contract("natives", &mut signer, &genesis_config);
 
         // Call entry function to run the internal native hashing methods
         let entry_fn = EntryFunction::new(
@@ -417,15 +427,16 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let changes = execute_transaction(&signed_tx, &state);
+        let changes = execute_transaction(&signed_tx, &state, &genesis_config);
         assert!(changes.is_ok());
     }
 
     /// Deposits can be made to the L2.
     #[test]
     fn test_deposit_tx() {
+        let genesis_config = GenesisConfig::default();
         let mut signer = Signer::new(&PRIVATE_KEY);
-        let (_, state) = deploy_contract("natives", &mut signer);
+        let (_, state) = deploy_contract("natives", &mut signer, &genesis_config);
 
         let mint_amount = U256::from(123u64);
         let tx = ExtendedTxEnvelope::DepositedTx(DepositedTx {
@@ -439,7 +450,7 @@ mod tests {
             data: Vec::new().into(),
         });
 
-        execute_transaction(&tx, &state)
+        execute_transaction(&tx, &state, &genesis_config)
             .unwrap()
             .vm_outcome
             .unwrap();
@@ -449,9 +460,11 @@ mod tests {
     fn test_transaction_replay_is_forbidden() {
         // Transaction replay is forbidden by the nonce checking.
 
+        let genesis_config = GenesisConfig::default();
+
         // Deploy a contract
         let mut signer = Signer::new(&PRIVATE_KEY);
-        let (module_id, mut storage) = deploy_contract("natives", &mut signer);
+        let (module_id, mut storage) = deploy_contract("natives", &mut signer, &genesis_config);
 
         // Use a transaction to call a function; this passes
         let entry_fn = EntryFunction::new(
@@ -466,19 +479,56 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let outcome = execute_transaction(&signed_tx, &storage).unwrap();
+        let outcome = execute_transaction(&signed_tx, &storage, &genesis_config).unwrap();
         storage.apply(outcome.changes).unwrap();
 
         // Send the same transaction again; this fails with a nonce error
-        let err = execute_transaction(&signed_tx, &storage).unwrap_err();
+        let err = execute_transaction(&signed_tx, &storage, &genesis_config).unwrap_err();
         assert_eq!(err.to_string(), "Incorrect nonce: given=1 expected=2");
     }
 
     #[test]
+    fn test_transaction_chain_id() {
+        let genesis_config = GenesisConfig::default();
+
+        // Deploy a contract
+        let mut signer = Signer::new(&PRIVATE_KEY);
+        let (module_id, storage) = deploy_contract("natives", &mut signer, &genesis_config);
+
+        // Use a transaction to call a function but pass the wrong chain id
+        let entry_fn = EntryFunction::new(
+            module_id,
+            Identifier::new("hashing").unwrap(),
+            Vec::new(),
+            vec![],
+        );
+        let mut tx = TxEip1559 {
+            // Intentionally setting the wrong chain id
+            chain_id: genesis_config.chain_id + 1,
+            nonce: signer.nonce,
+            gas_limit: 0,
+            max_fee_per_gas: 0,
+            max_priority_fee_per_gas: 0,
+            to: TxKind::Call(EVM_ADDRESS),
+            value: Default::default(),
+            access_list: Default::default(),
+            input: bcs::to_bytes(&entry_fn).unwrap().into(),
+        };
+        signer.nonce += 1;
+        let signature = signer.inner.sign_transaction_sync(&mut tx).unwrap();
+        let signed_tx =
+            ExtendedTxEnvelope::Canonical(TxEnvelope::Eip1559(tx.into_signed(signature)));
+
+        let err = execute_transaction(&signed_tx, &storage, &genesis_config).unwrap_err();
+        assert_eq!(err.to_string(), "Incorrect chain id");
+    }
+
+    #[test]
     fn test_execute_tables_contract() {
+        let genesis_config = GenesisConfig::default();
         let module_name = "tables";
         let mut signer = Signer::new(&PRIVATE_KEY);
-        let (module_id, storage) = deploy_contract(module_name, &mut signer);
+        let (module_id, storage) = deploy_contract(module_name, &mut signer, &genesis_config);
         let vm = create_move_vm().unwrap();
         let traversal_storage = TraversalStorage::new();
 
@@ -528,6 +578,8 @@ mod tests {
         // This test intentionally modifies a module to have a cycle in a struct definition
         // then tries to deploy it. The MoveVM returns an error in this case.
 
+        let genesis_config = GenesisConfig::default();
+
         // Load a real module
         let module_name = "signer_struct";
         let move_address = evm_address_to_move_address(&EVM_ADDRESS);
@@ -571,9 +623,9 @@ mod tests {
         // Attempt to deploy the module, but get an error.
         let mut signer = Signer::new(&PRIVATE_KEY);
         // Deploy some other contract to ensure the state is properly initialized.
-        let (_, storage) = deploy_contract("natives", &mut signer);
+        let (_, storage) = deploy_contract("natives", &mut signer, &genesis_config);
         let signed_tx = create_transaction(&mut signer, TxKind::Create, module_bytes);
-        let outcome = execute_transaction(&signed_tx, &storage).unwrap();
+        let outcome = execute_transaction(&signed_tx, &storage, &genesis_config).unwrap();
         let err = outcome.vm_outcome.unwrap_err();
         assert!(format!("{err:?}").contains("RECURSIVE_STRUCT_DEFINITION"));
     }
@@ -585,6 +637,8 @@ mod tests {
         // is a struct, which itself contains a different struct, and so on).
         // Then the test tries to run a function with this deeply nested type
         // as an input and the VM returns an error.
+
+        let genesis_config = GenesisConfig::default();
 
         // Load a real module
         let module_name = "signer_struct";
@@ -638,9 +692,9 @@ mod tests {
         // Deploy the module.
         let mut signer = Signer::new(&PRIVATE_KEY);
         // Deploy some other contract to ensure the state is properly initialized.
-        let (_, mut storage) = deploy_contract("natives", &mut signer);
+        let (_, mut storage) = deploy_contract("natives", &mut signer, &genesis_config);
         let signed_tx = create_transaction(&mut signer, TxKind::Create, module_bytes);
-        let outcome = execute_transaction(&signed_tx, &storage).unwrap();
+        let outcome = execute_transaction(&signed_tx, &storage, &genesis_config).unwrap();
         storage.apply(outcome.changes).unwrap();
         let module_id = ModuleId::new(move_address, Identifier::new(module_name).unwrap());
 
@@ -658,21 +712,25 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let outcome = execute_transaction(&signed_tx, &storage).unwrap();
+        let outcome = execute_transaction(&signed_tx, &storage, &genesis_config).unwrap();
         let err = outcome.vm_outcome.unwrap_err();
         assert!(format!("{err:?}").contains("VM_MAX_VALUE_DEPTH_REACHED"));
     }
 
-    fn deploy_contract(module_name: &str, signer: &mut Signer) -> (ModuleId, InMemoryStorage) {
+    fn deploy_contract(
+        module_name: &str,
+        signer: &mut Signer,
+        genesis_config: &GenesisConfig,
+    ) -> (ModuleId, InMemoryStorage) {
         let mut state = InMemoryStorage::new();
-        init_storage(&mut state);
+        init_storage(genesis_config, &mut state);
 
         let move_address = evm_address_to_move_address(&EVM_ADDRESS);
 
         let module_bytes = move_compile(module_name, &move_address).unwrap();
         let signed_tx = create_transaction(signer, TxKind::Create, module_bytes);
 
-        let outcome = execute_transaction(&signed_tx, &state).unwrap();
+        let outcome = execute_transaction(&signed_tx, &state, genesis_config).unwrap();
         state.apply(outcome.changes).unwrap();
 
         // Code was deployed
@@ -686,7 +744,7 @@ mod tests {
 
     fn create_transaction(signer: &mut Signer, to: TxKind, input: Vec<u8>) -> ExtendedTxEnvelope {
         let mut tx = TxEip1559 {
-            chain_id: 0,
+            chain_id: CHAIN_ID,
             nonce: signer.nonce,
             gas_limit: 0,
             max_fee_per_gas: 0,
