@@ -231,7 +231,7 @@ mod tests {
     use {
         super::*,
         crate::{
-            genesis::init_storage,
+            genesis::{config::CHAIN_ID, init_storage},
             tests::{signer::Signer, EVM_ADDRESS, PRIVATE_KEY},
             types::transactions::DepositedTx,
         },
@@ -503,6 +503,7 @@ mod tests {
             vec![],
         );
         let mut tx = TxEip1559 {
+            // Intentionally setting the wrong chain id
             chain_id: genesis_config.chain_id + 1,
             nonce: signer.nonce,
             gas_limit: 0,
@@ -743,7 +744,7 @@ mod tests {
 
     fn create_transaction(signer: &mut Signer, to: TxKind, input: Vec<u8>) -> ExtendedTxEnvelope {
         let mut tx = TxEip1559 {
-            chain_id: 404,
+            chain_id: CHAIN_ID,
             nonce: signer.nonce,
             gas_limit: 0,
             max_fee_per_gas: 0,

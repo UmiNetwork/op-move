@@ -3,6 +3,8 @@ use {
     move_vm_test_utils::gas_schedule::{self, CostTable},
 };
 
+pub const CHAIN_ID: u64 = 404;
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct GenesisConfig {
     pub chain_id: u64,
@@ -14,7 +16,7 @@ pub struct GenesisConfig {
 impl Default for GenesisConfig {
     fn default() -> Self {
         Self {
-            chain_id: 404,
+            chain_id: CHAIN_ID,
             // TODO: determine real value based on result after deploying framework
             initial_state_root: H256::default(),
             gas_costs: &gas_schedule::INITIAL_COST_SCHEDULE,
