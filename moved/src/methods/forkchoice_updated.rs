@@ -15,7 +15,7 @@ use {
 
 #[cfg(test)]
 use {
-    crate::types::engine_api::PayloadId,
+    crate::{genesis::config::GenesisConfig, types::engine_api::PayloadId},
     ethers_core::types::{Bytes, H160, H256, U64},
     std::str::FromStr,
 };
@@ -233,8 +233,9 @@ pub fn example_request() -> serde_json::Value {
 
 #[tokio::test]
 async fn test_execute_v3() {
+    let genesis_config = GenesisConfig::default();
     let (state_channel, rx) = tokio::sync::mpsc::channel(10);
-    let state = crate::state_actor::StateActor::new_in_memory(rx);
+    let state = crate::state_actor::StateActor::new_in_memory(rx, genesis_config);
     let state_handle = state.spawn();
 
     // Set payload id

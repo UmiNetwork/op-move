@@ -11,7 +11,11 @@ use {
 };
 
 #[cfg(test)]
-use {crate::methods::forkchoice_updated, ethers_core::types::H256, std::str::FromStr};
+use {
+    crate::{genesis::config::GenesisConfig, methods::forkchoice_updated},
+    ethers_core::types::H256,
+    std::str::FromStr,
+};
 
 pub async fn execute_v3(
     request: serde_json::Value,
@@ -88,8 +92,9 @@ fn test_parse_params_v3() {
 
 #[tokio::test]
 async fn test_execute_v3() {
+    let genesis_config = GenesisConfig::default();
     let (state_channel, rx) = tokio::sync::mpsc::channel(10);
-    let state = crate::state_actor::StateActor::new_in_memory(rx);
+    let state = crate::state_actor::StateActor::new_in_memory(rx, genesis_config);
     let state_handle = state.spawn();
 
     // Set payload id

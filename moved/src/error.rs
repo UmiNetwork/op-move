@@ -92,6 +92,8 @@ pub enum InvalidTransactionCause {
     IncorrectNonce { expected: u64, given: u64 },
     #[error("Account exhausted, no more nonce values remain")]
     ExhaustedAccount,
+    #[error("Incorrect chain id")]
+    IncorrectChainId,
 }
 
 #[derive(Debug, Error)]
@@ -188,6 +190,7 @@ mod tests {
         InvalidTransactionCause::ExhaustedAccount,
         "Account exhausted, no more nonce values remain"
     )]
+    #[test_case(InvalidTransactionCause::IncorrectChainId, "Incorrect chain id")]
     fn test_error_converts_and_displays(actual: impl Into<Error>, expected: impl Into<String>) {
         let actual = actual.into().to_string();
         let expected = expected.into();
