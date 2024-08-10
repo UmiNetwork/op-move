@@ -2,7 +2,7 @@ use {
     crate::{
         genesis::{config::GenesisConfig, init_storage},
         move_execution::execute_transaction,
-        storage::{InMemoryState, Storage},
+        storage::{InMemoryState, State},
         types::{
             engine_api::{
                 ExecutionPayloadV3, GetPayloadResponseV3, PayloadAttributesV3, PayloadId,
@@ -19,7 +19,7 @@ use {
 };
 
 #[derive(Debug)]
-pub struct StateActor<S: Storage> {
+pub struct StateActor<S: State> {
     genesis_config: GenesisConfig,
     rx: Receiver<StateMessage>,
     head: H256,
@@ -28,7 +28,7 @@ pub struct StateActor<S: Storage> {
     execution_payloads: HashMap<H256, GetPayloadResponseV3>,
     pending_payload: Option<(PayloadId, GetPayloadResponseV3)>,
     mem_pool: HashMap<H256, ExtendedTxEnvelope>,
-    storage: S,
+    state: S,
 }
 
 impl StateActor<InMemoryState> {
@@ -37,7 +37,7 @@ impl StateActor<InMemoryState> {
     }
 }
 
-impl<S: Storage<Err = PartialVMError> + Send + Sync + 'static> StateActor<S> {
+impl<S: State<Err = PartialVMError> + Send + Sync + 'static> StateActor<S> {
     pub fn spawn(mut self) -> JoinHandle<()> {
         tokio::spawn(async move {
             while let Some(msg) = self.rx.recv().await {
@@ -47,7 +47,7 @@ impl<S: Storage<Err = PartialVMError> + Send + Sync + 'static> StateActor<S> {
     }
 }
 
-impl<S: Storage<Err = PartialVMError>> StateActor<S> {
+impl<S: State<Err = PartialVMError>> StateActor<S> {
     pub fn new(rx: Receiver<StateMessage>, mut storage: S, genesis_config: GenesisConfig) -> Self {
         init_storage(&genesis_config, &mut storage);
 
@@ -60,7 +60,7 @@ impl<S: Storage<Err = PartialVMError>> StateActor<S> {
             execution_payloads: HashMap::new(),
             pending_payload: None,
             mem_pool: HashMap::new(),
-            storage,
+            state: storage,
         }
     }
 
@@ -187,10 +187,10 @@ impl<S: Storage<Err = PartialVMError>> StateActor<S> {
     fn execute_transactions(&mut self, transactions: &[ExtendedTxEnvelope]) -> ExecutionOutcome {
         // TODO: parallel transaction processing?
         for tx in transactions {
-            if let Err(e) =
-                execute_transaction(tx, self.storage.resolver(), &self.genesis_config).and_then(|outcome| {
+            if let Err(e) = execute_transaction(tx, self.state.resolver(), &self.genesis_config)
+                .and_then(|outcome| {
                     // TODO: record success or failure from outcome.vm_outcome
-                    self.storage.apply(outcome.changes)?;
+                    self.state.apply(outcome.changes)?;
                     Ok(())
                 })
             {
@@ -198,19 +198,21 @@ impl<S: Storage<Err = PartialVMError>> StateActor<S> {
                 println!("WARN: execution error {e:?}");
             }
         }
-        let block_height = self
-            .block_heights
-            .get(&self.head)
-            .copied()
-            .unwrap_or(U64::one())
-            .as_u64();
 
         // TODO: derive from execution above
         ExecutionOutcome {
-            state_root: self.storage.state_root(block_height),
+            state_root: self.state.state_root(self.head_block_height()),
             receipts_root: H256::default(),
             logs_bloom: Bytes::from(vec![0; 256]),
             gas_used: U64::zero(),
         }
+    }
+
+    fn head_block_height(&self) -> u64 {
+        self.block_heights
+            .get(&self.head)
+            .copied()
+            .unwrap_or(U64::one())
+            .as_u64()
     }
 }

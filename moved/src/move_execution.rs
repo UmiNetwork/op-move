@@ -228,11 +228,11 @@ fn evm_address_to_move_address(address: &alloy_primitives::Address) -> AccountAd
 
 #[cfg(test)]
 mod tests {
-    use crate::storage::{InMemoryState, Storage};
     use {
         super::*,
         crate::{
             genesis::{config::CHAIN_ID, init_storage},
+            storage::{InMemoryState, State},
             tests::{signer::Signer, EVM_ADDRESS, PRIVATE_KEY},
             types::transactions::DepositedTx,
         },
@@ -495,7 +495,7 @@ mod tests {
 
         // Deploy a contract
         let mut signer = Signer::new(&PRIVATE_KEY);
-        let (module_id, storage) = deploy_contract("natives", &mut signer, &genesis_config);
+        let (module_id, state) = deploy_contract("natives", &mut signer, &genesis_config);
 
         // Use a transaction to call a function but pass the wrong chain id
         let entry_fn = EntryFunction::new(
@@ -521,7 +521,7 @@ mod tests {
         let signed_tx =
             ExtendedTxEnvelope::Canonical(TxEnvelope::Eip1559(tx.into_signed(signature)));
 
-        let err = execute_transaction(&signed_tx, &storage, &genesis_config).unwrap_err();
+        let err = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap_err();
         assert_eq!(err.to_string(), "Incorrect chain id");
     }
 
