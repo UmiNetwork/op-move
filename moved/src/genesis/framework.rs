@@ -1,5 +1,5 @@
 use {
-    crate::{genesis::config::GenesisConfig, move_execution::create_move_vm, storage::Storage},
+    crate::{genesis::config::GenesisConfig, move_execution::create_move_vm, storage::State},
     aptos_framework::ReleaseBundle,
     aptos_table_natives::{NativeTableContext, TableChange, TableChangeSet},
     move_binary_format::errors::PartialVMError,
@@ -70,7 +70,7 @@ pub fn load_sui_framework_snapshot() -> &'static BTreeMap<ObjectID, SystemPackag
 }
 
 /// Initializes the in-memory storage with Aptos and Sui frameworks.
-pub fn init_storage(_config: &GenesisConfig, storage: &mut impl Storage<Err = PartialVMError>) {
+pub fn init_storage(_config: &GenesisConfig, storage: &mut impl State<Err = PartialVMError>) {
     let (change_set, table_change_set) =
         deploy_framework(storage).expect("All bundle modules should be valid");
 
@@ -110,7 +110,7 @@ pub fn init_storage(_config: &GenesisConfig, storage: &mut impl Storage<Err = Pa
 }
 
 fn deploy_framework(
-    storage: &mut impl Storage<Err = PartialVMError>,
+    storage: &mut impl State<Err = PartialVMError>,
 ) -> anyhow::Result<(ChangeSet, TableChangeSet)> {
     let vm = create_move_vm()?;
     let mut extensions = NativeContextExtensions::default();

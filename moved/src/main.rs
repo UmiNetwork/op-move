@@ -44,6 +44,7 @@ mod state_actor;
 mod storage;
 mod types;
 
+mod primitives;
 #[cfg(test)]
 mod tests;
 

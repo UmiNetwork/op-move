@@ -1,9 +1,8 @@
-use aptos_crypto::HashValue;
-use aptos_jellyfish_merkle::mock_tree_store::MockTreeStore;
-use aptos_jellyfish_merkle::{JellyfishMerkleTree, TreeReader};
-use aptos_types::state_store::state_key::StateKey;
-use ethers_core::types::H256;
 use {
+    crate::primitives::ToH256,
+    aptos_jellyfish_merkle::{mock_tree_store::MockTreeStore, JellyfishMerkleTree, TreeReader},
+    aptos_types::state_store::state_key::StateKey,
+    ethers_core::types::H256,
     move_binary_format::errors::PartialVMError,
     move_core_types::{effects::ChangeSet, resolver::MoveResolver},
     move_table_extension::{TableChangeSet, TableResolver},
@@ -11,13 +10,14 @@ use {
     std::fmt::Debug,
 };
 
-/// A persistent storage trait.
+/// A persistent state trait.
 ///
-/// This trait inherits [`MoveResolver`] that can resolve both resources and modules and extends it
+/// The state creates [`MoveResolver`] that can resolve both resources and modules.
+///
 /// with the [`apply`] operation.
 ///
 /// [`apply`]: Self::apply
-pub trait Storage {
+pub trait State {
     /// The associated error that can occur on storage operations.
     type Err: Debug;
 
@@ -40,32 +40,30 @@ pub trait Storage {
 }
 
 pub struct InMemoryState {
-    storage: InMemoryStorage,
-    tree: MockTreeStore<StateKey>,
+    resolver: InMemoryStorage,
+    db: MockTreeStore<StateKey>,
 }
 
 impl InMemoryState {
-    const ALLOW_OVERWRITE: bool = true;
+    const ALLOW_OVERWRITE: bool = false;
 
     pub fn new() -> Self {
         Self {
-            storage: InMemoryStorage::new(),
-            tree: MockTreeStore::new(Self::ALLOW_OVERWRITE),
+            resolver: InMemoryStorage::new(),
+            db: MockTreeStore::new(Self::ALLOW_OVERWRITE),
         }
     }
 
     fn tree(&self) -> JellyfishMerkleTree<impl TreeReader<StateKey>, StateKey> {
-        JellyfishMerkleTree::new(&self.tree)
+        JellyfishMerkleTree::new(&self.db)
     }
 }
 
-impl Storage for InMemoryState {
+impl State for InMemoryState {
     type Err = PartialVMError;
 
     fn apply(&mut self, changes: ChangeSet) -> Result<(), Self::Err> {
-        self.storage.apply(changes)?;
-
-        Ok(())
+        self.resolver.apply(changes)
     }
 
     fn apply_with_tables(
@@ -73,37 +71,27 @@ impl Storage for InMemoryState {
         changes: ChangeSet,
         table_changes: TableChangeSet,
     ) -> Result<(), Self::Err> {
-        self.storage.apply_extended(changes, table_changes)?;
-
-        Ok(())
+        self.resolver.apply_extended(changes, table_changes)
     }
 
     fn resolver(&self) -> &(impl MoveResolver<Self::Err> + TableResolver) {
-        &self.storage
+        &self.resolver
     }
 
     fn state_root(&self, block_height: u64) -> H256 {
-        self.tree().get_root_hash(block_height).unwrap().as_h256()
-    }
-}
-
-trait AsH256 {
-    fn as_h256(&self) -> H256;
-}
-
-impl AsH256 for HashValue {
-    fn as_h256(&self) -> H256 {
-        H256::from_slice(self.as_slice())
+        self.tree()
+            .get_root_hash(block_height)
+            .map(ToH256::to_h256)
+            .unwrap_or_default()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use aptos_crypto::HashValue;
-    use aptos_jellyfish_merkle::TreeUpdateBatch;
-    use aptos_storage_interface::AptosDbError;
-    use aptos_types::transaction::Version;
+    use {
+        super::*, aptos_crypto::HashValue, aptos_jellyfish_merkle::TreeUpdateBatch,
+        aptos_storage_interface::AptosDbError, aptos_types::transaction::Version,
+    };
 
     impl InMemoryState {
         pub fn put_value_set_test(
@@ -154,10 +142,10 @@ mod tests {
             .put_value_set_test(vec![(key, Some(&(value_hash, state_key)))], version)
             .unwrap();
 
-        state.tree.write_tree_update_batch(batch).unwrap();
+        state.db.write_tree_update_batch(batch).unwrap();
 
         let actual_state_root = state.state_root(version);
-        let expected_state_root = new_root_hash.as_h256();
+        let expected_state_root = new_root_hash.to_h256();
 
         assert_eq!(actual_state_root, expected_state_root);
 
@@ -166,10 +154,10 @@ mod tests {
             .put_value_set_test(vec![(key, None)], version)
             .unwrap();
 
-        state.tree.write_tree_update_batch(batch).unwrap();
+        state.db.write_tree_update_batch(batch).unwrap();
 
         let actual_state_root = state.state_root(version);
-        let expected_state_root = empty_root_hash.as_h256();
+        let expected_state_root = empty_root_hash.to_h256();
 
         assert_eq!(actual_state_root, expected_state_root);
     }
