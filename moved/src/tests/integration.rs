@@ -1,23 +1,29 @@
-use alloy::network::{EthereumWallet, TransactionBuilder};
-use alloy::primitives::utils::parse_ether;
-use alloy::primitives::{address, Address, U256};
-use alloy::providers::{Provider, ProviderBuilder};
-use alloy::rpc::types::eth::TransactionRequest;
-use alloy::signers::k256::ecdsa::SigningKey;
-use alloy::signers::local::{LocalSigner, PrivateKeySigner};
-use alloy::sol;
-use alloy::transports::http::reqwest::Url;
-use anyhow::{Context, Result};
-use openssl::rand::rand_bytes;
-use serde_json::Value;
-use std::env::{set_var, var};
-use std::fs::File;
-use std::io::prelude::*;
-use std::io::Read;
-use std::process::{Child, Command, Output};
-use std::str::FromStr;
-use std::time::Duration;
-use tokio::fs;
+use {
+    alloy::{
+        network::{EthereumWallet, TransactionBuilder},
+        primitives::{address, utils::parse_ether, Address, U256},
+        providers::{Provider, ProviderBuilder},
+        rpc::types::eth::TransactionRequest,
+        signers::{
+            k256::ecdsa::SigningKey,
+            local::{LocalSigner, PrivateKeySigner},
+        },
+        sol,
+        transports::http::reqwest::Url,
+    },
+    anyhow::{Context, Result},
+    openssl::rand::rand_bytes,
+    serde_json::Value,
+    std::{
+        env::{set_var, var},
+        fs::File,
+        io::{prelude::*, Read},
+        process::{Child, Command, Output},
+        str::FromStr,
+        time::Duration,
+    },
+    tokio::fs,
+};
 
 const GETH_START_IN_SECS: u64 = 1; // 1 seconds to kick off L1 geth in dev mode
 const L2_RPC_URL: &str = "http://localhost:8545";
