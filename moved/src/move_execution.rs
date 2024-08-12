@@ -4,10 +4,12 @@ use {
     crate::{
         genesis::config::GenesisConfig,
         move_execution::signers::check_signer,
-        types::transactions::{ExtendedTxEnvelope, TransactionExecutionOutcome},
+        types::transactions::{
+            ExtendedTxEnvelope, NormalizedEthTransaction, TransactionExecutionOutcome,
+        },
         InvalidTransactionCause,
     },
-    alloy_consensus::{Transaction, TxEnvelope},
+    alloy_consensus::Transaction,
     alloy_primitives::TxKind,
     aptos_framework::natives::event::NativeEventContext,
     aptos_gas_schedule::{MiscGasParameters, NativeGasParameters, LATEST_GAS_FEATURE_VERSION},
@@ -95,16 +97,8 @@ pub fn execute_transaction(
                 }
             }
 
-            let sender = tx.recover_signer()?;
-            let sender_move_address = evm_address_to_move_address(&sender);
-            // TODO: use other tx fields (value, gas limit, etc).
-            let (to, nonce, payload) = match tx {
-                TxEnvelope::Eip1559(tx) => (tx.tx().to, tx.tx().nonce, &tx.tx().input),
-                TxEnvelope::Eip2930(tx) => (tx.tx().to, tx.tx().nonce, &tx.tx().input),
-                TxEnvelope::Legacy(tx) => (tx.tx().to, tx.tx().nonce, &tx.tx().input),
-                TxEnvelope::Eip4844(_) => Err(InvalidTransactionCause::UnsupportedType)?,
-                t => Err(InvalidTransactionCause::UnknownType(t.tx_type()))?,
-            };
+            let tx = NormalizedEthTransaction::try_from(tx.clone())?;
+            let sender_move_address = evm_address_to_move_address(&tx.signer);
 
             let move_vm = create_move_vm()?;
             let mut session = create_vm_session(&move_vm, state);
@@ -112,16 +106,16 @@ pub fn execute_transaction(
             let mut traversal_context = TraversalContext::new(&traversal_storage);
 
             check_nonce(
-                nonce,
+                tx.nonce,
                 &sender_move_address,
                 &mut session,
                 &mut traversal_context,
             )?;
 
             // TODO: How to model script-type transactions?
-            let vm_outcome = match to {
+            let vm_outcome = match tx.to {
                 TxKind::Call(_to) => {
-                    let entry_fn: EntryFunction = bcs::from_bytes(payload)?;
+                    let entry_fn: EntryFunction = bcs::from_bytes(&tx.data)?;
                     if entry_fn.module().address() != &sender_move_address {
                         Err(InvalidTransactionCause::InvalidDestination)?
                     }
@@ -134,8 +128,12 @@ pub fn execute_transaction(
                 }
                 TxKind::Create => {
                     // Assume EVM create type transactions are module deployments in Move
-                    let module = Module::new(payload.to_vec());
-                    deploy_module(module, evm_address_to_move_address(&sender), &mut session)
+                    let module = Module::new(tx.data.to_vec());
+                    deploy_module(
+                        module,
+                        evm_address_to_move_address(&tx.signer),
+                        &mut session,
+                    )
                 }
             };
             let changes = session.finish()?;
@@ -236,7 +234,7 @@ mod tests {
             types::transactions::DepositedTx,
         },
         alloy::network::TxSignerSync,
-        alloy_consensus::{transaction::TxEip1559, SignableTransaction},
+        alloy_consensus::{transaction::TxEip1559, SignableTransaction, TxEnvelope},
         alloy_primitives::{FixedBytes, U256, U64},
         anyhow::Context,
         move_binary_format::{

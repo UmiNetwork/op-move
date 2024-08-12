@@ -19,6 +19,7 @@ edition = "2021"
 [workspace.dependencies]
 alloy = { version = "0.2", features = ["full", "signer-keystore"] }
 alloy-consensus = { version = "0.2", features = ["k256"] }
+alloy-eips = { version = "0.2" }
 alloy-primitives = { version = "0.7", features = ["k256", "rlp"] }
 alloy-rlp = { version = "0.3", features = ["derive"] }
 alloy-serde = "0.2"
