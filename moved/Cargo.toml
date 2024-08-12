@@ -6,6 +6,7 @@ edition = "2021"
 
 [dependencies]
 alloy-consensus.workspace = true
+alloy-eips.workspace = true
 alloy-primitives.workspace = true
 alloy-rlp.workspace = true
 alloy-serde.workspace = true

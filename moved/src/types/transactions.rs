@@ -1,6 +1,8 @@
 use {
-    alloy_consensus::TxEnvelope,
-    alloy_primitives::{Address, Bytes, B256, U256, U64},
+    crate::{Error, InvalidTransactionCause},
+    alloy_consensus::{Signed, Transaction, TxEip1559, TxEip2930, TxEnvelope, TxLegacy},
+    alloy_eips::eip2930::AccessList,
+    alloy_primitives::{Address, Bytes, TxKind, B256, U256, U64},
     alloy_rlp::{Buf, Decodable, Encodable, RlpDecodable, RlpEncodable},
     move_core_types::effects::ChangeSet,
     serde::{Deserialize, Serialize},
@@ -75,17 +77,110 @@ impl Decodable for ExtendedTxEnvelope {
 
 #[derive(Debug)]
 pub struct TransactionExecutionOutcome {
-    pub vm_outcome: Result<(), crate::Error>,
+    pub vm_outcome: Result<(), Error>,
     pub changes: ChangeSet,
     // TODO: gas used
 }
 
 impl TransactionExecutionOutcome {
-    pub fn new(vm_outcome: Result<(), crate::Error>, changes: ChangeSet) -> Self {
+    pub fn new(vm_outcome: Result<(), Error>, changes: ChangeSet) -> Self {
         Self {
             vm_outcome,
             changes,
         }
+    }
+}
+
+pub struct NormalizedEthTransaction {
+    pub signer: Address,
+    pub to: TxKind,
+    pub nonce: u64,
+    pub value: U256,
+    pub data: Bytes,
+    pub chain_id: Option<u64>,
+    pub gas_limit: U256,
+    pub max_priority_fee_per_gas: U256,
+    pub max_fee_per_gas: U256,
+    pub access_list: AccessList,
+}
+
+impl TryFrom<TxEnvelope> for NormalizedEthTransaction {
+    type Error = Error;
+
+    fn try_from(tx: TxEnvelope) -> Result<Self, Self::Error> {
+        Ok(match tx {
+            TxEnvelope::Eip1559(tx) => tx.try_into()?,
+            TxEnvelope::Eip2930(tx) => tx.try_into()?,
+            TxEnvelope::Legacy(tx) => tx.try_into()?,
+            TxEnvelope::Eip4844(_) => Err(InvalidTransactionCause::UnsupportedType)?,
+            t => Err(InvalidTransactionCause::UnknownType(t.tx_type()))?,
+        })
+    }
+}
+
+impl TryFrom<Signed<TxEip1559>> for NormalizedEthTransaction {
+    type Error = Error;
+
+    fn try_from(value: Signed<TxEip1559>) -> Result<Self, Self::Error> {
+        let address = value.recover_signer()?;
+        let tx = value.strip_signature();
+
+        Ok(Self {
+            signer: address,
+            to: tx.to,
+            nonce: tx.nonce,
+            value: tx.value,
+            chain_id: tx.chain_id(),
+            gas_limit: U256::from(tx.gas_limit()),
+            max_priority_fee_per_gas: U256::from(tx.max_priority_fee_per_gas),
+            max_fee_per_gas: U256::from(tx.max_fee_per_gas),
+            data: tx.input,
+            access_list: tx.access_list,
+        })
+    }
+}
+
+impl TryFrom<Signed<TxEip2930>> for NormalizedEthTransaction {
+    type Error = Error;
+
+    fn try_from(value: Signed<TxEip2930>) -> Result<Self, Self::Error> {
+        let address = value.recover_signer()?;
+        let tx = value.strip_signature();
+
+        Ok(Self {
+            signer: address,
+            to: tx.to,
+            nonce: tx.nonce,
+            value: tx.value,
+            chain_id: tx.chain_id(),
+            gas_limit: U256::from(tx.gas_limit()),
+            max_priority_fee_per_gas: U256::from(tx.gas_price),
+            max_fee_per_gas: U256::from(tx.gas_price),
+            data: tx.input,
+            access_list: tx.access_list,
+        })
+    }
+}
+
+impl TryFrom<Signed<TxLegacy>> for NormalizedEthTransaction {
+    type Error = Error;
+
+    fn try_from(value: Signed<TxLegacy>) -> Result<Self, Self::Error> {
+        let address = value.recover_signer()?;
+        let tx = value.strip_signature();
+
+        Ok(Self {
+            signer: address,
+            to: tx.to,
+            nonce: tx.nonce,
+            value: tx.value,
+            chain_id: tx.chain_id(),
+            gas_limit: U256::from(tx.gas_limit()),
+            max_priority_fee_per_gas: U256::from(tx.gas_price),
+            max_fee_per_gas: U256::from(tx.gas_price),
+            data: tx.input,
+            access_list: AccessList(Vec::new()),
+        })
     }
 }
 
