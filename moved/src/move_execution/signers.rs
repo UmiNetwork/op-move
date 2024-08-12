@@ -1,6 +1,6 @@
 use {
-    crate::InvalidTransactionCause, move_core_types::account_address::AccountAddress,
-    move_core_types::value::MoveValue,
+    crate::InvalidTransactionCause,
+    move_core_types::{account_address::AccountAddress, value::MoveValue},
 };
 
 /// Check that any instances of `MoveValue::Signer` contained within the given `arg`
@@ -32,8 +32,10 @@ pub(super) fn check_signer(arg: &MoveValue, expected_signer: &AccountAddress) ->
 #[cfg(test)]
 mod tests {
     use {
-        super::*, crate::move_execution::evm_address_to_move_address, crate::tests::EVM_ADDRESS,
-        alloy_primitives::address, move_core_types::value::MoveStruct,
+        super::*,
+        crate::{move_execution::evm_address_to_move_address, tests::EVM_ADDRESS},
+        alloy_primitives::address,
+        move_core_types::value::MoveStruct,
     };
 
     #[test]

@@ -196,8 +196,7 @@ fn deploy_sui_framework(session: &mut Session) -> anyhow::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use move_vm_test_utils::InMemoryStorage;
+    use {super::*, move_vm_test_utils::InMemoryStorage};
 
     // Aptos framework has 114 modules and Sui has 69. They are kept mutually exclusive.
     const APTOS_MODULES_LEN: usize = 114;

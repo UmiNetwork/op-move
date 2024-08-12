@@ -1,14 +1,18 @@
 mod integration;
 pub mod signer;
 
-use crate::{validate_jwt, Claims};
-use alloy_primitives::{address, Address};
-use aptos_types::transaction::{EntryFunction, TransactionPayload};
-use jsonwebtoken::{EncodingKey, Header};
-use move_core_types::account_address::AccountAddress;
-use move_core_types::ident_str;
-use move_core_types::language_storage::{ModuleId, StructTag, TypeTag};
-use std::time::SystemTime;
+use {
+    crate::{validate_jwt, Claims},
+    alloy_primitives::{address, Address},
+    aptos_types::transaction::{EntryFunction, TransactionPayload},
+    jsonwebtoken::{EncodingKey, Header},
+    move_core_types::{
+        account_address::AccountAddress,
+        ident_str,
+        language_storage::{ModuleId, StructTag, TypeTag},
+    },
+    std::time::SystemTime,
+};
 
 pub(crate) const EVM_ADDRESS: Address = address!("8fd379246834eac74b8419ffda202cf8051f7a03");
 
