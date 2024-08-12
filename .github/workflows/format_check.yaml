@@ -18,6 +18,6 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           default: true
-          toolchain: stable
+          toolchain: nightly
       - name: format
         run: cargo fmt -- --check
