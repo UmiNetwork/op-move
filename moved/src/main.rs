@@ -10,6 +10,7 @@ use {
             state::StateMessage,
         },
     },
+    crate::state_actor::StatePayloadId,
     clap::Parser,
     ethers_core::types::{H256, U64},
     flate2::read::GzDecoder,
@@ -19,11 +20,9 @@ use {
         fs,
         io::Read,
         net::{Ipv4Addr, SocketAddr, SocketAddrV4},
-        str::FromStr,
         time::SystemTime,
     },
     tokio::sync::mpsc,
-    types::engine_api::PayloadId,
     warp::{
         hyper::{body::Bytes, Body, Response},
         path::FullPath,
@@ -42,7 +41,7 @@ mod methods;
 mod move_execution;
 mod state_actor;
 mod storage;
-mod types;
+pub(crate) mod types;
 
 mod primitives;
 #[cfg(test)]
@@ -75,7 +74,7 @@ async fn main() {
     // TODO: think about channel size bound
     let (state_channel, rx) = mpsc::channel(1_000);
     let genesis_config = GenesisConfig::default();
-    let state = state_actor::StateActor::new_in_memory(rx, genesis_config);
+    let state = state_actor::StateActor::new_in_memory(rx, genesis_config, StatePayloadId);
 
     let http_state_channel = state_channel.clone();
     let http_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8545));
@@ -180,19 +179,6 @@ async fn mirror(
             }
             Err(e) => return Err(e),
         };
-
-    // If the geth response contained a payload id then we will use it.
-    // TODO: replace this with our own way of generating payload ids.
-    let maybe_payload_id = json_utils::get_field(
-        &json_utils::get_field(&parsed_geth_response, "result"),
-        "payloadId",
-    );
-    if let serde_json::Value::String(id) = maybe_payload_id {
-        if let Ok(id) = PayloadId::from_str(&id) {
-            let msg = StateMessage::SetPayloadId { id };
-            state_channel.send(msg).await.ok();
-        }
-    }
 
     // If geth knows about an execution payload, we extract some data from it
     // TODO: remove reliance on geth

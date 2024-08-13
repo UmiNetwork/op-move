@@ -9,6 +9,9 @@ use {
     tokio::sync::mpsc,
 };
 
+#[cfg(test)]
+use crate::state_actor::StatePayloadId;
+
 pub async fn execute(
     request: serde_json::Value,
     state_channel: mpsc::Sender<StateMessage>,
@@ -60,7 +63,7 @@ async fn inner_execute(
 async fn test_execute() {
     let genesis_config = crate::genesis::config::GenesisConfig::default();
     let (state_channel, rx) = tokio::sync::mpsc::channel(10);
-    let state = crate::state_actor::StateActor::new_in_memory(rx, genesis_config);
+    let state = crate::state_actor::StateActor::new_in_memory(rx, genesis_config, StatePayloadId);
     let state_handle = state.spawn();
 
     let request: serde_json::Value = serde_json::from_str(
