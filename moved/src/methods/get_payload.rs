@@ -94,14 +94,9 @@ fn test_parse_params_v3() {
 async fn test_execute_v3() {
     let genesis_config = GenesisConfig::default();
     let (state_channel, rx) = tokio::sync::mpsc::channel(10);
-    let state = crate::state_actor::StateActor::new_in_memory(rx, genesis_config);
+    let state =
+        crate::state_actor::StateActor::new_in_memory(rx, genesis_config, 0x03421ee50df45cacu64);
     let state_handle = state.spawn();
-
-    // Set payload id
-    let msg = StateMessage::SetPayloadId {
-        id: PayloadId::from_str("0x03421ee50df45cac").unwrap(),
-    };
-    state_channel.send(msg).await.unwrap();
 
     // Set known block height
     let head_hash =

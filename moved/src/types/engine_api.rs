@@ -2,7 +2,8 @@
 //! for specification of types.
 
 use {
-    ethers_core::types::{Bytes, H160, H256, U256, U64},
+    crate::state_actor::NewPayloadIdInput,
+    ethers_core::types::{Bytes, Withdrawal, H160, H256, U256, U64},
     serde::{Deserialize, Serialize},
     std::str::FromStr,
 };
@@ -126,9 +127,9 @@ impl FromStr for PayloadId {
     }
 }
 
-impl From<U64> for PayloadId {
-    fn from(value: U64) -> Self {
-        Self(value)
+impl<U: Into<U64>> From<U> for PayloadId {
+    fn from(value: U) -> Self {
+        Self(value.into())
     }
 }
 
@@ -180,4 +181,41 @@ pub struct GetPayloadResponseV3 {
     pub blobs_bundle: BlobsBundleV1,
     pub should_override_builder: bool,
     pub parent_beacon_block_root: H256,
+}
+
+trait ToWithdrawal {
+    fn to_withdrawal(&self) -> Withdrawal;
+}
+
+impl ToWithdrawal for WithdrawalV1 {
+    fn to_withdrawal(&self) -> Withdrawal {
+        Withdrawal {
+            index: self.index,
+            validator_index: self.validator_index,
+            address: self.address,
+            amount: U256::from(self.amount.as_u64()),
+        }
+    }
+}
+
+pub(crate) trait ToPayloadIdInput<'a> {
+    fn to_payload_id_input(&'a self, head: &'a H256) -> NewPayloadIdInput<'a>;
+}
+
+impl<'a> ToPayloadIdInput<'a> for &'a PayloadAttributesV3 {
+    fn to_payload_id_input(&'a self, head: &'a H256) -> NewPayloadIdInput<'a> {
+        NewPayloadIdInput::new_v3(
+            head,
+            self.timestamp.as_u64(),
+            &self.prev_randao,
+            &self.suggested_fee_recipient,
+        )
+        .with_beacon_root(&self.parent_beacon_block_root)
+        .with_withdrawals(
+            self.withdrawals
+                .iter()
+                .map(ToWithdrawal::to_withdrawal)
+                .collect::<Vec<_>>(),
+        )
+    }
 }

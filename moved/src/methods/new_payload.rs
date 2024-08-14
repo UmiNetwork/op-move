@@ -16,7 +16,6 @@ use {
     crate::{
         genesis::config::GenesisConfig,
         methods::{forkchoice_updated, get_payload},
-        types::engine_api::PayloadId,
     },
     ethers_core::types::{Bytes, H160, U256, U64},
     std::str::FromStr,
@@ -268,14 +267,9 @@ fn test_parse_params_v3() {
 async fn test_execute_v3() {
     let genesis_config = GenesisConfig::default();
     let (state_channel, rx) = tokio::sync::mpsc::channel(10);
-    let state = crate::state_actor::StateActor::new_in_memory(rx, genesis_config);
+    let state =
+        crate::state_actor::StateActor::new_in_memory(rx, genesis_config, 0x0306d51fc5aa1533u64);
     let state_handle = state.spawn();
-
-    // Set payload id
-    let msg = StateMessage::SetPayloadId {
-        id: PayloadId::from_str("0x0306d51fc5aa1533").unwrap(),
-    };
-    state_channel.send(msg).await.unwrap();
 
     // Set known block height
     let head_hash =
