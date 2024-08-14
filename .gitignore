@@ -2,6 +2,12 @@
 .DS_Store
 .idea
 
-# Build files
+# Rust build files
 target
 build
+
+# JS build files
+artifacts
+cache
+dist
+node_modules
