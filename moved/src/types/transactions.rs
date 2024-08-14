@@ -79,14 +79,15 @@ impl Decodable for ExtendedTxEnvelope {
 pub struct TransactionExecutionOutcome {
     pub vm_outcome: Result<(), Error>,
     pub changes: ChangeSet,
-    // TODO: gas used
+    pub gas_used: u64,
 }
 
 impl TransactionExecutionOutcome {
-    pub fn new(vm_outcome: Result<(), Error>, changes: ChangeSet) -> Self {
+    pub fn new(vm_outcome: Result<(), Error>, changes: ChangeSet, gas_used: u64) -> Self {
         Self {
             vm_outcome,
             changes,
+            gas_used,
         }
     }
 }
@@ -98,10 +99,21 @@ pub struct NormalizedEthTransaction {
     pub value: U256,
     pub data: Bytes,
     pub chain_id: Option<u64>,
-    pub gas_limit: U256,
+    gas_limit: U256,
     pub max_priority_fee_per_gas: U256,
     pub max_fee_per_gas: U256,
     pub access_list: AccessList,
+}
+
+impl NormalizedEthTransaction {
+    pub fn gas_limit(&self) -> u64 {
+        // Gas limit cannot be larger than a `u64`, so
+        // if any higher limb is non-zero simply return `u64::MAX`.
+        match self.gas_limit.into_limbs() {
+            [x, 0, 0, 0] => x,
+            _ => u64::MAX,
+        }
+    }
 }
 
 impl TryFrom<TxEnvelope> for NormalizedEthTransaction {

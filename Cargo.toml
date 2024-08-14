@@ -25,10 +25,12 @@ alloy-rlp = { version = "0.3", features = ["derive"] }
 alloy-serde = "0.2"
 anyhow = "1"
 aptos-framework = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
+aptos-gas-meter = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 aptos-gas-schedule = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 aptos-table-natives = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 aptos-types = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 aptos-vm = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
+aptos-vm-types = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 aptos-jellyfish-merkle = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0", features = ["fuzzing"] }
 aptos-crypto = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 aptos-storage-interface = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }

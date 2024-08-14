@@ -5,7 +5,7 @@ use {
         language_storage::ModuleId, value::MoveValue,
     },
     move_vm_runtime::{module_traversal::TraversalContext, session::Session},
-    move_vm_types::{gas::UnmeteredGasMeter, values::Value},
+    move_vm_types::{gas::GasMeter, values::Value},
 };
 
 const ACCOUNT_MODULE_NAME: &IdentStr = ident_str!("account");
@@ -13,15 +13,15 @@ const CREATE_ACCOUNT_FUNCTION_NAME: &IdentStr = ident_str!("create_account_if_do
 const GET_NONCE_FUNCTION_NAME: &IdentStr = ident_str!("get_sequence_number");
 const INCREMENT_NONCE_FUNCTION_NAME: &IdentStr = ident_str!("increment_sequence_number");
 
-pub(super) fn check_nonce(
+pub(super) fn check_nonce<G: GasMeter>(
     tx_nonce: u64,
     signer: &AccountAddress,
     session: &mut Session,
     traversal_context: &mut TraversalContext,
+    gas_meter: &mut G,
 ) -> Result<(), Error> {
     let account_module_id = ModuleId::new(FRAMEWORK_ADDRESS, ACCOUNT_MODULE_NAME.into());
     let addr_arg = bcs::to_bytes(signer).expect("address can serialize");
-    let mut gas_meter = UnmeteredGasMeter;
 
     session
         .execute_function_bypass_visibility(
@@ -29,7 +29,7 @@ pub(super) fn check_nonce(
             CREATE_ACCOUNT_FUNCTION_NAME,
             Vec::new(),
             vec![addr_arg.as_slice()],
-            &mut gas_meter,
+            gas_meter,
             traversal_context,
         )
         .map_err(|_| Error::nonce_invariant_violation(NonceChecking::AnyAccountCanBeCreated))?;
@@ -41,7 +41,7 @@ pub(super) fn check_nonce(
                 GET_NONCE_FUNCTION_NAME,
                 Vec::new(),
                 vec![addr_arg.as_slice()],
-                &mut gas_meter,
+                gas_meter,
                 traversal_context,
             )
             .map_err(|_| Error::nonce_invariant_violation(NonceChecking::GetNonceAlwaysSucceeds))?
@@ -83,7 +83,7 @@ pub(super) fn check_nonce(
             INCREMENT_NONCE_FUNCTION_NAME,
             Vec::new(),
             vec![addr_arg.as_slice()],
-            &mut gas_meter,
+            gas_meter,
             traversal_context,
         )
         .map_err(|_| {

@@ -185,12 +185,14 @@ impl<S: State<Err = PartialVMError>> StateActor<S> {
     }
 
     fn execute_transactions(&mut self, transactions: &[ExtendedTxEnvelope]) -> ExecutionOutcome {
+        let mut total_gas: u64 = 0;
         // TODO: parallel transaction processing?
         for tx in transactions {
             if let Err(e) = execute_transaction(tx, self.state.resolver(), &self.genesis_config)
                 .and_then(|outcome| {
                     // TODO: record success or failure from outcome.vm_outcome
                     self.state.apply(outcome.changes)?;
+                    total_gas = total_gas.saturating_add(outcome.gas_used);
                     Ok(())
                 })
             {
@@ -204,7 +206,7 @@ impl<S: State<Err = PartialVMError>> StateActor<S> {
             state_root: self.state.state_root(self.head_block_height()),
             receipts_root: H256::default(),
             logs_bloom: Bytes::from(vec![0; 256]),
-            gas_used: U64::zero(),
+            gas_used: U64::from(total_gas),
         }
     }
 

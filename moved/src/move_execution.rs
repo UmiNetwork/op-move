@@ -12,6 +12,7 @@ use {
     alloy_consensus::Transaction,
     alloy_primitives::TxKind,
     aptos_framework::natives::event::NativeEventContext,
+    aptos_gas_meter::{AptosGasMeter, GasAlgebra, StandardGasAlgebra, StandardGasMeter},
     aptos_gas_schedule::{MiscGasParameters, NativeGasParameters, LATEST_GAS_FEATURE_VERSION},
     aptos_table_natives::{NativeTableContext, TableResolver},
     aptos_types::{
@@ -20,15 +21,14 @@ use {
     },
     aptos_vm::natives::aptos_natives,
     move_binary_format::errors::PartialVMError,
-    move_core_types::{account_address::AccountAddress, resolver::MoveResolver},
+    move_core_types::{account_address::AccountAddress, effects::Changes, resolver::MoveResolver},
     move_vm_runtime::{
         module_traversal::{TraversalContext, TraversalStorage},
         move_vm::MoveVM,
         native_extensions::NativeContextExtensions,
         session::Session,
     },
-    move_vm_test_utils::gas_schedule::GasStatus,
-    move_vm_types::{gas::UnmeteredGasMeter, loaded_data::runtime_types::Type, values::Value},
+    move_vm_types::{gas::GasMeter, loaded_data::runtime_types::Type, values::Value},
     nonces::check_nonce,
 };
 
@@ -78,17 +78,33 @@ pub fn execute_transaction(
             let mut session = create_vm_session(&move_vm, state);
             let traversal_storage = TraversalStorage::new();
             let mut traversal_context = TraversalContext::new(&traversal_storage);
+            // The type of `tx.gas` is essentially `[u64; 1]` so taking the 0th element
+            // is a 1:1 mapping to `u64`.
+            let mut gas_meter = new_gas_meter(genesis_config, tx.gas.as_limbs()[0]);
 
-            eth_token::mint_eth(&to, amount, &mut session, &mut traversal_context)?;
+            eth_token::mint_eth(
+                &to,
+                amount,
+                &mut session,
+                &mut traversal_context,
+                &mut gas_meter,
+            )?;
 
             debug_assert!(
-                eth_token::get_eth_balance(&to, &mut session, &mut traversal_context).unwrap()
+                eth_token::get_eth_balance(
+                    &to,
+                    &mut session,
+                    &mut traversal_context,
+                    &mut gas_meter
+                )
+                .unwrap()
                     >= amount,
                 "tokens were minted"
             );
 
             let changes = session.finish()?;
-            Ok(TransactionExecutionOutcome::new(Ok(()), changes))
+            let gas_used = total_gas_used(&gas_meter, genesis_config);
+            Ok(TransactionExecutionOutcome::new(Ok(()), changes, gas_used))
         }
         ExtendedTxEnvelope::Canonical(tx) => {
             if let Some(chain_id) = tx.chain_id() {
@@ -104,12 +120,28 @@ pub fn execute_transaction(
             let mut session = create_vm_session(&move_vm, state);
             let traversal_storage = TraversalStorage::new();
             let mut traversal_context = TraversalContext::new(&traversal_storage);
+            let mut gas_meter = new_gas_meter(genesis_config, tx.gas_limit());
+
+            // Charge gas for the transaction itself.
+            // Immediately exit if there is not enough.
+            let txn_size = (tx.data.len() as u64).into();
+            let charge_gas = gas_meter
+                .charge_intrinsic_gas_for_transaction(txn_size)
+                .and_then(|_| gas_meter.charge_io_gas_for_transaction(txn_size));
+            if let Err(err) = charge_gas {
+                return Ok(TransactionExecutionOutcome {
+                    vm_outcome: Err(err.into()),
+                    changes: Changes::new(),
+                    gas_used: tx.gas_limit(),
+                });
+            }
 
             check_nonce(
                 tx.nonce,
                 &sender_move_address,
                 &mut session,
                 &mut traversal_context,
+                &mut gas_meter,
             )?;
 
             // TODO: How to model script-type transactions?
@@ -124,6 +156,7 @@ pub fn execute_transaction(
                         &sender_move_address,
                         &mut session,
                         &mut traversal_context,
+                        &mut gas_meter,
                     )
                 }
                 TxKind::Create => {
@@ -133,24 +166,26 @@ pub fn execute_transaction(
                         module,
                         evm_address_to_move_address(&tx.signer),
                         &mut session,
+                        &mut gas_meter,
                     )
                 }
             };
             let changes = session.finish()?;
-            Ok(TransactionExecutionOutcome::new(vm_outcome, changes))
+            let gas_used = total_gas_used(&gas_meter, genesis_config);
+            Ok(TransactionExecutionOutcome::new(
+                vm_outcome, changes, gas_used,
+            ))
         }
     }
 }
 
-fn execute_entry_function(
+fn execute_entry_function<G: GasMeter>(
     entry_fn: EntryFunction,
     signer: &AccountAddress,
     session: &mut Session,
     traversal_context: &mut TraversalContext,
+    gas_meter: &mut G,
 ) -> crate::Result<()> {
-    // TODO: gas metering
-    let mut gas_meter = GasStatus::new_unmetered();
-
     let (module_id, function_name, ty_args, args) = entry_fn.into_inner();
 
     // Validate signer params match the actual signer
@@ -183,7 +218,7 @@ fn execute_entry_function(
         &function_name,
         ty_args,
         args,
-        &mut gas_meter,
+        gas_meter,
         traversal_context,
     )?;
     Ok(())
@@ -207,12 +242,13 @@ fn strip_reference(t: &Type) -> crate::Result<&Type> {
     }
 }
 
-fn deploy_module(
+fn deploy_module<G: GasMeter>(
     code: Module,
     address: AccountAddress,
     session: &mut Session,
+    gas_meter: &mut G,
 ) -> crate::Result<()> {
-    session.publish_module(code.into_inner(), address, &mut UnmeteredGasMeter)?;
+    session.publish_module(code.into_inner(), address, gas_meter)?;
 
     Ok(())
 }
@@ -222,6 +258,33 @@ fn evm_address_to_move_address(address: &alloy_primitives::Address) -> AccountAd
     let mut bytes = [0; 32];
     bytes[12..32].copy_from_slice(address.as_slice());
     AccountAddress::new(bytes)
+}
+
+fn new_gas_meter(
+    genesis_config: &GenesisConfig,
+    gas_limit: u64,
+) -> StandardGasMeter<StandardGasAlgebra> {
+    StandardGasMeter::new(StandardGasAlgebra::new(
+        genesis_config.gas_costs.version,
+        genesis_config.gas_costs.vm.clone(),
+        genesis_config.gas_costs.storage.clone(),
+        false,
+        gas_limit,
+    ))
+}
+
+fn total_gas_used<G: AptosGasMeter>(gas_meter: &G, genesis_config: &GenesisConfig) -> u64 {
+    let gas_algebra = gas_meter.algebra();
+    // Note: this sum is overflow safe because it uses saturating addition
+    // by default in the implementation of `GasQuantity`.
+    let total = gas_algebra.execution_gas_used()
+        + gas_algebra.io_gas_used()
+        + gas_algebra.storage_fee_used_in_gas_units();
+    let total: u64 = total.into();
+    // Aptos scales up the input gas limit for some reason,
+    // so we need to reverse that scaling when we return.
+    let scaling_factor: u64 = genesis_config.gas_costs.vm.txn.scaling_factor().into();
+    total / scaling_factor
 }
 
 #[cfg(test)]
@@ -256,7 +319,8 @@ mod tests {
             resolver::ModuleResolver,
             value::{MoveStruct, MoveValue},
         },
-        std::collections::BTreeSet,
+        move_vm_types::gas::UnmeteredGasMeter,
+        std::{collections::BTreeSet, u64},
     };
 
     #[test]
@@ -445,7 +509,7 @@ mod tests {
             source_hash: FixedBytes::default(),
             from: EVM_ADDRESS,
             mint: U256::ZERO,
-            gas: U64::ZERO,
+            gas: U64::from(u64::MAX),
             is_system_tx: false,
             data: Vec::new().into(),
         });
@@ -506,7 +570,7 @@ mod tests {
             // Intentionally setting the wrong chain id
             chain_id: genesis_config.chain_id + 1,
             nonce: signer.nonce,
-            gas_limit: 0,
+            gas_limit: u64::MAX.into(),
             max_fee_per_gas: 0,
             max_priority_fee_per_gas: 0,
             to: TxKind::Call(EVM_ADDRESS),
@@ -521,6 +585,45 @@ mod tests {
 
         let err = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap_err();
         assert_eq!(err.to_string(), "Incorrect chain id");
+    }
+
+    #[test]
+    fn test_out_of_gas() {
+        let genesis_config = GenesisConfig::default();
+
+        // Deploy a contract
+        let mut signer = Signer::new(&PRIVATE_KEY);
+        let (module_id, state) = deploy_contract("natives", &mut signer, &genesis_config);
+
+        // Use a transaction to call a function but pass in too little gas
+        let entry_fn = EntryFunction::new(
+            module_id,
+            Identifier::new("hashing").unwrap(),
+            Vec::new(),
+            vec![],
+        );
+        let mut tx = TxEip1559 {
+            chain_id: genesis_config.chain_id,
+            nonce: signer.nonce,
+            // Intentionally pass a small amount of gas
+            gas_limit: 1,
+            max_fee_per_gas: 0,
+            max_priority_fee_per_gas: 0,
+            to: TxKind::Call(EVM_ADDRESS),
+            value: Default::default(),
+            access_list: Default::default(),
+            input: bcs::to_bytes(&entry_fn).unwrap().into(),
+        };
+        signer.nonce += 1;
+        let signature = signer.inner.sign_transaction_sync(&mut tx).unwrap();
+        let signed_tx =
+            ExtendedTxEnvelope::Canonical(TxEnvelope::Eip1559(tx.into_signed(signature)));
+
+        let err = execute_transaction(&signed_tx, state.resolver(), &genesis_config)
+            .unwrap()
+            .vm_outcome
+            .unwrap_err();
+        assert!(err.to_string().contains("OUT_OF_GAS"));
     }
 
     #[test]
@@ -746,7 +849,7 @@ mod tests {
         let mut tx = TxEip1559 {
             chain_id: CHAIN_ID,
             nonce: signer.nonce,
-            gas_limit: 0,
+            gas_limit: u64::MAX.into(),
             max_fee_per_gas: 0,
             max_priority_fee_per_gas: 0,
             to,
