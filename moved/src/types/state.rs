@@ -20,10 +20,6 @@ pub enum StateMessage {
         payload_attributes: PayloadAttributesV3,
         response_channel: oneshot::Sender<PayloadId>,
     },
-    // TODO: remove this in favour of generating our own PayloadIds
-    SetPayloadId {
-        id: PayloadId,
-    },
     GetPayload {
         id: PayloadId,
         response_channel: oneshot::Sender<Option<GetPayloadResponseV3>>,
