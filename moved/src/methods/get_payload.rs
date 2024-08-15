@@ -144,7 +144,7 @@ async fn test_execute_v3() {
                 "prevRandao": "0xbde07f5d381bb84700433fe6c0ae077aa40eaad3a5de7abd298f0e3e27e6e4c9",
                 "blockNumber": "0x4ab",
                 "gasLimit": "0x1c9c380",
-                "gasUsed": "0x0",
+                "gasUsed": "0x7",
                 "timestamp": "0x6660737b",
                 "extraData": "0x",
                 "baseFeePerGas": "0x0",

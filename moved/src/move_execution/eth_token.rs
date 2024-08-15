@@ -5,7 +5,7 @@ use {
         language_storage::ModuleId, value::MoveValue,
     },
     move_vm_runtime::{module_traversal::TraversalContext, session::Session},
-    move_vm_types::{gas::UnmeteredGasMeter, values::Value},
+    move_vm_types::{gas::GasMeter, values::Value},
 };
 
 const TOKEN_ADMIN: AccountAddress = FRAMEWORK_ADDRESS;
@@ -13,17 +13,17 @@ const TOKEN_MODULE_NAME: &IdentStr = ident_str!("eth_token");
 const MINT_FUNCTION_NAME: &IdentStr = ident_str!("mint");
 const GET_BALANCE_FUNCTION_NAME: &IdentStr = ident_str!("get_balance");
 
-pub fn mint_eth(
+pub fn mint_eth<G: GasMeter>(
     to: &AccountAddress,
     amount: u64,
     session: &mut Session,
     traversal_context: &mut TraversalContext,
+    gas_meter: &mut G,
 ) -> Result<(), crate::Error> {
     let token_module_id = ModuleId::new(FRAMEWORK_ADDRESS, TOKEN_MODULE_NAME.into());
     let admin_arg = bcs::to_bytes(&MoveValue::Signer(TOKEN_ADMIN)).expect("signer can serialize");
     let to_arg = bcs::to_bytes(to).expect("address can serialize");
     let amount_arg = bcs::to_bytes(&MoveValue::U64(amount)).expect("amount can serialize");
-    let mut gas_meter = UnmeteredGasMeter;
 
     session
         .execute_entry_function(
@@ -35,7 +35,7 @@ pub fn mint_eth(
                 to_arg.as_slice(),
                 amount_arg.as_slice(),
             ],
-            &mut gas_meter,
+            gas_meter,
             traversal_context,
         )
         .map_err(|e| {
@@ -46,12 +46,12 @@ pub fn mint_eth(
     Ok(())
 }
 
-pub fn get_eth_balance(
+pub fn get_eth_balance<G: GasMeter>(
     account: &AccountAddress,
     session: &mut Session,
     traversal_context: &mut TraversalContext,
+    gas_meter: &mut G,
 ) -> Result<u64, crate::Error> {
-    let mut gas_meter = UnmeteredGasMeter;
     let addr_arg = bcs::to_bytes(account).expect("address can serialize");
     let token_module_id = ModuleId::new(FRAMEWORK_ADDRESS, TOKEN_MODULE_NAME.into());
 
@@ -61,7 +61,7 @@ pub fn get_eth_balance(
             GET_BALANCE_FUNCTION_NAME,
             Vec::new(),
             vec![addr_arg.as_slice()],
-            &mut gas_meter,
+            gas_meter,
             traversal_context,
         )
         .map_err(|_| {
