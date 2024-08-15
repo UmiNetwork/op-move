@@ -8,7 +8,7 @@ generate the required artifacts for testing and deployment.
 ## Setting up the Plugin
 Right now this plugin requires some manual steps to set up.
 
-Step 1: Install the `aptos` executable which comes with `move` tools, for instance for macOS:
+Step 1: Install the `aptos` executable which comes with `move` tools. Follow the [installation instructions](https://aptos.dev/en/build/cli), for instance for macOS:
 ```
 brew install aptos
 ```

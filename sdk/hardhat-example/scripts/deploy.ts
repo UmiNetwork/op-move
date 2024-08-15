@@ -6,11 +6,11 @@ async function main() {
     const [deployer] = await ethers.getSigners();
     console.log('Deploying contracts for the account:', deployer.address);
 
-    const EthToken = await ethers.getContractFactory('counter');
-    const ethToken = await EthToken.deploy();
-    await ethToken.waitForDeployment();
-    const moduleAddress = await ethToken.getAddress();
-    console.log('EthToken address:', moduleAddress);
+    const Counter = await ethers.getContractFactory('counter');
+    const counter = await Counter.deploy();
+    await counter.waitForDeployment();
+    const moduleAddress = await counter.getAddress();
+    console.log('Counter address:', moduleAddress);
 
     // Use the deployed module
     const bobAddress = '0xb0b';
