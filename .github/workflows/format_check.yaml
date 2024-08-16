@@ -20,4 +20,4 @@ jobs:
           default: true
           toolchain: nightly
       - name: format
-        run: cargo fmt -- --check
+        run: cargo +nightly fmt -- --check
