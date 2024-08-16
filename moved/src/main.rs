@@ -36,16 +36,16 @@ use {
 
 mod error;
 mod genesis;
+mod iter;
 mod json_utils;
 mod methods;
 mod move_execution;
+mod primitives;
 mod state_actor;
 mod storage;
-pub(crate) mod types;
-
-mod primitives;
 #[cfg(test)]
 mod tests;
+pub(crate) mod types;
 
 #[derive(Parser)]
 struct Args {

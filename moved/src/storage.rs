@@ -1,13 +1,20 @@
 use {
-    crate::primitives::ToH256,
-    aptos_jellyfish_merkle::{mock_tree_store::MockTreeStore, JellyfishMerkleTree, TreeReader},
-    aptos_types::state_store::state_key::StateKey,
+    crate::{iter::GroupIterator, primitives::ToH256},
+    aptos_jellyfish_merkle::{
+        mock_tree_store::MockTreeStore, node_type::Node, JellyfishMerkleTree, TreeReader,
+        TreeUpdateBatch,
+    },
+    aptos_storage_interface::{jmt_update_refs, jmt_updates, AptosDbError},
+    aptos_types::{
+        state_store::{state_key::StateKey, state_value::StateValue},
+        transaction::Version,
+    },
     ethers_core::types::H256,
     move_binary_format::errors::PartialVMError,
     move_core_types::{effects::ChangeSet, resolver::MoveResolver},
     move_table_extension::{TableChangeSet, TableResolver},
     move_vm_test_utils::InMemoryStorage,
-    std::fmt::Debug,
+    std::{collections::HashMap, fmt::Debug},
 };
 
 /// A persistent state trait.
@@ -35,13 +42,14 @@ pub trait State {
     /// Returns a reference to a [`MoveResolver`] that can resolve both resources and modules.
     fn resolver(&self) -> &(impl MoveResolver<Self::Err> + TableResolver);
 
-    /// Retrieves a state root at `block_height`.
-    fn state_root(&self, block_height: u64) -> H256;
+    /// Retrieves the current state root.
+    fn state_root(&self) -> H256;
 }
 
 pub struct InMemoryState {
     resolver: InMemoryStorage,
     db: MockTreeStore<StateKey>,
+    version: Version,
 }
 
 impl InMemoryState {
@@ -51,6 +59,7 @@ impl InMemoryState {
         Self {
             resolver: InMemoryStorage::new(),
             db: MockTreeStore::new(Self::ALLOW_OVERWRITE),
+            version: 0,
         }
     }
 
@@ -63,7 +72,9 @@ impl State for InMemoryState {
     type Err = PartialVMError;
 
     fn apply(&mut self, changes: ChangeSet) -> Result<(), Self::Err> {
-        self.resolver.apply(changes)
+        self.resolver.apply(changes.clone())?;
+        self.insert_change_set_into_merkle_trie(changes).unwrap();
+        Ok(())
     }
 
     fn apply_with_tables(
@@ -71,93 +82,207 @@ impl State for InMemoryState {
         changes: ChangeSet,
         table_changes: TableChangeSet,
     ) -> Result<(), Self::Err> {
-        self.resolver.apply_extended(changes, table_changes)
+        self.resolver
+            .apply_extended(changes.clone(), table_changes)?;
+        self.insert_change_set_into_merkle_trie(changes).unwrap();
+        Ok(())
     }
 
     fn resolver(&self) -> &(impl MoveResolver<Self::Err> + TableResolver) {
         &self.resolver
     }
 
-    fn state_root(&self, block_height: u64) -> H256 {
+    fn state_root(&self) -> H256 {
         self.tree()
-            .get_root_hash(block_height)
+            .get_root_hash(self.version)
             .map(ToH256::to_h256)
-            .unwrap_or_default()
+            .unwrap()
+    }
+}
+
+impl InMemoryState {
+    fn increment_version(&mut self) -> Version {
+        self.version += 1;
+        self.version
+    }
+
+    fn insert_change_set_into_merkle_trie(
+        &mut self,
+        change_set: ChangeSet,
+    ) -> Result<H256, AptosDbError> {
+        let version = self.increment_version();
+        let tree = self.tree();
+        let mut tree_update_batch = TreeUpdateBatch::new();
+        let persisted_versions = tree.get_shard_persisted_versions(None)?;
+
+        let values = change_set
+            .into_inner()
+            .into_iter()
+            .flat_map(move |(address, changes)| {
+                changes
+                    .modules()
+                    .iter()
+                    .map(move |(k, v)| {
+                        let value = v.clone().ok().map(StateValue::new_legacy);
+                        let key = StateKey::module(&address, k.as_ident_str());
+
+                        (key, value)
+                    })
+                    .chain(changes.resources().iter().map(move |(k, v)| {
+                        let value = v.clone().ok().map(StateValue::new_legacy);
+                        let key = StateKey::resource(&address, k).unwrap();
+
+                        (key, value)
+                    }))
+                    .collect::<HashMap<_, _>>()
+            })
+            .collect::<HashMap<_, _>>();
+
+        let values = jmt_updates(
+            &values
+                .iter()
+                .map(|(k, v)| (k, v.as_ref()))
+                .collect::<HashMap<_, _>>(),
+        );
+
+        let values_per_shard = values
+            .into_iter()
+            .map(|(k, v)| (k.nibble(0), (k, v)))
+            .group();
+        const NIL: Node<StateKey> = Node::Null;
+        let mut shard_root_nodes = [NIL; 16];
+
+        for (shard_id, values) in values_per_shard {
+            let (shard_root_node, batch) = tree.batch_put_value_set_for_shard(
+                shard_id,
+                jmt_update_refs(&values),
+                None,
+                persisted_versions[shard_id as usize],
+                version,
+            )?;
+
+            tree_update_batch.combine(batch);
+            shard_root_nodes[shard_id as usize] = shard_root_node;
+        }
+
+        let (root_hash, batch) = tree.put_top_levels_nodes(
+            shard_root_nodes.to_vec(),
+            self.version.checked_sub(1),
+            self.version,
+        )?;
+        tree_update_batch.combine(batch);
+
+        self.db.write_tree_update_batch(tree_update_batch)?;
+
+        Ok(root_hash.to_h256())
     }
 }
 
 #[cfg(test)]
 mod tests {
     use {
-        super::*, aptos_crypto::HashValue, aptos_jellyfish_merkle::TreeUpdateBatch,
-        aptos_storage_interface::AptosDbError, aptos_types::transaction::Version,
+        super::*,
+        bytes::Bytes,
+        move_core_types::{
+            account_address::AccountAddress,
+            effects::{AccountChanges, Op},
+            identifier::Identifier,
+        },
     };
 
-    impl InMemoryState {
-        pub fn put_value_set_test(
-            &self,
-            value_set: Vec<(HashValue, Option<&(HashValue, StateKey)>)>,
-            version: Version,
-        ) -> Result<(HashValue, TreeUpdateBatch<StateKey>), AptosDbError> {
-            let tree = self.tree();
-            let mut tree_update_batch = TreeUpdateBatch::new();
-            let mut shard_root_nodes = Vec::with_capacity(16);
-
-            for shard_id in 0..16 {
-                let value_set_for_shard = value_set
-                    .iter()
-                    .filter(|(k, _v)| k.nibble(0) == shard_id)
-                    .cloned()
-                    .collect();
-                let (shard_root_node, shard_batch) = tree.batch_put_value_set_for_shard(
-                    shard_id,
-                    value_set_for_shard,
-                    None,
-                    version.checked_sub(1),
-                    version,
-                )?;
-
-                tree_update_batch.combine(shard_batch);
-                shard_root_nodes.push(shard_root_node);
-            }
-
-            let (root_hash, top_levels_batch) =
-                tree.put_top_levels_nodes(shard_root_nodes, version.checked_sub(1), version)?;
-            tree_update_batch.combine(top_levels_batch);
-
-            Ok((root_hash, tree_update_batch))
-        }
+    #[test]
+    #[should_panic]
+    fn test_state_root_from_empty_tree_fails() {
+        InMemoryState::new().state_root();
     }
 
     #[test]
     fn test_insert_to_empty_tree_produces_new_state_root() {
-        let state = InMemoryState::new();
+        let mut state = InMemoryState::new();
+        let mut change_set = ChangeSet::new();
 
-        let key = HashValue::zero();
-        let state_key = StateKey::raw(&[1u8, 2u8, 3u8, 4u8]);
-        let value_hash = HashValue::zero();
-        let version = 0;
-
-        let (new_root_hash, batch) = state
-            .put_value_set_test(vec![(key, Some(&(value_hash, state_key)))], version)
+        change_set
+            .add_account_changeset(AccountAddress::new([0; 32]), AccountChanges::new())
             .unwrap();
 
-        state.db.write_tree_update_batch(batch).unwrap();
+        let expected_root_hash = state
+            .insert_change_set_into_merkle_trie(change_set)
+            .unwrap();
+        let actual_state_root = state.state_root();
 
-        let actual_state_root = state.state_root(version);
-        let expected_state_root = new_root_hash.to_h256();
+        assert_eq!(actual_state_root, expected_root_hash);
+    }
 
-        assert_eq!(actual_state_root, expected_state_root);
+    #[test]
+    fn test_state_root_is_different_after_update_changes_trie() {
+        let mut state = InMemoryState::new();
+        let mut change_set = ChangeSet::new();
 
-        let version = 1;
-        let (empty_root_hash, batch) = state
-            .put_value_set_test(vec![(key, None)], version)
+        change_set
+            .add_account_changeset(AccountAddress::new([0; 32]), AccountChanges::new())
+            .unwrap();
+        state
+            .insert_change_set_into_merkle_trie(change_set)
+            .unwrap();
+        let old_state_root = state.state_root();
+
+        let mut change_set = ChangeSet::new();
+
+        let mut account_change_set = AccountChanges::new();
+        account_change_set
+            .add_module_op(
+                Identifier::new("lala").unwrap(),
+                Op::New(Bytes::from_static(&[1u8; 2])),
+            )
+            .unwrap();
+        change_set
+            .add_account_changeset(AccountAddress::new([9; 32]), account_change_set)
+            .unwrap();
+        state
+            .insert_change_set_into_merkle_trie(change_set)
+            .unwrap();
+        let new_state_root = state.state_root();
+
+        assert_ne!(old_state_root, new_state_root);
+    }
+
+    #[test]
+    fn test_state_root_remains_the_same_when_update_does_not_change_trie() {
+        let mut state = InMemoryState::new();
+        let mut change_set = ChangeSet::new();
+
+        let mut account_change_set = AccountChanges::new();
+        account_change_set
+            .add_module_op(
+                Identifier::new("lala").unwrap(),
+                Op::New(Bytes::from_static(&[1u8; 2])),
+            )
             .unwrap();
 
-        state.db.write_tree_update_batch(batch).unwrap();
+        change_set
+            .add_account_changeset(AccountAddress::new([9; 32]), account_change_set)
+            .unwrap();
+        state
+            .insert_change_set_into_merkle_trie(change_set)
+            .unwrap();
+        let expected_state_root = state.state_root();
 
-        let actual_state_root = state.state_root(version);
-        let expected_state_root = empty_root_hash.to_h256();
+        let mut change_set = ChangeSet::new();
+
+        let mut account_change_set = AccountChanges::new();
+        account_change_set
+            .add_module_op(
+                Identifier::new("lala").unwrap(),
+                Op::New(Bytes::from_static(&[1u8; 2])),
+            )
+            .unwrap();
+        change_set
+            .add_account_changeset(AccountAddress::new([9; 32]), account_change_set)
+            .unwrap();
+        state
+            .insert_change_set_into_merkle_trie(change_set)
+            .unwrap();
+        let actual_state_root = state.state_root();
 
         assert_eq!(actual_state_root, expected_state_root);
     }
