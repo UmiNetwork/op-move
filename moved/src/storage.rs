@@ -1,10 +1,11 @@
 use {
     crate::{iter::GroupIterator, primitives::ToH256},
+    aptos_crypto::hash::CryptoHash,
     aptos_jellyfish_merkle::{
         mock_tree_store::MockTreeStore, node_type::Node, JellyfishMerkleTree, TreeReader,
         TreeUpdateBatch,
     },
-    aptos_storage_interface::{jmt_update_refs, jmt_updates, AptosDbError},
+    aptos_storage_interface::AptosDbError,
     aptos_types::{
         state_store::{state_key::StateKey, state_value::StateValue},
         transaction::Version,
@@ -135,23 +136,20 @@ impl InMemoryState {
                         (key, value)
                     }))
             })
+            .map(|(k, v)| (k.hash(), v.as_ref().map(|v| (v.hash(), k.clone()))))
             .collect::<HashMap<_, _>>();
 
-        let values = jmt_updates(
-            &values
-                .iter()
-                .map(|(k, v)| (k, v.as_ref()))
-                .collect::<HashMap<_, _>>(),
-        );
-
-        let values_per_shard = values.into_iter().group_by(|(k, _)| k.nibble(0));
+        let values_per_shard = values
+            .iter()
+            .map(|(k, v)| (*k, v.as_ref()))
+            .group_by(|(k, _)| k.nibble(0));
         const NIL: Node<StateKey> = Node::Null;
         let mut shard_root_nodes = [NIL; 16];
 
         for (shard_id, values) in values_per_shard {
             let (shard_root_node, batch) = tree.batch_put_value_set_for_shard(
                 shard_id,
-                jmt_update_refs(&values),
+                values,
                 None,
                 persisted_versions[shard_id as usize],
                 version,
