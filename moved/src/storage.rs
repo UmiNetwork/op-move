@@ -145,10 +145,7 @@ impl InMemoryState {
                 .collect::<HashMap<_, _>>(),
         );
 
-        let values_per_shard = values
-            .into_iter()
-            .map(|(k, v)| (k.nibble(0), (k, v)))
-            .group();
+        let values_per_shard = values.into_iter().group_by(|(k, _)| k.nibble(0));
         const NIL: Node<StateKey> = Node::Null;
         let mut shard_root_nodes = [NIL; 16];
 
