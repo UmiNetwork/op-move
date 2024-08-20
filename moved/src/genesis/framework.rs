@@ -70,7 +70,7 @@ pub fn load_sui_framework_snapshot() -> &'static BTreeMap<ObjectID, SystemPackag
 }
 
 /// Initializes the in-memory storage with Aptos and Sui frameworks.
-pub fn init_storage(_config: &GenesisConfig, storage: &mut impl State<Err = PartialVMError>) {
+pub fn init_storage(config: &GenesisConfig, storage: &mut impl State<Err = PartialVMError>) {
     let (change_set, table_change_set) =
         deploy_framework(storage).expect("All bundle modules should be valid");
 
@@ -106,7 +106,13 @@ pub fn init_storage(_config: &GenesisConfig, storage: &mut impl State<Err = Part
         .apply_with_tables(change_set, table_change_set)
         .unwrap();
 
-    // TODO: validate result against config
+    let actual_state_root = storage.state_root();
+    let expected_state_root = config.initial_state_root;
+
+    assert_eq!(
+        actual_state_root, expected_state_root,
+        "Fatal Error: Genesis state root mismatch"
+    );
 }
 
 fn deploy_framework(
