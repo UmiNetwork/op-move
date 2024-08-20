@@ -73,7 +73,7 @@ impl State for InMemoryState {
     type Err = PartialVMError;
 
     fn apply(&mut self, changes: ChangeSet) -> Result<(), Self::Err> {
-        self.insert_change_set_into_merkle_trie(&changes).unwrap();
+        self.insert_change_set_into_merkle_trie(&changes);
         self.resolver.apply(changes)?;
         Ok(())
     }
@@ -83,7 +83,7 @@ impl State for InMemoryState {
         changes: ChangeSet,
         table_changes: TableChangeSet,
     ) -> Result<(), Self::Err> {
-        self.insert_change_set_into_merkle_trie(&changes).unwrap();
+        self.insert_change_set_into_merkle_trie(&changes);
         self.resolver.apply_extended(changes, table_changes)?;
         Ok(())
     }
@@ -106,22 +106,23 @@ impl InMemoryState {
         self.version
     }
 
-    fn insert_change_set_into_merkle_trie(
-        &mut self,
-        change_set: &ChangeSet,
-    ) -> Result<H256, AptosDbError> {
+    fn insert_change_set_into_merkle_trie(&mut self, change_set: &ChangeSet) -> H256 {
         let version = self.next_version();
         let values = change_set.to_tree_values();
         let values_per_shard = values
             .iter()
             .map(|(&k, v)| (k, v.as_ref()))
             .group_by(|(k, _)| k.nibble(0));
-        let (root_hash, tree_update_batch) =
-            self.tree().create_update_batch(values_per_shard, version)?;
+        let (root_hash, tree_update_batch) = self
+            .tree()
+            .create_update_batch(values_per_shard, version)
+            .expect("Fails on duplicate key or storage read. In memory storage cannot fail.");
 
-        self.db.write_tree_update_batch(tree_update_batch)?;
+        self.db
+            .write_tree_update_batch(tree_update_batch)
+            .expect("Fails on duplicate key or storage write. In memory storage cannot fail.");
 
-        Ok(root_hash.to_h256())
+        root_hash.to_h256()
     }
 }
 
@@ -273,9 +274,7 @@ mod tests {
             .add_account_changeset(AccountAddress::new([0; 32]), AccountChanges::new())
             .unwrap();
 
-        let expected_root_hash = state
-            .insert_change_set_into_merkle_trie(&change_set)
-            .unwrap();
+        let expected_root_hash = state.insert_change_set_into_merkle_trie(&change_set);
         let actual_state_root = state.state_root();
 
         assert_eq!(actual_state_root, expected_root_hash);
@@ -289,9 +288,7 @@ mod tests {
         change_set
             .add_account_changeset(AccountAddress::new([0; 32]), AccountChanges::new())
             .unwrap();
-        state
-            .insert_change_set_into_merkle_trie(&change_set)
-            .unwrap();
+        state.insert_change_set_into_merkle_trie(&change_set);
         let old_state_root = state.state_root();
 
         let mut change_set = ChangeSet::new();
@@ -306,9 +303,7 @@ mod tests {
         change_set
             .add_account_changeset(AccountAddress::new([9; 32]), account_change_set)
             .unwrap();
-        state
-            .insert_change_set_into_merkle_trie(&change_set)
-            .unwrap();
+        state.insert_change_set_into_merkle_trie(&change_set);
         let new_state_root = state.state_root();
 
         assert_ne!(old_state_root, new_state_root);
@@ -330,9 +325,7 @@ mod tests {
         change_set
             .add_account_changeset(AccountAddress::new([9; 32]), account_change_set)
             .unwrap();
-        state
-            .insert_change_set_into_merkle_trie(&change_set)
-            .unwrap();
+        state.insert_change_set_into_merkle_trie(&change_set);
         let expected_state_root = state.state_root();
 
         let mut change_set = ChangeSet::new();
@@ -347,9 +340,7 @@ mod tests {
         change_set
             .add_account_changeset(AccountAddress::new([9; 32]), account_change_set)
             .unwrap();
-        state
-            .insert_change_set_into_merkle_trie(&change_set)
-            .unwrap();
+        state.insert_change_set_into_merkle_trie(&change_set);
         let actual_state_root = state.state_root();
 
         assert_eq!(actual_state_root, expected_state_root);
