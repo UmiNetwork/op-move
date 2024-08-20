@@ -1,22 +1,36 @@
 use {
-    crate::primitives::ToH256,
-    aptos_jellyfish_merkle::{mock_tree_store::MockTreeStore, JellyfishMerkleTree, TreeReader},
-    aptos_types::state_store::state_key::StateKey,
+    crate::{iter::GroupIterator, primitives::ToH256},
+    aptos_crypto::{hash::CryptoHash, HashValue},
+    aptos_jellyfish_merkle::{
+        mock_tree_store::MockTreeStore, node_type::Node, JellyfishMerkleTree, TreeReader,
+        TreeUpdateBatch,
+    },
+    aptos_storage_interface::AptosDbError,
+    aptos_types::{
+        state_store::{state_key::StateKey, state_value::StateValue},
+        transaction::Version,
+    },
     ethers_core::types::H256,
     move_binary_format::errors::PartialVMError,
     move_core_types::{effects::ChangeSet, resolver::MoveResolver},
     move_table_extension::{TableChangeSet, TableResolver},
     move_vm_test_utils::InMemoryStorage,
-    std::fmt::Debug,
+    std::{collections::HashMap, fmt::Debug},
 };
 
-/// A persistent state trait.
+/// A global blockchain state trait.
 ///
-/// The state creates [`MoveResolver`] that can resolve both resources and modules.
+/// This trait is defined by these operations:
+/// * [`resolver`]: Creates [`MoveResolver`] that can resolve both resources and modules.
+/// * [`state_root`]: Returns current state root.
+/// * [`apply`]: Applies changes produced by a transaction on the state trie.
+/// * [`apply_with_tables`]: Same as [`apply`] but includes changes to tables from
+/// [`move_table_extension`].
 ///
-/// with the [`apply`] operation.
-///
+/// [`resolver`]: Self::resolver
+/// [`state_root`]: Self::state_root
 /// [`apply`]: Self::apply
+/// [`apply_with_tables`]: Self::apply_with_tables
 pub trait State {
     /// The associated error that can occur on storage operations.
     type Err: Debug;
@@ -35,13 +49,14 @@ pub trait State {
     /// Returns a reference to a [`MoveResolver`] that can resolve both resources and modules.
     fn resolver(&self) -> &(impl MoveResolver<Self::Err> + TableResolver);
 
-    /// Retrieves a state root at `block_height`.
-    fn state_root(&self, block_height: u64) -> H256;
+    /// Retrieves the current state root.
+    fn state_root(&self) -> H256;
 }
 
 pub struct InMemoryState {
     resolver: InMemoryStorage,
     db: MockTreeStore<StateKey>,
+    version: Version,
 }
 
 impl InMemoryState {
@@ -51,6 +66,7 @@ impl InMemoryState {
         Self {
             resolver: InMemoryStorage::new(),
             db: MockTreeStore::new(Self::ALLOW_OVERWRITE),
+            version: 0,
         }
     }
 
@@ -63,7 +79,9 @@ impl State for InMemoryState {
     type Err = PartialVMError;
 
     fn apply(&mut self, changes: ChangeSet) -> Result<(), Self::Err> {
-        self.resolver.apply(changes)
+        self.insert_change_set_into_merkle_trie(&changes);
+        self.resolver.apply(changes)?;
+        Ok(())
     }
 
     fn apply_with_tables(
@@ -71,93 +89,265 @@ impl State for InMemoryState {
         changes: ChangeSet,
         table_changes: TableChangeSet,
     ) -> Result<(), Self::Err> {
-        self.resolver.apply_extended(changes, table_changes)
+        self.insert_change_set_into_merkle_trie(&changes);
+        self.resolver.apply_extended(changes, table_changes)?;
+        Ok(())
     }
 
     fn resolver(&self) -> &(impl MoveResolver<Self::Err> + TableResolver) {
         &self.resolver
     }
 
-    fn state_root(&self, block_height: u64) -> H256 {
+    fn state_root(&self) -> H256 {
         self.tree()
-            .get_root_hash(block_height)
+            .get_root_hash(self.version)
             .map(ToH256::to_h256)
-            .unwrap_or_default()
+            .unwrap()
+    }
+}
+
+impl InMemoryState {
+    fn next_version(&mut self) -> Version {
+        self.version += 1;
+        self.version
+    }
+
+    fn insert_change_set_into_merkle_trie(&mut self, change_set: &ChangeSet) -> H256 {
+        let version = self.next_version();
+        let values = change_set.to_tree_values();
+        let values_per_shard = values
+            .iter()
+            .map(|(&k, v)| (k, v.as_ref()))
+            .group_by(|(k, _)| k.nibble(0));
+        let (root_hash, tree_update_batch) = self
+            .tree()
+            .create_update_batch(values_per_shard, version)
+            .expect("Fails on duplicate key or storage read. In memory storage cannot fail.");
+
+        self.db
+            .write_tree_update_batch(tree_update_batch)
+            .expect("Fails on duplicate key or storage write. In memory storage cannot fail.");
+
+        root_hash.to_h256()
+    }
+}
+
+/// The jellyfish merkle trie key is the hash of the actual key.
+type TreeKey = HashValue;
+
+/// The jellyfish merkle trie value consists of a hash of the actual value and the actual key.
+type TreeValue = Option<(HashValue, StateKey)>;
+
+/// A reference to [`TreeValue`].
+type TreeValueRef<'r> = Option<&'r (HashValue, StateKey)>;
+
+/// Converts itself to a set of updates for a jellyfish merkle trie.
+///
+/// This trait is defined by a single operation called [`Self::to_tree_values`].
+trait ToTreeValues {
+    /// Extracts modules and resources and generates a set of merkle trie keys and values applicable
+    /// to a trie for the purpose of updating it resulting in a new root hash.
+    ///
+    /// The [`TreeValue`] is optional where:
+    /// * The [`Some`] variant creates new or replaces existing value.
+    /// * The [`None`] variant marks a deletion.
+    ///
+    /// The [`TreeKey`] is a hashed values always based on the account's address and further based
+    /// on module name or resource type.
+    ///
+    /// # Move language context
+    ///
+    /// The purpose of Move programs is to read from and write to tree-shaped persistent global
+    /// storage. Programs cannot access the filesystem, network, or any other data outside of this
+    /// tree.
+    ///
+    /// In pseudocode, the global storage looks something like:
+    ///
+    /// ```no_run
+    /// module 0x42::example {
+    ///   struct GlobalStorage {
+    ///     resources: Map<(address, ResourceType), ResourceValue>,
+    ///     modules: Map<(address, ModuleName), ModuleBytecode>
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// Structurally, global storage is a forest consisting of trees rooted at an account address.
+    /// Each address can store both resource data values and module code values. As the pseudocode
+    /// above indicates, each address can store at most one resource value of a given type and at
+    /// most one module with a given name.
+    fn to_tree_values(&self) -> HashMap<TreeKey, TreeValue>;
+}
+
+impl ToTreeValues for ChangeSet {
+    fn to_tree_values(&self) -> HashMap<TreeKey, TreeValue> {
+        self.accounts()
+            .iter()
+            .flat_map(|(address, changes)| {
+                changes
+                    .modules()
+                    .iter()
+                    .map(move |(k, v)| {
+                        let value = v.clone().ok().map(StateValue::new_legacy);
+                        let key = StateKey::module(address, k.as_ident_str());
+
+                        (key, value)
+                    })
+                    .chain(changes.resources().iter().map(move |(k, v)| {
+                        let value = v.clone().ok().map(StateValue::new_legacy);
+                        let key = StateKey::resource(address, k).unwrap();
+
+                        (key, value)
+                    }))
+            })
+            .map(|(k, v)| (k.hash(), v.map(|v| (v.hash(), k))))
+            .collect::<HashMap<_, _>>()
+    }
+}
+
+/// Creates update batches for mutating the merkle trie.
+///
+/// This trait is defined by a single operation called [`Self::create_update_batch`].
+trait CreateUpdateBatch {
+    /// Creates a [`TreeUpdateBatch`] from `values_per_shard` and a `version`. Returns the update
+    /// batch and a root hash of the trie after applying the update batch.
+    ///
+    /// This function does not write any updates to the tree itself, making this work with an
+    /// immutable reference to `self`. It only creates an update batch that can be written using
+    /// a compatible storage backend.
+    fn create_update_batch(
+        &self,
+        values_per_shard: HashMap<u8, Vec<(TreeKey, TreeValueRef)>>,
+        version: Version,
+    ) -> Result<(HashValue, TreeUpdateBatch<StateKey>), AptosDbError>;
+}
+
+impl<'a, R> CreateUpdateBatch for JellyfishMerkleTree<'a, R, StateKey>
+where
+    R: 'a + TreeReader<StateKey> + Sync,
+{
+    fn create_update_batch(
+        &self,
+        values_per_shard: HashMap<u8, Vec<(TreeKey, TreeValueRef)>>,
+        version: Version,
+    ) -> Result<(HashValue, TreeUpdateBatch<StateKey>), AptosDbError> {
+        let mut tree_update_batch = TreeUpdateBatch::new();
+        const NIL: Node<StateKey> = Node::Null;
+        let mut shard_root_nodes = [NIL; 16];
+        let persisted_versions = self.get_shard_persisted_versions(None)?;
+
+        for (shard_id, values) in values_per_shard {
+            let (shard_root_node, batch) = self.batch_put_value_set_for_shard(
+                shard_id,
+                values,
+                None,
+                persisted_versions[shard_id as usize],
+                version,
+            )?;
+
+            tree_update_batch.combine(batch);
+            shard_root_nodes[shard_id as usize] = shard_root_node;
+        }
+
+        self.put_top_levels_nodes(shard_root_nodes.to_vec(), version.checked_sub(1), version)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use {
-        super::*, aptos_crypto::HashValue, aptos_jellyfish_merkle::TreeUpdateBatch,
-        aptos_storage_interface::AptosDbError, aptos_types::transaction::Version,
+        super::*,
+        bytes::Bytes,
+        move_core_types::{
+            account_address::AccountAddress,
+            effects::{AccountChanges, Op},
+            identifier::Identifier,
+        },
     };
 
-    impl InMemoryState {
-        pub fn put_value_set_test(
-            &self,
-            value_set: Vec<(HashValue, Option<&(HashValue, StateKey)>)>,
-            version: Version,
-        ) -> Result<(HashValue, TreeUpdateBatch<StateKey>), AptosDbError> {
-            let tree = self.tree();
-            let mut tree_update_batch = TreeUpdateBatch::new();
-            let mut shard_root_nodes = Vec::with_capacity(16);
-
-            for shard_id in 0..16 {
-                let value_set_for_shard = value_set
-                    .iter()
-                    .filter(|(k, _v)| k.nibble(0) == shard_id)
-                    .cloned()
-                    .collect();
-                let (shard_root_node, shard_batch) = tree.batch_put_value_set_for_shard(
-                    shard_id,
-                    value_set_for_shard,
-                    None,
-                    version.checked_sub(1),
-                    version,
-                )?;
-
-                tree_update_batch.combine(shard_batch);
-                shard_root_nodes.push(shard_root_node);
-            }
-
-            let (root_hash, top_levels_batch) =
-                tree.put_top_levels_nodes(shard_root_nodes, version.checked_sub(1), version)?;
-            tree_update_batch.combine(top_levels_batch);
-
-            Ok((root_hash, tree_update_batch))
-        }
+    #[test]
+    #[should_panic]
+    fn test_state_root_from_empty_tree_fails() {
+        InMemoryState::new().state_root();
     }
 
     #[test]
     fn test_insert_to_empty_tree_produces_new_state_root() {
-        let state = InMemoryState::new();
+        let mut state = InMemoryState::new();
+        let mut change_set = ChangeSet::new();
 
-        let key = HashValue::zero();
-        let state_key = StateKey::raw(&[1u8, 2u8, 3u8, 4u8]);
-        let value_hash = HashValue::zero();
-        let version = 0;
-
-        let (new_root_hash, batch) = state
-            .put_value_set_test(vec![(key, Some(&(value_hash, state_key)))], version)
+        change_set
+            .add_account_changeset(AccountAddress::new([0; 32]), AccountChanges::new())
             .unwrap();
 
-        state.db.write_tree_update_batch(batch).unwrap();
+        let expected_root_hash = state.insert_change_set_into_merkle_trie(&change_set);
+        let actual_state_root = state.state_root();
 
-        let actual_state_root = state.state_root(version);
-        let expected_state_root = new_root_hash.to_h256();
+        assert_eq!(actual_state_root, expected_root_hash);
+    }
 
-        assert_eq!(actual_state_root, expected_state_root);
+    #[test]
+    fn test_state_root_is_different_after_update_changes_trie() {
+        let mut state = InMemoryState::new();
+        let mut change_set = ChangeSet::new();
 
-        let version = 1;
-        let (empty_root_hash, batch) = state
-            .put_value_set_test(vec![(key, None)], version)
+        change_set
+            .add_account_changeset(AccountAddress::new([0; 32]), AccountChanges::new())
+            .unwrap();
+        state.insert_change_set_into_merkle_trie(&change_set);
+        let old_state_root = state.state_root();
+
+        let mut change_set = ChangeSet::new();
+
+        let mut account_change_set = AccountChanges::new();
+        account_change_set
+            .add_module_op(
+                Identifier::new("lala").unwrap(),
+                Op::New(Bytes::from_static(&[1u8; 2])),
+            )
+            .unwrap();
+        change_set
+            .add_account_changeset(AccountAddress::new([9; 32]), account_change_set)
+            .unwrap();
+        state.insert_change_set_into_merkle_trie(&change_set);
+        let new_state_root = state.state_root();
+
+        assert_ne!(old_state_root, new_state_root);
+    }
+
+    #[test]
+    fn test_state_root_remains_the_same_when_update_does_not_change_trie() {
+        let mut state = InMemoryState::new();
+        let mut change_set = ChangeSet::new();
+
+        let mut account_change_set = AccountChanges::new();
+        account_change_set
+            .add_module_op(
+                Identifier::new("lala").unwrap(),
+                Op::New(Bytes::from_static(&[1u8; 2])),
+            )
             .unwrap();
 
-        state.db.write_tree_update_batch(batch).unwrap();
+        change_set
+            .add_account_changeset(AccountAddress::new([9; 32]), account_change_set)
+            .unwrap();
+        state.insert_change_set_into_merkle_trie(&change_set);
+        let expected_state_root = state.state_root();
 
-        let actual_state_root = state.state_root(version);
-        let expected_state_root = empty_root_hash.to_h256();
+        let mut change_set = ChangeSet::new();
+
+        let mut account_change_set = AccountChanges::new();
+        account_change_set
+            .add_module_op(
+                Identifier::new("lala").unwrap(),
+                Op::New(Bytes::from_static(&[1u8; 2])),
+            )
+            .unwrap();
+        change_set
+            .add_account_changeset(AccountAddress::new([9; 32]), account_change_set)
+            .unwrap();
+        state.insert_change_set_into_merkle_trie(&change_set);
+        let actual_state_root = state.state_root();
 
         assert_eq!(actual_state_root, expected_state_root);
     }

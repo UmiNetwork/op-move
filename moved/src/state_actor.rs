@@ -220,18 +220,10 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
 
         // TODO: derive from execution above
         ExecutionOutcome {
-            state_root: self.state.state_root(self.head_block_height()),
+            state_root: self.state.state_root(),
             receipts_root: H256::default(),
             logs_bloom: Bytes::from(vec![0; 256]),
             gas_used: U64::from(total_gas),
         }
-    }
-
-    fn head_block_height(&self) -> u64 {
-        self.block_heights
-            .get(&self.head)
-            .copied()
-            .unwrap_or(U64::one())
-            .as_u64()
     }
 }

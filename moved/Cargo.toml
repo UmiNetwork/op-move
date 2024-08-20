@@ -22,6 +22,7 @@ aptos-vm-types.workspace = true
 aptos-jellyfish-merkle.workspace = true
 aptos-storage-interface.workspace = true
 bcs.workspace = true
+bytes.workspace = true
 clap.workspace = true
 ethers-core.workspace = true
 flate2.workspace = true
