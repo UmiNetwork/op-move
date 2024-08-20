@@ -1,6 +1,6 @@
 use {
     crate::{iter::GroupIterator, primitives::ToH256},
-    aptos_crypto::hash::CryptoHash,
+    aptos_crypto::{hash::CryptoHash, HashValue},
     aptos_jellyfish_merkle::{
         mock_tree_store::MockTreeStore, node_type::Node, JellyfishMerkleTree, TreeReader,
         TreeUpdateBatch,
@@ -101,7 +101,7 @@ impl State for InMemoryState {
 }
 
 impl InMemoryState {
-    fn increment_version(&mut self) -> Version {
+    fn next_version(&mut self) -> Version {
         self.version += 1;
         self.version
     }
@@ -110,13 +110,71 @@ impl InMemoryState {
         &mut self,
         change_set: &ChangeSet,
     ) -> Result<H256, AptosDbError> {
-        let version = self.increment_version();
-        let tree = self.tree();
-        let mut tree_update_batch = TreeUpdateBatch::new();
-        let persisted_versions = tree.get_shard_persisted_versions(None)?;
+        let version = self.next_version();
+        let values = change_set.to_tree_values();
+        let values_per_shard = values
+            .iter()
+            .map(|(&k, v)| (k, v.as_ref()))
+            .group_by(|(k, _)| k.nibble(0));
+        let (root_hash, tree_update_batch) =
+            self.tree().create_update_batch(values_per_shard, version)?;
 
-        let values = change_set
-            .accounts()
+        self.db.write_tree_update_batch(tree_update_batch)?;
+
+        Ok(root_hash.to_h256())
+    }
+}
+
+/// The jellyfish merkle trie key is the hash of the actual key.
+type TreeKey = HashValue;
+
+/// The jellyfish merkle trie value consists of hash of the actual value and the actual key.
+type TreeValue = Option<(HashValue, StateKey)>;
+
+/// A reference to [`TreeValue`].
+type TreeValueRef<'r> = Option<&'r (HashValue, StateKey)>;
+
+/// Converts itself to a set of updates to a jellyfish merkle trie.
+///
+/// This trait is defined by a single operation called [`Self::to_tree_values`].
+trait ToTreeValues {
+    /// Extracts modules and resources and generates a set of merkle trie keys and values apply on
+    /// the trie for the purpose of updating the state based on a transaction.
+    ///
+    /// The [`TreeValue`] is optional where:
+    /// * The [`Some`] variant creates new or replaces existing value.
+    /// * The [`None`] variant marks a deletion.
+    ///
+    /// The [`TreeKey`] is a hashed values always based on the account's address and further based
+    /// on module name or resource type.
+    ///
+    /// # Move language context
+    ///
+    /// The purpose of Move programs is to read from and write to tree-shaped persistent global
+    /// storage. Programs cannot access the filesystem, network, or any other data outside of this
+    /// tree.
+    ///
+    /// In pseudocode, the global storage looks something like:
+    ///
+    /// ```no_run
+    /// module 0x42::example {
+    ///   struct GlobalStorage {
+    ///     resources: Map<(address, ResourceType), ResourceValue>,
+    ///     modules: Map<(address, ModuleName), ModuleBytecode>
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// Structurally, global storage is a forest consisting of trees rooted at an account address.
+    /// Each address can store both resource data values and module code values. As the pseudocode
+    /// above indicates, each address can store at most one resource value of a given type and at
+    /// most one module with a given name.
+    fn to_tree_values(&self) -> HashMap<TreeKey, TreeValue>;
+}
+
+impl ToTreeValues for ChangeSet {
+    fn to_tree_values(&self) -> HashMap<TreeKey, TreeValue> {
+        self.accounts()
             .iter()
             .flat_map(|(address, changes)| {
                 changes
@@ -135,18 +193,44 @@ impl InMemoryState {
                         (key, value)
                     }))
             })
-            .map(|(k, v)| (k.hash(), v.as_ref().map(|v| (v.hash(), k.clone()))))
-            .collect::<HashMap<_, _>>();
+            .map(|(k, v)| (k.hash(), v.map(|v| (v.hash(), k))))
+            .collect::<HashMap<_, _>>()
+    }
+}
 
-        let values_per_shard = values
-            .iter()
-            .map(|(k, v)| (*k, v.as_ref()))
-            .group_by(|(k, _)| k.nibble(0));
+/// Creates update batches that can be written to update the merkle trie.
+///
+/// This trait is defined by a single operation called [`Self::create_update_batch`].
+trait CreateUpdateBatch {
+    /// Creates a [`TreeUpdateBatch`] from `values_per_shard` and a `version`. Returns the update
+    /// batch and state root of a tree resulting after applying the update batch.
+    ///
+    /// The method does not write any updates to the tree itself, making this work with an immutable
+    /// reference to `self`. It only creates an update batch that can be written using a compatible
+    /// storage backed.
+    fn create_update_batch(
+        &self,
+        values_per_shard: HashMap<u8, Vec<(TreeKey, TreeValueRef)>>,
+        version: Version,
+    ) -> Result<(HashValue, TreeUpdateBatch<StateKey>), AptosDbError>;
+}
+
+impl<'a, R> CreateUpdateBatch for JellyfishMerkleTree<'a, R, StateKey>
+where
+    R: 'a + TreeReader<StateKey> + Sync,
+{
+    fn create_update_batch(
+        &self,
+        values_per_shard: HashMap<u8, Vec<(TreeKey, TreeValueRef)>>,
+        version: Version,
+    ) -> Result<(HashValue, TreeUpdateBatch<StateKey>), AptosDbError> {
+        let mut tree_update_batch = TreeUpdateBatch::new();
         const NIL: Node<StateKey> = Node::Null;
         let mut shard_root_nodes = [NIL; 16];
+        let persisted_versions = self.get_shard_persisted_versions(None)?;
 
         for (shard_id, values) in values_per_shard {
-            let (shard_root_node, batch) = tree.batch_put_value_set_for_shard(
+            let (shard_root_node, batch) = self.batch_put_value_set_for_shard(
                 shard_id,
                 values,
                 None,
@@ -158,16 +242,7 @@ impl InMemoryState {
             shard_root_nodes[shard_id as usize] = shard_root_node;
         }
 
-        let (root_hash, batch) = tree.put_top_levels_nodes(
-            shard_root_nodes.to_vec(),
-            self.version.checked_sub(1),
-            self.version,
-        )?;
-        tree_update_batch.combine(batch);
-
-        self.db.write_tree_update_batch(tree_update_batch)?;
-
-        Ok(root_hash.to_h256())
+        self.put_top_levels_nodes(shard_root_nodes.to_vec(), version.checked_sub(1), version)
     }
 }
 
