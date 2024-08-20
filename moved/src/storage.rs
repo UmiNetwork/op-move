@@ -117,24 +117,23 @@ impl InMemoryState {
 
         let values = change_set
             .into_inner()
-            .into_iter()
-            .flat_map(move |(address, changes)| {
+            .iter()
+            .flat_map(|(address, changes)| {
                 changes
                     .modules()
                     .iter()
                     .map(move |(k, v)| {
                         let value = v.clone().ok().map(StateValue::new_legacy);
-                        let key = StateKey::module(&address, k.as_ident_str());
+                        let key = StateKey::module(address, k.as_ident_str());
 
                         (key, value)
                     })
                     .chain(changes.resources().iter().map(move |(k, v)| {
                         let value = v.clone().ok().map(StateValue::new_legacy);
-                        let key = StateKey::resource(&address, k).unwrap();
+                        let key = StateKey::resource(address, k).unwrap();
 
                         (key, value)
                     }))
-                    .collect::<HashMap<_, _>>()
             })
             .collect::<HashMap<_, _>>();
 
