@@ -73,8 +73,8 @@ impl State for InMemoryState {
     type Err = PartialVMError;
 
     fn apply(&mut self, changes: ChangeSet) -> Result<(), Self::Err> {
-        self.resolver.apply(changes.clone())?;
-        self.insert_change_set_into_merkle_trie(changes).unwrap();
+        self.insert_change_set_into_merkle_trie(&changes).unwrap();
+        self.resolver.apply(changes)?;
         Ok(())
     }
 
@@ -83,9 +83,8 @@ impl State for InMemoryState {
         changes: ChangeSet,
         table_changes: TableChangeSet,
     ) -> Result<(), Self::Err> {
-        self.resolver
-            .apply_extended(changes.clone(), table_changes)?;
-        self.insert_change_set_into_merkle_trie(changes).unwrap();
+        self.insert_change_set_into_merkle_trie(&changes).unwrap();
+        self.resolver.apply_extended(changes, table_changes)?;
         Ok(())
     }
 
@@ -109,7 +108,7 @@ impl InMemoryState {
 
     fn insert_change_set_into_merkle_trie(
         &mut self,
-        change_set: ChangeSet,
+        change_set: &ChangeSet,
     ) -> Result<H256, AptosDbError> {
         let version = self.increment_version();
         let tree = self.tree();
@@ -117,7 +116,7 @@ impl InMemoryState {
         let persisted_versions = tree.get_shard_persisted_versions(None)?;
 
         let values = change_set
-            .into_inner()
+            .accounts()
             .iter()
             .flat_map(|(address, changes)| {
                 changes
@@ -200,7 +199,7 @@ mod tests {
             .unwrap();
 
         let expected_root_hash = state
-            .insert_change_set_into_merkle_trie(change_set)
+            .insert_change_set_into_merkle_trie(&change_set)
             .unwrap();
         let actual_state_root = state.state_root();
 
@@ -216,7 +215,7 @@ mod tests {
             .add_account_changeset(AccountAddress::new([0; 32]), AccountChanges::new())
             .unwrap();
         state
-            .insert_change_set_into_merkle_trie(change_set)
+            .insert_change_set_into_merkle_trie(&change_set)
             .unwrap();
         let old_state_root = state.state_root();
 
@@ -233,7 +232,7 @@ mod tests {
             .add_account_changeset(AccountAddress::new([9; 32]), account_change_set)
             .unwrap();
         state
-            .insert_change_set_into_merkle_trie(change_set)
+            .insert_change_set_into_merkle_trie(&change_set)
             .unwrap();
         let new_state_root = state.state_root();
 
@@ -257,7 +256,7 @@ mod tests {
             .add_account_changeset(AccountAddress::new([9; 32]), account_change_set)
             .unwrap();
         state
-            .insert_change_set_into_merkle_trie(change_set)
+            .insert_change_set_into_merkle_trie(&change_set)
             .unwrap();
         let expected_state_root = state.state_root();
 
@@ -274,7 +273,7 @@ mod tests {
             .add_account_changeset(AccountAddress::new([9; 32]), account_change_set)
             .unwrap();
         state
-            .insert_change_set_into_merkle_trie(change_set)
+            .insert_change_set_into_merkle_trie(&change_set)
             .unwrap();
         let actual_state_root = state.state_root();
 
