@@ -18,13 +18,19 @@ use {
     std::{collections::HashMap, fmt::Debug},
 };
 
-/// A persistent state trait.
+/// A global blockchain state trait.
 ///
-/// The state creates [`MoveResolver`] that can resolve both resources and modules.
+/// This trait is defined by these operations:
+/// * [`resolver`]: Creates [`MoveResolver`] that can resolve both resources and modules.
+/// * [`state_root`]: Returns current state root.
+/// * [`apply`]: Applies changes produced by a transaction on the state trie.
+/// * [`apply_with_tables`]: Same as [`apply`] but includes changes to tables from
+/// [`move_table_extension`].
 ///
-/// with the [`apply`] operation.
-///
+/// [`resolver`]: Self::resolver
+/// [`state_root`]: Self::state_root
 /// [`apply`]: Self::apply
+/// [`apply_with_tables`]: Self::apply_with_tables
 pub trait State {
     /// The associated error that can occur on storage operations.
     type Err: Debug;
@@ -129,18 +135,18 @@ impl InMemoryState {
 /// The jellyfish merkle trie key is the hash of the actual key.
 type TreeKey = HashValue;
 
-/// The jellyfish merkle trie value consists of hash of the actual value and the actual key.
+/// The jellyfish merkle trie value consists of a hash of the actual value and the actual key.
 type TreeValue = Option<(HashValue, StateKey)>;
 
 /// A reference to [`TreeValue`].
 type TreeValueRef<'r> = Option<&'r (HashValue, StateKey)>;
 
-/// Converts itself to a set of updates to a jellyfish merkle trie.
+/// Converts itself to a set of updates for a jellyfish merkle trie.
 ///
 /// This trait is defined by a single operation called [`Self::to_tree_values`].
 trait ToTreeValues {
-    /// Extracts modules and resources and generates a set of merkle trie keys and values apply on
-    /// the trie for the purpose of updating the state based on a transaction.
+    /// Extracts modules and resources and generates a set of merkle trie keys and values applicable
+    /// to a trie for the purpose of updating it resulting in a new root hash.
     ///
     /// The [`TreeValue`] is optional where:
     /// * The [`Some`] variant creates new or replaces existing value.
@@ -199,16 +205,16 @@ impl ToTreeValues for ChangeSet {
     }
 }
 
-/// Creates update batches that can be written to update the merkle trie.
+/// Creates update batches for mutating the merkle trie.
 ///
 /// This trait is defined by a single operation called [`Self::create_update_batch`].
 trait CreateUpdateBatch {
     /// Creates a [`TreeUpdateBatch`] from `values_per_shard` and a `version`. Returns the update
-    /// batch and state root of a tree resulting after applying the update batch.
+    /// batch and a root hash of the trie after applying the update batch.
     ///
-    /// The method does not write any updates to the tree itself, making this work with an immutable
-    /// reference to `self`. It only creates an update batch that can be written using a compatible
-    /// storage backed.
+    /// This function does not write any updates to the tree itself, making this work with an
+    /// immutable reference to `self`. It only creates an update batch that can be written using
+    /// a compatible storage backend.
     fn create_update_batch(
         &self,
         values_per_shard: HashMap<u8, Vec<(TreeKey, TreeValueRef)>>,
