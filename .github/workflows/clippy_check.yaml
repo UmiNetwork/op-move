@@ -15,7 +15,7 @@ jobs:
     clippy_check:
       name: latest
       permissions: write-all
-      runs-on: self-hosted
+      runs-on: codebuild-MovedNetworkBuild-${{ github.run_id }}-${{ github.run_attempt }}
       steps:
         - uses: actions/checkout@v4
         - uses: actions-rs/toolchain@v1
