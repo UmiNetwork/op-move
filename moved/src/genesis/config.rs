@@ -1,4 +1,5 @@
 use {
+    alloy_primitives::hex,
     aptos_gas_schedule::{InitialGasSchedule, VMGasParameters},
     aptos_vm_types::storage::StorageGasParameters,
     ethers_core::types::H256,
@@ -34,8 +35,9 @@ impl Default for GenesisConfig {
     fn default() -> Self {
         Self {
             chain_id: CHAIN_ID,
-            // TODO: determine real value based on result after deploying framework
-            initial_state_root: H256::default(),
+            initial_state_root: H256::from(hex!(
+                "2503e9898a861f2753c4bd406d6454acba57f101096fa13ab01c5d7d585fcbf4"
+            )),
             gas_costs: GasCosts::default(),
         }
     }
