@@ -11,6 +11,7 @@
 use {
     alloy_consensus::TxType,
     move_binary_format::errors::{PartialVMError, VMError},
+    move_core_types::language_storage::TypeTag,
     thiserror::Error,
 };
 
@@ -94,6 +95,8 @@ pub enum InvalidTransactionCause {
     ExhaustedAccount,
     #[error("Incorrect chain id")]
     IncorrectChainId,
+    #[error("Argument type not allowed in entry function: {0}")]
+    DisallowedEntryFunctionType(TypeTag),
 }
 
 #[derive(Debug, Error)]
@@ -137,7 +140,11 @@ pub enum EthToken {
 #[cfg(test)]
 mod tests {
     use {
-        super::*, move_binary_format::errors::Location, move_core_types::vm_status::StatusCode,
+        super::*,
+        move_binary_format::errors::Location,
+        move_core_types::{
+            account_address::AccountAddress, language_storage::StructTag, vm_status::StatusCode,
+        },
         test_case::test_case,
     };
 
@@ -191,6 +198,15 @@ mod tests {
         "Account exhausted, no more nonce values remain"
     )]
     #[test_case(InvalidTransactionCause::IncorrectChainId, "Incorrect chain id")]
+    #[test_case(
+        InvalidTransactionCause::DisallowedEntryFunctionType(TypeTag::Struct(Box::new(StructTag {
+            address: AccountAddress::ONE,
+            module: "token".parse().unwrap(),
+            name: "Token".parse().unwrap(),
+            type_args: vec![TypeTag::U8],
+        }))),
+        "Argument type not allowed in entry function: 0x1::token::Token<u8>"
+    )]
     fn test_error_converts_and_displays(actual: impl Into<Error>, expected: impl Into<String>) {
         let actual = actual.into().to_string();
         let expected = expected.into();

@@ -30,10 +30,12 @@ use {
     },
     move_vm_types::{gas::GasMeter, loaded_data::runtime_types::Type, values::Value},
     nonces::check_nonce,
+    tag_validation::validate_entry_type_tag,
 };
 
 mod eth_token;
 mod nonces;
+mod tag_validation;
 
 pub fn create_move_vm() -> crate::Result<MoveVM> {
     let natives = aptos_natives(
@@ -197,7 +199,13 @@ fn execute_entry_function<G: GasMeter>(
         // References are ignored in entry function signatures because the
         // values are actualized in the serialized arguments.
         let ty = strip_reference(ty)?;
+        // Note: the function is safe even though the `get_type_tag` implementation
+        // has unbounded recursion in it because the recursion depth is limited at
+        // the time a module is deployed. If a module has been successfully deployed
+        // then we know the recursion is bounded to a reasonable degree (less than depth 255).
+        // See `test_deeply_nested_type`.
         let tag = session.get_type_tag(ty)?;
+        validate_entry_type_tag(&tag)?;
         let layout = session.get_type_layout(&tag)?;
         // TODO: Potential optimization -- could check layout for Signer type
         // and only deserialize if necessary. The tricky part here is we would need
@@ -431,7 +439,9 @@ mod tests {
 
         // Call main function with correct signer
         let move_address = evm_address_to_move_address(&EVM_ADDRESS);
-        let input_arg = MoveValue::Struct(MoveStruct::new(vec![MoveValue::Signer(move_address)]));
+        let input_arg = MoveValue::Struct(MoveStruct::new(vec![MoveValue::Vector(vec![
+            MoveValue::Signer(move_address),
+        ])]));
         let entry_fn = EntryFunction::new(
             module_id.clone(),
             Identifier::new("main").unwrap(),
@@ -449,9 +459,9 @@ mod tests {
         state.apply(outcome.changes).unwrap();
 
         // Call main function with incorrect signer (get an error)
-        let input_arg = MoveValue::Struct(MoveStruct::new(vec![MoveValue::Signer(
-            AccountAddress::new([0x11; 32]),
-        )]));
+        let input_arg = MoveValue::Struct(MoveStruct::new(vec![MoveValue::Vector(vec![
+            MoveValue::Signer(AccountAddress::new([0x11; 32])),
+        ])]));
         let entry_fn = EntryFunction::new(
             module_id.clone(),
             Identifier::new("main").unwrap(),
@@ -736,10 +746,9 @@ mod tests {
     #[test]
     fn test_deeply_nested_type() {
         // This test intentionally modifies a module to include a type
-        // which is very deeply nested (it is a struct which contains a field that
-        // is a struct, which itself contains a different struct, and so on).
-        // Then the test tries to run a function with this deeply nested type
-        // as an input and the VM returns an error.
+        // which is very deeply nested (Option<Option<Option<...>>>).
+        // Then the test tries to deploy the module and it fails due to
+        // the Move recursion limit.
 
         let genesis_config = GenesisConfig::default();
 
@@ -749,75 +758,129 @@ mod tests {
         let mut module_bytes = move_compile(module_name, &move_address).unwrap();
         let mut compiled_module = CompiledModule::deserialize(&module_bytes).unwrap();
 
-        // Define a procedure which includes a new struct which uses the previous
-        // struct as its field
-        let mut depth: u16 = 1;
-        let mut define_new_struct = || {
-            let struct_name: Identifier = format!("DeepStruct{depth}").parse().unwrap();
-            let struct_name_index = IdentifierIndex::new(compiled_module.identifiers.len() as u16);
-            compiled_module.identifiers.push(struct_name);
-            let previous_struct_handle_index = StructHandleIndex::new(depth - 1);
-            let current_struct_handle_index = StructHandleIndex::new(depth);
-            let struct_handle = StructHandle {
-                module: ModuleHandleIndex::new(0),
-                name: struct_name_index,
-                abilities: AbilitySet::FUNCTIONS,
-                type_parameters: Vec::new(),
-            };
-            compiled_module.struct_handles.push(struct_handle);
-            let struct_def = StructDefinition {
-                struct_handle: current_struct_handle_index,
-                field_information: StructFieldInformation::Declared(vec![FieldDefinition {
-                    name: struct_name_index,
-                    signature: TypeSignature(SignatureToken::Struct(previous_struct_handle_index)),
-                }]),
-            };
-            compiled_module.struct_defs.push(struct_def);
-            *compiled_module
-                .signatures
-                .first_mut()
-                .unwrap()
-                .0
-                .first_mut()
-                .unwrap() = SignatureToken::Struct(current_struct_handle_index);
-            depth += 1;
-        };
+        // Define a procedure which wraps the argument to the function `main` in an
+        // additional `Option`, e.g. `Option<signer>` -> `Option<Option<Signer>>`.
+        fn wrap_with_option(compiled_module: &mut CompiledModule, module_bytes: &mut Vec<u8>) {
+            let signature = compiled_module.signatures.first_mut().unwrap();
+            let inner = signature.0.clone();
+            signature.0 = vec![SignatureToken::StructInstantiation(
+                StructHandleIndex(0),
+                inner,
+            )];
 
-        // Run this procedure many times
-        for _ in 0..200 {
-            define_new_struct();
+            // Re-serialize the new module
+            module_bytes.clear();
+            compiled_module.serialize(module_bytes).unwrap();
         }
 
-        // Re-serialize the new module
-        module_bytes.clear();
-        compiled_module.serialize(&mut module_bytes).unwrap();
+        // This function does the same thing as `wrap_with_option` except it
+        // acts directly on the module bytes instead of on the `CompiledModule`
+        // data type. This allows us to continue wrapping with Option even once
+        // the module serialization would fail due to the recursion limit.
+        fn byte_level_wrap_with_option(module_bytes: &[u8]) -> Vec<u8> {
+            // Helper function for this procedure
+            fn update_byte(x: u8) -> (u8, u8) {
+                let (y, overflow) = x.overflowing_add(3);
+                if overflow {
+                    (y + 128, 1)
+                } else {
+                    (y, 0)
+                }
+            }
 
-        // Deploy the module.
+            let mut result = Vec::with_capacity(module_bytes.len() + 3);
+
+            // Copy first 20 bytes
+            for b in &module_bytes[0..20] {
+                result.push(*b);
+            }
+
+            // Update next 2 bytes
+            let (x, y) = update_byte(module_bytes[20]);
+            result.push(x);
+            result.push(module_bytes[21] + y);
+
+            // Copy next byte
+            result.push(module_bytes[22]);
+
+            // Update next 2 bytes
+            let (x, y) = update_byte(module_bytes[23]);
+            result.push(x);
+            result.push(module_bytes[24] + y);
+
+            // Copy next 2 bytes
+            result.push(module_bytes[25]);
+            result.push(module_bytes[26]);
+
+            // Update next 2 bytes
+            let (x, y) = update_byte(module_bytes[27]);
+            result.push(x);
+            result.push(module_bytes[28] + y);
+
+            // Copy next 2 bytes
+            result.push(module_bytes[29]);
+            result.push(module_bytes[30]);
+
+            // Update next 2 bytes
+            let (x, y) = update_byte(module_bytes[31]);
+            result.push(x);
+            result.push(module_bytes[32] + y);
+
+            // Copy next 16 bytes
+            for b in &module_bytes[33..49] {
+                result.push(*b);
+            }
+
+            // Push 3 new bytes
+            result.push(1);
+            result.push(11);
+            result.push(0);
+
+            // Copy remaining bytes
+            for b in &module_bytes[49..] {
+                result.push(*b);
+            }
+
+            result
+        }
+
+        // Run the `wrap_with_option` procedure many times to make a deep nesting
+        // of `Option<Option<Option<...>>>`.
+        for _ in 0..41 {
+            wrap_with_option(&mut compiled_module, &mut module_bytes);
+        }
+
+        let mut computed_module_bytes = module_bytes.clone();
+
+        // Continue wrapping up to the recursion limit.
+        // Also now also act on a separate copy of the module bytes directly
+        // and validate the changes are identical. We couldn't use the byte-level
+        // procedure on iterations 0 to 40 because the byte sequence is a little
+        // different for some reason.
+        for _ in 41..254 {
+            wrap_with_option(&mut compiled_module, &mut module_bytes);
+
+            computed_module_bytes = byte_level_wrap_with_option(&computed_module_bytes);
+
+            assert_eq!(computed_module_bytes, module_bytes);
+        }
+
+        // Do one extra iteration beyond the serialization recursion limit
+        module_bytes = byte_level_wrap_with_option(&computed_module_bytes);
+
+        // Try to deploy the module
         let mut signer = Signer::new(&PRIVATE_KEY);
         // Deploy some other contract to ensure the state is properly initialized.
-        let (_, mut state) = deploy_contract("natives", &mut signer, &genesis_config);
+        let (_, state) = deploy_contract("natives", &mut signer, &genesis_config);
         let signed_tx = create_transaction(&mut signer, TxKind::Create, module_bytes);
         let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
-        state.apply(outcome.changes).unwrap();
-        let module_id = ModuleId::new(move_address, Identifier::new(module_name).unwrap());
-
-        // Call the main function
-        let input_arg = MoveValue::Struct(MoveStruct::new(vec![MoveValue::Signer(move_address)]));
-        let entry_fn = EntryFunction::new(
-            module_id.clone(),
-            Identifier::new("main").unwrap(),
-            Vec::new(),
-            vec![bcs::to_bytes(&input_arg).unwrap()],
-        );
-        let signed_tx = create_transaction(
-            &mut signer,
-            TxKind::Call(EVM_ADDRESS),
-            bcs::to_bytes(&entry_fn).unwrap(),
-        );
-
-        let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
+        // The deployment fails because the Aptos code refuses to deserialize
+        // the module with too deep recursion.
         let err = outcome.vm_outcome.unwrap_err();
-        assert!(format!("{err:?}").contains("VM_MAX_VALUE_DEPTH_REACHED"));
+        assert!(
+            format!("{err:?}").contains("Maximum recursion depth reached"),
+            "Actual error: {err:?}"
+        );
     }
 
     fn deploy_contract(
