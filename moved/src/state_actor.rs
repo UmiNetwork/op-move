@@ -1,3 +1,4 @@
+mod markle_root;
 mod payload;
 
 pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
