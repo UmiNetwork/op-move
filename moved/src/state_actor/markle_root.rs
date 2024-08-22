@@ -1,5 +1,15 @@
 use alloy_primitives::{keccak256, B256};
 
+trait MerkleRootExt {
+    fn merkle_root(self) -> B256;
+}
+
+impl<I: ExactSizeIterator<Item = B256>> MerkleRootExt for I {
+    fn merkle_root(self) -> B256 {
+        merkle_root(self)
+    }
+}
+
 pub fn merkle_root(leaves: impl ExactSizeIterator<Item = B256>) -> B256 {
     let size = leaves.len().max(1);
     let nodes: Box<dyn Iterator<Item = B256>> = Box::new(leaves);
@@ -80,7 +90,7 @@ mod tests {
     fn test_root_of_single_node_tree_is_hash_of_the_node() {
         let one = B256::from([1; 32]);
         let expected_root = one;
-        let actual_root = merkle_root([one].into_iter());
+        let actual_root = [one].into_iter().merkle_root();
 
         assert_eq!(actual_root, expected_root);
     }
@@ -90,7 +100,7 @@ mod tests {
         let one = B256::from([1; 32]);
         let two = B256::from([2; 32]);
         let expected_root = keccak256(&[one, two].concat());
-        let actual_root = merkle_root([one, two].into_iter());
+        let actual_root = [one, two].into_iter().merkle_root();
 
         assert_eq!(actual_root, expected_root);
     }
@@ -101,7 +111,7 @@ mod tests {
         let two = B256::from([2; 32]);
         let three = B256::from([3; 32]);
         let expected_root = keccak256(&[keccak256(&[one, two].concat()), three].concat());
-        let actual_root = merkle_root([one, two, three].into_iter());
+        let actual_root = [one, two, three].into_iter().merkle_root();
 
         assert_eq!(actual_root, expected_root);
     }
@@ -119,7 +129,7 @@ mod tests {
             ]
             .concat(),
         );
-        let actual_root = merkle_root([one, two, three, four].into_iter());
+        let actual_root = [one, two, three, four].into_iter().merkle_root();
 
         assert_eq!(actual_root, expected_root);
     }
@@ -144,7 +154,7 @@ mod tests {
             ]
             .concat(),
         );
-        let actual_root = merkle_root([one, two, three, four, five].into_iter());
+        let actual_root = [one, two, three, four, five].into_iter().merkle_root();
 
         assert_eq!(actual_root, expected_root);
     }
