@@ -1,5 +1,5 @@
 use {
-    crate::{Error, InvalidTransactionCause, UserError},
+    crate::{Error, InvalidTransactionCause},
     move_core_types::{
         account_address::AccountAddress,
         ident_str,
@@ -54,9 +54,9 @@ pub fn validate_entry_type_tag(tag: &TypeTag) -> crate::Result<()> {
                 let info = MoveStructInfo::from_tag(struct_tag);
 
                 if !ALLOWED_STRUCTS.contains(&info) {
-                    return Err(Error::User(UserError::InvalidTransaction(
+                    return Err(Error::InvalidTransaction(
                         InvalidTransactionCause::DisallowedEntryFunctionType(tag.clone()),
-                    )));
+                    ));
                 }
 
                 match struct_tag.type_args.as_slice() {

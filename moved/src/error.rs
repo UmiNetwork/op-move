@@ -91,6 +91,8 @@ pub enum InvalidTransactionCause {
     IncorrectChainId,
     #[error("Argument type not allowed in entry function: {0}")]
     DisallowedEntryFunctionType(TypeTag),
+    #[error("Insufficient intrinsic gas")]
+    InsufficientIntrinsicGas,
 }
 
 impl From<InvalidTransactionCause> for Error {
@@ -212,6 +214,10 @@ mod tests {
             type_args: vec![TypeTag::U8],
         }))),
         "Argument type not allowed in entry function: 0x1::token::Token<u8>"
+    )]
+    #[test_case(
+        InvalidTransactionCause::InsufficientIntrinsicGas,
+        "Insufficient intrinsic gas"
     )]
     fn test_error_converts_and_displays(actual: impl Into<Error>, expected: impl Into<String>) {
         let actual = actual.into().to_string();

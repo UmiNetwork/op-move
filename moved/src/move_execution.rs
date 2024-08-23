@@ -1,5 +1,3 @@
-mod signers;
-
 use {
     crate::{
         genesis::config::GenesisConfig,
@@ -7,6 +5,7 @@ use {
         types::transactions::{
             ExtendedTxEnvelope, NormalizedEthTransaction, TransactionExecutionOutcome,
         },
+        Error::{InvalidTransaction, User},
         InvalidTransactionCause,
     },
     alloy_consensus::Transaction,
@@ -21,7 +20,7 @@ use {
     },
     aptos_vm::natives::aptos_natives,
     move_binary_format::errors::PartialVMError,
-    move_core_types::{account_address::AccountAddress, effects::Changes, resolver::MoveResolver},
+    move_core_types::{account_address::AccountAddress, resolver::MoveResolver},
     move_vm_runtime::{
         module_traversal::{TraversalContext, TraversalStorage},
         move_vm::MoveVM,
@@ -35,6 +34,7 @@ use {
 
 mod eth_token;
 mod nonces;
+mod signers;
 mod tag_validation;
 
 pub fn create_move_vm() -> crate::Result<MoveVM> {
@@ -131,11 +131,9 @@ pub fn execute_transaction(
             let charge_gas = gas_meter
                 .charge_intrinsic_gas_for_transaction(txn_size)
                 .and_then(|_| gas_meter.charge_io_gas_for_transaction(txn_size));
-            if let Err(err) = charge_gas {
-                return Ok(TransactionExecutionOutcome::new(
-                    Err(err.into()),
-                    Changes::new(),
-                    tx.gas_limit(),
+            if charge_gas.is_err() {
+                return Err(InvalidTransaction(
+                    InvalidTransactionCause::InsufficientIntrinsicGas,
                 ));
             }
 
@@ -173,20 +171,16 @@ pub fn execute_transaction(
                     )
                 }
             };
-            let vm_outcome = match vm_outcome {
-                Ok(v) => Ok(v),
-                Err(e) => Err(match e {
-                    crate::Error::User(user_error) => Ok(user_error),
-                    err => Err(err),
-                }?),
-            };
 
             let changes = session.finish()?;
             let gas_used = total_gas_used(&gas_meter, genesis_config);
 
-            Ok(TransactionExecutionOutcome::new(
-                vm_outcome, changes, gas_used,
-            ))
+            match vm_outcome {
+                Ok(_) => Ok(TransactionExecutionOutcome::new(Ok(()), changes, gas_used)),
+                // User error still generates a receipt and consumes gas
+                Err(User(e)) => Ok(TransactionExecutionOutcome::new(Err(e), changes, gas_used)),
+                Err(e) => Err(e),
+            }
         }
     }
 }
@@ -386,13 +380,13 @@ mod tests {
             TxKind::Call(EVM_ADDRESS),
             bcs::to_bytes(&entry_fn).unwrap(),
         );
-        let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
-        let err = outcome.vm_outcome.unwrap_err();
+        let err = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap_err();
         assert_eq!(
             err.to_string(),
             "Signer does not match transaction signature"
         );
-        state.apply(outcome.changes).unwrap(); // Still increment the nonce
+        // Reverse the nonce incrementing done in `create_transaction` because of the error
+        signer.nonce -= 1;
 
         // Resource was created
         let struct_tag = StructTag {
@@ -484,8 +478,7 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
-        let err = outcome.vm_outcome.unwrap_err();
+        let err = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap_err();
         assert_eq!(
             err.to_string(),
             "Signer does not match transaction signature"
@@ -598,7 +591,6 @@ mod tests {
             access_list: Default::default(),
             input: bcs::to_bytes(&entry_fn).unwrap().into(),
         };
-        signer.nonce += 1;
         let signature = signer.inner.sign_transaction_sync(&mut tx).unwrap();
         let signed_tx =
             ExtendedTxEnvelope::Canonical(TxEnvelope::Eip1559(tx.into_signed(signature)));
@@ -634,16 +626,12 @@ mod tests {
             access_list: Default::default(),
             input: bcs::to_bytes(&entry_fn).unwrap().into(),
         };
-        signer.nonce += 1;
         let signature = signer.inner.sign_transaction_sync(&mut tx).unwrap();
         let signed_tx =
             ExtendedTxEnvelope::Canonical(TxEnvelope::Eip1559(tx.into_signed(signature)));
 
-        let err = execute_transaction(&signed_tx, state.resolver(), &genesis_config)
-            .unwrap()
-            .vm_outcome
-            .unwrap_err();
-        assert!(err.to_string().contains("OUT_OF_GAS"));
+        let err = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap_err();
+        assert_eq!(err.to_string(), "Insufficient intrinsic gas");
     }
 
     #[test]
