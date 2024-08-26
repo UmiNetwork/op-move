@@ -1,11 +1,12 @@
-use move_core_types::{
-    account_address::AccountAddress,
-    ident_str,
-    identifier::IdentStr,
-    language_storage::{StructTag, TypeTag},
+use {
+    crate::{Error, InvalidTransactionCause, UserError},
+    move_core_types::{
+        account_address::AccountAddress,
+        ident_str,
+        identifier::IdentStr,
+        language_storage::{StructTag, TypeTag},
+    },
 };
-
-use crate::{Error, InvalidTransactionCause, UserError};
 
 const ALLOWED_STRUCTS: [MoveStructInfo<'static>; 5] = [
     MoveStructInfo {
