@@ -5,8 +5,8 @@ pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
 use {
     crate::{
         genesis::{config::GenesisConfig, init_storage},
+        merkle_tree::MerkleRootExt,
         move_execution::execute_transaction,
-        mpt::MerkleRootExt,
         storage::{InMemoryState, State},
         types::{
             engine_api::{
