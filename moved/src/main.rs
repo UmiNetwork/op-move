@@ -40,6 +40,7 @@ mod iter;
 mod json_utils;
 mod methods;
 mod move_execution;
+mod mpt;
 mod primitives;
 mod state_actor;
 mod storage;

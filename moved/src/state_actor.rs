@@ -1,4 +1,3 @@
-mod merkle_root;
 mod payload;
 
 pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
@@ -7,7 +6,7 @@ use {
     crate::{
         genesis::{config::GenesisConfig, init_storage},
         move_execution::execute_transaction,
-        state_actor::merkle_root::MerkleRootExt,
+        mpt::MerkleRootExt,
         storage::{InMemoryState, State},
         types::{
             engine_api::{

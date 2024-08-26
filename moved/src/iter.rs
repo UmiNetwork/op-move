@@ -34,3 +34,93 @@ impl<V, I: Iterator<Item = V>> GroupIterator<V> for I {
         hash_map
     }
 }
+
+/// A trait extension for iterators that turns them into an iterator of pairs of their values.
+///
+/// It is defined by a single [`Self::pair`] method.
+pub trait PairIteratorExt<T, I: Iterator<Item = T>> {
+    /// Wraps `self` into an iterator of its `Item` wrapped in a [`PairOrSingle`].
+    ///
+    /// When [`PairIterator::next`] is called, up to two next items are taken from the inner
+    /// iterator. It keeps returning pairs of two values until it reaches the end.
+    ///
+    /// The iterator always returns [`PairOrSingle::Pair`] with one exception. There is a special case if
+    /// the inner iterator has odd amount of values. The [`PairIterator`] returns the last remaining
+    /// value as [`PairOrSingle::Single`]. There is no other way this iterator returns this [`PairOrSingle`]
+    /// variant.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// # use crate::iter::{PairIteratorExt, Pair};
+    /// let iter = [1, 2].into_iter().pair();
+    ///
+    /// assert_eq!(iter.next(), Some(Pair::Full(1, 2)));
+    /// assert_eq!(iter.next(), None);
+    /// ```
+    ///
+    /// Using an iterator with odd amount of items:
+    ///
+    /// ```
+    /// # use crate::iter::{PairIteratorExt, Pair};
+    /// let iter = [1, 2, 3, 4, 5].into_iter().pair();
+    ///
+    /// assert_eq!(iter.next(), Some(Pair::Full(1, 2)));
+    /// assert_eq!(iter.next(), Some(Pair::Full(3, 4)));
+    /// assert_eq!(iter.next(), Some(Pair::Partial(5)));
+    /// assert_eq!(iter.next(), None);
+    /// ```
+    fn pair(self) -> PairIterator<T, I>;
+}
+
+impl<T, I: Iterator<Item = T>> PairIteratorExt<T, I> for I {
+    fn pair(self) -> PairIterator<T, I> {
+        PairIterator::new(self)
+    }
+}
+
+/// A single or a pair of values of type `T`.
+///
+/// # Variants
+/// * `Pair` represents an ordered tuple of two values of the same type.
+/// * `Single` represents a single value.
+pub enum PairOrSingle<T> {
+    Pair(T, T),
+    Single(T),
+}
+
+/// Turns any iterator into an iterator over a [`PairOrSingle`] items wrapping the original type.
+///
+/// See [extension trait documentation] for more information.
+///
+/// [extension trait documentation]: PairIteratorExt::pair
+pub struct PairIterator<T, I: Iterator<Item = T>> {
+    inner: I,
+}
+
+impl<T, I: Iterator<Item = T>> PairIterator<T, I> {
+    pub fn new(inner: I) -> Self {
+        Self { inner }
+    }
+}
+
+impl<T, I> Iterator for PairIterator<T, I>
+where
+    I: Iterator<Item = T>,
+{
+    type Item = PairOrSingle<T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(first) = self.inner.next() {
+            Some(if let Some(second) = self.inner.next() {
+                PairOrSingle::Pair(first, second)
+            } else {
+                PairOrSingle::Single(first)
+            })
+        } else {
+            None
+        }
+    }
+}

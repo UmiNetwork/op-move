@@ -1,4 +1,7 @@
-use alloy_primitives::{keccak256, B256};
+use {
+    crate::iter::{PairIteratorExt, PairOrSingle},
+    alloy_primitives::{keccak256, B256},
+};
 
 pub trait MerkleRootExt {
     fn merkle_root(self) -> B256;
@@ -16,60 +19,18 @@ pub fn merkle_root(leaves: impl ExactSizeIterator<Item = B256>) -> B256 {
     let levels = 0..=size.ilog2();
 
     levels
-        .fold(nodes, |nodes, _| Box::new(nodes.pair().map(Pair::combine)))
+        .fold(nodes, |nodes, _| {
+            Box::new(nodes.pair().map(PairOrSingle::combine))
+        })
         .next()
         .unwrap_or(B256::ZERO)
 }
 
-trait PairIteratorExt<T, I: Iterator<Item = T>> {
-    fn pair(self) -> PairIterator<T, I>;
-}
-
-impl<T, I: Iterator<Item = T>> PairIteratorExt<T, I> for I {
-    fn pair(self) -> PairIterator<T, I> {
-        PairIterator::new(self)
-    }
-}
-
-impl Pair<B256> {
+impl PairOrSingle<B256> {
     pub fn combine(self) -> B256 {
         match self {
-            Pair::Full(a, b) => keccak256([a, b].concat()),
-            Pair::Partial(hash) => hash,
-        }
-    }
-}
-
-pub enum Pair<T> {
-    Full(T, T),
-    Partial(T),
-}
-
-pub struct PairIterator<T, I: Iterator<Item = T>> {
-    inner: I,
-}
-
-impl<T, I: Iterator<Item = T>> PairIterator<T, I> {
-    pub fn new(inner: I) -> Self {
-        Self { inner }
-    }
-}
-
-impl<T, I> Iterator for PairIterator<T, I>
-where
-    I: Iterator<Item = T>,
-{
-    type Item = Pair<T>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if let Some(first) = self.inner.next() {
-            Some(if let Some(second) = self.inner.next() {
-                Pair::Full(first, second)
-            } else {
-                Pair::Partial(first)
-            })
-        } else {
-            None
+            PairOrSingle::Pair(a, b) => keccak256([a, b].concat()),
+            PairOrSingle::Single(hash) => hash,
         }
     }
 }
