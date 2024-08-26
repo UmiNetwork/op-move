@@ -23,7 +23,6 @@ alloy-eips = { version = "0.2" }
 alloy-primitives = { version = "0.7", features = ["k256", "rlp"] }
 alloy-rlp = { version = "0.3", features = ["derive"] }
 alloy-serde = "0.2"
-op-alloy-consensus = "0.1.5"
 anyhow = "1"
 aptos-framework = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 aptos-gas-meter = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }

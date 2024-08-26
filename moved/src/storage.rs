@@ -163,7 +163,7 @@ trait ToTreeValues {
     ///
     /// In pseudocode, the global storage looks something like:
     ///
-    /// ```no_run
+    /// ```move
     /// module 0x42::example {
     ///   struct GlobalStorage {
     ///     resources: Map<(address, ResourceType), ResourceValue>,

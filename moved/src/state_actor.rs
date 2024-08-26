@@ -1,10 +1,6 @@
 mod payload;
 
 pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
-use {
-    alloy_consensus::{Receipt, ReceiptWithBloom},
-    alloy_primitives::{Bloom, Log},
-};
 
 use {
     crate::{
@@ -21,7 +17,8 @@ use {
             transactions::ExtendedTxEnvelope,
         },
     },
-    alloy_primitives::keccak256,
+    alloy_consensus::{Receipt, ReceiptWithBloom},
+    alloy_primitives::{keccak256, Bloom, Log},
     alloy_rlp::{Decodable, Encodable},
     ethers_core::types::{Bytes, H256, U256, U64},
     move_binary_format::errors::PartialVMError,

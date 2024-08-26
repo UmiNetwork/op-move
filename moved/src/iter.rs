@@ -54,22 +54,22 @@ pub trait PairIteratorExt<T, I: Iterator<Item = T>> {
     /// Basic usage:
     ///
     /// ```
-    /// # use crate::iter::{PairIteratorExt, Pair};
-    /// let iter = [1, 2].into_iter().pair();
+    /// # use moved::iter::{PairIteratorExt, PairOrSingle::{self, Pair, Single}};
+    /// let mut iter = [1, 2].into_iter().pair();
     ///
-    /// assert_eq!(iter.next(), Some(Pair::Full(1, 2)));
+    /// assert_eq!(iter.next(), Some(Pair(1, 2)));
     /// assert_eq!(iter.next(), None);
     /// ```
     ///
     /// Using an iterator with odd amount of items:
     ///
     /// ```
-    /// # use crate::iter::{PairIteratorExt, Pair};
-    /// let iter = [1, 2, 3, 4, 5].into_iter().pair();
+    /// # use moved::iter::{PairIteratorExt, PairOrSingle::{self, Pair, Single}};
+    /// let mut iter = [1, 2, 3, 4, 5].into_iter().pair();
     ///
-    /// assert_eq!(iter.next(), Some(Pair::Full(1, 2)));
-    /// assert_eq!(iter.next(), Some(Pair::Full(3, 4)));
-    /// assert_eq!(iter.next(), Some(Pair::Partial(5)));
+    /// assert_eq!(iter.next(), Some(Pair(1, 2)));
+    /// assert_eq!(iter.next(), Some(Pair(3, 4)));
+    /// assert_eq!(iter.next(), Some(Single(5)));
     /// assert_eq!(iter.next(), None);
     /// ```
     fn pair(self) -> PairIterator<T, I>;
@@ -86,6 +86,7 @@ impl<T, I: Iterator<Item = T>> PairIteratorExt<T, I> for I {
 /// # Variants
 /// * `Pair` represents an ordered tuple of two values of the same type.
 /// * `Single` represents a single value.
+#[derive(Debug, PartialEq)]
 pub enum PairOrSingle<T> {
     Pair(T, T),
     Single(T),
