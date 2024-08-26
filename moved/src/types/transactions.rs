@@ -1,8 +1,6 @@
 use {
     crate::{Error, InvalidTransactionCause, UserError},
-    alloy_consensus::{
-        ReceiptEnvelope, Signed, Transaction, TxEip1559, TxEip2930, TxEnvelope, TxLegacy,
-    },
+    alloy_consensus::{Signed, Transaction, TxEip1559, TxEip2930, TxEnvelope, TxLegacy},
     alloy_eips::eip2930::AccessList,
     alloy_primitives::{Address, Bytes, TxKind, B256, U256, U64},
     alloy_rlp::{Buf, Decodable, Encodable, RlpDecodable, RlpEncodable},
@@ -81,19 +79,15 @@ impl Decodable for ExtendedTxEnvelope {
 pub struct TransactionExecutionOutcome {
     pub vm_outcome: Result<(), UserError>,
     pub changes: ChangeSet,
-    pub receipt: ReceiptEnvelope,
+    pub gas_used: u64,
 }
 
 impl TransactionExecutionOutcome {
-    pub fn new(
-        vm_outcome: Result<(), UserError>,
-        changes: ChangeSet,
-        receipt: ReceiptEnvelope,
-    ) -> Self {
+    pub fn new(vm_outcome: Result<(), UserError>, changes: ChangeSet, gas_used: u64) -> Self {
         Self {
             vm_outcome,
             changes,
-            receipt,
+            gas_used,
         }
     }
 }

@@ -1,6 +1,10 @@
 mod payload;
 
 pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
+use {
+    alloy_consensus::{Receipt, ReceiptWithBloom},
+    alloy_primitives::{Bloom, Log},
+};
 
 use {
     crate::{
@@ -204,7 +208,7 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
     }
 
     fn execute_transactions(&mut self, transactions: &[ExtendedTxEnvelope]) -> ExecutionOutcome {
-        let mut receipts = Vec::new();
+        let mut outcomes = Vec::new();
 
         // TODO: parallel transaction processing?
         for tx in transactions {
@@ -212,7 +216,7 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
                 .and_then(|outcome| {
                     // TODO: record success or failure from outcome.vm_outcome
                     self.state.apply(outcome.changes)?;
-                    receipts.push(outcome.receipt);
+                    outcomes.push((outcome.vm_outcome.is_ok(), outcome.gas_used));
                     Ok(())
                 })
             {
@@ -221,21 +225,32 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
             }
         }
 
+        let mut cumulative_gas_used = 0u64;
+
+        let receipts = outcomes.into_iter().map(|(status, gas_used)| {
+            cumulative_gas_used = cumulative_gas_used.saturating_add(gas_used);
+
+            let receipt = Receipt {
+                status: status.into(),
+                cumulative_gas_used: cumulative_gas_used as u128,
+                logs: Vec::<Log>::new(),
+            };
+
+            ReceiptWithBloom::new(receipt, Bloom::ZERO)
+        });
+
+        let receipts_root = receipts
+            .map(alloy_rlp::encode)
+            .map(keccak256)
+            .merkle_root()
+            .0
+            .into();
+
         // TODO: derive from execution above
         ExecutionOutcome {
             state_root: self.state.state_root(),
-            gas_used: receipts
-                .iter()
-                .map(|receipt| receipt.cumulative_gas_used() as u64)
-                .fold(0u64, u64::saturating_add)
-                .into(),
-            receipts_root: receipts
-                .into_iter()
-                .map(alloy_rlp::encode)
-                .map(keccak256)
-                .merkle_root()
-                .0
-                .into(),
+            gas_used: cumulative_gas_used.into(),
+            receipts_root,
             logs_bloom: Bytes::from(vec![0; 256]),
         }
     }

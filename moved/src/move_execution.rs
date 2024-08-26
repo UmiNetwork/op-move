@@ -9,8 +9,8 @@ use {
         },
         InvalidTransactionCause,
     },
-    alloy_consensus::{Receipt, ReceiptEnvelope, ReceiptWithBloom, Transaction},
-    alloy_primitives::{Bloom, TxKind},
+    alloy_consensus::Transaction,
+    alloy_primitives::TxKind,
     aptos_framework::natives::event::NativeEventContext,
     aptos_gas_meter::{AptosGasMeter, GasAlgebra, StandardGasAlgebra, StandardGasMeter},
     aptos_gas_schedule::{MiscGasParameters, NativeGasParameters, LATEST_GAS_FEATURE_VERSION},
@@ -104,9 +104,8 @@ pub fn execute_transaction(
 
             let changes = session.finish()?;
             let gas_used = total_gas_used(&gas_meter, genesis_config);
-            let receipt = create_receipt_ok(gas_used);
 
-            Ok(TransactionExecutionOutcome::new(Ok(()), changes, receipt))
+            Ok(TransactionExecutionOutcome::new(Ok(()), changes, gas_used))
         }
         ExtendedTxEnvelope::Canonical(tx) => {
             if let Some(chain_id) = tx.chain_id() {
@@ -134,7 +133,7 @@ pub fn execute_transaction(
                 return Ok(TransactionExecutionOutcome::new(
                     Err(err.into()),
                     Changes::new(),
-                    create_receipt_err(tx.gas_limit()),
+                    tx.gas_limit(),
                 ));
             }
 
@@ -182,33 +181,12 @@ pub fn execute_transaction(
 
             let changes = session.finish()?;
             let gas_used = total_gas_used(&gas_meter, genesis_config);
-            let receipt = create_receipt_ok(gas_used);
 
             Ok(TransactionExecutionOutcome::new(
-                vm_outcome, changes, receipt,
+                vm_outcome, changes, gas_used,
             ))
         }
     }
-}
-
-fn create_receipt_ok(gas_used: u64) -> ReceiptEnvelope {
-    let receipt = Receipt {
-        status: true.into(),
-        cumulative_gas_used: gas_used as u128,
-        logs: Vec::new(),
-    };
-
-    ReceiptEnvelope::Eip4844(ReceiptWithBloom::new(receipt, Bloom::ZERO))
-}
-
-fn create_receipt_err(gas_used: u64) -> ReceiptEnvelope {
-    let receipt = Receipt {
-        status: false.into(),
-        cumulative_gas_used: gas_used as u128,
-        logs: Vec::new(),
-    };
-
-    ReceiptEnvelope::Eip4844(ReceiptWithBloom::new(receipt, Bloom::ZERO))
 }
 
 fn execute_entry_function<G: GasMeter>(
