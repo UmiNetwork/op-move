@@ -34,7 +34,7 @@ impl<T, I: Iterator<Item = T>> PairIteratorExt<T, I> for I {
 impl Pair<B256> {
     pub fn combine(self) -> B256 {
         match self {
-            Pair::Full(a, b) => keccak256(&[a, b].concat()),
+            Pair::Full(a, b) => keccak256([a, b].concat()),
             Pair::Partial(hash) => hash,
         }
     }

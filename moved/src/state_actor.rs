@@ -1,14 +1,13 @@
-mod markle_root;
+mod merkle_root;
 mod payload;
 
-use alloy_primitives::keccak256;
 pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
 
 use {
     crate::{
         genesis::{config::GenesisConfig, init_storage},
         move_execution::execute_transaction,
-        state_actor::markle_root::MerkleRootExt,
+        state_actor::merkle_root::MerkleRootExt,
         storage::{InMemoryState, State},
         types::{
             engine_api::{
@@ -19,6 +18,7 @@ use {
             transactions::ExtendedTxEnvelope,
         },
     },
+    alloy_primitives::keccak256,
     alloy_rlp::{Decodable, Encodable},
     ethers_core::types::{Bytes, H256, U256, U64},
     move_binary_format::errors::PartialVMError,
