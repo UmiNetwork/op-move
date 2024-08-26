@@ -9,8 +9,8 @@ use {
         },
         InvalidTransactionCause,
     },
-    alloy_consensus::Transaction,
-    alloy_primitives::TxKind,
+    alloy_consensus::{Receipt, ReceiptEnvelope, ReceiptWithBloom, Transaction},
+    alloy_primitives::{Bloom, TxKind},
     aptos_framework::natives::event::NativeEventContext,
     aptos_gas_meter::{AptosGasMeter, GasAlgebra, StandardGasAlgebra, StandardGasMeter},
     aptos_gas_schedule::{MiscGasParameters, NativeGasParameters, LATEST_GAS_FEATURE_VERSION},
@@ -104,7 +104,9 @@ pub fn execute_transaction(
 
             let changes = session.finish()?;
             let gas_used = total_gas_used(&gas_meter, genesis_config);
-            Ok(TransactionExecutionOutcome::new(Ok(()), changes, gas_used))
+            let receipt = create_receipt_ok(gas_used);
+
+            Ok(TransactionExecutionOutcome::new(Ok(()), changes, receipt))
         }
         ExtendedTxEnvelope::Canonical(tx) => {
             if let Some(chain_id) = tx.chain_id() {
@@ -129,11 +131,11 @@ pub fn execute_transaction(
                 .charge_intrinsic_gas_for_transaction(txn_size)
                 .and_then(|_| gas_meter.charge_io_gas_for_transaction(txn_size));
             if let Err(err) = charge_gas {
-                return Ok(TransactionExecutionOutcome {
-                    vm_outcome: Err(err.into()),
-                    changes: Changes::new(),
-                    gas_used: tx.gas_limit(),
-                });
+                return Ok(TransactionExecutionOutcome::new(
+                    Err(err.into()),
+                    Changes::new(),
+                    create_receipt_err(tx.gas_limit()),
+                ));
             }
 
             check_nonce(
@@ -170,13 +172,43 @@ pub fn execute_transaction(
                     )
                 }
             };
+            let vm_outcome = match vm_outcome {
+                Ok(v) => Ok(v),
+                Err(e) => Err(match e {
+                    crate::Error::User(user_error) => Ok(user_error),
+                    err => Err(err),
+                }?),
+            };
+
             let changes = session.finish()?;
             let gas_used = total_gas_used(&gas_meter, genesis_config);
+            let receipt = create_receipt_ok(gas_used);
+
             Ok(TransactionExecutionOutcome::new(
-                vm_outcome, changes, gas_used,
+                vm_outcome, changes, receipt,
             ))
         }
     }
+}
+
+fn create_receipt_ok(gas_used: u64) -> ReceiptEnvelope {
+    let receipt = Receipt {
+        status: true.into(),
+        cumulative_gas_used: gas_used as u128,
+        logs: Vec::new(),
+    };
+
+    ReceiptEnvelope::Eip4844(ReceiptWithBloom::new(receipt, Bloom::ZERO))
+}
+
+fn create_receipt_err(gas_used: u64) -> ReceiptEnvelope {
+    let receipt = Receipt {
+        status: false.into(),
+        cumulative_gas_used: gas_used as u128,
+        logs: Vec::new(),
+    };
+
+    ReceiptEnvelope::Eip4844(ReceiptWithBloom::new(receipt, Bloom::ZERO))
 }
 
 fn execute_entry_function<G: GasMeter>(

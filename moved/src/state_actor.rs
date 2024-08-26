@@ -1,12 +1,14 @@
 mod markle_root;
 mod payload;
 
+use alloy_primitives::keccak256;
 pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
 
 use {
     crate::{
         genesis::{config::GenesisConfig, init_storage},
         move_execution::execute_transaction,
+        state_actor::markle_root::MerkleRootExt,
         storage::{InMemoryState, State},
         types::{
             engine_api::{
@@ -203,14 +205,15 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
     }
 
     fn execute_transactions(&mut self, transactions: &[ExtendedTxEnvelope]) -> ExecutionOutcome {
-        let mut total_gas: u64 = 0;
+        let mut receipts = Vec::new();
+
         // TODO: parallel transaction processing?
         for tx in transactions {
             if let Err(e) = execute_transaction(tx, self.state.resolver(), &self.genesis_config)
                 .and_then(|outcome| {
                     // TODO: record success or failure from outcome.vm_outcome
                     self.state.apply(outcome.changes)?;
-                    total_gas = total_gas.saturating_add(outcome.gas_used);
+                    receipts.push(outcome.receipt);
                     Ok(())
                 })
             {
@@ -222,9 +225,19 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
         // TODO: derive from execution above
         ExecutionOutcome {
             state_root: self.state.state_root(),
-            receipts_root: H256::default(),
+            gas_used: receipts
+                .iter()
+                .map(|receipt| receipt.cumulative_gas_used() as u64)
+                .fold(0u64, u64::saturating_add)
+                .into(),
+            receipts_root: receipts
+                .into_iter()
+                .map(alloy_rlp::encode)
+                .map(keccak256)
+                .merkle_root()
+                .0
+                .into(),
             logs_bloom: Bytes::from(vec![0; 256]),
-            gas_used: U64::from(total_gas),
         }
     }
 }

@@ -1,6 +1,6 @@
 use alloy_primitives::{keccak256, B256};
 
-trait MerkleRootExt {
+pub trait MerkleRootExt {
     fn merkle_root(self) -> B256;
 }
 
