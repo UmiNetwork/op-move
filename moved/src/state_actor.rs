@@ -213,7 +213,7 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
             let outcome = match execute_transaction(tx, self.state.resolver(), &self.genesis_config)
             {
                 Ok(outcome) => outcome,
-                Err(User(_)) => unreachable!(""), // User errors are handled in execution
+                Err(User(_)) => unreachable!("User errors are handled in execution"),
                 Err(InvalidTransaction(_)) => continue,
                 Err(InvariantViolation(e)) => panic!("ERROR: execution error {e:?}"),
             };
