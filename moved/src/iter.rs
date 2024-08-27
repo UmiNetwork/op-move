@@ -114,14 +114,11 @@ where
     type Item = PairOrSingle<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(first) = self.inner.next() {
-            Some(if let Some(second) = self.inner.next() {
-                PairOrSingle::Pair(first, second)
-            } else {
-                PairOrSingle::Single(first)
-            })
-        } else {
-            None
-        }
+        let first = self.inner.next()?;
+
+        Some(match self.inner.next() {
+            Some(second) => PairOrSingle::Pair(first, second),
+            None => PairOrSingle::Single(first),
+        })
     }
 }
