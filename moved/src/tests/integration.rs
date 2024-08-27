@@ -67,7 +67,7 @@ async fn test_on_ethereum() -> Result<()> {
     let op_geth = init_and_start_op_geth()?;
 
     // 8. Start op-move to accept requests from the sequencer
-    std::thread::spawn(crate::main);
+    std::thread::spawn(crate::run);
 
     // 9. In separate threads run op-node, op-batcher, op-proposer
     let (op_node, op_batcher, op_proposer) = run_op()?;

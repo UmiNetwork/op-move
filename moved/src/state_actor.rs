@@ -5,6 +5,7 @@ pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
 use {
     crate::{
         genesis::{config::GenesisConfig, init_storage},
+        merkle_tree::MerkleRootExt,
         move_execution::execute_transaction,
         storage::{InMemoryState, State},
         types::{
@@ -16,6 +17,8 @@ use {
             transactions::ExtendedTxEnvelope,
         },
     },
+    alloy_consensus::{Receipt, ReceiptWithBloom},
+    alloy_primitives::{keccak256, Bloom, Log},
     alloy_rlp::{Decodable, Encodable},
     ethers_core::types::{Bytes, H256, U256, U64},
     move_binary_format::errors::PartialVMError,
@@ -202,14 +205,15 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
     }
 
     fn execute_transactions(&mut self, transactions: &[ExtendedTxEnvelope]) -> ExecutionOutcome {
-        let mut total_gas: u64 = 0;
+        let mut outcomes = Vec::new();
+
         // TODO: parallel transaction processing?
         for tx in transactions {
             if let Err(e) = execute_transaction(tx, self.state.resolver(), &self.genesis_config)
                 .and_then(|outcome| {
                     // TODO: record success or failure from outcome.vm_outcome
                     self.state.apply(outcome.changes)?;
-                    total_gas = total_gas.saturating_add(outcome.gas_used);
+                    outcomes.push((outcome.vm_outcome.is_ok(), outcome.gas_used));
                     Ok(())
                 })
             {
@@ -218,12 +222,33 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
             }
         }
 
+        let mut cumulative_gas_used = 0u64;
+
+        let receipts = outcomes.into_iter().map(|(status, gas_used)| {
+            cumulative_gas_used = cumulative_gas_used.saturating_add(gas_used);
+
+            let receipt = Receipt {
+                status: status.into(),
+                cumulative_gas_used: cumulative_gas_used as u128,
+                logs: Vec::<Log>::new(),
+            };
+
+            ReceiptWithBloom::new(receipt, Bloom::ZERO)
+        });
+
+        let receipts_root = receipts
+            .map(alloy_rlp::encode)
+            .map(keccak256)
+            .merkle_root()
+            .0
+            .into();
+
         // TODO: derive from execution above
         ExecutionOutcome {
             state_root: self.state.state_root(),
-            receipts_root: H256::default(),
+            gas_used: cumulative_gas_used.into(),
+            receipts_root,
             logs_bloom: Bytes::from(vec![0; 256]),
-            gas_used: U64::from(total_gas),
         }
     }
 }

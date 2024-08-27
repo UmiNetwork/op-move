@@ -106,6 +106,7 @@ pub fn execute_transaction(
 
             let changes = session.finish()?;
             let gas_used = total_gas_used(&gas_meter, genesis_config);
+
             Ok(TransactionExecutionOutcome::new(Ok(()), changes, gas_used))
         }
         ExtendedTxEnvelope::Canonical(tx) => {
@@ -131,11 +132,11 @@ pub fn execute_transaction(
                 .charge_intrinsic_gas_for_transaction(txn_size)
                 .and_then(|_| gas_meter.charge_io_gas_for_transaction(txn_size));
             if let Err(err) = charge_gas {
-                return Ok(TransactionExecutionOutcome {
-                    vm_outcome: Err(err.into()),
-                    changes: Changes::new(),
-                    gas_used: tx.gas_limit(),
-                });
+                return Ok(TransactionExecutionOutcome::new(
+                    Err(err.into()),
+                    Changes::new(),
+                    tx.gas_limit(),
+                ));
             }
 
             check_nonce(
@@ -172,8 +173,17 @@ pub fn execute_transaction(
                     )
                 }
             };
+            let vm_outcome = match vm_outcome {
+                Ok(v) => Ok(v),
+                Err(e) => Err(match e {
+                    crate::Error::User(user_error) => Ok(user_error),
+                    err => Err(err),
+                }?),
+            };
+
             let changes = session.finish()?;
             let gas_used = total_gas_used(&gas_meter, genesis_config);
+
             Ok(TransactionExecutionOutcome::new(
                 vm_outcome, changes, gas_used,
             ))
