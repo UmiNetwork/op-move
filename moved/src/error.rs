@@ -22,10 +22,14 @@ pub type Result<T> = std::result::Result<T, Error>;
 ///
 /// # Variants
 /// * [`UserError`] is an error caused by an invalid user input.
+/// * [`InvalidTransaction`] is an error caused by an invalid transaction input parameter.
+/// * [`InvariantViolation`] is an error caused by an internal system issue.
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("{0}")]
     User(UserError),
+    #[error("{0}")]
+    InvalidTransaction(InvalidTransactionCause),
     #[error("{0}")]
     InvariantViolation(InvariantViolation),
 }
@@ -58,19 +62,9 @@ pub enum UserError {
     PartialVm(#[from] PartialVMError),
     #[error("{0}")]
     InvalidSignature(#[from] alloy_primitives::SignatureError),
-    #[error("{0}")]
-    InvalidTransaction(InvalidTransactionCause),
 }
 
-impl<T> From<T> for UserError
-where
-    InvalidTransactionCause: From<T>,
-{
-    fn from(value: T) -> Self {
-        UserError::InvalidTransaction(InvalidTransactionCause::from(value))
-    }
-}
-
+/// The error caused by invalid transaction input parameter.
 #[derive(Debug, Error)]
 pub enum InvalidTransactionCause {
     #[error("tx.to must match payload module address")]
@@ -78,7 +72,7 @@ pub enum InvalidTransactionCause {
     #[error("Signer does not match transaction signature")]
     InvalidSigner,
     #[error("{0}")]
-    InvalidPayload(#[from] bcs::Error),
+    InvalidPayload(bcs::Error),
     #[error("Incorrect number of arguments")]
     MismatchedArgumentCount,
     #[error("Failed to deserialize entry function argument")]
@@ -97,6 +91,20 @@ pub enum InvalidTransactionCause {
     IncorrectChainId,
     #[error("Argument type not allowed in entry function: {0}")]
     DisallowedEntryFunctionType(TypeTag),
+    #[error("Insufficient intrinsic gas")]
+    InsufficientIntrinsicGas,
+}
+
+impl From<InvalidTransactionCause> for Error {
+    fn from(value: InvalidTransactionCause) -> Self {
+        Error::InvalidTransaction(value)
+    }
+}
+
+impl From<bcs::Error> for Error {
+    fn from(value: bcs::Error) -> Self {
+        Error::InvalidTransaction(InvalidTransactionCause::InvalidPayload(value))
+    }
 }
 
 #[derive(Debug, Error)]
@@ -206,6 +214,10 @@ mod tests {
             type_args: vec![TypeTag::U8],
         }))),
         "Argument type not allowed in entry function: 0x1::token::Token<u8>"
+    )]
+    #[test_case(
+        InvalidTransactionCause::InsufficientIntrinsicGas,
+        "Insufficient intrinsic gas"
     )]
     fn test_error_converts_and_displays(actual: impl Into<Error>, expected: impl Into<String>) {
         let actual = actual.into().to_string();

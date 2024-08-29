@@ -117,7 +117,7 @@ pub fn init_storage(config: &GenesisConfig, storage: &mut impl State<Err = Parti
 
 fn deploy_framework(
     storage: &mut impl State<Err = PartialVMError>,
-) -> anyhow::Result<(ChangeSet, TableChangeSet)> {
+) -> crate::Result<(ChangeSet, TableChangeSet)> {
     let vm = create_move_vm()?;
     let mut extensions = NativeContextExtensions::default();
     extensions.add(NativeTableContext::new([0u8; 32], storage.resolver()));
@@ -140,7 +140,7 @@ fn deploy_framework(
 fn initialize_eth_token(
     session: &mut Session,
     traversal_context: &mut TraversalContext,
-) -> anyhow::Result<()> {
+) -> crate::Result<()> {
     let module = ModuleId::new(FRAMEWORK_ADDRESS, ident_str!("eth_token").into());
     let function_name = ident_str!("init_module");
     let args = bcs::to_bytes(&MoveValue::Signer(FRAMEWORK_ADDRESS))
@@ -156,7 +156,7 @@ fn initialize_eth_token(
     Ok(())
 }
 
-fn deploy_aptos_framework(session: &mut Session) -> anyhow::Result<()> {
+fn deploy_aptos_framework(session: &mut Session) -> crate::Result<()> {
     let framework = load_aptos_framework_snapshot();
     // Iterate over the bundled packages in the Aptos framework
     for package in &framework.packages {
@@ -182,7 +182,7 @@ fn deploy_aptos_framework(session: &mut Session) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn deploy_sui_framework(session: &mut Session) -> anyhow::Result<()> {
+fn deploy_sui_framework(session: &mut Session) -> crate::Result<()> {
     // Load the framework packages from the framework snapshot
     let snapshots = load_sui_framework_snapshot();
     let stdlib = snapshots

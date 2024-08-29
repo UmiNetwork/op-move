@@ -1,5 +1,3 @@
-mod payload;
-
 pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
 
 use {
@@ -16,6 +14,7 @@ use {
             state::{ExecutionOutcome, StateMessage},
             transactions::ExtendedTxEnvelope,
         },
+        Error::{InvalidTransaction, InvariantViolation, User},
     },
     alloy_consensus::{Receipt, ReceiptWithBloom},
     alloy_primitives::{keccak256, Bloom, Log},
@@ -25,6 +24,8 @@ use {
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
 };
+
+mod payload;
 
 #[derive(Debug)]
 pub struct StateActor<S: State, P: NewPayloadId> {
@@ -209,21 +210,21 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
 
         // TODO: parallel transaction processing?
         for tx in transactions {
-            if let Err(e) = execute_transaction(tx, self.state.resolver(), &self.genesis_config)
-                .and_then(|outcome| {
-                    // TODO: record success or failure from outcome.vm_outcome
-                    self.state.apply(outcome.changes)?;
-                    outcomes.push((outcome.vm_outcome.is_ok(), outcome.gas_used));
-                    Ok(())
-                })
+            let outcome = match execute_transaction(tx, self.state.resolver(), &self.genesis_config)
             {
-                // TODO: proper error handling
-                println!("WARN: execution error {e:?}");
-            }
+                Ok(outcome) => outcome,
+                Err(User(_)) => unreachable!("User errors are handled in execution"),
+                Err(InvalidTransaction(_)) => continue,
+                Err(InvariantViolation(e)) => panic!("ERROR: execution error {e:?}"),
+            };
+
+            self.state
+                .apply(outcome.changes)
+                .unwrap_or_else(|_| panic!("ERROR: state update failed for transaction {tx:?}"));
+            outcomes.push((outcome.vm_outcome.is_ok(), outcome.gas_used));
         }
 
         let mut cumulative_gas_used = 0u64;
-
         let receipts = outcomes.into_iter().map(|(status, gas_used)| {
             cumulative_gas_used = cumulative_gas_used.saturating_add(gas_used);
 
@@ -232,7 +233,6 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
                 cumulative_gas_used: cumulative_gas_used as u128,
                 logs: Vec::<Log>::new(),
             };
-
             ReceiptWithBloom::new(receipt, Bloom::ZERO)
         });
 
