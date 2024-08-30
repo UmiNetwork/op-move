@@ -42,7 +42,7 @@ pub(super) fn execute_entry_function<G: GasMeter>(
         // Note: no recursion limit is needed in this function because we have already
         // constructed the recursive types `Type`, `TypeTag`, `MoveTypeLayout` and `MoveValue` so
         // the values must have respected whatever recursion limit is present in MoveVM.
-        validate_entry_value(&tag, &arg, signer)?;
+        validate_entry_value(&tag, &arg, signer, session)?;
     }
 
     // TODO: is this the right way to be using the VM?

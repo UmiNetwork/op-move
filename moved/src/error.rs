@@ -101,6 +101,8 @@ pub enum InvalidTransactionCause {
     InvalidString,
     #[error("Option is a Move Vector with 0 or 1 elements")]
     InvalidOption,
+    #[error("Object must already exist to pass as an entry function argument")]
+    InvalidObject,
 }
 
 impl From<InvalidTransactionCause> for Error {
@@ -171,6 +173,16 @@ pub enum EntryFunctionValue {
     OptionStructHasField,
     #[error("Option struct field is a vector")]
     OptionStructFieldIsVector,
+    #[error("Object struct has a type parameter")]
+    ObjectStructHasTypeParameter,
+    #[error("Object struct has a field")]
+    ObjectStructHasField,
+    #[error("Object struct field is an address")]
+    ObjectStructFieldIsAddress,
+    #[error("ObjectCore is a type defined in the standard library")]
+    ObjectCoreTypeExists,
+    #[error("Object parameter type must be defined")]
+    ObjectInnerTypeExists,
 }
 
 #[cfg(test)]
