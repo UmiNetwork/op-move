@@ -1,7 +1,6 @@
 use {
     crate::{
         genesis::config::GenesisConfig,
-        move_execution::signers::check_signer,
         types::transactions::{
             ExtendedTxEnvelope, NormalizedEthTransaction, TransactionExecutionOutcome,
         },
@@ -29,12 +28,11 @@ use {
     },
     move_vm_types::{gas::GasMeter, loaded_data::runtime_types::Type, values::Value},
     nonces::check_nonce,
-    tag_validation::validate_entry_type_tag,
+    tag_validation::{validate_entry_type_tag, validate_entry_value},
 };
 
 mod eth_token;
 mod nonces;
-mod signers;
 mod tag_validation;
 
 pub fn create_move_vm() -> crate::Result<MoveVM> {
@@ -220,7 +218,7 @@ fn execute_entry_function<G: GasMeter>(
         // Note: no recursion limit is needed in this function because we have already
         // constructed the recursive types `Type`, `TypeTag`, `MoveTypeLayout` and `MoveValue` so
         // the values must have respected whatever recursion limit is present in MoveVM.
-        check_signer(&arg, signer)?;
+        validate_entry_value(&tag, &arg, signer)?;
     }
 
     // TODO: is this the right way to be using the VM?
@@ -483,6 +481,55 @@ mod tests {
             err.to_string(),
             "Signer does not match transaction signature"
         );
+    }
+
+    #[test]
+    fn test_execute_hello_strings_contract() {
+        let genesis_config = GenesisConfig::default();
+        let module_name = "hello_strings";
+        let mut signer = Signer::new(&PRIVATE_KEY);
+        let (module_id, mut state) = deploy_contract(module_name, &mut signer, &genesis_config);
+
+        // Call the contract with valid text; it works.
+        let text = "world";
+        let input_arg = MoveStruct::new(vec![MoveValue::Vector(
+            text.bytes().map(MoveValue::U8).collect(),
+        )]);
+        let entry_fn = EntryFunction::new(
+            module_id.clone(),
+            Identifier::new("main").unwrap(),
+            Vec::new(),
+            vec![bcs::to_bytes(&input_arg).unwrap()],
+        );
+        let signed_tx = create_transaction(
+            &mut signer,
+            TxKind::Call(EVM_ADDRESS),
+            bcs::to_bytes(&entry_fn).unwrap(),
+        );
+
+        let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
+        outcome.vm_outcome.unwrap();
+        state.apply(outcome.changes).unwrap();
+
+        // Try calling the contract with bytes that are not valid UTF-8; get an error.
+        let not_utf8: [u8; 2] = [0, 159];
+        let input_arg = MoveStruct::new(vec![MoveValue::Vector(
+            not_utf8.into_iter().map(MoveValue::U8).collect(),
+        )]);
+        let entry_fn = EntryFunction::new(
+            module_id.clone(),
+            Identifier::new("main").unwrap(),
+            Vec::new(),
+            vec![bcs::to_bytes(&input_arg).unwrap()],
+        );
+        let signed_tx = create_transaction(
+            &mut signer,
+            TxKind::Call(EVM_ADDRESS),
+            bcs::to_bytes(&entry_fn).unwrap(),
+        );
+
+        let err = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap_err();
+        assert_eq!(err.to_string(), "String must be UTF-8 encoded bytes",);
     }
 
     #[test]

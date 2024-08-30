@@ -42,6 +42,10 @@ impl Error {
     pub const fn eth_token_invariant_violation(invariant: EthToken) -> Self {
         Self::InvariantViolation(InvariantViolation::EthToken(invariant))
     }
+
+    pub const fn entry_fn_invariant_violation(invariant: EntryFunctionValue) -> Self {
+        Self::InvariantViolation(InvariantViolation::EntryFunctionValue(invariant))
+    }
 }
 
 impl<T> From<T> for Error
@@ -93,6 +97,10 @@ pub enum InvalidTransactionCause {
     DisallowedEntryFunctionType(TypeTag),
     #[error("Insufficient intrinsic gas")]
     InsufficientIntrinsicGas,
+    #[error("String must be UTF-8 encoded bytes")]
+    InvalidString,
+    #[error("Option is a Move Vector with 0 or 1 elements")]
+    InvalidOption,
 }
 
 impl From<InvalidTransactionCause> for Error {
@@ -113,6 +121,8 @@ pub enum InvariantViolation {
     NonceChecking(NonceChecking),
     #[error("ETH token invariant violation: {0}")]
     EthToken(EthToken),
+    #[error("Entry function type check invariant violation: {0}")]
+    EntryFunctionValue(EntryFunctionValue),
 }
 
 #[derive(Debug, Error)]
@@ -143,6 +153,24 @@ pub enum EthToken {
     GetBalanceReturnDeserializes,
     #[error("Function get_balance returns a value of type u64")]
     GetBalanceReturnsU64,
+}
+
+#[derive(Debug, Error)]
+pub enum EntryFunctionValue {
+    #[error("Only allowed structs pass the type check")]
+    OnlyAllowedStructs,
+    #[error("String struct has a field")]
+    StringStructHasField,
+    #[error("String struct field is a vector")]
+    StringStructFieldIsVector,
+    #[error("String is composed of u8")]
+    StringElementsAreU8,
+    #[error("Option struct has a type parameter")]
+    OptionHasInnerType,
+    #[error("Option struct has a field")]
+    OptionStructHasField,
+    #[error("Option struct field is a vector")]
+    OptionStructFieldIsVector,
 }
 
 #[cfg(test)]
