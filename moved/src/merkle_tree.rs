@@ -70,7 +70,7 @@ mod tests {
     fn test_root_of_two_node_tree_is_hash_of_concatenated_hashes() {
         let hash1 = B256::from([1; 32]);
         let hash2 = B256::from([2; 32]);
-        let expected_root = keccak256(&[hash1, hash2].concat());
+        let expected_root = keccak256([hash1, hash2].concat());
         let actual_root = [hash1, hash2].into_iter().merkle_root();
 
         assert_eq!(actual_root, expected_root);
@@ -81,7 +81,7 @@ mod tests {
         let hash1 = B256::from([1; 32]);
         let hash2 = B256::from([2; 32]);
         let hash3 = B256::from([3; 32]);
-        let expected_root = keccak256(&[keccak256(&[hash1, hash2].concat()), hash3].concat());
+        let expected_root = keccak256([keccak256([hash1, hash2].concat()), hash3].concat());
         let actual_root = [hash1, hash2, hash3].into_iter().merkle_root();
 
         assert_eq!(actual_root, expected_root);
@@ -94,9 +94,9 @@ mod tests {
         let hash3 = B256::from([3; 32]);
         let hash4 = B256::from([4; 32]);
         let expected_root = keccak256(
-            &[
-                keccak256(&[hash1, hash2].concat()),
-                keccak256(&[hash3, hash4].concat()),
+            [
+                keccak256([hash1, hash2].concat()),
+                keccak256([hash3, hash4].concat()),
             ]
             .concat(),
         );
@@ -113,11 +113,11 @@ mod tests {
         let hash4 = B256::from([4; 32]);
         let hash5 = B256::from([5; 32]);
         let expected_root = keccak256(
-            &[
+            [
                 keccak256(
-                    &[
-                        keccak256(&[hash1, hash2].concat()),
-                        keccak256(&[hash3, hash4].concat()),
+                    [
+                        keccak256([hash1, hash2].concat()),
+                        keccak256([hash3, hash4].concat()),
                     ]
                     .concat(),
                 ),
