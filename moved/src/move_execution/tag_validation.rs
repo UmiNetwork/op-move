@@ -69,9 +69,15 @@ pub fn validate_entry_type_tag(tag: &TypeTag) -> crate::Result<()> {
                         return Ok(());
                     }
                     [inner_type] => {
-                        // Option is an allowed type, and it has a type parameter.
-                        // Option<T> is allowed iff T is allowed.
-                        current_tag = inner_type;
+                        if info.name == ALLOWED_STRUCTS[2].name {
+                            // Option<T> is allowed iff T is allowed.
+                            current_tag = inner_type;
+                        } else {
+                            // For Object<T> we do not need to validate the inner type
+                            // because no value for that type is actually created (it's phantom).
+                            // No other allowed types have type parameters.
+                            return Ok(());
+                        }
                     }
                     _ => unreachable!("No allowed type has more than 1 type parameter"),
                 }
@@ -251,14 +257,14 @@ fn validate_object(
     match inner {
         MoveValue::Address(addr) => {
             let object_core = get_object_core_type(session)?;
-            if session.load_resource(*addr, &object_core).is_err() {
+            if !resource_exists(session, *addr, &object_core) {
                 return Err(InvalidTransactionCause::InvalidObject.into());
             }
 
             let inner_type = session.load_type(inner_type).map_err(|_| {
                 Error::entry_fn_invariant_violation(EntryFunctionValue::ObjectInnerTypeExists)
             })?;
-            if session.load_resource(*addr, &inner_type).is_err() {
+            if !resource_exists(session, *addr, &inner_type) {
                 return Err(InvalidTransactionCause::InvalidObject.into());
             }
 
@@ -268,6 +274,14 @@ fn validate_object(
             EntryFunctionValue::ObjectStructFieldIsAddress,
         )),
     }
+}
+
+#[inline]
+fn resource_exists(session: &mut Session, addr: AccountAddress, ty: &Type) -> bool {
+    session
+        .load_resource(addr, ty)
+        .and_then(|(value, _)| value.exists())
+        .unwrap_or(false)
 }
 
 #[inline]
