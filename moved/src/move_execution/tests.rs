@@ -8,8 +8,9 @@ use {
     },
     alloy::network::TxSignerSync,
     alloy_consensus::{transaction::TxEip1559, SignableTransaction, TxEnvelope},
-    alloy_primitives::{FixedBytes, U256, U64},
+    alloy_primitives::{FixedBytes, TxKind, U256, U64},
     anyhow::Context,
+    aptos_types::transaction::EntryFunction,
     move_binary_format::{
         file_format::{
             AbilitySet, FieldDefinition, IdentifierIndex, ModuleHandleIndex, SignatureToken,
@@ -23,11 +24,13 @@ use {
         Compiler, Flags,
     },
     move_core_types::{
+        account_address::AccountAddress,
         identifier::Identifier,
         language_storage::{ModuleId, StructTag},
         resolver::ModuleResolver,
         value::{MoveStruct, MoveValue},
     },
+    move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
     move_vm_types::gas::UnmeteredGasMeter,
     std::{collections::BTreeSet, u64},
 };
