@@ -294,7 +294,7 @@ fn test_execute_object_playground_contract() {
 
     let entry_fn = EntryFunction::new(
         module_id.clone(),
-        Identifier::new("check_struct2_owner").unwrap(),
+        Identifier::new("check_struct1_owner").unwrap(),
         Vec::new(),
         vec![
             bcs::to_bytes(&signer_input_arg).unwrap(),
@@ -320,7 +320,7 @@ fn test_execute_object_playground_contract() {
         MoveValue::Struct(MoveStruct::new(vec![MoveValue::Address(fake_address)]));
     let entry_fn = EntryFunction::new(
         module_id.clone(),
-        Identifier::new("check_struct1_owner").unwrap(),
+        Identifier::new("check_struct2_owner").unwrap(),
         Vec::new(),
         vec![
             bcs::to_bytes(&signer_input_arg).unwrap(),
