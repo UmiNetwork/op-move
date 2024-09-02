@@ -22,7 +22,7 @@ use {
         str::FromStr,
         time::Duration,
     },
-    tokio::fs,
+    tokio::{fs, runtime::Runtime},
 };
 
 const GETH_START_IN_SECS: u64 = 1; // 1 seconds to kick off L1 geth in dev mode
@@ -67,7 +67,8 @@ async fn test_on_ethereum() -> Result<()> {
     let op_geth = init_and_start_op_geth()?;
 
     // 8. Start op-move to accept requests from the sequencer
-    std::thread::spawn(crate::run);
+    let op_move_runtime = Runtime::new()?;
+    op_move_runtime.spawn(crate::run());
 
     // 9. In separate threads run op-node, op-batcher, op-proposer
     let (op_node, op_batcher, op_proposer) = run_op()?;
@@ -80,6 +81,7 @@ async fn test_on_ethereum() -> Result<()> {
 
     // 12. Cleanup generated files and folders
     let _ = cleanup_files();
+    op_move_runtime.shutdown_background();
     cleanup_processes(vec![geth, op_geth, op_node, op_batcher, op_proposer])
 }
 
