@@ -1,7 +1,10 @@
 use {
     crate::{
         genesis::config::GenesisConfig,
-        types::transactions::{ExtendedTxEnvelope, ToLog, TransactionExecutionOutcome},
+        types::{
+            session_id::SessionId,
+            transactions::{ExtendedTxEnvelope, ToLog, TransactionExecutionOutcome},
+        },
     },
     alloy_primitives::Bloom,
     aptos_framework::natives::{
@@ -14,6 +17,7 @@ use {
     aptos_vm::natives::aptos_natives,
     canonical::execute_canonical_transaction,
     deposited::execute_deposited_transaction,
+    ethers_core::types::H256,
     move_binary_format::errors::PartialVMError,
     move_core_types::resolver::MoveResolver,
     move_vm_runtime::{
@@ -44,10 +48,15 @@ pub fn create_move_vm() -> crate::Result<MoveVM> {
     Ok(vm)
 }
 
-pub fn create_vm_session<'l, 'r, S>(vm: &'l MoveVM, state: &'r S) -> Session<'r, 'l>
+pub fn create_vm_session<'l, 'r, S>(
+    vm: &'l MoveVM,
+    state: &'r S,
+    session_id: SessionId,
+) -> Session<'r, 'l>
 where
     S: MoveResolver<PartialVMError> + TableResolver,
 {
+    let txn_hash = session_id.txn_hash;
     let mut native_extensions = NativeContextExtensions::default();
 
     // Events are used in `eth_token` because it depends on `fungible_asset`.
@@ -57,32 +66,34 @@ where
     native_extensions.add(NativeObjectContext::default());
 
     // Objects require transaction_context to work
-    // TODO: what are the right values for these parameters?
     native_extensions.add(NativeTransactionContext::new(
-        [0; 32].to_vec(),
-        [0; 32].to_vec(),
-        0,
-        None,
+        txn_hash.to_vec(),
+        session_id
+            .script_hash
+            .map(|h| h.to_vec())
+            .unwrap_or_default(),
+        session_id.chain_id,
+        session_id.user_txn_context,
     ));
 
     // Tables can be used
-    // TODO: what is the right value for txn_hash?
-    native_extensions.add(NativeTableContext::new([0; 32], state));
+    native_extensions.add(NativeTableContext::new(txn_hash, state));
 
     vm.new_session_with_extensions(state, native_extensions)
 }
 
 pub fn execute_transaction(
     tx: &ExtendedTxEnvelope,
+    tx_hash: &H256,
     state: &(impl MoveResolver<PartialVMError> + TableResolver),
     genesis_config: &GenesisConfig,
 ) -> crate::Result<TransactionExecutionOutcome> {
     match tx {
         ExtendedTxEnvelope::DepositedTx(tx) => {
-            execute_deposited_transaction(tx, state, genesis_config)
+            execute_deposited_transaction(tx, tx_hash, state, genesis_config)
         }
         ExtendedTxEnvelope::Canonical(tx) => {
-            execute_canonical_transaction(tx, state, genesis_config)
+            execute_canonical_transaction(tx, tx_hash, state, genesis_config)
         }
     }
 }

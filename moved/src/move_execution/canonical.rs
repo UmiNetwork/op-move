@@ -9,7 +9,10 @@ use {
             LogsBloom,
         },
         primitives::ToMoveAddress,
-        types::transactions::{NormalizedEthTransaction, TransactionExecutionOutcome},
+        types::{
+            session_id::SessionId,
+            transactions::{NormalizedEthTransaction, TransactionExecutionOutcome},
+        },
         Error::{InvalidTransaction, User},
         InvalidTransactionCause,
     },
@@ -18,6 +21,7 @@ use {
     aptos_gas_meter::AptosGasMeter,
     aptos_table_natives::TableResolver,
     aptos_types::transaction::{EntryFunction, Module},
+    ethers_core::types::H256,
     move_binary_format::errors::PartialVMError,
     move_core_types::resolver::MoveResolver,
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
@@ -25,6 +29,7 @@ use {
 
 pub(super) fn execute_canonical_transaction(
     tx: &TxEnvelope,
+    tx_hash: &H256,
     state: &(impl MoveResolver<PartialVMError> + TableResolver),
     genesis_config: &GenesisConfig,
 ) -> crate::Result<TransactionExecutionOutcome> {
@@ -38,7 +43,8 @@ pub(super) fn execute_canonical_transaction(
     let sender_move_address = tx.signer.to_move_address();
 
     let move_vm = create_move_vm()?;
-    let mut session = create_vm_session(&move_vm, state);
+    let session_id = SessionId::new_from_canonical(&tx, tx_hash, genesis_config);
+    let mut session = create_vm_session(&move_vm, state, session_id);
     let traversal_storage = TraversalStorage::new();
     let mut traversal_context = TraversalContext::new(&traversal_storage);
     let mut gas_meter = new_gas_meter(genesis_config, tx.gas_limit());

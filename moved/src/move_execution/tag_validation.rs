@@ -323,6 +323,7 @@ mod tests {
             primitives::ToMoveAddress,
             storage::State,
             tests::EVM_ADDRESS,
+            types::session_id::SessionId,
         },
         alloy_primitives::address,
         move_core_types::value::MoveStruct,
@@ -524,7 +525,7 @@ mod tests {
 
         let move_vm = create_move_vm().unwrap();
         let state = crate::storage::InMemoryState::new();
-        let mut session = create_vm_session(&move_vm, state.resolver());
+        let mut session = create_vm_session(&move_vm, state.resolver(), SessionId::default());
         for (type_tag, test_case, expected_outcome) in test_cases {
             let actual_outcome =
                 validate_entry_value(type_tag, test_case, &correct_signer, &mut session)
@@ -597,7 +598,7 @@ mod tests {
 
         let move_vm = create_move_vm().unwrap();
         let state = crate::storage::InMemoryState::new();
-        let mut session = create_vm_session(&move_vm, state.resolver());
+        let mut session = create_vm_session(&move_vm, state.resolver(), SessionId::default());
         for (type_tag, test_case, expected_outcome) in test_cases {
             let actual_outcome =
                 validate_entry_value(type_tag, test_case, &AccountAddress::ZERO, &mut session)
