@@ -3,7 +3,10 @@ use {
         genesis::config::GenesisConfig,
         types::transactions::{ExtendedTxEnvelope, TransactionExecutionOutcome},
     },
-    aptos_framework::natives::event::NativeEventContext,
+    aptos_framework::natives::{
+        event::NativeEventContext, object::NativeObjectContext,
+        transaction_context::NativeTransactionContext,
+    },
     aptos_gas_schedule::{MiscGasParameters, NativeGasParameters, LATEST_GAS_FEATURE_VERSION},
     aptos_table_natives::{NativeTableContext, TableResolver},
     aptos_types::on_chain_config::{Features, TimedFeaturesBuilder},
@@ -48,6 +51,18 @@ where
 
     // Events are used in `eth_token` because it depends on `fungible_asset`.
     native_extensions.add(NativeEventContext::default());
+
+    // Objects are part of the standard library
+    native_extensions.add(NativeObjectContext::default());
+
+    // Objects require transaction_context to work
+    // TODO: what are the right values for these parameters?
+    native_extensions.add(NativeTransactionContext::new(
+        [0; 32].to_vec(),
+        [0; 32].to_vec(),
+        0,
+        None,
+    ));
 
     // Tables can be used
     // TODO: what is the right value for txn_hash?

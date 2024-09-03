@@ -235,6 +235,111 @@ fn test_execute_hello_strings_contract() {
 }
 
 #[test]
+fn test_execute_object_playground_contract() {
+    let genesis_config = GenesisConfig::default();
+    let module_name = "object_playground";
+    let mut signer = Signer::new(&PRIVATE_KEY);
+    let (module_id, mut state) = deploy_contract(module_name, &mut signer, &genesis_config);
+
+    // Create the objects
+    let move_address = evm_address_to_move_address(&EVM_ADDRESS);
+    let signer_input_arg = MoveValue::Signer(move_address);
+    let destination_input_arg = MoveValue::Address(move_address);
+    let entry_fn = EntryFunction::new(
+        module_id.clone(),
+        Identifier::new("create_and_transfer").unwrap(),
+        Vec::new(),
+        vec![
+            bcs::to_bytes(&signer_input_arg).unwrap(),
+            bcs::to_bytes(&destination_input_arg).unwrap(),
+        ],
+    );
+    let signed_tx = create_transaction(
+        &mut signer,
+        TxKind::Call(EVM_ADDRESS),
+        bcs::to_bytes(&entry_fn).unwrap(),
+    );
+
+    let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
+    outcome.vm_outcome.unwrap();
+    state.apply(outcome.changes).unwrap();
+
+    // The object address is deterministic based on the transaction
+    let object_address = AccountAddress::from_str_strict(
+        "0x777e34c52ecee7cd877e439f7cbf8f5a2394c369855c7bb8a140fced68b3aed6",
+    )
+    .unwrap();
+
+    // Calls with correct object address work
+    let object_input_arg =
+        MoveValue::Struct(MoveStruct::new(vec![MoveValue::Address(object_address)]));
+    let entry_fn = EntryFunction::new(
+        module_id.clone(),
+        Identifier::new("check_struct1_owner").unwrap(),
+        Vec::new(),
+        vec![
+            bcs::to_bytes(&signer_input_arg).unwrap(),
+            bcs::to_bytes(&object_input_arg).unwrap(),
+        ],
+    );
+    let signed_tx = create_transaction(
+        &mut signer,
+        TxKind::Call(EVM_ADDRESS),
+        bcs::to_bytes(&entry_fn).unwrap(),
+    );
+
+    let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
+    outcome.vm_outcome.unwrap();
+    state.apply(outcome.changes).unwrap();
+
+    let entry_fn = EntryFunction::new(
+        module_id.clone(),
+        Identifier::new("check_struct1_owner").unwrap(),
+        Vec::new(),
+        vec![
+            bcs::to_bytes(&signer_input_arg).unwrap(),
+            bcs::to_bytes(&object_input_arg).unwrap(),
+        ],
+    );
+    let signed_tx = create_transaction(
+        &mut signer,
+        TxKind::Call(EVM_ADDRESS),
+        bcs::to_bytes(&entry_fn).unwrap(),
+    );
+
+    let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
+    outcome.vm_outcome.unwrap();
+    state.apply(outcome.changes).unwrap();
+
+    // Calls with a fake object address fail
+    let fake_address = AccountAddress::from_str_strict(
+        "0x00a1ce00b0b0000deadbeef00ca1100fa1100000000000000000000000000000",
+    )
+    .unwrap();
+    let object_input_arg =
+        MoveValue::Struct(MoveStruct::new(vec![MoveValue::Address(fake_address)]));
+    let entry_fn = EntryFunction::new(
+        module_id.clone(),
+        Identifier::new("check_struct2_owner").unwrap(),
+        Vec::new(),
+        vec![
+            bcs::to_bytes(&signer_input_arg).unwrap(),
+            bcs::to_bytes(&object_input_arg).unwrap(),
+        ],
+    );
+    let signed_tx = create_transaction(
+        &mut signer,
+        TxKind::Call(EVM_ADDRESS),
+        bcs::to_bytes(&entry_fn).unwrap(),
+    );
+    let err = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap_err();
+    assert_eq!(
+        err.to_string(),
+        "Object must already exist to pass as an entry function argument",
+    );
+}
+
+#[test]
 fn test_execute_natives_contract() {
     let genesis_config = GenesisConfig::default();
     let mut signer = Signer::new(&PRIVATE_KEY);

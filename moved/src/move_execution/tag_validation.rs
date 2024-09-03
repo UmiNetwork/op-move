@@ -8,6 +8,8 @@ use {
         language_storage::{StructTag, TypeTag},
         value::{MoveStruct, MoveValue},
     },
+    move_vm_runtime::session::Session,
+    move_vm_types::loaded_data::runtime_types::Type,
 };
 
 const ALLOWED_STRUCTS: [MoveStructInfo<'static>; 5] = [
@@ -67,9 +69,15 @@ pub fn validate_entry_type_tag(tag: &TypeTag) -> crate::Result<()> {
                         return Ok(());
                     }
                     [inner_type] => {
-                        // Option is an allowed type, and it has a type parameter.
-                        // Option<T> is allowed iff T is allowed.
-                        current_tag = inner_type;
+                        if info.name == ALLOWED_STRUCTS[2].name {
+                            // Option<T> is allowed iff T is allowed.
+                            current_tag = inner_type;
+                        } else {
+                            // For Object<T> we do not need to validate the inner type
+                            // because no value for that type is actually created (it's phantom).
+                            // No other allowed types have type parameters.
+                            return Ok(());
+                        }
                     }
                     _ => unreachable!("No allowed type has more than 1 type parameter"),
                 }
@@ -99,6 +107,7 @@ pub fn validate_entry_value(
     tag: &TypeTag,
     value: &MoveValue,
     expected_signer: &AccountAddress,
+    session: &mut Session,
 ) -> crate::Result<()> {
     let mut stack = Vec::with_capacity(10);
     stack.push((tag, value));
@@ -126,7 +135,17 @@ pub fn validate_entry_value(
                     validate_string(struct_value)?;
                     continue;
                 } else if info.name == ALLOWED_STRUCTS[1].name {
-                    todo!("Object validation")
+                    let inner_type =
+                        struct_tag
+                            .type_args
+                            .first()
+                            .ok_or(Error::entry_fn_invariant_violation(
+                                EntryFunctionValue::ObjectStructHasTypeParameter,
+                            ))?;
+                    validate_object(struct_value, inner_type, session)?;
+                    // We don't need to push the inner type on the stack for validation
+                    // because a value of it is not actually constructed.
+                    continue;
                 } else if info.name == ALLOWED_STRUCTS[2].name {
                     if let Some(inner_value) = validate_option(struct_value)? {
                         let inner_tag = struct_tag.type_args.first().ok_or(
@@ -221,6 +240,63 @@ fn validate_option(value: &MoveStruct) -> crate::Result<Option<&MoveValue>> {
     }
 }
 
+// Based on
+// https://github.com/aptos-labs/aptos-core/blob/aptos-node-v1.14.0/aptos-move/framework/aptos-framework/sources/object.move#L192
+fn validate_object(
+    value: &MoveStruct,
+    inner_type: &TypeTag,
+    session: &mut Session,
+) -> crate::Result<()> {
+    let inner = value
+        .fields()
+        .first()
+        .ok_or(Error::entry_fn_invariant_violation(
+            EntryFunctionValue::ObjectStructHasField,
+        ))?;
+
+    match inner {
+        MoveValue::Address(addr) => {
+            let object_core = get_object_core_type(session)?;
+            if !resource_exists(session, *addr, &object_core) {
+                return Err(InvalidTransactionCause::InvalidObject.into());
+            }
+
+            let inner_type = session.load_type(inner_type).map_err(|_| {
+                Error::entry_fn_invariant_violation(EntryFunctionValue::ObjectInnerTypeExists)
+            })?;
+            if !resource_exists(session, *addr, &inner_type) {
+                return Err(InvalidTransactionCause::InvalidObject.into());
+            }
+
+            Ok(())
+        }
+        _ => Err(Error::entry_fn_invariant_violation(
+            EntryFunctionValue::ObjectStructFieldIsAddress,
+        )),
+    }
+}
+
+#[inline]
+fn resource_exists(session: &mut Session, addr: AccountAddress, ty: &Type) -> bool {
+    session
+        .load_resource(addr, ty)
+        .and_then(|(value, _)| value.exists())
+        .unwrap_or(false)
+}
+
+#[inline]
+fn get_object_core_type(session: &mut Session) -> crate::Result<Type> {
+    let type_tag = TypeTag::Struct(Box::new(StructTag {
+        address: ALLOWED_STRUCTS[1].address,
+        module: ALLOWED_STRUCTS[1].module.into(),
+        name: ident_str!("ObjectCore").into(),
+        type_args: Vec::new(),
+    }));
+    session
+        .load_type(&type_tag)
+        .map_err(|_| Error::entry_fn_invariant_violation(EntryFunctionValue::ObjectCoreTypeExists))
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 struct MoveStructInfo<'a> {
     pub address: AccountAddress,
@@ -242,7 +318,11 @@ impl<'a> MoveStructInfo<'a> {
 mod tests {
     use {
         super::*,
-        crate::{move_execution::evm_address_to_move_address, tests::EVM_ADDRESS},
+        crate::{
+            move_execution::{create_move_vm, create_vm_session, evm_address_to_move_address},
+            storage::State,
+            tests::EVM_ADDRESS,
+        },
         alloy_primitives::address,
         move_core_types::value::MoveStruct,
     };
@@ -441,9 +521,13 @@ mod tests {
             ),
         ];
 
+        let move_vm = create_move_vm().unwrap();
+        let state = crate::storage::InMemoryState::new();
+        let mut session = create_vm_session(&move_vm, state.resolver());
         for (type_tag, test_case, expected_outcome) in test_cases {
             let actual_outcome =
-                validate_entry_value(type_tag, test_case, &correct_signer).map_err(|_| ());
+                validate_entry_value(type_tag, test_case, &correct_signer, &mut session)
+                    .map_err(|_| ());
             assert_eq!(
                 &actual_outcome,
                 expected_outcome,
@@ -510,9 +594,13 @@ mod tests {
             ),
         ];
 
+        let move_vm = create_move_vm().unwrap();
+        let state = crate::storage::InMemoryState::new();
+        let mut session = create_vm_session(&move_vm, state.resolver());
         for (type_tag, test_case, expected_outcome) in test_cases {
             let actual_outcome =
-                validate_entry_value(type_tag, test_case, &AccountAddress::ZERO).map_err(|_| ());
+                validate_entry_value(type_tag, test_case, &AccountAddress::ZERO, &mut session)
+                    .map_err(|_| ());
             assert_eq!(
                 &actual_outcome,
                 expected_outcome,
