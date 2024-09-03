@@ -21,7 +21,7 @@ pub(crate) trait ToMoveAddress {
 
 impl<T: AsRef<[u8; 20]>> ToMoveAddress for T {
     fn to_move_address(&self) -> AccountAddress {
-        // TODO: is there a way to make Move use 32-byte addresses?
+        // TODO: is there a way to make Move use 20-byte addresses?
         let mut bytes = [0; 32];
         bytes[12..32].copy_from_slice(self.as_ref());
         AccountAddress::new(bytes)
