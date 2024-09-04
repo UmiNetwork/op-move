@@ -4,6 +4,7 @@ use {
         move_execution::{
             create_move_vm, create_vm_session, eth_token,
             gas::{new_gas_meter, total_gas_used},
+            LogsBloom,
         },
         primitives::ToMoveAddress,
         types::transactions::{DepositedTx, TransactionExecutionOutcome},
@@ -46,8 +47,14 @@ pub(super) fn execute_deposited_transaction(
         "tokens were minted"
     );
 
-    let changes = session.finish()?;
+    let (changes, mut extensions) = session.finish_with_extensions()?;
     let gas_used = total_gas_used(&gas_meter, genesis_config);
+    let logs_bloom = extensions.logs_bloom();
 
-    Ok(TransactionExecutionOutcome::new(Ok(()), changes, gas_used))
+    Ok(TransactionExecutionOutcome::new(
+        Ok(()),
+        changes,
+        gas_used,
+        logs_bloom,
+    ))
 }

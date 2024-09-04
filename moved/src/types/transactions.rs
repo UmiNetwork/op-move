@@ -1,11 +1,13 @@
 use {
-    crate::{Error, InvalidTransactionCause, UserError},
+    crate::{primitives::ToEthAddress, Error, InvalidTransactionCause, UserError},
     alloy_consensus::{Signed, Transaction, TxEip1559, TxEip2930, TxEnvelope, TxLegacy},
     alloy_eips::eip2930::AccessList,
-    alloy_primitives::{Address, Bytes, TxKind, B256, U256, U64},
+    alloy_primitives::{Address, Bloom, Bytes, Keccak256, Log, LogData, TxKind, B256, U256, U64},
     alloy_rlp::{Buf, Decodable, Encodable, RlpDecodable, RlpEncodable},
-    move_core_types::effects::ChangeSet,
+    aptos_types::contract_event::ContractEvent,
+    move_core_types::{effects::ChangeSet, language_storage::TypeTag},
     serde::{Deserialize, Serialize},
+    std::hash::{Hash, Hasher},
 };
 
 const DEPOSITED_TYPE_BYTE: u8 = 0x7e;
@@ -80,14 +82,22 @@ pub struct TransactionExecutionOutcome {
     pub vm_outcome: Result<(), UserError>,
     pub changes: ChangeSet,
     pub gas_used: u64,
+    /// The bloom filter created from all emitted Move events converted to Ethereum logs.
+    pub logs_bloom: Bloom,
 }
 
 impl TransactionExecutionOutcome {
-    pub fn new(vm_outcome: Result<(), UserError>, changes: ChangeSet, gas_used: u64) -> Self {
+    pub fn new(
+        vm_outcome: Result<(), UserError>,
+        changes: ChangeSet,
+        gas_used: u64,
+        logs_bloom: Bloom,
+    ) -> Self {
         Self {
             vm_outcome,
             changes,
             gas_used,
+            logs_bloom,
         }
     }
 }
@@ -193,6 +203,47 @@ impl TryFrom<Signed<TxLegacy>> for NormalizedEthTransaction {
             data: tx.input,
             access_list: AccessList(Vec::new()),
         })
+    }
+}
+
+pub(crate) trait ToLog {
+    fn to_log(&self) -> Log<LogData>;
+}
+
+impl ToLog for ContractEvent {
+    fn to_log(&self) -> Log<LogData> {
+        let (type_tag, event_data) = match self {
+            ContractEvent::V1(event) => (event.type_tag(), event.event_data()),
+            ContractEvent::V2(event) => (event.type_tag(), event.event_data()),
+        };
+
+        let address = match type_tag {
+            TypeTag::Struct(struct_tag) => struct_tag.address,
+            _ => unreachable!("This would break move event extension invariant"),
+        };
+
+        let address = address.to_eth_address();
+
+        struct KeccakHasher(Keccak256);
+        impl Hasher for KeccakHasher {
+            fn finish(&self) -> u64 {
+                unimplemented!("KeccakHasher should not finish as u64")
+            }
+
+            fn write(&mut self, bytes: &[u8]) {
+                self.0.update(bytes);
+            }
+        }
+        let mut hasher = KeccakHasher(Keccak256::new());
+        type_tag.hash(&mut hasher);
+        let type_hash = hasher.0.finalize();
+
+        let topics = vec![type_hash];
+
+        let data = event_data.to_vec();
+        let data = data.into();
+
+        Log::new_unchecked(address, topics, data)
     }
 }
 

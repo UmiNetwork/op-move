@@ -3,7 +3,6 @@ use {
     move_core_types::account_address::AccountAddress,
 };
 
-#[allow(dead_code)] // TODO: use this
 pub(crate) trait ToEthAddress {
     fn to_eth_address(&self) -> alloy_primitives::Address;
 }
