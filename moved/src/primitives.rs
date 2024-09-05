@@ -3,6 +3,19 @@ use {
     move_core_types::account_address::AccountAddress,
 };
 
+#[allow(dead_code)] // TODO: use this
+pub(crate) trait ToEthAddress {
+    fn to_eth_address(&self) -> alloy_primitives::Address;
+}
+
+impl ToEthAddress for AccountAddress {
+    fn to_eth_address(&self) -> alloy_primitives::Address {
+        let bytes = &self.as_slice()[12..];
+        let bytes = bytes.try_into().expect("Slice should be 20 bytes");
+        alloy_primitives::Address::new(bytes)
+    }
+}
+
 pub(crate) trait ToMoveAddress {
     fn to_move_address(&self) -> AccountAddress;
 }
@@ -60,5 +73,38 @@ mod tests {
         let expected = &hex!("ffffffffffffffffffffffffffffffffffffffff");
 
         assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_eth_from_move_address_match_at_intersection() {
+        let move_address: AccountAddress =
+            hex!("000000000000000000000000ffffffffffffffffffffffffffffffffffffffff").into();
+        let eth_address = move_address.to_eth_address();
+        let actual = eth_address.as_slice();
+        let expected = &hex!("ffffffffffffffffffffffffffffffffffffffff");
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_eth_from_move_address_with_only_zero_bits_outside_intersection_and_back_produces_identical_value(
+    ) {
+        let expected_move_address: AccountAddress =
+            hex!("000000000000000000000000ffffffffffffffffffffffffffffffffffffffff").into();
+        let eth_address = expected_move_address.to_eth_address();
+        let actual_move_address = eth_address.to_move_address();
+
+        assert_eq!(actual_move_address, expected_move_address);
+    }
+
+    #[test]
+    fn test_eth_from_move_address_with_non_zero_bits_outside_intersection_and_back_produces_different_value(
+    ) {
+        let expected_move_address: AccountAddress =
+            hex!("100000000000000000000000ffffffffffffffffffffffffffffffffffffffff").into();
+        let eth_address = expected_move_address.to_eth_address();
+        let actual_move_address = eth_address.to_move_address();
+
+        assert_ne!(actual_move_address, expected_move_address);
     }
 }
