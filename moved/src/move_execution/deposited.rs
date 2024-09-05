@@ -2,9 +2,10 @@ use {
     crate::{
         genesis::config::GenesisConfig,
         move_execution::{
-            create_move_vm, create_vm_session, eth_token, evm_address_to_move_address,
+            create_move_vm, create_vm_session, eth_token,
             gas::{new_gas_meter, total_gas_used},
         },
+        primitives::ToMoveAddress,
         types::transactions::{DepositedTx, TransactionExecutionOutcome},
     },
     aptos_table_natives::TableResolver,
@@ -20,7 +21,7 @@ pub(super) fn execute_deposited_transaction(
 ) -> crate::Result<TransactionExecutionOutcome> {
     // TODO: handle U256 properly
     let amount = tx.mint.as_limbs()[0].saturating_add(tx.value.as_limbs()[0]);
-    let to = evm_address_to_move_address(&tx.to);
+    let to = tx.to.to_move_address();
 
     let move_vm = create_move_vm()?;
     let mut session = create_vm_session(&move_vm, state);

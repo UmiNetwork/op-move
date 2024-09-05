@@ -2,11 +2,12 @@ use {
     crate::{
         genesis::config::GenesisConfig,
         move_execution::{
-            create_move_vm, create_vm_session, evm_address_to_move_address,
+            create_move_vm, create_vm_session,
             execute::{deploy_module, execute_entry_function},
             gas::{new_gas_meter, total_gas_used},
             nonces::check_nonce,
         },
+        primitives::ToMoveAddress,
         types::transactions::{NormalizedEthTransaction, TransactionExecutionOutcome},
         Error::{InvalidTransaction, User},
         InvalidTransactionCause,
@@ -33,7 +34,7 @@ pub(super) fn execute_canonical_transaction(
     }
 
     let tx = NormalizedEthTransaction::try_from(tx.clone())?;
-    let sender_move_address = evm_address_to_move_address(&tx.signer);
+    let sender_move_address = tx.signer.to_move_address();
 
     let move_vm = create_move_vm()?;
     let mut session = create_vm_session(&move_vm, state);
@@ -81,7 +82,7 @@ pub(super) fn execute_canonical_transaction(
             let module = Module::new(tx.data.to_vec());
             deploy_module(
                 module,
-                evm_address_to_move_address(&tx.signer),
+                tx.signer.to_move_address(),
                 &mut session,
                 &mut gas_meter,
             )

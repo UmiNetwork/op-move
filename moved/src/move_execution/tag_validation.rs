@@ -319,7 +319,8 @@ mod tests {
     use {
         super::*,
         crate::{
-            move_execution::{create_move_vm, create_vm_session, evm_address_to_move_address},
+            move_execution::{create_move_vm, create_vm_session},
+            primitives::ToMoveAddress,
             storage::State,
             tests::EVM_ADDRESS,
         },
@@ -410,9 +411,9 @@ mod tests {
 
     #[test]
     fn test_check_signer() {
-        let correct_signer = evm_address_to_move_address(&EVM_ADDRESS);
+        let correct_signer = EVM_ADDRESS.to_move_address();
         let incorrect_signer =
-            evm_address_to_move_address(&address!("c104f4840573bed437190daf5d2898c2bdf928ac"));
+            address!("c104f4840573bed437190daf5d2898c2bdf928ac").to_move_address();
         type CheckSignerOutcome = Result<(), ()>;
 
         let test_cases: &[(TypeTag, MoveValue, CheckSignerOutcome)] = &[

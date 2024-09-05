@@ -14,7 +14,7 @@ use {
     canonical::execute_canonical_transaction,
     deposited::execute_deposited_transaction,
     move_binary_format::errors::PartialVMError,
-    move_core_types::{account_address::AccountAddress, resolver::MoveResolver},
+    move_core_types::resolver::MoveResolver,
     move_vm_runtime::{
         move_vm::MoveVM, native_extensions::NativeContextExtensions, session::Session,
     },
@@ -84,11 +84,4 @@ pub fn execute_transaction(
             execute_canonical_transaction(tx, state, genesis_config)
         }
     }
-}
-
-// TODO: is there a way to make Move use 32-byte addresses?
-fn evm_address_to_move_address(address: &alloy_primitives::Address) -> AccountAddress {
-    let mut bytes = [0; 32];
-    bytes[12..32].copy_from_slice(address.as_slice());
-    AccountAddress::new(bytes)
 }

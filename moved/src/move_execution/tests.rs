@@ -2,6 +2,7 @@ use {
     super::*,
     crate::{
         genesis::{config::CHAIN_ID, init_storage},
+        primitives::ToMoveAddress,
         storage::{InMemoryState, State},
         tests::{signer::Signer, EVM_ADDRESS, PRIVATE_KEY},
         types::transactions::DepositedTx,
@@ -43,7 +44,7 @@ fn test_execute_counter_contract() {
     let (module_id, mut state) = deploy_contract(module_name, &mut signer, &genesis_config);
 
     // Call entry function to create the `Counter` resource
-    let move_address = evm_address_to_move_address(&EVM_ADDRESS);
+    let move_address = EVM_ADDRESS.to_move_address();
     let initial_value: u64 = 7;
     let signer_arg = MoveValue::Signer(move_address);
     let entry_fn = EntryFunction::new(
@@ -142,7 +143,7 @@ fn test_execute_signer_struct_contract() {
     let (module_id, mut state) = deploy_contract(module_name, &mut signer, &genesis_config);
 
     // Call main function with correct signer
-    let move_address = evm_address_to_move_address(&EVM_ADDRESS);
+    let move_address = EVM_ADDRESS.to_move_address();
     let input_arg = MoveValue::Struct(MoveStruct::new(vec![MoveValue::Vector(vec![
         MoveValue::Signer(move_address),
     ])]));
@@ -242,7 +243,7 @@ fn test_execute_object_playground_contract() {
     let (module_id, mut state) = deploy_contract(module_name, &mut signer, &genesis_config);
 
     // Create the objects
-    let move_address = evm_address_to_move_address(&EVM_ADDRESS);
+    let move_address = EVM_ADDRESS.to_move_address();
     let signer_input_arg = MoveValue::Signer(move_address);
     let destination_input_arg = MoveValue::Address(move_address);
     let entry_fn = EntryFunction::new(
@@ -498,7 +499,7 @@ fn test_execute_tables_contract() {
     let mut session = create_vm_session(&vm, state.resolver());
     let mut traversal_context = TraversalContext::new(&traversal_storage);
 
-    let move_address = evm_address_to_move_address(&EVM_ADDRESS);
+    let move_address = EVM_ADDRESS.to_move_address();
     let signer_arg = MoveValue::Signer(move_address);
     let entry_fn = EntryFunction::new(
         module_id.clone(),
@@ -545,7 +546,7 @@ fn test_recursive_struct() {
 
     // Load a real module
     let module_name = "signer_struct";
-    let move_address = evm_address_to_move_address(&EVM_ADDRESS);
+    let move_address = EVM_ADDRESS.to_move_address();
     let mut module_bytes = move_compile(module_name, &move_address).unwrap();
     let mut compiled_module = CompiledModule::deserialize(&module_bytes).unwrap();
 
@@ -603,7 +604,7 @@ fn test_deeply_nested_type() {
 
     // Load a real module
     let module_name = "signer_struct";
-    let move_address = evm_address_to_move_address(&EVM_ADDRESS);
+    let move_address = EVM_ADDRESS.to_move_address();
     let mut module_bytes = move_compile(module_name, &move_address).unwrap();
     let mut compiled_module = CompiledModule::deserialize(&module_bytes).unwrap();
 
@@ -740,7 +741,7 @@ fn deploy_contract(
     let mut state = InMemoryState::new();
     init_storage(genesis_config, &mut state);
 
-    let move_address = evm_address_to_move_address(&EVM_ADDRESS);
+    let move_address = EVM_ADDRESS.to_move_address();
 
     let module_bytes = move_compile(module_name, &move_address).unwrap();
     let signed_tx = create_transaction(signer, TxKind::Create, module_bytes);
