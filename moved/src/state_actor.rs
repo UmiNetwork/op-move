@@ -157,20 +157,21 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
         let mut transactions_ser = Vec::with_capacity(transactions.len());
         for tx_bytes in payload_attributes.transactions {
             let mut slice: &[u8] = tx_bytes.as_ref();
+            let tx_hash = H256(keccak256(slice).0);
             match ExtendedTxEnvelope::decode(&mut slice) {
-                Ok(tx) => transactions.push(tx),
+                Ok(tx) => transactions.push((tx_hash, tx)),
                 Err(_) => {
                     println!("WARN: Failed to RLP decode transaction in payload_attributes");
                 }
             };
             transactions_ser.push(tx_bytes);
         }
-        for (_, tx) in self.mem_pool.drain() {
+        for (tx_hash, tx) in self.mem_pool.drain() {
             let capacity = tx.length();
             let mut bytes = Vec::with_capacity(capacity);
             tx.encode(&mut bytes);
             transactions_ser.push(bytes.into());
-            transactions.push(tx);
+            transactions.push((tx_hash, tx));
         }
         let execution_outcome = self.execute_transactions(&transactions);
         let head_height = self
@@ -205,19 +206,23 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
         }
     }
 
-    fn execute_transactions(&mut self, transactions: &[ExtendedTxEnvelope]) -> ExecutionOutcome {
+    fn execute_transactions(
+        &mut self,
+        transactions: &[(H256, ExtendedTxEnvelope)],
+    ) -> ExecutionOutcome {
         let mut outcomes = Vec::new();
         let mut logs_bloom = Bloom::ZERO;
 
         // TODO: parallel transaction processing?
-        for tx in transactions {
-            let outcome = match execute_transaction(tx, self.state.resolver(), &self.genesis_config)
-            {
-                Ok(outcome) => outcome,
-                Err(User(_)) => unreachable!("User errors are handled in execution"),
-                Err(InvalidTransaction(_)) => continue,
-                Err(InvariantViolation(e)) => panic!("ERROR: execution error {e:?}"),
-            };
+        for (tx_hash, tx) in transactions {
+            let outcome =
+                match execute_transaction(tx, tx_hash, self.state.resolver(), &self.genesis_config)
+                {
+                    Ok(outcome) => outcome,
+                    Err(User(_)) => unreachable!("User errors are handled in execution"),
+                    Err(InvalidTransaction(_)) => continue,
+                    Err(InvariantViolation(e)) => panic!("ERROR: execution error {e:?}"),
+                };
 
             self.state
                 .apply(outcome.changes)

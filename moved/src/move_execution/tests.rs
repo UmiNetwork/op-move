@@ -9,7 +9,8 @@ use {
     },
     alloy::network::TxSignerSync,
     alloy_consensus::{transaction::TxEip1559, SignableTransaction, TxEnvelope},
-    alloy_primitives::{FixedBytes, TxKind, U256, U64},
+    alloy_primitives::{keccak256, FixedBytes, TxKind, U256, U64},
+    alloy_rlp::Encodable,
     anyhow::Context,
     aptos_types::transaction::EntryFunction,
     move_binary_format::{
@@ -56,13 +57,14 @@ fn test_execute_counter_contract() {
             bcs::to_bytes(&initial_value).unwrap(),
         ],
     );
-    let signed_tx = create_transaction(
+    let (tx_hash, signed_tx) = create_transaction(
         &mut signer,
         TxKind::Call(EVM_ADDRESS),
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
+    let outcome =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
     state.apply(outcome.changes).unwrap();
 
     // Calling the function with an incorrect signer causes an error
@@ -76,12 +78,13 @@ fn test_execute_counter_contract() {
             bcs::to_bytes(&initial_value).unwrap(),
         ],
     );
-    let signed_tx = create_transaction(
+    let (tx_hash, signed_tx) = create_transaction(
         &mut signer,
         TxKind::Call(EVM_ADDRESS),
         bcs::to_bytes(&entry_fn).unwrap(),
     );
-    let err = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap_err();
+    let err =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap_err();
     assert_eq!(
         err.to_string(),
         "Signer does not match transaction signature"
@@ -114,13 +117,14 @@ fn test_execute_counter_contract() {
         Vec::new(),
         vec![bcs::to_bytes(&address_arg).unwrap()],
     );
-    let signed_tx = create_transaction(
+    let (tx_hash, signed_tx) = create_transaction(
         &mut signer,
         TxKind::Call(EVM_ADDRESS),
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
+    let outcome =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
     state.apply(outcome.changes).unwrap();
 
     // Resource was modified
@@ -153,13 +157,14 @@ fn test_execute_signer_struct_contract() {
         Vec::new(),
         vec![bcs::to_bytes(&input_arg).unwrap()],
     );
-    let signed_tx = create_transaction(
+    let (tx_hash, signed_tx) = create_transaction(
         &mut signer,
         TxKind::Call(EVM_ADDRESS),
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
+    let outcome =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
     assert!(outcome.vm_outcome.is_ok());
     state.apply(outcome.changes).unwrap();
 
@@ -173,13 +178,14 @@ fn test_execute_signer_struct_contract() {
         Vec::new(),
         vec![bcs::to_bytes(&input_arg).unwrap()],
     );
-    let signed_tx = create_transaction(
+    let (tx_hash, signed_tx) = create_transaction(
         &mut signer,
         TxKind::Call(EVM_ADDRESS),
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let err = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap_err();
+    let err =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap_err();
     assert_eq!(
         err.to_string(),
         "Signer does not match transaction signature"
@@ -204,13 +210,14 @@ fn test_execute_hello_strings_contract() {
         Vec::new(),
         vec![bcs::to_bytes(&input_arg).unwrap()],
     );
-    let signed_tx = create_transaction(
+    let (tx_hash, signed_tx) = create_transaction(
         &mut signer,
         TxKind::Call(EVM_ADDRESS),
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
+    let outcome =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
     outcome.vm_outcome.unwrap();
     state.apply(outcome.changes).unwrap();
 
@@ -225,13 +232,14 @@ fn test_execute_hello_strings_contract() {
         Vec::new(),
         vec![bcs::to_bytes(&input_arg).unwrap()],
     );
-    let signed_tx = create_transaction(
+    let (tx_hash, signed_tx) = create_transaction(
         &mut signer,
         TxKind::Call(EVM_ADDRESS),
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let err = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap_err();
+    let err =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap_err();
     assert_eq!(err.to_string(), "String must be UTF-8 encoded bytes",);
 }
 
@@ -255,19 +263,20 @@ fn test_execute_object_playground_contract() {
             bcs::to_bytes(&destination_input_arg).unwrap(),
         ],
     );
-    let signed_tx = create_transaction(
+    let (tx_hash, signed_tx) = create_transaction(
         &mut signer,
         TxKind::Call(EVM_ADDRESS),
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
+    let outcome =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
     outcome.vm_outcome.unwrap();
     state.apply(outcome.changes).unwrap();
 
     // The object address is deterministic based on the transaction
     let object_address = AccountAddress::from_str_strict(
-        "0x777e34c52ecee7cd877e439f7cbf8f5a2394c369855c7bb8a140fced68b3aed6",
+        "0x81383494fba7aa2410337bc4f16e3d0a196105b22d3317a56d6cbd613c061f5f",
     )
     .unwrap();
 
@@ -283,13 +292,14 @@ fn test_execute_object_playground_contract() {
             bcs::to_bytes(&object_input_arg).unwrap(),
         ],
     );
-    let signed_tx = create_transaction(
+    let (tx_hash, signed_tx) = create_transaction(
         &mut signer,
         TxKind::Call(EVM_ADDRESS),
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
+    let outcome =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
     outcome.vm_outcome.unwrap();
     state.apply(outcome.changes).unwrap();
 
@@ -302,13 +312,14 @@ fn test_execute_object_playground_contract() {
             bcs::to_bytes(&object_input_arg).unwrap(),
         ],
     );
-    let signed_tx = create_transaction(
+    let (tx_hash, signed_tx) = create_transaction(
         &mut signer,
         TxKind::Call(EVM_ADDRESS),
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
+    let outcome =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
     outcome.vm_outcome.unwrap();
     state.apply(outcome.changes).unwrap();
 
@@ -328,12 +339,13 @@ fn test_execute_object_playground_contract() {
             bcs::to_bytes(&object_input_arg).unwrap(),
         ],
     );
-    let signed_tx = create_transaction(
+    let (tx_hash, signed_tx) = create_transaction(
         &mut signer,
         TxKind::Call(EVM_ADDRESS),
         bcs::to_bytes(&entry_fn).unwrap(),
     );
-    let err = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap_err();
+    let err =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap_err();
     assert_eq!(
         err.to_string(),
         "Object must already exist to pass as an entry function argument",
@@ -353,13 +365,13 @@ fn test_execute_natives_contract() {
         Vec::new(),
         vec![],
     );
-    let signed_tx = create_transaction(
+    let (tx_hash, signed_tx) = create_transaction(
         &mut signer,
         TxKind::Call(EVM_ADDRESS),
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let changes = execute_transaction(&signed_tx, state.resolver(), &genesis_config);
+    let changes = execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config);
     assert!(changes.is_ok());
 }
 
@@ -381,8 +393,14 @@ fn test_deposit_tx() {
         is_system_tx: false,
         data: Vec::new().into(),
     });
+    let tx_hash = {
+        let capacity = tx.length();
+        let mut bytes = Vec::with_capacity(capacity);
+        tx.encode(&mut bytes);
+        H256(keccak256(bytes).0)
+    };
 
-    execute_transaction(&tx, state.resolver(), &genesis_config)
+    execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config)
         .unwrap()
         .vm_outcome
         .unwrap();
@@ -405,17 +423,19 @@ fn test_transaction_replay_is_forbidden() {
         Vec::new(),
         vec![],
     );
-    let signed_tx = create_transaction(
+    let (tx_hash, signed_tx) = create_transaction(
         &mut signer,
         TxKind::Call(EVM_ADDRESS),
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
+    let outcome =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
     state.apply(outcome.changes).unwrap();
 
     // Send the same transaction again; this fails with a nonce error
-    let err = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap_err();
+    let err =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap_err();
     assert_eq!(err.to_string(), "Incorrect nonce: given=1 expected=2");
 }
 
@@ -447,9 +467,12 @@ fn test_transaction_chain_id() {
         input: bcs::to_bytes(&entry_fn).unwrap().into(),
     };
     let signature = signer.inner.sign_transaction_sync(&mut tx).unwrap();
-    let signed_tx = ExtendedTxEnvelope::Canonical(TxEnvelope::Eip1559(tx.into_signed(signature)));
+    let signed_tx = TxEnvelope::Eip1559(tx.into_signed(signature));
+    let tx_hash = H256(signed_tx.tx_hash().0);
+    let signed_tx = ExtendedTxEnvelope::Canonical(signed_tx);
 
-    let err = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap_err();
+    let err =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap_err();
     assert_eq!(err.to_string(), "Incorrect chain id");
 }
 
@@ -481,9 +504,12 @@ fn test_out_of_gas() {
         input: bcs::to_bytes(&entry_fn).unwrap().into(),
     };
     let signature = signer.inner.sign_transaction_sync(&mut tx).unwrap();
-    let signed_tx = ExtendedTxEnvelope::Canonical(TxEnvelope::Eip1559(tx.into_signed(signature)));
+    let signed_tx = TxEnvelope::Eip1559(tx.into_signed(signature));
+    let tx_hash = H256(signed_tx.tx_hash().0);
+    let signed_tx = ExtendedTxEnvelope::Canonical(signed_tx);
 
-    let err = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap_err();
+    let err =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap_err();
     assert_eq!(err.to_string(), "Insufficient intrinsic gas");
 }
 
@@ -496,7 +522,7 @@ fn test_execute_tables_contract() {
     let vm = create_move_vm().unwrap();
     let traversal_storage = TraversalStorage::new();
 
-    let mut session = create_vm_session(&vm, state.resolver());
+    let mut session = create_vm_session(&vm, state.resolver(), SessionId::default());
     let mut traversal_context = TraversalContext::new(&traversal_storage);
 
     let move_address = EVM_ADDRESS.to_move_address();
@@ -587,8 +613,9 @@ fn test_recursive_struct() {
     let mut signer = Signer::new(&PRIVATE_KEY);
     // Deploy some other contract to ensure the state is properly initialized.
     let (_, state) = deploy_contract("natives", &mut signer, &genesis_config);
-    let signed_tx = create_transaction(&mut signer, TxKind::Create, module_bytes);
-    let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
+    let (tx_hash, signed_tx) = create_transaction(&mut signer, TxKind::Create, module_bytes);
+    let outcome =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
     let err = outcome.vm_outcome.unwrap_err();
     assert!(format!("{err:?}").contains("RECURSIVE_STRUCT_DEFINITION"));
 }
@@ -722,8 +749,9 @@ fn test_deeply_nested_type() {
     let mut signer = Signer::new(&PRIVATE_KEY);
     // Deploy some other contract to ensure the state is properly initialized.
     let (_, state) = deploy_contract("natives", &mut signer, &genesis_config);
-    let signed_tx = create_transaction(&mut signer, TxKind::Create, module_bytes);
-    let outcome = execute_transaction(&signed_tx, state.resolver(), &genesis_config).unwrap();
+    let (tx_hash, signed_tx) = create_transaction(&mut signer, TxKind::Create, module_bytes);
+    let outcome =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
     // The deployment fails because the Aptos code refuses to deserialize
     // the module with too deep recursion.
     let err = outcome.vm_outcome.unwrap_err();
@@ -744,9 +772,10 @@ fn deploy_contract(
     let move_address = EVM_ADDRESS.to_move_address();
 
     let module_bytes = move_compile(module_name, &move_address).unwrap();
-    let signed_tx = create_transaction(signer, TxKind::Create, module_bytes);
+    let (tx_hash, signed_tx) = create_transaction(signer, TxKind::Create, module_bytes);
 
-    let outcome = execute_transaction(&signed_tx, state.resolver(), genesis_config).unwrap();
+    let outcome =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), genesis_config).unwrap();
     state.apply(outcome.changes).unwrap();
 
     // Code was deployed
@@ -758,7 +787,11 @@ fn deploy_contract(
     (module_id, state)
 }
 
-fn create_transaction(signer: &mut Signer, to: TxKind, input: Vec<u8>) -> ExtendedTxEnvelope {
+fn create_transaction(
+    signer: &mut Signer,
+    to: TxKind,
+    input: Vec<u8>,
+) -> (H256, ExtendedTxEnvelope) {
     let mut tx = TxEip1559 {
         chain_id: CHAIN_ID,
         nonce: signer.nonce,
@@ -772,7 +805,9 @@ fn create_transaction(signer: &mut Signer, to: TxKind, input: Vec<u8>) -> Extend
     };
     signer.nonce += 1;
     let signature = signer.inner.sign_transaction_sync(&mut tx).unwrap();
-    ExtendedTxEnvelope::Canonical(TxEnvelope::Eip1559(tx.into_signed(signature)))
+    let signed_tx = TxEnvelope::Eip1559(tx.into_signed(signature));
+    let tx_hash = H256(signed_tx.tx_hash().0);
+    (tx_hash, ExtendedTxEnvelope::Canonical(signed_tx))
 }
 
 fn move_compile(package_name: &str, address: &AccountAddress) -> anyhow::Result<Vec<u8>> {

@@ -7,9 +7,13 @@ use {
             LogsBloom,
         },
         primitives::ToMoveAddress,
-        types::transactions::{DepositedTx, TransactionExecutionOutcome},
+        types::{
+            session_id::SessionId,
+            transactions::{DepositedTx, TransactionExecutionOutcome},
+        },
     },
     aptos_table_natives::TableResolver,
+    ethers_core::types::H256,
     move_binary_format::errors::PartialVMError,
     move_core_types::resolver::MoveResolver,
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
@@ -17,6 +21,7 @@ use {
 
 pub(super) fn execute_deposited_transaction(
     tx: &DepositedTx,
+    tx_hash: &H256,
     state: &(impl MoveResolver<PartialVMError> + TableResolver),
     genesis_config: &GenesisConfig,
 ) -> crate::Result<TransactionExecutionOutcome> {
@@ -25,7 +30,8 @@ pub(super) fn execute_deposited_transaction(
     let to = tx.to.to_move_address();
 
     let move_vm = create_move_vm()?;
-    let mut session = create_vm_session(&move_vm, state);
+    let session_id = SessionId::new_from_deposited(tx, tx_hash, genesis_config);
+    let mut session = create_vm_session(&move_vm, state, session_id);
     let traversal_storage = TraversalStorage::new();
     let mut traversal_context = TraversalContext::new(&traversal_storage);
     // The type of `tx.gas` is essentially `[u64; 1]` so taking the 0th element
