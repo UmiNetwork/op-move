@@ -109,4 +109,28 @@ mod tests {
 
         assert_ne!(actual_move_address, expected_move_address);
     }
+
+    #[test]
+    fn test_eth_address_to_move_address_round_trip() {
+        // All Ethereum addresses should map to Move addresses, which
+        // then map back to the same Ethereum address.
+
+        let eth_address = {
+            // Generate a random address based on the system time.
+            use std::time::SystemTime;
+            let ns = SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos();
+            let bytes = alloy_primitives::keccak256(ns.to_be_bytes());
+            alloy_primitives::Address::from_word(bytes)
+        };
+        let move_address = eth_address.to_move_address();
+        let rt_eth_address = move_address.to_eth_address();
+
+        assert_eq!(
+            eth_address, rt_eth_address,
+            "Round trip eth to move address must cause no change"
+        );
+    }
 }
