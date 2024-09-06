@@ -207,6 +207,7 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
 
     fn execute_transactions(&mut self, transactions: &[ExtendedTxEnvelope]) -> ExecutionOutcome {
         let mut outcomes = Vec::new();
+        let mut logs_bloom = Bloom::ZERO;
 
         // TODO: parallel transaction processing?
         for tx in transactions {
@@ -222,6 +223,7 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
                 .apply(outcome.changes)
                 .unwrap_or_else(|_| panic!("ERROR: state update failed for transaction {tx:?}"));
             outcomes.push((outcome.vm_outcome.is_ok(), outcome.gas_used));
+            logs_bloom.accrue_bloom(&outcome.logs_bloom);
         }
 
         let mut cumulative_gas_used = 0u64;
@@ -243,12 +245,13 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
             .0
             .into();
 
-        // TODO: derive from execution above
+        let logs_bloom = logs_bloom.0 .0.into();
+
         ExecutionOutcome {
             state_root: self.state.state_root(),
             gas_used: cumulative_gas_used.into(),
             receipts_root,
-            logs_bloom: Bytes::from(vec![0; 256]),
+            logs_bloom,
         }
     }
 }

@@ -25,7 +25,7 @@ use {
 /// * [`state_root`]: Returns current state root.
 /// * [`apply`]: Applies changes produced by a transaction on the state trie.
 /// * [`apply_with_tables`]: Same as [`apply`] but includes changes to tables from
-/// [`move_table_extension`].
+///   [`move_table_extension`].
 ///
 /// [`resolver`]: Self::resolver
 /// [`state_root`]: Self::state_root

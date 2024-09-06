@@ -1,8 +1,9 @@
 use {
     crate::{
         genesis::config::GenesisConfig,
-        types::transactions::{ExtendedTxEnvelope, TransactionExecutionOutcome},
+        types::transactions::{ExtendedTxEnvelope, ToLog, TransactionExecutionOutcome},
     },
+    alloy_primitives::Bloom,
     aptos_framework::natives::{
         event::NativeEventContext, object::NativeObjectContext,
         transaction_context::NativeTransactionContext,
@@ -14,7 +15,7 @@ use {
     canonical::execute_canonical_transaction,
     deposited::execute_deposited_transaction,
     move_binary_format::errors::PartialVMError,
-    move_core_types::{account_address::AccountAddress, resolver::MoveResolver},
+    move_core_types::resolver::MoveResolver,
     move_vm_runtime::{
         move_vm::MoveVM, native_extensions::NativeContextExtensions, session::Session,
     },
@@ -86,9 +87,19 @@ pub fn execute_transaction(
     }
 }
 
-// TODO: is there a way to make Move use 32-byte addresses?
-fn evm_address_to_move_address(address: &alloy_primitives::Address) -> AccountAddress {
-    let mut bytes = [0; 32];
-    bytes[12..32].copy_from_slice(address.as_slice());
-    AccountAddress::new(bytes)
+trait LogsBloom {
+    fn logs_bloom(&mut self) -> Bloom;
+}
+
+impl LogsBloom for NativeContextExtensions<'_> {
+    fn logs_bloom(&mut self) -> Bloom {
+        self.remove::<NativeEventContext>()
+            .into_events()
+            .into_iter()
+            .map(|(event, ..)| event.to_log())
+            .fold(Bloom::ZERO, |mut bloom, log| {
+                bloom.accrue_log(&log);
+                bloom
+            })
+    }
 }
