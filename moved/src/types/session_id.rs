@@ -10,6 +10,11 @@ use {
     ethers_core::types::H256,
 };
 
+/// This struct represents a unique identifier for the current session of the MoveVM.
+/// It is constructed from data of the transaction that is being executed in that session.
+/// his is based on the corresponding [Aptos type](https://github.com/aptos-labs/aptos-core/blob/aptos-node-v1.14.0/aptos-move/aptos-vm/src/move_vm_ext/session/session_id.rs#L16)
+/// plus the extra parameter Aptos includes in its
+/// [session creation function](https://github.com/aptos-labs/aptos-core/blob/aptos-node-v1.14.0/aptos-move/aptos-vm/src/move_vm_ext/vm.rs#L130).
 pub struct SessionId {
     pub txn_hash: [u8; 32],
     pub script_hash: Option<[u8; 32]>,
@@ -92,7 +97,10 @@ fn u64_gas_price(u256_gas_price: &U256) -> u64 {
 }
 
 /// Ethereum uses U256 (and most projects on Ethereum use u64) for chain id,
-/// but Aptos requires u8.
+/// but Aptos requires u8. Therefore, the purpose of this function is to map
+/// the u64 chain ID we have for Ethereum compatibility to a u8 chain ID we
+/// need for the Aptos Move extensions. The choice of 1 here was motivated
+/// by [Aptos's choice of 1 = Mainnet](https://github.com/aptos-labs/aptos-core/blob/aptos-node-v1.14.0/types/src/chain_id.rs#L18).
 fn u8_chain_id(genesis_config: &GenesisConfig) -> u8 {
     if genesis_config.chain_id == CHAIN_ID {
         1
