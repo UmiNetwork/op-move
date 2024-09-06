@@ -6,6 +6,7 @@ use {
         types::transactions::NormalizedEthTransaction,
     },
     alloy_primitives::U256,
+    aptos_types::transaction::EntryFunction,
     aptos_vm::move_vm_ext::UserTransactionContext,
     ethers_core::types::H256,
 };
@@ -25,6 +26,7 @@ pub struct SessionId {
 impl SessionId {
     pub fn new_from_canonical(
         tx: &NormalizedEthTransaction,
+        maybe_entry_fn: Option<&EntryFunction>,
         tx_hash: &H256,
         genesis_config: &GenesisConfig,
     ) -> Self {
@@ -37,7 +39,7 @@ impl SessionId {
             tx.gas_limit(),
             u64_gas_price(&tx.max_fee_per_gas),
             chain_id,
-            None, // TODO
+            maybe_entry_fn.map(EntryFunction::as_entry_function_payload),
             None,
         );
         Self {

@@ -42,8 +42,21 @@ pub(super) fn execute_canonical_transaction(
     let tx = NormalizedEthTransaction::try_from(tx.clone())?;
     let sender_move_address = tx.signer.to_move_address();
 
+    // TODO: How to model script-type transactions?
+    let maybe_entry_fn: Option<EntryFunction> = match tx.to {
+        TxKind::Call(_to) => {
+            let entry_fn: EntryFunction = bcs::from_bytes(&tx.data)?;
+            if entry_fn.module().address() != &sender_move_address {
+                Err(InvalidTransactionCause::InvalidDestination)?
+            }
+            Some(entry_fn)
+        }
+        TxKind::Create => None,
+    };
+
     let move_vm = create_move_vm()?;
-    let session_id = SessionId::new_from_canonical(&tx, tx_hash, genesis_config);
+    let session_id =
+        SessionId::new_from_canonical(&tx, maybe_entry_fn.as_ref(), tx_hash, genesis_config);
     let mut session = create_vm_session(&move_vm, state, session_id);
     let traversal_storage = TraversalStorage::new();
     let mut traversal_context = TraversalContext::new(&traversal_storage);
@@ -69,22 +82,15 @@ pub(super) fn execute_canonical_transaction(
         &mut gas_meter,
     )?;
 
-    // TODO: How to model script-type transactions?
-    let vm_outcome = match tx.to {
-        TxKind::Call(_to) => {
-            let entry_fn: EntryFunction = bcs::from_bytes(&tx.data)?;
-            if entry_fn.module().address() != &sender_move_address {
-                Err(InvalidTransactionCause::InvalidDestination)?
-            }
-            execute_entry_function(
-                entry_fn,
-                &sender_move_address,
-                &mut session,
-                &mut traversal_context,
-                &mut gas_meter,
-            )
-        }
-        TxKind::Create => {
+    let vm_outcome = match maybe_entry_fn {
+        Some(entry_fn) => execute_entry_function(
+            entry_fn,
+            &sender_move_address,
+            &mut session,
+            &mut traversal_context,
+            &mut gas_meter,
+        ),
+        None => {
             // Assume EVM create type transactions are module deployments in Move
             let module = Module::new(tx.data.to_vec());
             deploy_module(
