@@ -33,7 +33,7 @@ use {
     },
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
     move_vm_types::gas::UnmeteredGasMeter,
-    std::{collections::BTreeSet, u64},
+    std::collections::BTreeSet,
 };
 
 #[test]

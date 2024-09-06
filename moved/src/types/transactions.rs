@@ -1,10 +1,11 @@
 use {
-    crate::{Error, InvalidTransactionCause, UserError},
+    crate::{primitives::ToEthAddress, Error, InvalidTransactionCause, UserError},
     alloy_consensus::{Signed, Transaction, TxEip1559, TxEip2930, TxEnvelope, TxLegacy},
     alloy_eips::eip2930::AccessList,
-    alloy_primitives::{Address, Bytes, TxKind, B256, U256, U64},
+    alloy_primitives::{Address, Bloom, Bytes, Keccak256, Log, LogData, TxKind, B256, U256, U64},
     alloy_rlp::{Buf, Decodable, Encodable, RlpDecodable, RlpEncodable},
-    move_core_types::effects::ChangeSet,
+    aptos_types::contract_event::ContractEvent,
+    move_core_types::{effects::ChangeSet, language_storage::TypeTag},
     serde::{Deserialize, Serialize},
 };
 
@@ -80,14 +81,22 @@ pub struct TransactionExecutionOutcome {
     pub vm_outcome: Result<(), UserError>,
     pub changes: ChangeSet,
     pub gas_used: u64,
+    /// The bloom filter created from all emitted Move events converted to Ethereum logs.
+    pub logs_bloom: Bloom,
 }
 
 impl TransactionExecutionOutcome {
-    pub fn new(vm_outcome: Result<(), UserError>, changes: ChangeSet, gas_used: u64) -> Self {
+    pub fn new(
+        vm_outcome: Result<(), UserError>,
+        changes: ChangeSet,
+        gas_used: u64,
+        logs_bloom: Bloom,
+    ) -> Self {
         Self {
             vm_outcome,
             changes,
             gas_used,
+            logs_bloom,
         }
     }
 }
@@ -196,22 +205,92 @@ impl TryFrom<Signed<TxLegacy>> for NormalizedEthTransaction {
     }
 }
 
-#[test]
-fn test_extended_tx_envelope_rlp() {
-    use std::str::FromStr;
+pub(crate) trait ToLog {
+    fn to_log(&self) -> Log<LogData>;
+}
 
-    // Deposited Transaction
-    rlp_roundtrip(&Bytes::from_str("0x7ef8f8a0672dfee56b1754d9fb99b11dae8eab6dfb7246470f6f7354d7acab837eab12b294deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000000558000c5fc50000000000000004000000006672f4bd000000000000020e00000000000000000000000000000000000000000000000000000000000000070000000000000000000000000000000000000000000000000000000000000001bc6d63f57e9fd865ae9a204a4db7fe1cff654377442541b06d020ddab88c2eeb000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425").unwrap());
+impl ToLog for ContractEvent {
+    fn to_log(&self) -> Log<LogData> {
+        let (type_tag, event_data) = match self {
+            ContractEvent::V1(event) => (event.type_tag(), event.event_data()),
+            ContractEvent::V2(event) => (event.type_tag(), event.event_data()),
+        };
 
-    // Canonical Transaction
-    rlp_roundtrip(&Bytes::from_str("0x02f86f82a45580808346a8928252089465d08a056c17ae13370565b04cf77d2afa1cb9fa8806f05b59d3b2000080c080a0dd50efde9a4d2f01f5248e1a983165c8cfa5f193b07b4b094f4078ad4717c1e4a017db1be1e8751b09e033bcffca982d0fe4919ff6b8594654e06647dee9292750").unwrap())
+        let address = match type_tag {
+            TypeTag::Struct(struct_tag) => struct_tag.address,
+            _ => unreachable!("This would break move event extension invariant"),
+        };
+
+        let address = address.to_eth_address();
+
+        let mut hasher = Keccak256::new();
+        let type_string = type_tag.to_canonical_string();
+        hasher.update(type_string.as_bytes());
+        let type_hash = hasher.finalize();
+
+        let topics = vec![type_hash];
+
+        let data = event_data.to_vec();
+        let data = data.into();
+
+        Log::new_unchecked(address, topics, data)
+    }
 }
 
 #[cfg(test)]
-fn rlp_roundtrip(encoded: &[u8]) {
-    let mut re_encoded = Vec::with_capacity(encoded.len());
-    let mut slice = encoded;
-    let tx = ExtendedTxEnvelope::decode(&mut slice).unwrap();
-    tx.encode(&mut re_encoded);
-    assert_eq!(re_encoded, encoded);
+mod tests {
+    use {
+        super::*,
+        alloy_primitives::{address, hex, keccak256},
+        alloy_rlp::{Decodable, Encodable},
+        aptos_types::contract_event::{ContractEvent, ContractEventV2},
+        move_core_types::{
+            identifier::Identifier,
+            language_storage::{StructTag, TypeTag},
+        },
+    };
+
+    #[test]
+    fn test_move_event_converts_to_eth_log_successfully() {
+        let data = vec![0u8, 1, 2, 3];
+        let type_tag = TypeTag::Struct(Box::new(StructTag {
+            address: hex!("0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff")
+                .into(),
+            module: Identifier::new("moved").unwrap(),
+            name: Identifier::new("test").unwrap(),
+            type_args: vec![],
+        }));
+        let event = ContractEvent::V2(ContractEventV2::new(type_tag, data));
+
+        let actual_log = event.to_log();
+        let expected_log = Log::new_unchecked(
+            address!("6666777788889999aaaabbbbccccddddeeeeffff"),
+            vec![keccak256(
+                "0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff::moved::test",
+            )],
+            Bytes::from([0u8, 1, 2, 3]),
+        );
+
+        assert_eq!(actual_log, expected_log);
+    }
+
+    #[test]
+    fn test_extended_tx_envelope_rlp() {
+        use std::str::FromStr;
+
+        // Deposited Transaction
+        rlp_roundtrip(&Bytes::from_str("0x7ef8f8a0672dfee56b1754d9fb99b11dae8eab6dfb7246470f6f7354d7acab837eab12b294deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000000558000c5fc50000000000000004000000006672f4bd000000000000020e00000000000000000000000000000000000000000000000000000000000000070000000000000000000000000000000000000000000000000000000000000001bc6d63f57e9fd865ae9a204a4db7fe1cff654377442541b06d020ddab88c2eeb000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425").unwrap());
+
+        // Canonical Transaction
+        rlp_roundtrip(&Bytes::from_str("0x02f86f82a45580808346a8928252089465d08a056c17ae13370565b04cf77d2afa1cb9fa8806f05b59d3b2000080c080a0dd50efde9a4d2f01f5248e1a983165c8cfa5f193b07b4b094f4078ad4717c1e4a017db1be1e8751b09e033bcffca982d0fe4919ff6b8594654e06647dee9292750").unwrap())
+    }
+
+    #[cfg(test)]
+    fn rlp_roundtrip(encoded: &[u8]) {
+        let mut re_encoded = Vec::with_capacity(encoded.len());
+        let mut slice = encoded;
+        let tx = ExtendedTxEnvelope::decode(&mut slice).unwrap();
+        tx.encode(&mut re_encoded);
+        assert_eq!(re_encoded, encoded);
+    }
 }

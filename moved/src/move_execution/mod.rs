@@ -1,8 +1,9 @@
 use {
     crate::{
         genesis::config::GenesisConfig,
-        types::transactions::{ExtendedTxEnvelope, TransactionExecutionOutcome},
+        types::transactions::{ExtendedTxEnvelope, ToLog, TransactionExecutionOutcome},
     },
+    alloy_primitives::Bloom,
     aptos_framework::natives::{
         event::NativeEventContext, object::NativeObjectContext,
         transaction_context::NativeTransactionContext,
@@ -83,5 +84,22 @@ pub fn execute_transaction(
         ExtendedTxEnvelope::Canonical(tx) => {
             execute_canonical_transaction(tx, state, genesis_config)
         }
+    }
+}
+
+trait LogsBloom {
+    fn logs_bloom(&mut self) -> Bloom;
+}
+
+impl LogsBloom for NativeContextExtensions<'_> {
+    fn logs_bloom(&mut self) -> Bloom {
+        self.remove::<NativeEventContext>()
+            .into_events()
+            .into_iter()
+            .map(|(event, ..)| event.to_log())
+            .fold(Bloom::ZERO, |mut bloom, log| {
+                bloom.accrue_log(&log);
+                bloom
+            })
     }
 }

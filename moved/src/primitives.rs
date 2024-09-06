@@ -3,7 +3,6 @@ use {
     move_core_types::account_address::AccountAddress,
 };
 
-#[allow(dead_code)] // TODO: use this
 pub(crate) trait ToEthAddress {
     fn to_eth_address(&self) -> alloy_primitives::Address;
 }
@@ -41,7 +40,10 @@ impl ToH256 for HashValue {
 
 #[cfg(test)]
 mod tests {
-    use {super::*, alloy::hex, alloy_primitives::address};
+    use {
+        super::*,
+        alloy_primitives::{address, hex},
+    };
 
     #[test]
     fn conversion_from_hash_value_to_h256_and_back_produces_identical_value() {
