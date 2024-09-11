@@ -3,7 +3,6 @@ pub use error::*;
 use {
     self::{
         genesis::config::GenesisConfig,
-        primitives::{B256, U64},
         types::{
             jsonrpc::{JsonRpcError, JsonRpcResponse},
             method_name::MethodName,
@@ -11,7 +10,7 @@ use {
             state::StateMessage,
         },
     },
-    crate::state_actor::StatePayloadId,
+    crate::{block::MovedBlockHash, state_actor::StatePayloadId},
     clap::Parser,
     flate2::read::GzDecoder,
     jsonwebtoken::{DecodingKey, Validation},
@@ -38,6 +37,7 @@ pub mod iter;
 
 pub(crate) mod types;
 
+mod block;
 mod error;
 mod genesis;
 mod json_utils;
@@ -76,7 +76,8 @@ pub async fn run() {
     // TODO: think about channel size bound
     let (state_channel, rx) = mpsc::channel(1_000);
     let genesis_config = GenesisConfig::default();
-    let state = state_actor::StateActor::new_in_memory(rx, genesis_config, StatePayloadId);
+    let state =
+        state_actor::StateActor::new_in_memory(rx, genesis_config, StatePayloadId, MovedBlockHash);
 
     let http_state_channel = state_channel.clone();
     let http_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8545));
@@ -181,26 +182,6 @@ async fn mirror(
             }
             Err(e) => return Err(e),
         };
-
-    // If geth knows about an execution payload, we extract some data from it
-    // TODO: remove reliance on geth
-    let maybe_execution_payload = json_utils::get_field(
-        &json_utils::get_field(&parsed_geth_response, "result"),
-        "executionPayload",
-    );
-    let block_height: Result<Option<U64>, _> = serde_json::from_value(json_utils::get_field(
-        &maybe_execution_payload,
-        "blockNumber",
-    ));
-    let block_hash: Result<Option<B256>, _> =
-        serde_json::from_value(json_utils::get_field(&maybe_execution_payload, "blockHash"));
-    if let (Ok(Some(block_height)), Ok(Some(block_hash))) = (block_height, block_hash) {
-        let msg = StateMessage::NewBlock {
-            block_hash,
-            block_height,
-        };
-        state_channel.send(msg).await.ok();
-    }
 
     let request = request.expect("geth responded, so body must have been JSON");
     let op_move_response = handle_request(request.clone(), state_channel).await;

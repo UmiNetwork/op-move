@@ -12,11 +12,7 @@ use {
 
 #[cfg(test)]
 use {
-    crate::{
-        genesis::config::GenesisConfig,
-        methods::forkchoice_updated,
-        primitives::{B256, U64},
-    },
+    crate::{genesis::config::GenesisConfig, methods::forkchoice_updated, primitives::B256},
     std::str::FromStr,
 };
 
@@ -97,19 +93,19 @@ fn test_parse_params_v3() {
 async fn test_execute_v3() {
     let genesis_config = GenesisConfig::default();
     let (state_channel, rx) = tokio::sync::mpsc::channel(10);
-    let state =
-        crate::state_actor::StateActor::new_in_memory(rx, genesis_config, 0x03421ee50df45cacu64);
-    let state_handle = state.spawn();
 
     // Set known block height
     let head_hash =
         B256::from_str("0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d")
             .unwrap();
-    let msg = StateMessage::NewBlock {
-        block_hash: head_hash,
-        block_height: U64::from(1_194u64),
-    };
-    state_channel.send(msg).await.unwrap();
+
+    let state = crate::state_actor::StateActor::new_in_memory(
+        rx,
+        genesis_config,
+        0x03421ee50df45cacu64,
+        head_hash,
+    );
+    let state_handle = state.spawn();
 
     // Set head block hash
     let msg = StateMessage::UpdateHead {
@@ -145,13 +141,13 @@ async fn test_execute_v3() {
                 "receiptsRoot": "0x6f1da088070d8d62a333ef7a100f6b850b24de6ad964611823e33d6541aea16a",
                 "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
                 "prevRandao": "0xbde07f5d381bb84700433fe6c0ae077aa40eaad3a5de7abd298f0e3e27e6e4c9",
-                "blockNumber": "0x4ab",
+                "blockNumber": "0x1",
                 "gasLimit": "0x1c9c380",
                 "gasUsed": "0x7",
                 "timestamp": "0x6660737b",
                 "extraData": "0x",
                 "baseFeePerGas": "0x0",
-                "blockHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "blockHash": "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d",
                 "transactions": [
                 "0x7ef8f8a0de86bef815fc910df65a9459ccb2b9a35fa8596dfcfed1ff01bbf28891d86d5e94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000000558000c5fc50000000000000000000000006660735b00000000000001a9000000000000000000000000000000000000000000000000000000000000000700000000000000000000000000000000000000000000000000000000000000017ae3f74f0134521a7d62a387ac75a5153bcd1aab1c7e003e9b9e15a5d8846363000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425"
                 ],
