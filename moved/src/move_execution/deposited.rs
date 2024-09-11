@@ -6,14 +6,13 @@ use {
             gas::{new_gas_meter, total_gas_used},
             LogsBloom,
         },
-        primitives::ToMoveAddress,
+        primitives::{ToMoveAddress, B256},
         types::{
             session_id::SessionId,
             transactions::{DepositedTx, TransactionExecutionOutcome},
         },
     },
     aptos_table_natives::TableResolver,
-    ethers_core::types::H256,
     move_binary_format::errors::PartialVMError,
     move_core_types::resolver::MoveResolver,
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
@@ -21,7 +20,7 @@ use {
 
 pub(super) fn execute_deposited_transaction(
     tx: &DepositedTx,
-    tx_hash: &H256,
+    tx_hash: &B256,
     state: &(impl MoveResolver<PartialVMError> + TableResolver),
     genesis_config: &GenesisConfig,
 ) -> crate::Result<TransactionExecutionOutcome> {

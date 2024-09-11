@@ -3,6 +3,7 @@ pub use error::*;
 use {
     self::{
         genesis::config::GenesisConfig,
+        primitives::{B256, U64},
         types::{
             jsonrpc::{JsonRpcError, JsonRpcResponse},
             method_name::MethodName,
@@ -12,7 +13,6 @@ use {
     },
     crate::state_actor::StatePayloadId,
     clap::Parser,
-    ethers_core::types::{H256, U64},
     flate2::read::GzDecoder,
     jsonwebtoken::{DecodingKey, Validation},
     once_cell::sync::Lazy,
@@ -192,7 +192,7 @@ async fn mirror(
         &maybe_execution_payload,
         "blockNumber",
     ));
-    let block_hash: Result<Option<H256>, _> =
+    let block_hash: Result<Option<B256>, _> =
         serde_json::from_value(json_utils::get_field(&maybe_execution_payload, "blockHash"));
     if let (Ok(Some(block_height)), Ok(Some(block_hash))) = (block_height, block_hash) {
         let msg = StateMessage::NewBlock {

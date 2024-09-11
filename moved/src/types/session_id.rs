@@ -2,13 +2,12 @@ use {
     super::transactions::DepositedTx,
     crate::{
         genesis::config::{GenesisConfig, CHAIN_ID},
-        primitives::ToMoveAddress,
+        primitives::{ToMoveAddress, B256},
         types::transactions::NormalizedEthTransaction,
     },
     alloy_primitives::U256,
     aptos_types::transaction::EntryFunction,
     aptos_vm::move_vm_ext::UserTransactionContext,
-    ethers_core::types::H256,
 };
 
 /// This struct represents a unique identifier for the current session of the MoveVM.
@@ -27,7 +26,7 @@ impl SessionId {
     pub fn new_from_canonical(
         tx: &NormalizedEthTransaction,
         maybe_entry_fn: Option<&EntryFunction>,
-        tx_hash: &H256,
+        tx_hash: &B256,
         genesis_config: &GenesisConfig,
     ) -> Self {
         let chain_id = u8_chain_id(genesis_config);
@@ -53,7 +52,7 @@ impl SessionId {
 
     pub fn new_from_deposited(
         tx: &DepositedTx,
-        tx_hash: &H256,
+        tx_hash: &B256,
         genesis_config: &GenesisConfig,
     ) -> Self {
         let chain_id = u8_chain_id(genesis_config);

@@ -5,6 +5,7 @@ use {
         genesis::{config::GenesisConfig, init_storage},
         merkle_tree::MerkleRootExt,
         move_execution::execute_transaction,
+        primitives::{Bytes, B256, U256, U64},
         storage::{InMemoryState, State},
         types::{
             engine_api::{
@@ -19,7 +20,6 @@ use {
     alloy_consensus::{Receipt, ReceiptWithBloom},
     alloy_primitives::{keccak256, Bloom, Log},
     alloy_rlp::{Decodable, Encodable},
-    ethers_core::types::{Bytes, H256, U256, U64},
     move_binary_format::errors::PartialVMError,
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
@@ -31,12 +31,12 @@ mod payload;
 pub struct StateActor<S: State, P: NewPayloadId> {
     genesis_config: GenesisConfig,
     rx: Receiver<StateMessage>,
-    head: H256,
+    head: B256,
     payload_id: P,
-    block_heights: HashMap<H256, U64>,
-    execution_payloads: HashMap<H256, GetPayloadResponseV3>,
+    block_heights: HashMap<B256, U64>,
+    execution_payloads: HashMap<B256, GetPayloadResponseV3>,
     pending_payload: Option<(PayloadId, GetPayloadResponseV3)>,
-    mem_pool: HashMap<H256, ExtendedTxEnvelope>,
+    mem_pool: HashMap<B256, ExtendedTxEnvelope>,
     state: S,
 }
 
@@ -157,7 +157,7 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
         let mut transactions_ser = Vec::with_capacity(transactions.len());
         for tx_bytes in payload_attributes.transactions {
             let mut slice: &[u8] = tx_bytes.as_ref();
-            let tx_hash = H256(keccak256(slice).0);
+            let tx_hash = B256::new(keccak256(slice).0);
             match ExtendedTxEnvelope::decode(&mut slice) {
                 Ok(tx) => transactions.push((tx_hash, tx)),
                 Err(_) => {
@@ -178,7 +178,7 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
             .block_heights
             .get(&self.head)
             .copied()
-            .unwrap_or(U64::zero());
+            .unwrap_or(U64::ZERO);
         GetPayloadResponseV3 {
             execution_payload: ExecutionPayloadV3 {
                 parent_hash: self.head,
@@ -187,19 +187,19 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
                 receipts_root: execution_outcome.receipts_root,
                 logs_bloom: execution_outcome.logs_bloom,
                 prev_randao: payload_attributes.prev_randao,
-                block_number: head_height + 1,
+                block_number: head_height + U64::from(1u64),
                 gas_limit: payload_attributes.gas_limit,
                 gas_used: execution_outcome.gas_used,
                 timestamp: payload_attributes.timestamp,
                 extra_data: Bytes::default(),
-                base_fee_per_gas: U256::zero(), // TODO: gas pricing?
-                block_hash: H256::default(),    // TODO: proper block hash calculation
+                base_fee_per_gas: U256::ZERO, // TODO: gas pricing?
+                block_hash: B256::default(),  // TODO: proper block hash calculation
                 transactions: transactions_ser,
                 withdrawals: payload_attributes.withdrawals,
-                blob_gas_used: U64::zero(),
-                excess_blob_gas: U64::zero(),
+                blob_gas_used: U64::ZERO,
+                excess_blob_gas: U64::ZERO,
             },
-            block_value: U256::zero(), // TODO: value?
+            block_value: U256::ZERO, // TODO: value?
             blobs_bundle: Default::default(),
             should_override_builder: false,
             parent_beacon_block_root: payload_attributes.parent_beacon_block_root,
@@ -208,7 +208,7 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
 
     fn execute_transactions(
         &mut self,
-        transactions: &[(H256, ExtendedTxEnvelope)],
+        transactions: &[(B256, ExtendedTxEnvelope)],
     ) -> ExecutionOutcome {
         let mut outcomes = Vec::new();
         let mut logs_bloom = Bloom::ZERO;
@@ -254,7 +254,7 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
 
         ExecutionOutcome {
             state_root: self.state.state_root(),
-            gas_used: cumulative_gas_used.into(),
+            gas_used: U64::from(cumulative_gas_used),
             receipts_root,
             logs_bloom,
         }
