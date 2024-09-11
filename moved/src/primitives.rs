@@ -3,14 +3,14 @@ pub(crate) use alloy_primitives::{aliases::B2048, Address, Bytes, B256, U256, U6
 use {aptos_crypto::HashValue, move_core_types::account_address::AccountAddress};
 
 pub(crate) trait ToEthAddress {
-    fn to_eth_address(&self) -> alloy_primitives::Address;
+    fn to_eth_address(&self) -> Address;
 }
 
 impl ToEthAddress for AccountAddress {
-    fn to_eth_address(&self) -> alloy_primitives::Address {
+    fn to_eth_address(&self) -> Address {
         let bytes = &self.as_slice()[12..];
         let bytes = bytes.try_into().expect("Slice should be 20 bytes");
-        alloy_primitives::Address::new(bytes)
+        Address::new(bytes)
     }
 }
 
@@ -34,6 +34,16 @@ pub(crate) trait ToB256 {
 impl ToB256 for HashValue {
     fn to_h256(self) -> B256 {
         B256::from_slice(self.as_slice())
+    }
+}
+
+pub(crate) trait ToU64 {
+    fn to_u64(self) -> u64;
+}
+
+impl ToU64 for U64 {
+    fn to_u64(self) -> u64 {
+        self.into_limbs()[0]
     }
 }
 
@@ -122,7 +132,7 @@ mod tests {
                 .unwrap()
                 .as_nanos();
             let bytes = alloy_primitives::keccak256(ns.to_be_bytes());
-            alloy_primitives::Address::from_word(bytes)
+            Address::from_word(bytes)
         };
         let move_address = eth_address.to_move_address();
         let rt_eth_address = move_address.to_eth_address();

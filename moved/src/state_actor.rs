@@ -2,24 +2,25 @@ pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
 
 use {
     crate::{
+        block::{Block, BlockHash, Header},
         genesis::{config::GenesisConfig, init_storage},
         merkle_tree::MerkleRootExt,
         move_execution::execute_transaction,
-        primitives::{Bytes, B256, U256, U64},
+        primitives::{B256, U64},
         storage::{InMemoryState, State},
         types::{
             engine_api::{
-                ExecutionPayloadV3, GetPayloadResponseV3, PayloadAttributesV3, PayloadId,
-                ToPayloadIdInput,
+                GetPayloadResponseV3, PayloadAttributesV3, PayloadId, ToPayloadIdInput,
+                WithPayloadAttributes,
             },
-            state::{ExecutionOutcome, StateMessage},
+            state::{ExecutionOutcome, StateMessage, WithExecutionOutcome},
             transactions::ExtendedTxEnvelope,
         },
         Error::{InvalidTransaction, InvariantViolation, User},
     },
     alloy_consensus::{Receipt, ReceiptWithBloom},
     alloy_primitives::{keccak256, Bloom, Log},
-    alloy_rlp::{Decodable, Encodable},
+    alloy_rlp::Decodable,
     move_binary_format::errors::PartialVMError,
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
@@ -28,32 +29,41 @@ use {
 mod payload;
 
 #[derive(Debug)]
-pub struct StateActor<S: State, P: NewPayloadId> {
+pub struct StateActor<S: State, P: NewPayloadId, H: BlockHash> {
     genesis_config: GenesisConfig,
     rx: Receiver<StateMessage>,
     head: B256,
+    height: u64,
     payload_id: P,
-    block_heights: HashMap<B256, U64>,
+    block_hash: H,
     execution_payloads: HashMap<B256, GetPayloadResponseV3>,
     pending_payload: Option<(PayloadId, GetPayloadResponseV3)>,
     mem_pool: HashMap<B256, ExtendedTxEnvelope>,
     state: S,
 }
 
-impl<P: NewPayloadId> StateActor<InMemoryState, P> {
+impl<P: NewPayloadId, H: BlockHash> StateActor<InMemoryState, P, H> {
     pub fn new_in_memory(
         rx: Receiver<StateMessage>,
         genesis_config: GenesisConfig,
         payload_id: P,
+        block_hash: H,
     ) -> Self {
-        Self::new(rx, InMemoryState::new(), genesis_config, payload_id)
+        Self::new(
+            rx,
+            InMemoryState::new(),
+            genesis_config,
+            payload_id,
+            block_hash,
+        )
     }
 }
 
 impl<
         S: State<Err = PartialVMError> + Send + Sync + 'static,
         P: NewPayloadId + Send + Sync + 'static,
-    > StateActor<S, P>
+        H: BlockHash + Send + Sync + 'static,
+    > StateActor<S, P, H>
 {
     pub fn spawn(mut self) -> JoinHandle<()> {
         tokio::spawn(async move {
@@ -64,12 +74,13 @@ impl<
     }
 }
 
-impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
+impl<S: State<Err = PartialVMError>, P: NewPayloadId, H: BlockHash> StateActor<S, P, H> {
     pub fn new(
         rx: Receiver<StateMessage>,
         mut storage: S,
         genesis_config: GenesisConfig,
         payload_id: P,
+        block_hash: H,
     ) -> Self {
         init_storage(&genesis_config, &mut storage);
 
@@ -77,12 +88,13 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
             genesis_config,
             rx,
             head: Default::default(),
+            height: 0,
             payload_id,
-            block_heights: HashMap::new(),
             execution_payloads: HashMap::new(),
             pending_payload: None,
             mem_pool: HashMap::new(),
             state: storage,
+            block_hash,
         }
     }
 
@@ -95,11 +107,14 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
                 payload_attributes,
                 response_channel,
             } => {
-                let id = self
-                    .payload_id
-                    .new_payload_id((&payload_attributes).to_payload_id_input(&self.head));
+                let input = payload_attributes.to_payload_id_input(&self.head);
+                let id = self.payload_id.new_payload_id(input);
                 response_channel.send(id.clone()).ok();
-                let payload = self.create_execution_payload(payload_attributes);
+                let block = self.create_block(payload_attributes);
+                let hash = self.block_hash.block_hash(&block.header);
+                let block = block.with_hash(hash);
+                let payload = GetPayloadResponseV3::from(block);
+                self.execution_payloads.insert(hash, payload.clone());
                 self.pending_payload = Some((id, payload));
             }
             StateMessage::GetPayload {
@@ -134,76 +149,40 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId> StateActor<S, P> {
                 self.mem_pool
                     .insert(tx_hash, ExtendedTxEnvelope::Canonical(tx));
             }
-            StateMessage::NewBlock {
-                block_hash,
-                block_height,
-            } => {
-                self.block_heights.insert(block_hash, block_height);
-                if let Some((_, payload)) = self.pending_payload.as_mut() {
-                    payload.execution_payload.block_hash = block_hash;
-                    payload.execution_payload.block_number = block_height;
-                }
-            }
         }
     }
 
-    fn create_execution_payload(
-        &mut self,
-        payload_attributes: PayloadAttributesV3,
-    ) -> GetPayloadResponseV3 {
+    fn create_block(&mut self, payload_attributes: PayloadAttributesV3) -> Block {
         // Include transactions from both `payload_attributes` and internal mem-pool
-        let mut transactions =
-            Vec::with_capacity(payload_attributes.transactions.len() + self.mem_pool.len());
-        let mut transactions_ser = Vec::with_capacity(transactions.len());
-        for tx_bytes in payload_attributes.transactions {
-            let mut slice: &[u8] = tx_bytes.as_ref();
-            let tx_hash = B256::new(keccak256(slice).0);
-            match ExtendedTxEnvelope::decode(&mut slice) {
-                Ok(tx) => transactions.push((tx_hash, tx)),
-                Err(_) => {
-                    println!("WARN: Failed to RLP decode transaction in payload_attributes");
+        let transactions = payload_attributes
+            .transactions
+            .iter()
+            .filter_map(|tx_bytes| {
+                let mut slice: &[u8] = tx_bytes.as_ref();
+                let tx_hash = B256::new(keccak256(slice).0);
+
+                match ExtendedTxEnvelope::decode(&mut slice) {
+                    Ok(tx) => Some((tx_hash, tx)),
+                    Err(_) => {
+                        println!("WARN: Failed to RLP decode transaction in payload_attributes");
+                        None
+                    }
                 }
-            };
-            transactions_ser.push(tx_bytes);
-        }
-        for (tx_hash, tx) in self.mem_pool.drain() {
-            let capacity = tx.length();
-            let mut bytes = Vec::with_capacity(capacity);
-            tx.encode(&mut bytes);
-            transactions_ser.push(bytes.into());
-            transactions.push((tx_hash, tx));
-        }
+            })
+            .chain(self.mem_pool.drain())
+            .collect::<Vec<_>>();
+
         let execution_outcome = self.execute_transactions(&transactions);
-        let head_height = self
-            .block_heights
-            .get(&self.head)
-            .copied()
-            .unwrap_or(U64::ZERO);
-        GetPayloadResponseV3 {
-            execution_payload: ExecutionPayloadV3 {
-                parent_hash: self.head,
-                fee_recipient: payload_attributes.suggested_fee_recipient,
-                state_root: execution_outcome.state_root,
-                receipts_root: execution_outcome.receipts_root,
-                logs_bloom: execution_outcome.logs_bloom,
-                prev_randao: payload_attributes.prev_randao,
-                block_number: head_height + U64::from(1u64),
-                gas_limit: payload_attributes.gas_limit,
-                gas_used: execution_outcome.gas_used,
-                timestamp: payload_attributes.timestamp,
-                extra_data: Bytes::default(),
-                base_fee_per_gas: U256::ZERO, // TODO: gas pricing?
-                block_hash: B256::default(),  // TODO: proper block hash calculation
-                transactions: transactions_ser,
-                withdrawals: payload_attributes.withdrawals,
-                blob_gas_used: U64::ZERO,
-                excess_blob_gas: U64::ZERO,
-            },
-            block_value: U256::ZERO, // TODO: value?
-            blobs_bundle: Default::default(),
-            should_override_builder: false,
-            parent_beacon_block_root: payload_attributes.parent_beacon_block_root,
-        }
+
+        // TODO: Determine gas pricing for `base_fee_per_gas`
+        // TODO: Compute `transaction_root`
+        // TODO: Compute `withdrawals_root`
+        let header = Header::new(self.head, self.height + 1)
+            .with_payload_attributes(payload_attributes)
+            .with_execution_outcome(execution_outcome);
+        let transactions = transactions.into_iter().map(|(_, tx)| tx).collect();
+
+        Block::new(header, transactions)
     }
 
     fn execute_transactions(

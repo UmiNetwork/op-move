@@ -63,7 +63,12 @@ async fn inner_execute(
 async fn test_execute() {
     let genesis_config = crate::genesis::config::GenesisConfig::default();
     let (state_channel, rx) = tokio::sync::mpsc::channel(10);
-    let state = crate::state_actor::StateActor::new_in_memory(rx, genesis_config, StatePayloadId);
+    let state = crate::state_actor::StateActor::new_in_memory(
+        rx,
+        genesis_config,
+        StatePayloadId,
+        B256::ZERO,
+    );
     let state_handle = state.spawn();
 
     let request: serde_json::Value = serde_json::from_str(

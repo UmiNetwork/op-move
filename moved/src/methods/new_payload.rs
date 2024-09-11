@@ -18,6 +18,7 @@ use {
         methods::{forkchoice_updated, get_payload},
         primitives::{Address, Bytes, B2048, U256, U64},
     },
+    alloy_primitives::hex,
     std::str::FromStr,
 };
 
@@ -267,19 +268,15 @@ fn test_parse_params_v3() {
 async fn test_execute_v3() {
     let genesis_config = GenesisConfig::default();
     let (state_channel, rx) = tokio::sync::mpsc::channel(10);
-    let state =
-        crate::state_actor::StateActor::new_in_memory(rx, genesis_config, 0x0306d51fc5aa1533u64);
+    let state = crate::state_actor::StateActor::new_in_memory(
+        rx,
+        genesis_config,
+        0x0306d51fc5aa1533u64,
+        B256::from(hex!(
+            "c013e1ff1b8bca9f0d074618cc9e661983bc91d7677168b156765781aee775d3"
+        )),
+    );
     let state_handle = state.spawn();
-
-    // Set known block height
-    let head_hash =
-        B256::from_str("0x781f09c5b7629a7ca30668e440ea40557f01461ad6f105b371f61ff5824b2449")
-            .unwrap();
-    let msg = StateMessage::NewBlock {
-        block_hash: head_hash,
-        block_height: U64::ZERO,
-    };
-    state_channel.send(msg).await.unwrap();
 
     let fc_updated_request: serde_json::Value = serde_json::from_str(
         r#"
@@ -316,7 +313,7 @@ async fn test_execute_v3() {
                 "id": 8,
                 "method": "engine_getPayloadV3",
                 "params": [
-                "0x0306d51fc5aa1533"
+                    "0x0306d51fc5aa1533"
                 ]
             }
     "#,
@@ -361,15 +358,6 @@ async fn test_execute_v3() {
     forkchoice_updated::execute_v3(fc_updated_request, state_channel.clone())
         .await
         .unwrap();
-
-    let msg = StateMessage::NewBlock {
-        block_hash: B256::from_str(
-            "0xc013e1ff1b8bca9f0d074618cc9e661983bc91d7677168b156765781aee775d3",
-        )
-        .unwrap(),
-        block_height: U64::from(1u64),
-    };
-    state_channel.send(msg).await.unwrap();
 
     get_payload::execute_v3(get_payload_request, state_channel.clone())
         .await

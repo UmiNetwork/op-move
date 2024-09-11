@@ -3,10 +3,12 @@
 
 use {
     crate::{
-        primitives::{Address, Bytes, B2048, B256, U256, U64},
+        block::{BlockWithHash, Header},
+        primitives::{Address, Bytes, ToU64, B2048, B256, U256, U64},
         state_actor::NewPayloadIdInput,
     },
     alloy_eips::eip4895::Withdrawal,
+    alloy_rlp::Encodable,
     serde::{Deserialize, Serialize},
     std::str::FromStr,
 };
@@ -205,7 +207,7 @@ pub(crate) trait ToPayloadIdInput<'a> {
     fn to_payload_id_input(&'a self, head: &'a B256) -> NewPayloadIdInput<'a>;
 }
 
-impl<'a> ToPayloadIdInput<'a> for &'a PayloadAttributesV3 {
+impl<'a> ToPayloadIdInput<'a> for PayloadAttributesV3 {
     fn to_payload_id_input(&'a self, head: &'a B256) -> NewPayloadIdInput<'a> {
         NewPayloadIdInput::new_v3(
             head,
@@ -220,5 +222,70 @@ impl<'a> ToPayloadIdInput<'a> for &'a PayloadAttributesV3 {
                 .map(ToWithdrawal::to_withdrawal)
                 .collect::<Vec<_>>(),
         )
+    }
+}
+
+impl From<BlockWithHash> for GetPayloadResponseV3 {
+    fn from(value: BlockWithHash) -> Self {
+        GetPayloadResponseV3 {
+            parent_beacon_block_root: value.block.header.parent_beacon_block_root,
+            execution_payload: ExecutionPayloadV3::from(value),
+            block_value: U256::ZERO, // TODO: value?
+            blobs_bundle: Default::default(),
+            should_override_builder: false,
+        }
+    }
+}
+
+impl From<BlockWithHash> for ExecutionPayloadV3 {
+    fn from(value: BlockWithHash) -> Self {
+        let transactions = value
+            .block
+            .transactions
+            .into_iter()
+            .map(|tx| {
+                let capacity = tx.length();
+                let mut bytes = Vec::with_capacity(capacity);
+                tx.encode(&mut bytes);
+                bytes.into()
+            })
+            .collect();
+
+        Self {
+            block_hash: value.hash,
+            parent_hash: value.block.header.parent_hash,
+            fee_recipient: value.block.header.beneficiary,
+            state_root: value.block.header.state_root,
+            receipts_root: value.block.header.receipts_root,
+            logs_bloom: value.block.header.logs_bloom,
+            prev_randao: value.block.header.prev_randao,
+            block_number: U64::from(value.block.header.number),
+            gas_limit: U64::from(value.block.header.gas_limit),
+            gas_used: U64::from(value.block.header.gas_used),
+            timestamp: U64::from(value.block.header.timestamp),
+            extra_data: value.block.header.extra_data,
+            base_fee_per_gas: value.block.header.base_fee_per_gas,
+            transactions,
+            withdrawals: Vec::new(), // TODO: withdrawals
+            blob_gas_used: U64::from(value.block.header.blob_gas_used),
+            excess_blob_gas: U64::from(value.block.header.excess_blob_gas),
+        }
+    }
+}
+
+pub(crate) trait WithPayloadAttributes {
+    fn with_payload_attributes(self, payload: PayloadAttributesV3) -> Self;
+}
+
+impl WithPayloadAttributes for Header {
+    fn with_payload_attributes(self, payload: PayloadAttributesV3) -> Self {
+        Self {
+            beneficiary: payload.suggested_fee_recipient,
+            gas_limit: payload.gas_limit.to_u64(),
+            timestamp: payload.timestamp.to_u64(),
+            prev_randao: payload.prev_randao,
+            parent_beacon_block_root: payload.parent_beacon_block_root,
+            ..self
+        }
     }
 }

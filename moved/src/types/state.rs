@@ -6,7 +6,8 @@
 use {
     super::engine_api::GetPayloadResponseV3,
     crate::{
-        primitives::{B2048, B256, U64},
+        block::Header,
+        primitives::{ToU64, B2048, B256, U64},
         types::engine_api::{PayloadAttributesV3, PayloadId},
     },
     alloy_consensus::transaction::TxEnvelope,
@@ -33,12 +34,6 @@ pub enum StateMessage {
     AddTransaction {
         tx: TxEnvelope,
     },
-    // Tells the state to remember a new block hash/height correspondence.
-    // TODO: should be able to remove in the future
-    NewBlock {
-        block_hash: B256,
-        block_height: U64,
-    },
 }
 
 #[derive(Debug)]
@@ -47,4 +42,20 @@ pub struct ExecutionOutcome {
     pub state_root: B256,
     pub logs_bloom: B2048,
     pub gas_used: U64,
+}
+
+pub(crate) trait WithExecutionOutcome {
+    fn with_execution_outcome(self, outcome: ExecutionOutcome) -> Self;
+}
+
+impl WithExecutionOutcome for Header {
+    fn with_execution_outcome(self, outcome: ExecutionOutcome) -> Self {
+        Self {
+            state_root: outcome.state_root,
+            receipts_root: outcome.receipts_root,
+            logs_bloom: outcome.logs_bloom,
+            gas_used: outcome.gas_used.to_u64(),
+            ..self
+        }
+    }
 }
