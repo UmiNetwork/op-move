@@ -1,6 +1,7 @@
 use {
     crate::{
         genesis::config::GenesisConfig,
+        primitives::B256,
         types::{
             session_id::SessionId,
             transactions::{ExtendedTxEnvelope, ToLog, TransactionExecutionOutcome},
@@ -17,7 +18,6 @@ use {
     aptos_vm::natives::aptos_natives,
     canonical::execute_canonical_transaction,
     deposited::execute_deposited_transaction,
-    ethers_core::types::H256,
     move_binary_format::errors::PartialVMError,
     move_core_types::resolver::MoveResolver,
     move_vm_runtime::{
@@ -84,7 +84,7 @@ where
 
 pub fn execute_transaction(
     tx: &ExtendedTxEnvelope,
-    tx_hash: &H256,
+    tx_hash: &B256,
     state: &(impl MoveResolver<PartialVMError> + TableResolver),
     genesis_config: &GenesisConfig,
 ) -> crate::Result<TransactionExecutionOutcome> {

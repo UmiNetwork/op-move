@@ -8,7 +8,7 @@ use {
             nonces::check_nonce,
             LogsBloom,
         },
-        primitives::ToMoveAddress,
+        primitives::{ToMoveAddress, B256},
         types::{
             session_id::SessionId,
             transactions::{NormalizedEthTransaction, TransactionExecutionOutcome},
@@ -21,7 +21,6 @@ use {
     aptos_gas_meter::AptosGasMeter,
     aptos_table_natives::TableResolver,
     aptos_types::transaction::{EntryFunction, Module},
-    ethers_core::types::H256,
     move_binary_format::errors::PartialVMError,
     move_core_types::resolver::MoveResolver,
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
@@ -29,7 +28,7 @@ use {
 
 pub(super) fn execute_canonical_transaction(
     tx: &TxEnvelope,
-    tx_hash: &H256,
+    tx_hash: &B256,
     state: &(impl MoveResolver<PartialVMError> + TableResolver),
     genesis_config: &GenesisConfig,
 ) -> crate::Result<TransactionExecutionOutcome> {

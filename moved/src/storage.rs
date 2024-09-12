@@ -1,5 +1,8 @@
 use {
-    crate::{iter::GroupIterator, primitives::ToH256},
+    crate::{
+        iter::GroupIterator,
+        primitives::{ToB256, B256},
+    },
     aptos_crypto::{hash::CryptoHash, HashValue},
     aptos_jellyfish_merkle::{
         mock_tree_store::MockTreeStore, node_type::Node, JellyfishMerkleTree, TreeReader,
@@ -10,7 +13,6 @@ use {
         state_store::{state_key::StateKey, state_value::StateValue},
         transaction::Version,
     },
-    ethers_core::types::H256,
     move_binary_format::errors::PartialVMError,
     move_core_types::{effects::ChangeSet, resolver::MoveResolver},
     move_table_extension::{TableChangeSet, TableResolver},
@@ -50,7 +52,7 @@ pub trait State {
     fn resolver(&self) -> &(impl MoveResolver<Self::Err> + TableResolver);
 
     /// Retrieves the current state root.
-    fn state_root(&self) -> H256;
+    fn state_root(&self) -> B256;
 }
 
 pub struct InMemoryState {
@@ -98,10 +100,10 @@ impl State for InMemoryState {
         &self.resolver
     }
 
-    fn state_root(&self) -> H256 {
+    fn state_root(&self) -> B256 {
         self.tree()
             .get_root_hash(self.version)
-            .map(ToH256::to_h256)
+            .map(ToB256::to_h256)
             .unwrap()
     }
 }
@@ -112,7 +114,7 @@ impl InMemoryState {
         self.version
     }
 
-    fn insert_change_set_into_merkle_trie(&mut self, change_set: &ChangeSet) -> H256 {
+    fn insert_change_set_into_merkle_trie(&mut self, change_set: &ChangeSet) -> B256 {
         let version = self.next_version();
         let values = change_set.to_tree_values();
         let values_per_shard = values

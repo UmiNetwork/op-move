@@ -1,7 +1,6 @@
-use {
-    aptos_crypto::HashValue, ethers_core::types::H256,
-    move_core_types::account_address::AccountAddress,
-};
+pub(crate) use alloy_primitives::{aliases::B2048, Address, Bytes, B256, U256, U64};
+
+use {aptos_crypto::HashValue, move_core_types::account_address::AccountAddress};
 
 pub(crate) trait ToEthAddress {
     fn to_eth_address(&self) -> alloy_primitives::Address;
@@ -28,13 +27,13 @@ impl<T: AsRef<[u8; 20]>> ToMoveAddress for T {
     }
 }
 
-pub(crate) trait ToH256 {
-    fn to_h256(self) -> H256;
+pub(crate) trait ToB256 {
+    fn to_h256(self) -> B256;
 }
 
-impl ToH256 for HashValue {
-    fn to_h256(self) -> H256 {
-        H256::from_slice(self.as_slice())
+impl ToB256 for HashValue {
+    fn to_h256(self) -> B256 {
+        B256::from_slice(self.as_slice())
     }
 }
 
@@ -50,7 +49,7 @@ mod tests {
         let bytes = hex!("123456789abcdef000000feedb1123535271351623521abcefdabdfc0000001f");
         let value = HashValue::from_slice(bytes).unwrap();
         let converted = value.to_h256();
-        let actual_value = HashValue::from_slice(converted.as_fixed_bytes()).unwrap();
+        let actual_value = HashValue::from_slice(converted.as_slice()).unwrap();
         let expected_value = value;
 
         assert_eq!(actual_value, expected_value);
@@ -61,7 +60,7 @@ mod tests {
         let bytes = hex!("123456789abcdef000000feedb1123535271351623521abcefdabdfc0000001f");
         let value = HashValue::from_slice(bytes).unwrap();
         let converted = value.to_h256();
-        let actual_bytes = converted.as_fixed_bytes();
+        let actual_bytes = converted.as_slice();
         let expected_bytes = &bytes;
 
         assert_eq!(actual_bytes, expected_bytes);

@@ -5,16 +5,18 @@
 
 use {
     super::engine_api::GetPayloadResponseV3,
-    crate::types::engine_api::{PayloadAttributesV3, PayloadId},
+    crate::{
+        primitives::{B2048, B256, U64},
+        types::engine_api::{PayloadAttributesV3, PayloadId},
+    },
     alloy_consensus::transaction::TxEnvelope,
-    ethers_core::types::{Bytes, H256, U64},
     tokio::sync::oneshot,
 };
 
 #[derive(Debug)]
 pub enum StateMessage {
     UpdateHead {
-        block_hash: H256,
+        block_hash: B256,
     },
     StartBlockBuild {
         payload_attributes: PayloadAttributesV3,
@@ -25,7 +27,7 @@ pub enum StateMessage {
         response_channel: oneshot::Sender<Option<GetPayloadResponseV3>>,
     },
     GetPayloadByBlockHash {
-        block_hash: H256,
+        block_hash: B256,
         response_channel: oneshot::Sender<Option<GetPayloadResponseV3>>,
     },
     AddTransaction {
@@ -34,15 +36,15 @@ pub enum StateMessage {
     // Tells the state to remember a new block hash/height correspondence.
     // TODO: should be able to remove in the future
     NewBlock {
-        block_hash: H256,
+        block_hash: B256,
         block_height: U64,
     },
 }
 
 #[derive(Debug)]
 pub struct ExecutionOutcome {
-    pub receipts_root: H256,
-    pub state_root: H256,
-    pub logs_bloom: Bytes,
+    pub receipts_root: B256,
+    pub state_root: B256,
+    pub logs_bloom: B2048,
     pub gas_used: U64,
 }

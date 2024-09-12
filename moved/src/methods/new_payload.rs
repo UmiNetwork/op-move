@@ -1,13 +1,13 @@
 use {
     crate::{
         json_utils::{self, access_state_error},
+        primitives::B256,
         types::{
             engine_api::{ExecutionPayloadV3, GetPayloadResponseV3, PayloadStatusV1, Status},
             jsonrpc::JsonRpcError,
             state::StateMessage,
         },
     },
-    ethers_core::types::H256,
     tokio::sync::{mpsc, oneshot},
 };
 
@@ -16,8 +16,8 @@ use {
     crate::{
         genesis::config::GenesisConfig,
         methods::{forkchoice_updated, get_payload},
+        primitives::{Address, Bytes, B2048, U256, U64},
     },
-    ethers_core::types::{Bytes, H160, U256, U64},
     std::str::FromStr,
 };
 
@@ -39,7 +39,7 @@ pub async fn execute_v3(
 
 fn parse_params_v3(
     request: serde_json::Value,
-) -> Result<(ExecutionPayloadV3, Vec<H256>, H256), JsonRpcError> {
+) -> Result<(ExecutionPayloadV3, Vec<B256>, B256), JsonRpcError> {
     let params = json_utils::get_params_list(&request);
     match params {
         [] | [_] | [_, _] => Err(JsonRpcError {
@@ -49,8 +49,8 @@ fn parse_params_v3(
         }),
         [x, y, z] => {
             let execution_payload: ExecutionPayloadV3 = json_utils::deserialize(x)?;
-            let expected_blob_versioned_hashes: Vec<H256> = json_utils::deserialize(y)?;
-            let parent_beacon_block_root: H256 = json_utils::deserialize(z)?;
+            let expected_blob_versioned_hashes: Vec<B256> = json_utils::deserialize(y)?;
+            let parent_beacon_block_root: B256 = json_utils::deserialize(z)?;
             Ok((
                 execution_payload,
                 expected_blob_versioned_hashes,
@@ -67,8 +67,8 @@ fn parse_params_v3(
 
 async fn inner_execute_v3(
     execution_payload: ExecutionPayloadV3,
-    expected_blob_versioned_hashes: Vec<H256>,
-    parent_beacon_block_root: H256,
+    expected_blob_versioned_hashes: Vec<B256>,
+    parent_beacon_block_root: B256,
     state_channel: mpsc::Sender<StateMessage>,
 ) -> Result<PayloadStatusV1, JsonRpcError> {
     // Spec: https://github.com/ethereum/execution-apis/blob/main/src/engine/cancun.md#specification
@@ -99,8 +99,8 @@ async fn inner_execute_v3(
 
 fn validate_payload(
     execution_payload: ExecutionPayloadV3,
-    expected_blob_versioned_hashes: Vec<H256>,
-    parent_beacon_block_root: H256,
+    expected_blob_versioned_hashes: Vec<B256>,
+    parent_beacon_block_root: B256,
     known_payload: GetPayloadResponseV3,
 ) -> Result<PayloadStatusV1, JsonRpcError> {
     if execution_payload.block_number != known_payload.execution_payload.block_number {
@@ -236,28 +236,28 @@ fn test_parse_params_v3() {
 
     let expected_params = (
         ExecutionPayloadV3 {
-            parent_hash: H256::from_str("0x781f09c5b7629a7ca30668e440ea40557f01461ad6f105b371f61ff5824b2449").unwrap(),
-            fee_recipient: H160::from_str("0x4200000000000000000000000000000000000011").unwrap(),
-            state_root: H256::from_str("0x316850949fd480573fec2a2cb07c9c22d7f18a390d9ad4b6847a4326b1a4a5eb").unwrap(),
-            receipts_root: H256::from_str("0x619a992b2d1905328560c3bd9c7fc79b57f012afbff3de92d7a82cfdf8aa186c").unwrap(),
-            logs_bloom: vec![0; 256].into(),
-            prev_randao: H256::from_str("0x5e52abb859f1fff3a4bf38e076b67815214e8cff662055549b91ba33f5cb7fba").unwrap(),
-            block_number: U64::one(),
+            parent_hash: B256::from_str("0x781f09c5b7629a7ca30668e440ea40557f01461ad6f105b371f61ff5824b2449").unwrap(),
+            fee_recipient: Address::from_str("0x4200000000000000000000000000000000000011").unwrap(),
+            state_root: B256::from_str("0x316850949fd480573fec2a2cb07c9c22d7f18a390d9ad4b6847a4326b1a4a5eb").unwrap(),
+            receipts_root: B256::from_str("0x619a992b2d1905328560c3bd9c7fc79b57f012afbff3de92d7a82cfdf8aa186c").unwrap(),
+            logs_bloom: B2048::ZERO,
+            prev_randao: B256::from_str("0x5e52abb859f1fff3a4bf38e076b67815214e8cff662055549b91ba33f5cb7fba").unwrap(),
+            block_number: U64::from(1u64),
             gas_limit: U64::from_str("0x1c9c380").unwrap(),
             gas_used: U64::from_str("0x2728a").unwrap(),
             timestamp: U64::from_str("0x666c9d8d").unwrap(),
             extra_data: Vec::new().into(),
             base_fee_per_gas: U256::from_str("0x3b5dc100").unwrap(),
-            block_hash: H256::from_str("0xc013e1ff1b8bca9f0d074618cc9e661983bc91d7677168b156765781aee775d3").unwrap(),
+            block_hash: B256::from_str("0xc013e1ff1b8bca9f0d074618cc9e661983bc91d7677168b156765781aee775d3").unwrap(),
             transactions: vec![
                 Bytes::from_str("0x7ef8f8a0d449f5de7f558fa593dce80637d3a3f52cfaaee2913167371dd6ffd9014e431d94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e20000f424000000000000000000000000100000000666c9d8b0000000000000028000000000000000000000000000000000000000000000000000000000049165f0000000000000000000000000000000000000000000000000000000000000001d05450763214e6060d285b39ef5fe51ef9526395e5cef6ecb27ba06f9598f27d000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425").unwrap()
             ],
             withdrawals: Vec::new(),
-            blob_gas_used: U64::zero(),
-            excess_blob_gas: U64::zero(),
+            blob_gas_used: U64::ZERO,
+            excess_blob_gas: U64::ZERO,
         },
         Vec::new(),
-        H256::from_str("0x1a274bb1e783ec35804dee78ec3d7cecd03371f311b2f946500613e994f024a5").unwrap()
+        B256::from_str("0x1a274bb1e783ec35804dee78ec3d7cecd03371f311b2f946500613e994f024a5").unwrap()
     );
 
     assert_eq!(params, expected_params);
@@ -273,11 +273,11 @@ async fn test_execute_v3() {
 
     // Set known block height
     let head_hash =
-        H256::from_str("0x781f09c5b7629a7ca30668e440ea40557f01461ad6f105b371f61ff5824b2449")
+        B256::from_str("0x781f09c5b7629a7ca30668e440ea40557f01461ad6f105b371f61ff5824b2449")
             .unwrap();
     let msg = StateMessage::NewBlock {
         block_hash: head_hash,
-        block_height: U64::zero(),
+        block_height: U64::ZERO,
     };
     state_channel.send(msg).await.unwrap();
 
@@ -363,11 +363,11 @@ async fn test_execute_v3() {
         .unwrap();
 
     let msg = StateMessage::NewBlock {
-        block_hash: H256::from_str(
+        block_hash: B256::from_str(
             "0xc013e1ff1b8bca9f0d074618cc9e661983bc91d7677168b156765781aee775d3",
         )
         .unwrap(),
-        block_height: U64::one(),
+        block_height: U64::from(1u64),
     };
     state_channel.send(msg).await.unwrap();
 

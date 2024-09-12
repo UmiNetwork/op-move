@@ -1,11 +1,11 @@
 use {
     crate::{
         json_utils::{self, access_state_error},
+        primitives::{Bytes, B256},
         types::{jsonrpc::JsonRpcError, state::StateMessage},
     },
     alloy_consensus::transaction::TxEnvelope,
     alloy_rlp::Decodable,
-    ethers_core::types::{Bytes, H256},
     tokio::sync::mpsc,
 };
 
@@ -50,7 +50,7 @@ fn parse_params(request: serde_json::Value) -> Result<TxEnvelope, JsonRpcError> 
 async fn inner_execute(
     tx: TxEnvelope,
     state_channel: mpsc::Sender<StateMessage>,
-) -> Result<H256, JsonRpcError> {
+) -> Result<B256, JsonRpcError> {
     let tx_hash = tx.tx_hash().0.into();
 
     let msg = StateMessage::AddTransaction { tx };

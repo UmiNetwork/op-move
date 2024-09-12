@@ -1,6 +1,9 @@
 use {
-    crate::types::engine_api::PayloadId,
-    ethers_core::types::{Withdrawal, H160, H256, U64},
+    crate::{
+        primitives::{Address, B256},
+        types::engine_api::PayloadId,
+    },
+    alloy_eips::eip4895::Withdrawal,
     sha2::{Digest, Sha256},
 };
 
@@ -9,12 +12,12 @@ use {
 /// See trait [`NewPayloadId`] for the definition of the Payload ID creation behavior.
 #[derive(Debug)]
 pub struct NewPayloadIdInput<'a> {
-    parent: &'a H256,
+    parent: &'a B256,
     timestamp: u64,
-    random: &'a H256,
-    fee_recipient: &'a H160,
+    random: &'a B256,
+    fee_recipient: &'a Address,
     withdrawals: Vec<Withdrawal>,
-    beacon_root: Option<&'a H256>,
+    beacon_root: Option<&'a B256>,
     version: u8,
 }
 
@@ -24,10 +27,10 @@ impl<'a> NewPayloadIdInput<'a> {
     ///
     /// Marks `version` as `3`.
     pub fn new_v3(
-        parent: &'a H256,
+        parent: &'a B256,
         timestamp: u64,
-        random: &'a H256,
-        fee_recipient: &'a H160,
+        random: &'a B256,
+        fee_recipient: &'a Address,
     ) -> Self {
         Self {
             parent,
@@ -50,7 +53,7 @@ impl<'a> NewPayloadIdInput<'a> {
     }
 
     /// Creates this input with `beacon_root`.
-    pub fn with_beacon_root(mut self, beacon_root: &'a H256) -> Self {
+    pub fn with_beacon_root(mut self, beacon_root: &'a B256) -> Self {
         self.beacon_root.replace(beacon_root);
         self
     }
@@ -75,18 +78,23 @@ pub struct StatePayloadId;
 impl NewPayloadId for StatePayloadId {
     fn new_payload_id(&self, input: NewPayloadIdInput) -> PayloadId {
         let mut hasher = Sha256::new();
-        hasher.update(input.parent.as_bytes());
+        hasher.update(input.parent.as_slice());
         hasher.update(input.timestamp.to_be_bytes());
-        hasher.update(input.random.as_bytes());
+        hasher.update(input.random.as_slice());
         hasher.update(input.fee_recipient.0.as_slice());
-        hasher.update(&rlp::encode_list(&input.withdrawals));
+        let mut buffer =
+            Vec::with_capacity(input.withdrawals.len() * std::mem::size_of::<Withdrawal>());
+        alloy_rlp::encode_list(&input.withdrawals, &mut buffer);
+        hasher.update(buffer);
         if let Some(beacon_root) = input.beacon_root {
-            hasher.update(beacon_root.as_bytes());
+            hasher.update(beacon_root.as_slice());
         }
         let mut hash = hasher.finalize();
         hash[0] = input.version;
 
-        PayloadId::from(U64::from(&hash[..8]))
+        PayloadId::from(u64::from_be_bytes(
+            hash[..8].try_into().expect("Slice should be 8-bytes"),
+        ))
     }
 }
 
@@ -100,25 +108,25 @@ mod tests {
         }
     }
 
-    macro_rules! h256_0_ended {
+    macro_rules! b256_0_ended {
         ($x: expr) => {
-            H256::from([
+            B256::from([
                 $x, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0,
             ])
         };
     }
 
-    macro_rules! h160_0_ended {
+    macro_rules! addr_0_ended {
         ($x: expr) => {
-            H160::from([$x, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+            Address::from([$x, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
         };
     }
 
     macro_rules! withdrawal {
         ($index: expr) => {{
             Withdrawal {
-                index: U64::from($index),
+                index: $index,
                 validator_index: Default::default(),
                 address: Default::default(),
                 amount: Default::default(),
@@ -126,18 +134,18 @@ mod tests {
         }};
     }
 
-    #[test_case(h256_0_ended!(1u8), 1, h256_0_ended!(1u8), h160_0_ended!(1u8), [], 0x004cffc0e01f12fau64; "All ones")]
-    #[test_case(h256_0_ended!(2u8), 1, h256_0_ended!(1u8), h160_0_ended!(1u8), [], 0x00fda8bfe79f5f1bu64; "Different parent")]
-    #[test_case(h256_0_ended!(2u8), 2, h256_0_ended!(1u8), h160_0_ended!(1u8), [], 0x00410bd3dc768689u64; "Different timestamp")]
-    #[test_case(h256_0_ended!(2u8), 2, h256_0_ended!(2u8), h160_0_ended!(1u8), [], 0x0040399b0c29a27fu64; "Different random")]
-    #[test_case(h256_0_ended!(2u8), 2, h256_0_ended!(2u8), h160_0_ended!(2u8), [], 0x0024950cf11b41b5u64; "Different fee recipient")]
-    #[test_case(h256_0_ended!(2u8), 2, h256_0_ended!(2u8), h160_0_ended!(2u8), [withdrawal!(0)], 0x00d1a6974d7595ccu64; "With withdrawals")]
-    #[test_case(h256_0_ended!(2u8), 2, h256_0_ended!(2u8), h160_0_ended!(2u8), [withdrawal!(2)], 0x0070e1a339c8ed47u64; "Different withdrawals")]
+    #[test_case(b256_0_ended!(1u8), 1, b256_0_ended!(1u8), addr_0_ended!(1u8), [], 0x004cffc0e01f12fau64; "All ones")]
+    #[test_case(b256_0_ended!(2u8), 1, b256_0_ended!(1u8), addr_0_ended!(1u8), [], 0x00fda8bfe79f5f1bu64; "Different parent")]
+    #[test_case(b256_0_ended!(2u8), 2, b256_0_ended!(1u8), addr_0_ended!(1u8), [], 0x00410bd3dc768689u64; "Different timestamp")]
+    #[test_case(b256_0_ended!(2u8), 2, b256_0_ended!(2u8), addr_0_ended!(1u8), [], 0x0040399b0c29a27fu64; "Different random")]
+    #[test_case(b256_0_ended!(2u8), 2, b256_0_ended!(2u8), addr_0_ended!(2u8), [], 0x0024950cf11b41b5u64; "Different fee recipient")]
+    #[test_case(b256_0_ended!(2u8), 2, b256_0_ended!(2u8), addr_0_ended!(2u8), [withdrawal!(0)], 0x00d1a6974d7595ccu64; "With withdrawals")]
+    #[test_case(b256_0_ended!(2u8), 2, b256_0_ended!(2u8), addr_0_ended!(2u8), [withdrawal!(2)], 0x0070e1a339c8ed47u64; "Different withdrawals")]
     fn test_new_payload_id_creates_deterministic_id(
-        parent: H256,
+        parent: B256,
         timestamp: u64,
-        random: H256,
-        fee_recipient: H160,
+        random: B256,
+        fee_recipient: Address,
         withdrawals: impl IntoIterator<Item = Withdrawal>,
         expected_payload_id: impl Into<PayloadId>,
     ) {

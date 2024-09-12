@@ -12,8 +12,11 @@ use {
 
 #[cfg(test)]
 use {
-    crate::{genesis::config::GenesisConfig, methods::forkchoice_updated},
-    ethers_core::types::H256,
+    crate::{
+        genesis::config::GenesisConfig,
+        methods::forkchoice_updated,
+        primitives::{B256, U64},
+    },
     std::str::FromStr,
 };
 
@@ -100,11 +103,11 @@ async fn test_execute_v3() {
 
     // Set known block height
     let head_hash =
-        H256::from_str("0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d")
+        B256::from_str("0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d")
             .unwrap();
     let msg = StateMessage::NewBlock {
         block_hash: head_hash,
-        block_height: 1_194u64.into(),
+        block_height: U64::from(1_194u64),
     };
     state_channel.send(msg).await.unwrap();
 
