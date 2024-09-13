@@ -41,3 +41,17 @@ Currently, exactly one contract is generated from each Move package, with the
 a tentative design, and we may add a finer way for the user to specify the 
 package/module-to-contract mapping, potentially allowing custom contract names and 
 defining multiple contracts in the same package.
+
+## Development
+
+On one terminal keep building the hardhat plugin whenever a change is saved.
+```
+cd sdk/hardhat-moved
+yarn watch
+```
+
+On another tab reload the built plugin package and compile the contracts.
+```
+cd sdk/hardhat-example
+yarn add --force -D file:../hardhat-moved && npx hardhat compile
+```
