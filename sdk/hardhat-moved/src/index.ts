@@ -5,6 +5,7 @@ import { subtask, types } from 'hardhat/config';
 import { Artifacts } from 'hardhat/internal/artifacts';
 import { err, ok, Result } from 'neverthrow';
 import * as Path from 'path';
+import * as toml from 'toml';
 
 import type {Artifact} from "hardhat/types/artifacts";
 
@@ -12,7 +13,7 @@ import type {Artifact} from "hardhat/types/artifacts";
  *
  *   Wrappers for Result-based Error Handling
  *
- *   Functions in the js standard lib uses execeptions for error handling, of which
+ *   Functions in the js standard lib uses exceptions for error handling, of which
  *   the correctness is hard to reason about. Here are a few wrappers that transform
  *   them into Result-based APIs for easy error handling and chaining.
  *
@@ -52,6 +53,12 @@ async function resultifyAsync<T>(f: () => Promise<T>): Promise<Result<T, Error>>
 async function readTextFile(path: Fs.PathLike): Promise<Result<string, Error>> {
     return resultifyAsync(() => {
         return Fs.promises.readFile(path, { encoding: "utf-8" });
+    });
+}
+
+async function readBytecodeFile(path: Fs.PathLike): Promise<Result<string, Error>> {
+    return resultifyAsync(() => {
+        return Fs.promises.readFile(path, { encoding: "hex" });
     });
 }
 
@@ -102,6 +109,21 @@ async function listMovePackages(contractsPath: Fs.PathLike): Promise<Array<Strin
     return (await Promise.all(promises)).filter((path): path is String => path !== null)
 }
 
+async function identifyMoveType(packagePath:string): Promise<Result<MoveType, ChainedError>> {
+    const moveTomlPath = Path.join(packagePath, "Move.toml");
+    const moveTomlRes = await readTextFile(moveTomlPath);
+    if (moveTomlRes.isErr()) {
+        return err(new ChainedError(`Failed to find ${moveTomlPath}`, moveTomlRes.error));
+    }
+
+    // If the Move.toml file includes a `Sui` dependency it is considered a Sui project,
+    // otherwise an Aptos project. We might need to require project type explicitly in the
+    // Move.toml file because the default is assumed to be an Aptos project.
+    const moveToml = toml.parse(moveTomlRes.value);
+    const moveType = moveToml?.dependencies?.Sui === undefined ? MoveType.Aptos : MoveType.Sui;
+    return ok(moveType);
+}
+
 /***************************************************************************************
  *
  *   Build
@@ -109,8 +131,8 @@ async function listMovePackages(contractsPath: Fs.PathLike): Promise<Array<Strin
  *   Functions to build Move packages using the `move` executable.
  *
  **************************************************************************************/
-async function locateMoveExecutablePath(): Promise<Result<string, Error>> {
-    const [e, stdout, _stderr] = await executeChildProcess("which aptos");
+async function locateMoveExecutablePath(type: MoveType): Promise<Result<string, Error>> {
+    const [e, stdout, _stderr] = await executeChildProcess(type === MoveType.Aptos ? "which aptos" : "which sui");
 
     if (e !== null) {
         return err(e);
@@ -133,17 +155,25 @@ class MoveBuildError {
     }
 }
 
-async function movePackageBuild(movePath: string, packagePath: string): Promise<Result<void, MoveBuildError>> {
-    // Rebuild every time, so clean up the build folder. `assume-no` is to keep the package cache at ~/.move
-    let cmd = `${movePath} move clean --package-dir ${packagePath} --assume-no`;
-    let [e, stdout, stderr] = await executeChildProcess(cmd);
-    if (e !== null) return err(new MoveBuildError(e, stdout, stderr));
+enum MoveType {
+    Aptos,
+    Sui,
+}
 
-    // `build-publish-payload` generates a readable json file with the module metadata and bytecode
-    const publishPath = Path.join(packagePath, 'build', 'publish.json');
-    cmd = `${movePath} move build-publish-payload --json-output-file ${publishPath} --package-dir ${packagePath}`;
+async function movePackageBuild(moveType: MoveType, movePath: string, packagePath: string): Promise<Result<void, MoveBuildError>> {
+    if (moveType === MoveType.Aptos) {
+        // Rebuild every time, so clean up the build folder. `assume-no` is to keep the package cache at ~/.move
+        let cmd = `${movePath} move clean --package-dir ${packagePath} --assume-no`;
+        let [e, stdout, stderr] = await executeChildProcess(cmd);
+        if (e !== null) return err(new MoveBuildError(e, stdout, stderr));
+    }
 
-    [e, stdout, stderr] = await executeChildProcess(cmd);
+    // Aptos and Sui uses different subcommands to build a package
+    const cmd = moveType === MoveType.Aptos
+        ? `${movePath} move compile --package-dir ${packagePath} --skip-fetch-latest-git-deps`
+        : `${movePath} move build --path ${packagePath} --force --skip-fetch-latest-git-deps`;
+
+    const [e, stdout, stderr] = await executeChildProcess(cmd);
     if (e !== null) return err(new MoveBuildError(e, stdout, stderr));
 
     return ok(undefined);
@@ -157,30 +187,13 @@ async function movePackageBuild(movePath: string, packagePath: string): Promise<
  *   toolchain.
  *
  **************************************************************************************/
-async function loadBytecode(packagePath: string): Promise<Result<string, ChainedError>> {
-    const bytecodePath = Path.join(packagePath, "build", 'publish.json');
-
-    const readFileRes = await readTextFile(bytecodePath);
-    if (readFileRes.isErr()) {
-        return err(new ChainedError(`Failed to load bytecode from ${bytecodePath}`, readFileRes.error));
-    }
-
-    try {
-        let publishTxn = JSON.parse(readFileRes.value);
-        if (!publishTxn.args) {
-            return err(new ChainedError(`Failed to get args in bytecode from ${bytecodePath}`));
-        }
-        if (publishTxn.args.length != 2) {
-            return err(new ChainedError(`Failed to access the bytecode arg from ${bytecodePath}`));
-        }
-        if (!publishTxn.args[1].value) {
-            return err(new ChainedError(`Failed to the actual bytecode hex from ${bytecodePath}`));
-        }
-        // TODO: Assumes compiling a single module. Consider publishing multiple modules.
-        return ok(publishTxn.args[1].value[0]);
-    } catch(e) {
-        return err(new ChainedError(`Failed to JSON parse bytecode from ${bytecodePath}`));
-    }
+ async function loadBytecode(packagePath: string, contractName: string): Promise<Result<string, ChainedError>> {
+     const bytecodePath = Path.join(packagePath, "build", contractName, 'bytecode_modules', `${contractName}.mv`);
+     let readFileRes = await readBytecodeFile(bytecodePath);
+     if (readFileRes.isErr()) {
+         return err(new ChainedError(`Failed to load bytecode from ${bytecodePath}`, readFileRes.error));
+     }
+     return ok(readFileRes.value);
 }
 
 async function listCompiledContracts(packagePath: string): Promise<Result<string[], ChainedError>> {
@@ -196,6 +209,8 @@ async function listCompiledContracts(packagePath: string): Promise<Result<string
     for (const entry of entries) {
         if (entry.isDirectory()) {
             const parsed = Path.parse(entry.name);
+            // Skip Sui generated lock folder
+            if (parsed.name === 'locks') continue;
             info.push(parsed.name);
         }
     }
@@ -203,7 +218,7 @@ async function listCompiledContracts(packagePath: string): Promise<Result<string
 }
 
 async function generateArtifact(hardhatRootPath: string, packagePath: string, contractName: string): Promise<Result<Artifact, ChainedError>> {
-    let [loadbytecodeRes] = await Promise.all([loadBytecode(packagePath)]);
+    let [loadbytecodeRes] = await Promise.all([loadBytecode(packagePath, contractName)]);
 
     if (loadbytecodeRes.isErr()) {
         return err(loadbytecodeRes.error);
@@ -258,8 +273,20 @@ async function generateArtifactsForPackage(hardhatRootPath: string, packagePath:
     return ok(artifacts);
 }
 
-async function buildPackageAndGenerateArtifacts(movePath: string, hardhatRootPath: string, packagePath: string): Promise<Result<Artifact[], MoveBuildError | ChainedError>> {
-    let buildRes = await movePackageBuild(movePath, packagePath);
+async function buildPackageAndGenerateArtifacts(hardhatRootPath: string, packagePath: string): Promise<Result<Artifact[], MoveBuildError | ChainedError>> {
+    const moveTypeRes = await identifyMoveType(packagePath);
+    if (moveTypeRes.isErr()) {
+        return err(moveTypeRes.error);
+    }
+    const moveType = moveTypeRes.value;
+
+    const locateRes = await locateMoveExecutablePath(moveTypeRes.value);
+    if (locateRes.isErr()) {
+        return err(new ChainedError("Failed to locate the `move executable`", locateRes.error));
+    }
+    const movePath = locateRes.value;
+
+    const buildRes = await movePackageBuild(moveType, movePath, packagePath);
     if (buildRes.isErr()) {
         let e = buildRes.error;
         console.log(`\nFailed to build ${packagePath}\n${e.stdout}${e.stderr}`);
@@ -311,15 +338,7 @@ subtask(TASK_COMPILE_MOVE)
         let plural = packagePaths.length == 1 ? "" : "s";
         console.log("Building %d Move package%s...", packagePaths.length, plural);
 
-        let locateRes = await locateMoveExecutablePath();
-        if (locateRes.isErr()) {
-            console.log("Failed to locate the `move` executable.");
-            console.log(locateRes.error);
-            return;
-        }
-        let movePath = locateRes.value;
-
-        let buildResults = await Promise.all(packagePaths.map(path => buildPackageAndGenerateArtifacts(movePath, config.paths.root, path.toString())));
+        let buildResults = await Promise.all(packagePaths.map(path => buildPackageAndGenerateArtifacts(config.paths.root, path.toString())));
 
         let failedToBuildAll = false;
         console.assert(packagePaths.length == buildResults.length);
