@@ -11,3 +11,7 @@ artifacts
 cache
 dist
 node_modules
+
+# SDK artifacts
+sdk/**/.env
+Move.lock

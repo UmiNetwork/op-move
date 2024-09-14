@@ -5,6 +5,7 @@ import { subtask, types } from 'hardhat/config';
 import { Artifacts } from 'hardhat/internal/artifacts';
 import { err, ok, Result } from 'neverthrow';
 import * as Path from 'path';
+import * as toml from 'toml';
 
 import type {Artifact} from "hardhat/types/artifacts";
 
@@ -115,7 +116,11 @@ async function identifyMoveType(packagePath:string): Promise<Result<MoveType, Ch
         return err(new ChainedError(`Failed to find ${moveTomlPath}`, moveTomlRes.error));
     }
 
-    const moveType = moveTomlRes.value.includes('Sui') ? MoveType.Sui : MoveType.Aptos;
+    // If the Move.toml file includes a `Sui` dependency it is considered a Sui project,
+    // otherwise an Aptos project. We might need to require project type explicitly in the
+    // Move.toml file because the default is assumed to be an Aptos project.
+    const moveToml = toml.parse(moveTomlRes.value);
+    const moveType = moveToml?.dependencies?.Sui === undefined ? MoveType.Aptos : MoveType.Sui;
     return ok(moveType);
 }
 
@@ -156,19 +161,19 @@ enum MoveType {
 }
 
 async function movePackageBuild(moveType: MoveType, movePath: string, packagePath: string): Promise<Result<void, MoveBuildError>> {
-    // Rebuild every time, so clean up the build folder
-    let cmd = `rm -rf ${packagePath}/build`;
-    let [e, stdout, stderr] = await executeChildProcess(cmd);
-    if (e !== null) return err(new MoveBuildError(e, stdout, stderr));
-
-    // Aptos and Sui uses different subcommands to build a package
     if (moveType === MoveType.Aptos) {
-        cmd = `${movePath} move compile --package-dir ${packagePath} --skip-fetch-latest-git-deps`;
-    } else {
-        cmd = `${movePath} move build --path ${packagePath} --skip-fetch-latest-git-deps`;
+        // Rebuild every time, so clean up the build folder. `assume-no` is to keep the package cache at ~/.move
+        let cmd = `${movePath} move clean --package-dir ${packagePath} --assume-no`;
+        let [e, stdout, stderr] = await executeChildProcess(cmd);
+        if (e !== null) return err(new MoveBuildError(e, stdout, stderr));
     }
 
-    [e, stdout, stderr] = await executeChildProcess(cmd);
+    // Aptos and Sui uses different subcommands to build a package
+    const cmd = moveType === MoveType.Aptos
+        ? `${movePath} move compile --package-dir ${packagePath} --skip-fetch-latest-git-deps`
+        : `${movePath} move build --path ${packagePath} --force --skip-fetch-latest-git-deps`;
+
+    const [e, stdout, stderr] = await executeChildProcess(cmd);
     if (e !== null) return err(new MoveBuildError(e, stdout, stderr));
 
     return ok(undefined);
