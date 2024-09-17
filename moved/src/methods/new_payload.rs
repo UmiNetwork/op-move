@@ -189,7 +189,9 @@ mod tests {
     use {
         super::*,
         crate::{
-            block::{Block, BlockRepository, BlockWithHash, InMemoryBlockRepository},
+            block::{
+                Block, BlockRepository, BlockWithHash, Eip1559GasFee, InMemoryBlockRepository,
+            },
             genesis::{config::GenesisConfig, init_state},
             methods::{forkchoice_updated, get_payload},
             primitives::{Address, Bytes, B2048, U256, U64},
@@ -269,7 +271,7 @@ mod tests {
     #[tokio::test]
     async fn test_execute_v3() {
         let genesis_config = GenesisConfig::default();
-        let (state_channel, rx) = tokio::sync::mpsc::channel(10);
+        let (state_channel, rx) = mpsc::channel(10);
 
         // Set known block height
         let head_hash = B256::new(hex!(
@@ -293,6 +295,7 @@ mod tests {
                 "c013e1ff1b8bca9f0d074618cc9e661983bc91d7677168b156765781aee775d3"
             )),
             repository,
+            Eip1559GasFee::default(),
         );
         let state_handle = state.spawn();
 

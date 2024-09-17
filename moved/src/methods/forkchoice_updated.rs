@@ -94,7 +94,9 @@ pub(super) mod tests {
     use {
         super::*,
         crate::{
-            block::{Block, BlockRepository, BlockWithHash, InMemoryBlockRepository},
+            block::{
+                Block, BlockRepository, BlockWithHash, Eip1559GasFee, InMemoryBlockRepository,
+            },
             genesis::{config::GenesisConfig, init_state},
             primitives::{Address, Bytes, B256, U64},
             storage::InMemoryState,
@@ -246,6 +248,7 @@ pub(super) mod tests {
             0x03421ee50df45cacu64,
             B256::ZERO,
             repository,
+            Eip1559GasFee::default(),
         );
         let state_handle = state.spawn();
         let request = example_request();

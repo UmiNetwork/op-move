@@ -1,3 +1,4 @@
+use alloy_primitives::U256;
 pub use error::*;
 
 use {
@@ -12,8 +13,8 @@ use {
     },
     crate::{
         block::{
-            Block, BlockHash, BlockRepository, BlockWithHash, Header, InMemoryBlockRepository,
-            MovedBlockHash,
+            Block, BlockHash, BlockRepository, BlockWithHash, Eip1559GasFee, Header,
+            InMemoryBlockRepository, MovedBlockHash,
         },
         genesis::init_state,
         primitives::B256,
@@ -70,6 +71,8 @@ struct Claims {
     iat: u64,
 }
 
+const EIP1559_ELASTICITY_MULTIPLIER: u64 = 6;
+const EIP1559_BASE_FEE_MAX_CHANGE_DENOMINATOR: U256 = U256::from_limbs([250, 0, 0, 0]);
 const JWT_VALID_DURATION_IN_SECS: u64 = 60;
 /// JWT secret key is either passed in as an env var `JWT_SECRET` or file path arg `--jwtsecret`
 static JWTSECRET: Lazy<Vec<u8>> = Lazy::new(|| {
@@ -103,6 +106,10 @@ pub async fn run() {
         StatePayloadId,
         block_hash,
         repository,
+        Eip1559GasFee::new(
+            EIP1559_ELASTICITY_MULTIPLIER,
+            EIP1559_BASE_FEE_MAX_CHANGE_DENOMINATOR,
+        ),
     );
 
     let http_state_channel = state_channel.clone();

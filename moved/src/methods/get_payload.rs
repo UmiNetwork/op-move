@@ -65,7 +65,9 @@ mod tests {
     use {
         super::*,
         crate::{
-            block::{Block, BlockRepository, BlockWithHash, InMemoryBlockRepository},
+            block::{
+                Block, BlockRepository, BlockWithHash, Eip1559GasFee, InMemoryBlockRepository,
+            },
             genesis::{config::GenesisConfig, init_state},
             methods::forkchoice_updated,
             primitives::B256,
@@ -122,6 +124,7 @@ mod tests {
             0x03421ee50df45cacu64,
             head_hash,
             repository,
+            Eip1559GasFee::default(),
         );
         let state_handle = state.spawn();
 

@@ -2,7 +2,7 @@ pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
 
 use {
     crate::{
-        block::{Block, BlockHash, BlockRepository, Header},
+        block::{Block, BlockHash, BlockRepository, GasFee, Header},
         genesis::config::GenesisConfig,
         merkle_tree::MerkleRootExt,
         move_execution::execute_transaction,
@@ -29,13 +29,14 @@ use {
 mod payload;
 
 #[derive(Debug)]
-pub struct StateActor<S: State, P: NewPayloadId, H: BlockHash, R: BlockRepository> {
+pub struct StateActor<S: State, P: NewPayloadId, H: BlockHash, R: BlockRepository, G: GasFee> {
     genesis_config: GenesisConfig,
     rx: Receiver<StateMessage>,
     head: B256,
     height: u64,
     payload_id: P,
     block_hash: H,
+    gas_fee: G,
     execution_payloads: HashMap<B256, GetPayloadResponseV3>,
     pending_payload: Option<(PayloadId, GetPayloadResponseV3)>,
     mem_pool: HashMap<B256, ExtendedTxEnvelope>,
@@ -48,7 +49,8 @@ impl<
         P: NewPayloadId + Send + Sync + 'static,
         H: BlockHash + Send + Sync + 'static,
         R: BlockRepository + Send + Sync + 'static,
-    > StateActor<S, P, H, R>
+        G: GasFee + Send + Sync + 'static,
+    > StateActor<S, P, H, R, G>
 {
     pub fn spawn(mut self) -> JoinHandle<()> {
         tokio::spawn(async move {
@@ -59,9 +61,15 @@ impl<
     }
 }
 
-impl<S: State<Err = PartialVMError>, P: NewPayloadId, H: BlockHash, R: BlockRepository>
-    StateActor<S, P, H, R>
+impl<
+        S: State<Err = PartialVMError>,
+        P: NewPayloadId,
+        H: BlockHash,
+        R: BlockRepository,
+        G: GasFee,
+    > StateActor<S, P, H, R, G>
 {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         rx: Receiver<StateMessage>,
         state: S,
@@ -70,6 +78,7 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId, H: BlockHash, R: BlockRepo
         payload_id: P,
         block_hash: H,
         block_repository: R,
+        base_fee_per_gas: G,
     ) -> Self {
         Self {
             genesis_config,
@@ -83,6 +92,7 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId, H: BlockHash, R: BlockRepo
             state,
             block_hash,
             block_repository,
+            gas_fee: base_fee_per_gas,
         }
     }
 
@@ -163,8 +173,7 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId, H: BlockHash, R: BlockRepo
 
         let execution_outcome = self.execute_transactions(&transactions);
 
-        // TODO: use parent for gas pricing
-        let _parent = self
+        let parent = self
             .block_repository
             .by_hash(self.head)
             .expect("Parent block should exist");
@@ -172,7 +181,12 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId, H: BlockHash, R: BlockRepo
         // TODO: Compute `withdrawals_root`
         let header = Header::new(self.head, self.height + 1)
             .with_payload_attributes(payload_attributes)
-            .with_execution_outcome(execution_outcome);
+            .with_execution_outcome(execution_outcome)
+            .with_base_fee_per_gas(self.gas_fee.base_fee_per_gas(
+                parent.block.header.gas_limit,
+                parent.block.header.gas_used,
+                parent.block.header.base_fee_per_gas,
+            ));
         let transactions = transactions.into_iter().map(|(_, tx)| tx).collect();
 
         Block::new(header, transactions)

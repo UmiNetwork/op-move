@@ -61,14 +61,16 @@ mod tests {
     use {
         super::*,
         crate::{
-            block::InMemoryBlockRepository, state_actor::StatePayloadId, storage::InMemoryState,
+            block::{Eip1559GasFee, InMemoryBlockRepository},
+            state_actor::StatePayloadId,
+            storage::InMemoryState,
         },
     };
 
     #[tokio::test]
     async fn test_execute() {
         let genesis_config = crate::genesis::config::GenesisConfig::default();
-        let (state_channel, rx) = tokio::sync::mpsc::channel(10);
+        let (state_channel, rx) = mpsc::channel(10);
         let state = crate::state_actor::StateActor::new(
             rx,
             InMemoryState::new(),
@@ -77,6 +79,7 @@ mod tests {
             StatePayloadId,
             B256::ZERO,
             InMemoryBlockRepository::new(),
+            Eip1559GasFee::default(),
         );
         let state_handle = state.spawn();
 

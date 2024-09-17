@@ -139,4 +139,9 @@ impl Header {
         self.state_root = state_root;
         self
     }
+
+    pub fn with_base_fee_per_gas(mut self, base_fee_per_gas: U256) -> Self {
+        self.base_fee_per_gas = base_fee_per_gas;
+        self
+    }
 }
