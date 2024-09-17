@@ -10,6 +10,7 @@ use {
 
 pub trait BlockRepository: Debug {
     fn add(&mut self, block: BlockWithHash);
+    fn by_hash(&self, hash: B256) -> Option<BlockWithHash>;
 }
 
 #[derive(Debug, Clone)]
@@ -25,7 +26,7 @@ impl BlockWithHash {
 }
 
 /// TODO: Add withdrawals
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Block {
     pub(crate) header: Header,
     pub(crate) transactions: Vec<ExtendedTxEnvelope>,
@@ -132,5 +133,10 @@ impl Header {
             nonce: 0,
             ..Default::default()
         }
+    }
+
+    pub fn with_state_root(mut self, state_root: B256) -> Self {
+        self.state_root = state_root;
+        self
     }
 }

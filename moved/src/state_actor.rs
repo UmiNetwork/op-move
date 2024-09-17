@@ -46,6 +46,7 @@ pub struct StateActor<S: State, P: NewPayloadId, H: BlockHash, R: BlockRepositor
 impl<P: NewPayloadId, H: BlockHash, R: BlockRepository> StateActor<InMemoryState, P, H, R> {
     pub fn new_in_memory(
         rx: Receiver<StateMessage>,
+        head: B256,
         genesis_config: GenesisConfig,
         payload_id: P,
         block_hash: H,
@@ -54,6 +55,7 @@ impl<P: NewPayloadId, H: BlockHash, R: BlockRepository> StateActor<InMemoryState
         Self::new(
             rx,
             InMemoryState::new(),
+            head,
             genesis_config,
             payload_id,
             block_hash,
@@ -84,6 +86,7 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId, H: BlockHash, R: BlockRepo
     pub fn new(
         rx: Receiver<StateMessage>,
         mut storage: S,
+        head: B256,
         genesis_config: GenesisConfig,
         payload_id: P,
         block_hash: H,
@@ -94,7 +97,7 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId, H: BlockHash, R: BlockRepo
         Self {
             genesis_config,
             rx,
-            head: Default::default(),
+            head,
             height: 0,
             payload_id,
             execution_payloads: HashMap::new(),
@@ -183,7 +186,11 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId, H: BlockHash, R: BlockRepo
 
         let execution_outcome = self.execute_transactions(&transactions);
 
-        // TODO: Determine gas pricing for `base_fee_per_gas`
+        // TODO: use parent for gas pricing
+        let _parent = self
+            .block_repository
+            .by_hash(self.head)
+            .expect("Parent block should exist");
         // TODO: Compute `transaction_root`
         // TODO: Compute `withdrawals_root`
         let header = Header::new(self.head, self.height + 1)

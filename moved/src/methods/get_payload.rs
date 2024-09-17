@@ -13,8 +13,10 @@ use {
 #[cfg(test)]
 use {
     crate::{
-        block::InMemoryBlockRepository, genesis::config::GenesisConfig,
-        methods::forkchoice_updated, primitives::B256,
+        block::{Block, BlockRepository, BlockWithHash, InMemoryBlockRepository},
+        genesis::config::GenesisConfig,
+        methods::forkchoice_updated,
+        primitives::B256,
     },
     std::str::FromStr,
 };
@@ -101,13 +103,18 @@ async fn test_execute_v3() {
     let head_hash =
         B256::from_str("0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d")
             .unwrap();
+    let genesis_block = BlockWithHash::new(head_hash, Block::default());
+
+    let mut repository = InMemoryBlockRepository::new();
+    repository.add(genesis_block);
 
     let state = crate::state_actor::StateActor::new_in_memory(
         rx,
+        head_hash,
         genesis_config,
         0x03421ee50df45cacu64,
         head_hash,
-        InMemoryBlockRepository::new(),
+        repository,
     );
     let state_handle = state.spawn();
 

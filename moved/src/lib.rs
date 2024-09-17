@@ -11,7 +11,11 @@ use {
         },
     },
     crate::{
-        block::{InMemoryBlockRepository, MovedBlockHash},
+        block::{
+            Block, BlockHash, BlockRepository, BlockWithHash, Header, InMemoryBlockRepository,
+            MovedBlockHash,
+        },
+        primitives::B256,
         state_actor::StatePayloadId,
     },
     clap::Parser,
@@ -79,12 +83,20 @@ pub async fn run() {
     // TODO: think about channel size bound
     let (state_channel, rx) = mpsc::channel(1_000);
     let genesis_config = GenesisConfig::default();
+
+    let block_hash = MovedBlockHash;
+    let genesis_block = create_genesis_block(&block_hash, &genesis_config);
+    let mut repository = InMemoryBlockRepository::new();
+    let head = genesis_block.hash;
+    repository.add(genesis_block);
+
     let state = state_actor::StateActor::new_in_memory(
         rx,
+        head,
         genesis_config,
         StatePayloadId,
-        MovedBlockHash,
-        InMemoryBlockRepository::new(),
+        block_hash,
+        repository,
     );
 
     let http_state_channel = state_channel.clone();
@@ -113,6 +125,18 @@ pub async fn run() {
         state.spawn(),
     );
     state_result.unwrap();
+}
+
+fn create_genesis_block(
+    block_hash: &impl BlockHash,
+    genesis_config: &GenesisConfig,
+) -> BlockWithHash {
+    let genesis_header =
+        Header::new(B256::ZERO, 0).with_state_root(genesis_config.initial_state_root);
+    let hash = block_hash.block_hash(&genesis_header);
+    let genesis_block = Block::new(genesis_header, Vec::new());
+
+    BlockWithHash::new(hash, genesis_block)
 }
 
 pub fn validate_jwt() -> impl Filter<Extract = (String,), Error = Rejection> + Clone {

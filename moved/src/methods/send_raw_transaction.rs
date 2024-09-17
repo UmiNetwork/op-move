@@ -65,6 +65,7 @@ async fn test_execute() {
     let (state_channel, rx) = tokio::sync::mpsc::channel(10);
     let state = crate::state_actor::StateActor::new_in_memory(
         rx,
+        B256::ZERO,
         genesis_config,
         StatePayloadId,
         B256::ZERO,

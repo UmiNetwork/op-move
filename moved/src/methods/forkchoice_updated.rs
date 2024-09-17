@@ -15,7 +15,7 @@ use {
 
 #[cfg(test)]
 use {
-    crate::block::InMemoryBlockRepository,
+    crate::block::{Block, BlockRepository, BlockWithHash, InMemoryBlockRepository},
     crate::genesis::config::GenesisConfig,
     crate::primitives::{Address, Bytes, B256, U64},
     std::str::FromStr,
@@ -237,12 +237,21 @@ async fn test_execute_v3() {
     let genesis_config = GenesisConfig::default();
     let (state_channel, rx) = tokio::sync::mpsc::channel(10);
 
+    let head_hash =
+        B256::from_str("0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d")
+            .unwrap();
+    let genesis_block = BlockWithHash::new(head_hash, Block::default());
+
+    let mut repository = InMemoryBlockRepository::new();
+    repository.add(genesis_block);
+
     let state = crate::state_actor::StateActor::new_in_memory(
         rx,
+        head_hash,
         genesis_config,
         0x03421ee50df45cacu64,
         B256::ZERO,
-        InMemoryBlockRepository::new(),
+        repository,
     );
     let state_handle = state.spawn();
     let request = example_request();

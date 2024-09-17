@@ -14,7 +14,7 @@ use {
 #[cfg(test)]
 use {
     crate::{
-        block::InMemoryBlockRepository,
+        block::{Block, BlockRepository, BlockWithHash, InMemoryBlockRepository},
         genesis::config::GenesisConfig,
         methods::{forkchoice_updated, get_payload},
         primitives::{Address, Bytes, B2048, U256, U64},
@@ -269,14 +269,25 @@ fn test_parse_params_v3() {
 async fn test_execute_v3() {
     let genesis_config = GenesisConfig::default();
     let (state_channel, rx) = tokio::sync::mpsc::channel(10);
+
+    // Set known block height
+    let head_hash =
+        B256::from_str("0x781f09c5b7629a7ca30668e440ea40557f01461ad6f105b371f61ff5824b2449")
+            .unwrap();
+    let genesis_block = BlockWithHash::new(head_hash, Block::default());
+
+    let mut repository = InMemoryBlockRepository::new();
+    repository.add(genesis_block);
+
     let state = crate::state_actor::StateActor::new_in_memory(
         rx,
+        head_hash,
         genesis_config,
         0x0306d51fc5aa1533u64,
         B256::from(hex!(
             "c013e1ff1b8bca9f0d074618cc9e661983bc91d7677168b156765781aee775d3"
         )),
-        InMemoryBlockRepository::new(),
+        repository,
     );
     let state_handle = state.spawn();
 
