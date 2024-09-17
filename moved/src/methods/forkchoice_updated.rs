@@ -15,6 +15,7 @@ use {
 
 #[cfg(test)]
 use {
+    crate::block::InMemoryBlockRepository,
     crate::genesis::config::GenesisConfig,
     crate::primitives::{Address, Bytes, B256, U64},
     std::str::FromStr,
@@ -241,6 +242,7 @@ async fn test_execute_v3() {
         genesis_config,
         0x03421ee50df45cacu64,
         B256::ZERO,
+        InMemoryBlockRepository::new(),
     );
     let state_handle = state.spawn();
     let request = example_request();

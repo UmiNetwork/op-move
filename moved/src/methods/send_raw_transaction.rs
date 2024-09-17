@@ -1,3 +1,6 @@
+#[cfg(test)]
+use crate::{block::InMemoryBlockRepository, state_actor::StatePayloadId};
+
 use {
     crate::{
         json_utils::{self, access_state_error},
@@ -8,9 +11,6 @@ use {
     alloy_rlp::Decodable,
     tokio::sync::mpsc,
 };
-
-#[cfg(test)]
-use crate::state_actor::StatePayloadId;
 
 pub async fn execute(
     request: serde_json::Value,
@@ -68,6 +68,7 @@ async fn test_execute() {
         genesis_config,
         StatePayloadId,
         B256::ZERO,
+        InMemoryBlockRepository::new(),
     );
     let state_handle = state.spawn();
 

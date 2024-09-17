@@ -10,7 +10,10 @@ use {
             state::StateMessage,
         },
     },
-    crate::{block::MovedBlockHash, state_actor::StatePayloadId},
+    crate::{
+        block::{InMemoryBlockRepository, MovedBlockHash},
+        state_actor::StatePayloadId,
+    },
     clap::Parser,
     flate2::read::GzDecoder,
     jsonwebtoken::{DecodingKey, Validation},
@@ -76,8 +79,13 @@ pub async fn run() {
     // TODO: think about channel size bound
     let (state_channel, rx) = mpsc::channel(1_000);
     let genesis_config = GenesisConfig::default();
-    let state =
-        state_actor::StateActor::new_in_memory(rx, genesis_config, StatePayloadId, MovedBlockHash);
+    let state = state_actor::StateActor::new_in_memory(
+        rx,
+        genesis_config,
+        StatePayloadId,
+        MovedBlockHash,
+        InMemoryBlockRepository::new(),
+    );
 
     let http_state_channel = state_channel.clone();
     let http_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8545));

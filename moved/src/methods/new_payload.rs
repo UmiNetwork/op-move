@@ -14,6 +14,7 @@ use {
 #[cfg(test)]
 use {
     crate::{
+        block::InMemoryBlockRepository,
         genesis::config::GenesisConfig,
         methods::{forkchoice_updated, get_payload},
         primitives::{Address, Bytes, B2048, U256, U64},
@@ -275,6 +276,7 @@ async fn test_execute_v3() {
         B256::from(hex!(
             "c013e1ff1b8bca9f0d074618cc9e661983bc91d7677168b156765781aee775d3"
         )),
+        InMemoryBlockRepository::new(),
     );
     let state_handle = state.spawn();
 

@@ -12,7 +12,10 @@ use {
 
 #[cfg(test)]
 use {
-    crate::{genesis::config::GenesisConfig, methods::forkchoice_updated, primitives::B256},
+    crate::{
+        block::InMemoryBlockRepository, genesis::config::GenesisConfig,
+        methods::forkchoice_updated, primitives::B256,
+    },
     std::str::FromStr,
 };
 
@@ -104,6 +107,7 @@ async fn test_execute_v3() {
         genesis_config,
         0x03421ee50df45cacu64,
         head_hash,
+        InMemoryBlockRepository::new(),
     );
     let state_handle = state.spawn();
 

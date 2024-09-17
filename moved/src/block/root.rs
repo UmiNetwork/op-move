@@ -5,7 +5,12 @@ use {
     },
     alloy_primitives::hex,
     alloy_rlp::RlpEncodable,
+    std::fmt::Debug,
 };
+
+pub trait BlockRepository: Debug {
+    fn add(&mut self, block: BlockWithHash);
+}
 
 #[derive(Debug, Clone)]
 pub struct BlockWithHash {

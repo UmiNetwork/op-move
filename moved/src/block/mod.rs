@@ -5,9 +5,11 @@
 //! * Declares a collection of blocks in the node.
 
 mod hash;
+mod in_memory;
 mod root;
 
 pub use {
     hash::{BlockHash, MovedBlockHash},
-    root::{Block, BlockWithHash, Header},
+    in_memory::InMemoryBlockRepository,
+    root::{Block, BlockRepository, BlockWithHash, Header},
 };

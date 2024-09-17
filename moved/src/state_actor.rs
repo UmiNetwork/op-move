@@ -2,7 +2,7 @@ pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
 
 use {
     crate::{
-        block::{Block, BlockHash, Header},
+        block::{Block, BlockHash, BlockRepository, Header},
         genesis::{config::GenesisConfig, init_storage},
         merkle_tree::MerkleRootExt,
         move_execution::execute_transaction,
@@ -29,7 +29,7 @@ use {
 mod payload;
 
 #[derive(Debug)]
-pub struct StateActor<S: State, P: NewPayloadId, H: BlockHash> {
+pub struct StateActor<S: State, P: NewPayloadId, H: BlockHash, R: BlockRepository> {
     genesis_config: GenesisConfig,
     rx: Receiver<StateMessage>,
     head: B256,
@@ -40,14 +40,16 @@ pub struct StateActor<S: State, P: NewPayloadId, H: BlockHash> {
     pending_payload: Option<(PayloadId, GetPayloadResponseV3)>,
     mem_pool: HashMap<B256, ExtendedTxEnvelope>,
     state: S,
+    block_repository: R,
 }
 
-impl<P: NewPayloadId, H: BlockHash> StateActor<InMemoryState, P, H> {
+impl<P: NewPayloadId, H: BlockHash, R: BlockRepository> StateActor<InMemoryState, P, H, R> {
     pub fn new_in_memory(
         rx: Receiver<StateMessage>,
         genesis_config: GenesisConfig,
         payload_id: P,
         block_hash: H,
+        block_repository: R,
     ) -> Self {
         Self::new(
             rx,
@@ -55,6 +57,7 @@ impl<P: NewPayloadId, H: BlockHash> StateActor<InMemoryState, P, H> {
             genesis_config,
             payload_id,
             block_hash,
+            block_repository,
         )
     }
 }
@@ -63,7 +66,8 @@ impl<
         S: State<Err = PartialVMError> + Send + Sync + 'static,
         P: NewPayloadId + Send + Sync + 'static,
         H: BlockHash + Send + Sync + 'static,
-    > StateActor<S, P, H>
+        R: BlockRepository + Send + Sync + 'static,
+    > StateActor<S, P, H, R>
 {
     pub fn spawn(mut self) -> JoinHandle<()> {
         tokio::spawn(async move {
@@ -74,13 +78,16 @@ impl<
     }
 }
 
-impl<S: State<Err = PartialVMError>, P: NewPayloadId, H: BlockHash> StateActor<S, P, H> {
+impl<S: State<Err = PartialVMError>, P: NewPayloadId, H: BlockHash, R: BlockRepository>
+    StateActor<S, P, H, R>
+{
     pub fn new(
         rx: Receiver<StateMessage>,
         mut storage: S,
         genesis_config: GenesisConfig,
         payload_id: P,
         block_hash: H,
+        block_repository: R,
     ) -> Self {
         init_storage(&genesis_config, &mut storage);
 
@@ -95,6 +102,7 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId, H: BlockHash> StateActor<S
             mem_pool: HashMap::new(),
             state: storage,
             block_hash,
+            block_repository,
         }
     }
 
@@ -113,6 +121,7 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId, H: BlockHash> StateActor<S
                 let block = self.create_block(payload_attributes);
                 let hash = self.block_hash.block_hash(&block.header);
                 let block = block.with_hash(hash);
+                self.block_repository.add(block.clone());
                 let payload = GetPayloadResponseV3::from(block);
                 self.execution_payloads.insert(hash, payload.clone());
                 self.pending_payload = Some((id, payload));
