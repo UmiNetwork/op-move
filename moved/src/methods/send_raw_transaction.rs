@@ -1,6 +1,3 @@
-#[cfg(test)]
-use crate::{block::InMemoryBlockRepository, state_actor::StatePayloadId};
-
 use {
     crate::{
         json_utils::{self, access_state_error},
@@ -59,41 +56,48 @@ async fn inner_execute(
     Ok(tx_hash)
 }
 
-#[tokio::test]
-async fn test_execute() {
-    let genesis_config = crate::genesis::config::GenesisConfig::default();
-    let (state_channel, rx) = tokio::sync::mpsc::channel(10);
-    let state = crate::state_actor::StateActor::new_in_memory(
-        rx,
-        B256::ZERO,
-        genesis_config,
-        StatePayloadId,
-        B256::ZERO,
-        InMemoryBlockRepository::new(),
-    );
-    let state_handle = state.spawn();
+#[cfg(test)]
+mod tests {
+    use {
+        super::*,
+        crate::{block::InMemoryBlockRepository, state_actor::StatePayloadId},
+    };
 
-    let request: serde_json::Value = serde_json::from_str(
-        r#"
-            {
-                "method": "eth_sendRawTransaction",
-                "params": [
-                "0x02f86f82a45580808346a8928252089465d08a056c17ae13370565b04cf77d2afa1cb9fa8806f05b59d3b2000080c080a0dd50efde9a4d2f01f5248e1a983165c8cfa5f193b07b4b094f4078ad4717c1e4a017db1be1e8751b09e033bcffca982d0fe4919ff6b8594654e06647dee9292750"
-                ],
-                "id": 4,
-                "jsonrpc": "2.0"
-            }
-    "#,
-    )
-    .unwrap();
+    #[tokio::test]
+    async fn test_execute() {
+        let genesis_config = crate::genesis::config::GenesisConfig::default();
+        let (state_channel, rx) = tokio::sync::mpsc::channel(10);
+        let state = crate::state_actor::StateActor::new_in_memory(
+            rx,
+            B256::ZERO,
+            genesis_config,
+            StatePayloadId,
+            B256::ZERO,
+            InMemoryBlockRepository::new(),
+        );
+        let state_handle = state.spawn();
 
-    let expected_response: serde_json::Value = serde_json::from_str(
-        r#""0x7185c49a6b650a42cae042cde2228bf11a3f7e32c9a62dd59b4b52ebd5d3e090""#,
-    )
-    .unwrap();
+        let request: serde_json::Value = serde_json::from_str(
+            r#"
+                {
+                    "method": "eth_sendRawTransaction",
+                    "params": [
+                    "0x02f86f82a45580808346a8928252089465d08a056c17ae13370565b04cf77d2afa1cb9fa8806f05b59d3b2000080c080a0dd50efde9a4d2f01f5248e1a983165c8cfa5f193b07b4b094f4078ad4717c1e4a017db1be1e8751b09e033bcffca982d0fe4919ff6b8594654e06647dee9292750"
+                    ],
+                    "id": 4,
+                    "jsonrpc": "2.0"
+                }
+        "#,
+        ).unwrap();
 
-    let response = execute(request, state_channel).await.unwrap();
+        let expected_response: serde_json::Value = serde_json::from_str(
+            r#""0x7185c49a6b650a42cae042cde2228bf11a3f7e32c9a62dd59b4b52ebd5d3e090""#,
+        )
+        .unwrap();
 
-    assert_eq!(response, expected_response);
-    state_handle.await.unwrap();
+        let response = execute(request, state_channel).await.unwrap();
+
+        assert_eq!(response, expected_response);
+        state_handle.await.unwrap();
+    }
 }
