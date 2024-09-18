@@ -98,7 +98,7 @@ pub(super) mod tests {
             genesis::config::GenesisConfig,
             primitives::{Address, Bytes, B256, U64},
         },
-        std::str::FromStr,
+        alloy_primitives::hex,
     };
 
     pub fn example_request() -> serde_json::Value {
@@ -161,36 +161,25 @@ pub(super) mod tests {
 
         let expected_params = (
             ForkchoiceStateV1 {
-                head_block_hash: B256::from_str(
-                    "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d",
-                )
-                    .unwrap(),
-                safe_block_hash: B256::from_str(
-                    "0xc9488c812782fac769416f918718107ca8f44f98fd2fe7dbcc12b9f5afa276dd",
-                )
-                    .unwrap(),
-                finalized_block_hash: B256::from_str(
-                    "0x2c7cb7e2f79c2fa31f2b4280e96c34f7de981c6ccf5d0e998b51f5dc798fa53d",
-                )
-                    .unwrap(),
+                head_block_hash: B256::new(
+                    hex!("e56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d")),
+                safe_block_hash: B256::new(
+                    hex!("c9488c812782fac769416f918718107ca8f44f98fd2fe7dbcc12b9f5afa276dd")),
+                finalized_block_hash: B256::new(
+                    hex!("2c7cb7e2f79c2fa31f2b4280e96c34f7de981c6ccf5d0e998b51f5dc798fa53d")),
             },
             Some(PayloadAttributesV3 {
-                timestamp: U64::from_str_radix("6660737b", 16).unwrap(),
-                prev_randao: B256::from_str(
-                    "0xbde07f5d381bb84700433fe6c0ae077aa40eaad3a5de7abd298f0e3e27e6e4c9",
-                )
-                    .unwrap(),
-                suggested_fee_recipient: Address::from_str("0x4200000000000000000000000000000000000011")
-                    .unwrap(),
+                timestamp: U64::from_be_slice(&hex!("6660737b")),
+                prev_randao: B256::new(
+                    hex!("bde07f5d381bb84700433fe6c0ae077aa40eaad3a5de7abd298f0e3e27e6e4c9")),
+                suggested_fee_recipient: Address::new(hex!("4200000000000000000000000000000000000011")),
                 withdrawals: Vec::new(),
-                parent_beacon_block_root: B256::from_str(
-                    "0x2bd857e239f7e5b5e6415608c76b90600d51fa0f7f0bbbc04e2d6861b3186f1c",
-                )
-                    .unwrap(),
+                parent_beacon_block_root: B256::new(
+                    hex!("2bd857e239f7e5b5e6415608c76b90600d51fa0f7f0bbbc04e2d6861b3186f1c")),
                 transactions: vec![
-                    Bytes::from_str("0x7ef8f8a0de86bef815fc910df65a9459ccb2b9a35fa8596dfcfed1ff01bbf28891d86d5e94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000000558000c5fc50000000000000000000000006660735b00000000000001a9000000000000000000000000000000000000000000000000000000000000000700000000000000000000000000000000000000000000000000000000000000017ae3f74f0134521a7d62a387ac75a5153bcd1aab1c7e003e9b9e15a5d8846363000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425").unwrap()
+                    Bytes::from_static(&hex!("7ef8f8a0de86bef815fc910df65a9459ccb2b9a35fa8596dfcfed1ff01bbf28891d86d5e94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000000558000c5fc50000000000000000000000006660735b00000000000001a9000000000000000000000000000000000000000000000000000000000000000700000000000000000000000000000000000000000000000000000000000000017ae3f74f0134521a7d62a387ac75a5153bcd1aab1c7e003e9b9e15a5d8846363000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425"))
                 ],
-                gas_limit: U64::from_str_radix("1c9c380", 16).unwrap(),
+                gas_limit: U64::from_be_slice(&hex!("01c9c380")),
             }),
         );
 
@@ -216,18 +205,15 @@ pub(super) mod tests {
 
         let expected_params = (
             ForkchoiceStateV1 {
-                head_block_hash: B256::from_str(
-                    "0xb412d0583c92bd00d1987291ba05a894af7483ff9b6e33891a47cf125f400ce2",
-                )
-                .unwrap(),
-                safe_block_hash: B256::from_str(
-                    "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d",
-                )
-                .unwrap(),
-                finalized_block_hash: B256::from_str(
-                    "0x2c7cb7e2f79c2fa31f2b4280e96c34f7de981c6ccf5d0e998b51f5dc798fa53d",
-                )
-                .unwrap(),
+                head_block_hash: B256::new(hex!(
+                    "b412d0583c92bd00d1987291ba05a894af7483ff9b6e33891a47cf125f400ce2"
+                )),
+                safe_block_hash: B256::new(hex!(
+                    "e56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d"
+                )),
+                finalized_block_hash: B256::new(hex!(
+                    "2c7cb7e2f79c2fa31f2b4280e96c34f7de981c6ccf5d0e998b51f5dc798fa53d"
+                )),
             },
             None,
         );
@@ -238,11 +224,11 @@ pub(super) mod tests {
     #[tokio::test]
     async fn test_execute_v3() {
         let genesis_config = GenesisConfig::default();
-        let (state_channel, rx) = tokio::sync::mpsc::channel(10);
+        let (state_channel, rx) = mpsc::channel(10);
 
-        let head_hash =
-            B256::from_str("0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d")
-                .unwrap();
+        let head_hash = B256::new(hex!(
+            "e56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d"
+        ));
         let genesis_block = BlockWithHash::new(head_hash, Block::default());
 
         let mut repository = InMemoryBlockRepository::new();
@@ -260,15 +246,15 @@ pub(super) mod tests {
         let request = example_request();
 
         let expected_response: serde_json::Value = serde_json::from_str(r#"
-        {
-            "payloadStatus": {
-                "status": "VALID",
-                "latestValidHash": "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d",
-                "validationError": null
-            },
-            "payloadId": "0x03421ee50df45cac"
-        }
-    "#).unwrap();
+            {
+                "payloadStatus": {
+                    "status": "VALID",
+                    "latestValidHash": "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d",
+                    "validationError": null
+                },
+                "payloadId": "0x03421ee50df45cac"
+            }
+        "#).unwrap();
 
         let response = execute_v3(request, state_channel).await.unwrap();
 

@@ -9,7 +9,7 @@ use {
     },
     alloy::network::TxSignerSync,
     alloy_consensus::{transaction::TxEip1559, SignableTransaction, TxEnvelope},
-    alloy_primitives::{keccak256, FixedBytes, TxKind},
+    alloy_primitives::{hex, keccak256, FixedBytes, TxKind},
     alloy_rlp::Encodable,
     anyhow::Context,
     aptos_types::transaction::EntryFunction,
@@ -275,10 +275,9 @@ fn test_execute_object_playground_contract() {
     state.apply(outcome.changes).unwrap();
 
     // The object address is deterministic based on the transaction
-    let object_address = AccountAddress::from_str_strict(
-        "0x81383494fba7aa2410337bc4f16e3d0a196105b22d3317a56d6cbd613c061f5f",
-    )
-    .unwrap();
+    let object_address = AccountAddress::new(hex!(
+        "81383494fba7aa2410337bc4f16e3d0a196105b22d3317a56d6cbd613c061f5f"
+    ));
 
     // Calls with correct object address work
     let object_input_arg =
@@ -324,10 +323,9 @@ fn test_execute_object_playground_contract() {
     state.apply(outcome.changes).unwrap();
 
     // Calls with a fake object address fail
-    let fake_address = AccountAddress::from_str_strict(
-        "0x00a1ce00b0b0000deadbeef00ca1100fa1100000000000000000000000000000",
-    )
-    .unwrap();
+    let fake_address = AccountAddress::new(hex!(
+        "00a1ce00b0b0000deadbeef00ca1100fa1100000000000000000000000000000"
+    ));
     let object_input_arg =
         MoveValue::Struct(MoveStruct::new(vec![MoveValue::Address(fake_address)]));
     let entry_fn = EntryFunction::new(

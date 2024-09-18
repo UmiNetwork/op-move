@@ -70,7 +70,7 @@ mod tests {
             methods::forkchoice_updated,
             primitives::B256,
         },
-        std::str::FromStr,
+        alloy_primitives::hex,
     };
 
     #[test]
@@ -91,7 +91,7 @@ mod tests {
 
         let params = parse_params_v3(request).unwrap();
 
-        let expected_params = PayloadId::from_str("0x03421ee50df45cac").unwrap();
+        let expected_params = PayloadId::from(0x03421ee50df45cacu64);
 
         assert_eq!(params, expected_params);
     }
@@ -99,12 +99,12 @@ mod tests {
     #[tokio::test]
     async fn test_execute_v3() {
         let genesis_config = GenesisConfig::default();
-        let (state_channel, rx) = tokio::sync::mpsc::channel(10);
+        let (state_channel, rx) = mpsc::channel(10);
 
         // Set known block height
-        let head_hash =
-            B256::from_str("0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d")
-                .unwrap();
+        let head_hash = B256::new(hex!(
+            "e56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d"
+        ));
         let genesis_block = BlockWithHash::new(head_hash, Block::default());
 
         let mut repository = InMemoryBlockRepository::new();

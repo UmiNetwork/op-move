@@ -195,7 +195,6 @@ mod tests {
             primitives::{Address, Bytes, B2048, U256, U64},
         },
         alloy_primitives::hex,
-        std::str::FromStr,
     };
 
     #[test]
@@ -239,28 +238,28 @@ mod tests {
 
         let expected_params = (
             ExecutionPayloadV3 {
-                parent_hash: B256::from_str("0x781f09c5b7629a7ca30668e440ea40557f01461ad6f105b371f61ff5824b2449").unwrap(),
-                fee_recipient: Address::from_str("0x4200000000000000000000000000000000000011").unwrap(),
-                state_root: B256::from_str("0x316850949fd480573fec2a2cb07c9c22d7f18a390d9ad4b6847a4326b1a4a5eb").unwrap(),
-                receipts_root: B256::from_str("0x619a992b2d1905328560c3bd9c7fc79b57f012afbff3de92d7a82cfdf8aa186c").unwrap(),
+                parent_hash: B256::new(hex!("781f09c5b7629a7ca30668e440ea40557f01461ad6f105b371f61ff5824b2449")),
+                fee_recipient: Address::new(hex!("4200000000000000000000000000000000000011")),
+                state_root: B256::new(hex!("316850949fd480573fec2a2cb07c9c22d7f18a390d9ad4b6847a4326b1a4a5eb")),
+                receipts_root: B256::new(hex!("619a992b2d1905328560c3bd9c7fc79b57f012afbff3de92d7a82cfdf8aa186c")),
                 logs_bloom: B2048::ZERO,
-                prev_randao: B256::from_str("0x5e52abb859f1fff3a4bf38e076b67815214e8cff662055549b91ba33f5cb7fba").unwrap(),
-                block_number: U64::from(1u64),
-                gas_limit: U64::from_str("0x1c9c380").unwrap(),
-                gas_used: U64::from_str("0x2728a").unwrap(),
-                timestamp: U64::from_str("0x666c9d8d").unwrap(),
+                prev_randao: B256::new(hex!("5e52abb859f1fff3a4bf38e076b67815214e8cff662055549b91ba33f5cb7fba")),
+                block_number: U64::from_be_slice(&hex!("01")),
+                gas_limit: U64::from_be_slice(&hex!("01c9c380")),
+                gas_used: U64::from_be_slice(&hex!("02728a")),
+                timestamp: U64::from_be_slice(&hex!("666c9d8d")),
                 extra_data: Vec::new().into(),
-                base_fee_per_gas: U256::from_str("0x3b5dc100").unwrap(),
-                block_hash: B256::from_str("0xc013e1ff1b8bca9f0d074618cc9e661983bc91d7677168b156765781aee775d3").unwrap(),
+                base_fee_per_gas: U256::from_be_slice(&hex!("3b5dc100")),
+                block_hash: B256::new(hex!("c013e1ff1b8bca9f0d074618cc9e661983bc91d7677168b156765781aee775d3")),
                 transactions: vec![
-                    Bytes::from_str("0x7ef8f8a0d449f5de7f558fa593dce80637d3a3f52cfaaee2913167371dd6ffd9014e431d94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e20000f424000000000000000000000000100000000666c9d8b0000000000000028000000000000000000000000000000000000000000000000000000000049165f0000000000000000000000000000000000000000000000000000000000000001d05450763214e6060d285b39ef5fe51ef9526395e5cef6ecb27ba06f9598f27d000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425").unwrap()
+                    Bytes::from_static(&hex!("7ef8f8a0d449f5de7f558fa593dce80637d3a3f52cfaaee2913167371dd6ffd9014e431d94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e20000f424000000000000000000000000100000000666c9d8b0000000000000028000000000000000000000000000000000000000000000000000000000049165f0000000000000000000000000000000000000000000000000000000000000001d05450763214e6060d285b39ef5fe51ef9526395e5cef6ecb27ba06f9598f27d000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425"))
                 ],
                 withdrawals: Vec::new(),
                 blob_gas_used: U64::ZERO,
                 excess_blob_gas: U64::ZERO,
             },
             Vec::new(),
-            B256::from_str("0x1a274bb1e783ec35804dee78ec3d7cecd03371f311b2f946500613e994f024a5").unwrap()
+            B256::new(hex!("1a274bb1e783ec35804dee78ec3d7cecd03371f311b2f946500613e994f024a5"))
         );
 
         assert_eq!(params, expected_params);
@@ -272,9 +271,9 @@ mod tests {
         let (state_channel, rx) = tokio::sync::mpsc::channel(10);
 
         // Set known block height
-        let head_hash =
-            B256::from_str("0x781f09c5b7629a7ca30668e440ea40557f01461ad6f105b371f61ff5824b2449")
-                .unwrap();
+        let head_hash = B256::new(hex!(
+            "781f09c5b7629a7ca30668e440ea40557f01461ad6f105b371f61ff5824b2449"
+        ));
         let genesis_block = BlockWithHash::new(head_hash, Block::default());
 
         let mut repository = InMemoryBlockRepository::new();
