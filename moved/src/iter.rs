@@ -122,3 +122,42 @@ where
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use {
+        super::*,
+        std::collections::HashMap,
+        test_case::test_case,
+        PairOrSingle::{Pair, Single},
+    };
+
+    #[test_case([], []; "Empty")]
+    #[test_case([1, 2, 3], [(1, vec![1]), (2, vec![2]), (3, vec![3])]; "All unique")]
+    #[test_case([1, 2, 2], [(1, vec![1]), (2, vec![2, 2])]; "Some unique")]
+    #[test_case([1, 1, 2, 2, 2], [(1, vec![1, 1]), (2, vec![2, 2, 2])]; "None unique")]
+    fn test_grouping_by_value_puts_equal_values_together(
+        values: impl IntoIterator<Item = i32>,
+        expected: impl Into<HashMap<i32, Vec<i32>>>,
+    ) {
+        let expected_groups = expected.into();
+        let actual_groups = values.into_iter().group_by(|v| *v);
+
+        assert_eq!(actual_groups, expected_groups)
+    }
+
+    #[test_case([], []; "Empty")]
+    #[test_case([1], [Single(1)]; "Single")]
+    #[test_case([1, 2], [Pair(1, 2)]; "Pair")]
+    #[test_case([1, 2, 3], [Pair(1, 2), Single(3)]; "Pair and single")]
+    #[test_case([1, 2, 3, 4], [Pair(1, 2), Pair(3, 4)]; "Two pairs")]
+    fn test_pairing_values_puts_two_adjacent_values_together(
+        values: impl IntoIterator<Item = i32>,
+        expected: impl IntoIterator<Item = PairOrSingle<i32>>,
+    ) {
+        let expected_pairs = expected.into_iter().collect::<Vec<_>>();
+        let actual_pairs = values.into_iter().pair().collect::<Vec<_>>();
+
+        assert_eq!(actual_pairs, expected_pairs);
+    }
+}
