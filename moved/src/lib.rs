@@ -15,8 +15,10 @@ use {
             Block, BlockHash, BlockRepository, BlockWithHash, Header, InMemoryBlockRepository,
             MovedBlockHash,
         },
+        genesis::init_state,
         primitives::B256,
         state_actor::StatePayloadId,
+        storage::InMemoryState,
     },
     clap::Parser,
     flate2::read::GzDecoder,
@@ -90,8 +92,12 @@ pub async fn run() {
     let head = genesis_block.hash;
     repository.add(genesis_block);
 
-    let state = state_actor::StateActor::new_in_memory(
+    let mut state = InMemoryState::new();
+    init_state(&genesis_config, &mut state);
+
+    let state = state_actor::StateActor::new(
         rx,
+        state,
         head,
         genesis_config,
         StatePayloadId,

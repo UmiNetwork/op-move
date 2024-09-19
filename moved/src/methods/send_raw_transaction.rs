@@ -60,15 +60,18 @@ async fn inner_execute(
 mod tests {
     use {
         super::*,
-        crate::{block::InMemoryBlockRepository, state_actor::StatePayloadId},
+        crate::{
+            block::InMemoryBlockRepository, state_actor::StatePayloadId, storage::InMemoryState,
+        },
     };
 
     #[tokio::test]
     async fn test_execute() {
         let genesis_config = crate::genesis::config::GenesisConfig::default();
         let (state_channel, rx) = tokio::sync::mpsc::channel(10);
-        let state = crate::state_actor::StateActor::new_in_memory(
+        let state = crate::state_actor::StateActor::new(
             rx,
+            InMemoryState::new(),
             B256::ZERO,
             genesis_config,
             StatePayloadId,

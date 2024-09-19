@@ -190,9 +190,10 @@ mod tests {
         super::*,
         crate::{
             block::{Block, BlockRepository, BlockWithHash, InMemoryBlockRepository},
-            genesis::config::GenesisConfig,
+            genesis::{config::GenesisConfig, init_state},
             methods::{forkchoice_updated, get_payload},
             primitives::{Address, Bytes, B2048, U256, U64},
+            storage::InMemoryState,
         },
         alloy_primitives::hex,
     };
@@ -279,8 +280,12 @@ mod tests {
         let mut repository = InMemoryBlockRepository::new();
         repository.add(genesis_block);
 
-        let state = crate::state_actor::StateActor::new_in_memory(
+        let mut state = InMemoryState::new();
+        init_state(&genesis_config, &mut state);
+
+        let state = crate::state_actor::StateActor::new(
             rx,
+            state,
             head_hash,
             genesis_config,
             0x0306d51fc5aa1533u64,

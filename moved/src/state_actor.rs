@@ -3,11 +3,11 @@ pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
 use {
     crate::{
         block::{Block, BlockHash, BlockRepository, Header},
-        genesis::{config::GenesisConfig, init_storage},
+        genesis::config::GenesisConfig,
         merkle_tree::MerkleRootExt,
         move_execution::execute_transaction,
         primitives::{B256, U64},
-        storage::{InMemoryState, State},
+        storage::State,
         types::{
             engine_api::{
                 GetPayloadResponseV3, PayloadAttributesV3, PayloadId, ToPayloadIdInput,
@@ -43,27 +43,6 @@ pub struct StateActor<S: State, P: NewPayloadId, H: BlockHash, R: BlockRepositor
     block_repository: R,
 }
 
-impl<P: NewPayloadId, H: BlockHash, R: BlockRepository> StateActor<InMemoryState, P, H, R> {
-    pub fn new_in_memory(
-        rx: Receiver<StateMessage>,
-        head: B256,
-        genesis_config: GenesisConfig,
-        payload_id: P,
-        block_hash: H,
-        block_repository: R,
-    ) -> Self {
-        Self::new(
-            rx,
-            InMemoryState::new(),
-            head,
-            genesis_config,
-            payload_id,
-            block_hash,
-            block_repository,
-        )
-    }
-}
-
 impl<
         S: State<Err = PartialVMError> + Send + Sync + 'static,
         P: NewPayloadId + Send + Sync + 'static,
@@ -85,15 +64,13 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId, H: BlockHash, R: BlockRepo
 {
     pub fn new(
         rx: Receiver<StateMessage>,
-        mut storage: S,
+        state: S,
         head: B256,
         genesis_config: GenesisConfig,
         payload_id: P,
         block_hash: H,
         block_repository: R,
     ) -> Self {
-        init_storage(&genesis_config, &mut storage);
-
         Self {
             genesis_config,
             rx,
@@ -103,7 +80,7 @@ impl<S: State<Err = PartialVMError>, P: NewPayloadId, H: BlockHash, R: BlockRepo
             execution_payloads: HashMap::new(),
             pending_payload: None,
             mem_pool: HashMap::new(),
-            state: storage,
+            state,
             block_hash,
             block_repository,
         }

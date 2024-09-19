@@ -1,7 +1,7 @@
 use {
     super::*,
     crate::{
-        genesis::{config::CHAIN_ID, init_storage},
+        genesis::{config::CHAIN_ID, init_state},
         primitives::{ToMoveAddress, B256, U256, U64},
         storage::{InMemoryState, State},
         tests::{signer::Signer, EVM_ADDRESS, PRIVATE_KEY},
@@ -765,7 +765,7 @@ fn deploy_contract(
     genesis_config: &GenesisConfig,
 ) -> (ModuleId, InMemoryState) {
     let mut state = InMemoryState::new();
-    init_storage(genesis_config, &mut state);
+    init_state(genesis_config, &mut state);
 
     let move_address = EVM_ADDRESS.to_move_address();
 

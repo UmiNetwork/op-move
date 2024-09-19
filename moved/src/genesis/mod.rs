@@ -1,4 +1,4 @@
 pub mod config;
 mod framework;
 
-pub use framework::{init_storage, FRAMEWORK_ADDRESS};
+pub use framework::{init_state, FRAMEWORK_ADDRESS};

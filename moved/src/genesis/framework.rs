@@ -69,10 +69,10 @@ pub fn load_sui_framework_snapshot() -> &'static BTreeMap<ObjectID, SystemPackag
     &SUI_SYSTEM_PACKAGES
 }
 
-/// Initializes the in-memory storage with Aptos and Sui frameworks.
-pub fn init_storage(config: &GenesisConfig, storage: &mut impl State<Err = PartialVMError>) {
+/// Initializes the blockchain state with Aptos and Sui frameworks.
+pub fn init_state(config: &GenesisConfig, state: &mut impl State<Err = PartialVMError>) {
     let (change_set, table_change_set) =
-        deploy_framework(storage).expect("All bundle modules should be valid");
+        deploy_framework(state).expect("All bundle modules should be valid");
 
     // This function converts a `TableChange` to a move table extension struct.
     // InMemoryStorage relies on this conversion to apply the storage changes correctly.
@@ -102,11 +102,11 @@ pub fn init_storage(config: &GenesisConfig, storage: &mut impl State<Err = Parti
             .collect(),
     };
 
-    storage
+    state
         .apply_with_tables(change_set, table_change_set)
         .unwrap();
 
-    let actual_state_root = storage.state_root();
+    let actual_state_root = state.state_root();
     let expected_state_root = config.initial_state_root;
 
     assert_eq!(
