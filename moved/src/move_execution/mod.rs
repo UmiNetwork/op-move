@@ -7,7 +7,7 @@ use {
             transactions::{ExtendedTxEnvelope, ToLog, TransactionExecutionOutcome},
         },
     },
-    alloy_primitives::Bloom,
+    alloy_primitives::{Bloom, Log},
     aptos_framework::natives::{
         event::NativeEventContext, object::NativeObjectContext,
         transaction_context::NativeTransactionContext,
@@ -98,19 +98,28 @@ pub fn execute_transaction(
     }
 }
 
-trait LogsBloom {
+pub trait LogsBloom {
     fn logs_bloom(&mut self) -> Bloom;
 }
 
-impl LogsBloom for NativeContextExtensions<'_> {
+impl<'a, I: Iterator<Item = &'a Log>> LogsBloom for I {
     fn logs_bloom(&mut self) -> Bloom {
+        self.fold(Bloom::ZERO, |mut bloom, log| {
+            bloom.accrue_log(log);
+            bloom
+        })
+    }
+}
+
+trait Logs {
+    fn logs(&mut self) -> impl Iterator<Item = Log>;
+}
+
+impl Logs for NativeContextExtensions<'_> {
+    fn logs(&mut self) -> impl Iterator<Item = Log> {
         self.remove::<NativeEventContext>()
             .into_events()
             .into_iter()
             .map(|(event, ..)| event.to_log())
-            .fold(Bloom::ZERO, |mut bloom, log| {
-                bloom.accrue_log(&log);
-                bloom
-            })
     }
 }
