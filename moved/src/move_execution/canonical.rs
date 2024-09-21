@@ -6,7 +6,7 @@ use {
             execute::{deploy_module, execute_entry_function},
             gas::{new_gas_meter, total_gas_used},
             nonces::check_nonce,
-            LogsBloom,
+            Logs,
         },
         primitives::{ToMoveAddress, B256},
         types::{
@@ -102,7 +102,7 @@ pub(super) fn execute_canonical_transaction(
     };
 
     let (changes, mut extensions) = session.finish_with_extensions()?;
-    let logs_bloom = extensions.logs_bloom();
+    let logs = extensions.logs().collect();
     let gas_used = total_gas_used(&gas_meter, genesis_config);
 
     match vm_outcome {
@@ -110,14 +110,14 @@ pub(super) fn execute_canonical_transaction(
             Ok(()),
             changes,
             gas_used,
-            logs_bloom,
+            logs,
         )),
         // User error still generates a receipt and consumes gas
         Err(User(e)) => Ok(TransactionExecutionOutcome::new(
             Err(e),
             changes,
             gas_used,
-            logs_bloom,
+            logs,
         )),
         Err(e) => Err(e),
     }

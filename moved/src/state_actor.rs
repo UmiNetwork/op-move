@@ -5,7 +5,7 @@ use {
         block::{Block, BlockHash, BlockRepository, GasFee, Header},
         genesis::config::GenesisConfig,
         merkle_tree::MerkleRootExt,
-        move_execution::execute_transaction,
+        move_execution::{execute_transaction, LogsBloom},
         primitives::{B256, U64},
         storage::State,
         types::{
@@ -19,7 +19,7 @@ use {
         Error::{InvalidTransaction, InvariantViolation, User},
     },
     alloy_consensus::{Receipt, ReceiptWithBloom},
-    alloy_primitives::{keccak256, Bloom, Log},
+    alloy_primitives::{keccak256, Bloom},
     alloy_rlp::Decodable,
     move_binary_format::errors::PartialVMError,
     std::collections::HashMap,
@@ -197,7 +197,6 @@ impl<
         transactions: &[(B256, ExtendedTxEnvelope)],
     ) -> ExecutionOutcome {
         let mut outcomes = Vec::new();
-        let mut logs_bloom = Bloom::ZERO;
 
         // TODO: parallel transaction processing?
         for (tx_hash, tx) in transactions {
@@ -213,30 +212,28 @@ impl<
             self.state
                 .apply(outcome.changes)
                 .unwrap_or_else(|_| panic!("ERROR: state update failed for transaction {tx:?}"));
-            outcomes.push((outcome.vm_outcome.is_ok(), outcome.gas_used));
-            logs_bloom.accrue_bloom(&outcome.logs_bloom);
+
+            outcomes.push((outcome.vm_outcome.is_ok(), outcome.gas_used, outcome.logs));
         }
 
         let mut cumulative_gas_used = 0u64;
-        let receipts = outcomes.into_iter().map(|(status, gas_used)| {
+        let mut logs_bloom = Bloom::ZERO;
+        let receipts = outcomes.into_iter().map(|(status, gas_used, logs)| {
             cumulative_gas_used = cumulative_gas_used.saturating_add(gas_used);
+
+            let bloom = logs.iter().logs_bloom();
+            logs_bloom.accrue_bloom(&bloom);
 
             let receipt = Receipt {
                 status: status.into(),
                 cumulative_gas_used: cumulative_gas_used as u128,
-                logs: Vec::<Log>::new(),
+                logs,
             };
-            ReceiptWithBloom::new(receipt, Bloom::ZERO)
+            ReceiptWithBloom::new(receipt, bloom)
         });
 
-        let receipts_root = receipts
-            .map(alloy_rlp::encode)
-            .map(keccak256)
-            .merkle_root()
-            .0
-            .into();
-
-        let logs_bloom = logs_bloom.0 .0.into();
+        let receipts_root = receipts.map(alloy_rlp::encode).map(keccak256).merkle_root();
+        let logs_bloom = logs_bloom.into();
 
         ExecutionOutcome {
             state_root: self.state.state_root(),
