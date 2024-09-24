@@ -140,6 +140,11 @@ impl Header {
         self
     }
 
+    pub fn with_transactions_root(mut self, transactions_root: B256) -> Self {
+        self.transactions_root = transactions_root;
+        self
+    }
+
     pub fn with_base_fee_per_gas(mut self, base_fee_per_gas: U256) -> Self {
         self.base_fee_per_gas = base_fee_per_gas;
         self

@@ -173,15 +173,21 @@ impl<
 
         let execution_outcome = self.execute_transactions(&transactions);
 
+        let transactions_root = transactions
+            .iter()
+            .map(|(.., tx)| tx)
+            .map(alloy_rlp::encode)
+            .map(keccak256)
+            .merkle_root();
         let parent = self
             .block_repository
             .by_hash(self.head)
             .expect("Parent block should exist");
-        // TODO: Compute `transaction_root`
         // TODO: Compute `withdrawals_root`
         let header = Header::new(self.head, self.height + 1)
             .with_payload_attributes(payload_attributes)
             .with_execution_outcome(execution_outcome)
+            .with_transactions_root(transactions_root)
             .with_base_fee_per_gas(self.gas_fee.base_fee_per_gas(
                 parent.block.header.gas_limit,
                 parent.block.header.gas_used,
