@@ -50,3 +50,49 @@ impl NormalizedEthTransaction {
         self.max_priority_fee_per_gas.min(extra_fee)
     }
 }
+
+pub trait L1GasFee {
+    fn l1_fee(&self, tx_data: &[u8]) -> U256;
+}
+
+#[derive(Debug)]
+struct EcotoneL1GasFee {
+    base_fee: U256,
+    base_fee_scalar: U256,
+    blob_base_fee: U256,
+    blob_base_fee_scalar: U256,
+}
+
+impl EcotoneL1GasFee {
+    const ZERO_BYTE_MULTIPLIER: U256 = U256::from_limbs([4, 0, 0, 0]);
+    const GAS_PRICE_MULTIPLIER: U256 = U256::from_limbs([16, 0, 0, 0]);
+
+    pub fn new(
+        base_fee: U256,
+        base_fee_scalar: u32,
+        blob_base_fee: U256,
+        blob_base_fee_scalar: u32,
+    ) -> Self {
+        Self {
+            base_fee,
+            base_fee_scalar: U256::from(base_fee_scalar),
+            blob_base_fee,
+            blob_base_fee_scalar: U256::from(blob_base_fee_scalar),
+        }
+    }
+}
+
+impl L1GasFee for EcotoneL1GasFee {
+    fn l1_fee(&self, tx_data: &[u8]) -> U256 {
+        let zero_bytes = U256::from(tx_data.iter().filter(|&&v| v == 0).count());
+        let non_zero_bytes = U256::from(tx_data.len()) - zero_bytes;
+        let tx_compressed_size = (zero_bytes * Self::ZERO_BYTE_MULTIPLIER
+            + non_zero_bytes * Self::GAS_PRICE_MULTIPLIER)
+            / Self::GAS_PRICE_MULTIPLIER;
+        let weighted_gas_price = Self::GAS_PRICE_MULTIPLIER * self.base_fee_scalar * self.base_fee
+            + self.blob_base_fee_scalar * self.blob_base_fee;
+        
+
+        tx_compressed_size * weighted_gas_price
+    }
+}
