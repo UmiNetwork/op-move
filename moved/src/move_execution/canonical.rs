@@ -16,7 +16,6 @@ use {
         Error::{InvalidTransaction, User},
         InvalidTransactionCause,
     },
-    alloy_consensus::{Transaction, TxEnvelope},
     alloy_primitives::TxKind,
     aptos_gas_meter::AptosGasMeter,
     aptos_table_natives::TableResolver,
@@ -27,18 +26,17 @@ use {
 };
 
 pub(super) fn execute_canonical_transaction(
-    tx: &TxEnvelope,
+    tx: &NormalizedEthTransaction,
     tx_hash: &B256,
     state: &(impl MoveResolver<PartialVMError> + TableResolver),
     genesis_config: &GenesisConfig,
 ) -> crate::Result<TransactionExecutionOutcome> {
-    if let Some(chain_id) = tx.chain_id() {
+    if let Some(chain_id) = tx.chain_id {
         if chain_id != genesis_config.chain_id {
             return Err(InvalidTransactionCause::IncorrectChainId.into());
         }
     }
 
-    let tx = NormalizedEthTransaction::try_from(tx.clone())?;
     let sender_move_address = tx.signer.to_move_address();
 
     let maybe_entry_fn: Option<EntryFunction> = match tx.to {
@@ -54,7 +52,7 @@ pub(super) fn execute_canonical_transaction(
 
     let move_vm = create_move_vm()?;
     let session_id =
-        SessionId::new_from_canonical(&tx, maybe_entry_fn.as_ref(), tx_hash, genesis_config);
+        SessionId::new_from_canonical(tx, maybe_entry_fn.as_ref(), tx_hash, genesis_config);
     let mut session = create_vm_session(&move_vm, state, session_id);
     let traversal_storage = TraversalStorage::new();
     let mut traversal_context = TraversalContext::new(&traversal_storage);

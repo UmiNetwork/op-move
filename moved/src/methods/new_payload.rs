@@ -277,7 +277,7 @@ mod tests {
         let head_hash = B256::new(hex!(
             "781f09c5b7629a7ca30668e440ea40557f01461ad6f105b371f61ff5824b2449"
         ));
-        let genesis_block = BlockWithHash::new(head_hash, Block::default());
+        let genesis_block = BlockWithHash::new(head_hash, Block::default()).with_value(U256::ZERO);
 
         let mut repository = InMemoryBlockRepository::new();
         repository.add(genesis_block);

@@ -4,7 +4,7 @@ use {
         primitives::B256,
         types::{
             session_id::SessionId,
-            transactions::{ExtendedTxEnvelope, ToLog, TransactionExecutionOutcome},
+            transactions::{NormalizedExtendedTxEnvelope, ToLog, TransactionExecutionOutcome},
         },
     },
     alloy_primitives::{Bloom, Log},
@@ -83,16 +83,16 @@ where
 }
 
 pub fn execute_transaction(
-    tx: &ExtendedTxEnvelope,
+    tx: &NormalizedExtendedTxEnvelope,
     tx_hash: &B256,
     state: &(impl MoveResolver<PartialVMError> + TableResolver),
     genesis_config: &GenesisConfig,
 ) -> crate::Result<TransactionExecutionOutcome> {
     match tx {
-        ExtendedTxEnvelope::DepositedTx(tx) => {
+        NormalizedExtendedTxEnvelope::DepositedTx(tx) => {
             execute_deposited_transaction(tx, tx_hash, state, genesis_config)
         }
-        ExtendedTxEnvelope::Canonical(tx) => {
+        NormalizedExtendedTxEnvelope::Canonical(tx) => {
             execute_canonical_transaction(tx, tx_hash, state, genesis_config)
         }
     }

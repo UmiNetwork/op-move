@@ -70,7 +70,7 @@ mod tests {
             },
             genesis::{config::GenesisConfig, init_state},
             methods::forkchoice_updated,
-            primitives::B256,
+            primitives::{B256, U256},
             storage::InMemoryState,
         },
         alloy_primitives::hex,
@@ -108,7 +108,7 @@ mod tests {
         let head_hash = B256::new(hex!(
             "e56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d"
         ));
-        let genesis_block = BlockWithHash::new(head_hash, Block::default());
+        let genesis_block = BlockWithHash::new(head_hash, Block::default()).with_value(U256::ZERO);
 
         let mut repository = InMemoryBlockRepository::new();
         repository.add(genesis_block);

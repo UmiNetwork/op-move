@@ -9,8 +9,35 @@ use {
 };
 
 pub trait BlockRepository: Debug {
-    fn add(&mut self, block: BlockWithHash);
-    fn by_hash(&self, hash: B256) -> Option<BlockWithHash>;
+    fn add(&mut self, block: ExtendedBlock);
+    fn by_hash(&self, hash: B256) -> Option<ExtendedBlock>;
+}
+
+#[derive(Debug, Clone)]
+pub struct ExtendedBlock {
+    /// The block hash is the output of keccak-256 algorithm with RLP encoded block header as input.
+    pub hash: B256,
+    /// The block value is total value in Wei expected to be received by the fee recipient. It is
+    /// the gas paid on top of the base fee.
+    ///
+    /// The base fee is burned to prevent malicious behavior.
+    ///
+    /// Burning the base fee hinders a block producer's ability to manipulate transactions. For
+    /// example, if block producers received the base fee, they could include their own transactions
+    /// for free and raise the base fee for everyone else. Alternatively, they could refund the base
+    /// fee to some users off-chain, leading to a more opaque and complex transaction fee market.
+    pub value: U256,
+    pub block: Block,
+}
+
+impl ExtendedBlock {
+    pub fn new(hash: B256, value: U256, block: Block) -> Self {
+        Self { hash, value, block }
+    }
+
+    pub fn without_value(self) -> BlockWithHash {
+        BlockWithHash::new(self.hash, self.block)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -22,6 +49,10 @@ pub struct BlockWithHash {
 impl BlockWithHash {
     pub fn new(hash: B256, block: Block) -> Self {
         Self { hash, block }
+    }
+
+    pub fn with_value(self, value: U256) -> ExtendedBlock {
+        ExtendedBlock::new(self.hash, value, self.block)
     }
 }
 

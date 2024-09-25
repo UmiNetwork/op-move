@@ -36,6 +36,12 @@ pub enum ExtendedTxEnvelope {
     DepositedTx(DepositedTx),
 }
 
+#[derive(Debug)]
+pub enum NormalizedExtendedTxEnvelope {
+    Canonical(NormalizedEthTransaction),
+    DepositedTx(DepositedTx),
+}
+
 impl Encodable for ExtendedTxEnvelope {
     fn length(&self) -> usize {
         match self {
@@ -79,6 +85,28 @@ impl Decodable for ExtendedTxEnvelope {
     }
 }
 
+impl TryFrom<ExtendedTxEnvelope> for NormalizedExtendedTxEnvelope {
+    type Error = Error;
+
+    fn try_from(value: ExtendedTxEnvelope) -> Result<Self, Self::Error> {
+        Ok(match value {
+            ExtendedTxEnvelope::Canonical(tx) => {
+                NormalizedExtendedTxEnvelope::Canonical(NormalizedEthTransaction::try_from(tx)?)
+            }
+            ExtendedTxEnvelope::DepositedTx(tx) => NormalizedExtendedTxEnvelope::DepositedTx(tx),
+        })
+    }
+}
+
+impl NormalizedExtendedTxEnvelope {
+    pub fn tip_per_gas(&self, base_fee: U256) -> U256 {
+        match self {
+            Self::DepositedTx(..) => U256::ZERO,
+            Self::Canonical(tx) => tx.tip_per_gas(base_fee),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct TransactionExecutionOutcome {
     /// The final outcome of the transaction execution.
@@ -113,6 +141,7 @@ impl TransactionExecutionOutcome {
     }
 }
 
+#[derive(Debug)]
 pub struct NormalizedEthTransaction {
     pub signer: Address,
     pub to: TxKind,
