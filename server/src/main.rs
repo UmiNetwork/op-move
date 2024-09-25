@@ -1,4 +1,4 @@
 #[tokio::main]
 async fn main() {
-    moved::run().await;
+    moved_server::run().await;
 }

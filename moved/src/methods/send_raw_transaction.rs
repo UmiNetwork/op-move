@@ -78,7 +78,7 @@ mod tests {
             genesis_config,
             StatePayloadId,
             B256::ZERO,
-            InMemoryBlockRepository::new(),
+            InMemoryBlockRepository::default(),
             Eip1559GasFee::default(),
         );
         let state_handle = state.spawn();

@@ -61,6 +61,12 @@ pub struct InMemoryState {
     version: Version,
 }
 
+impl Default for InMemoryState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InMemoryState {
     const ALLOW_OVERWRITE: bool = false;
 

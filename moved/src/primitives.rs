@@ -1,4 +1,4 @@
-pub(crate) use alloy_primitives::{aliases::B2048, Address, Bytes, B256, U256, U64};
+pub use alloy_primitives::{aliases::B2048, Address, Bytes, B256, U256, U64};
 
 use {aptos_crypto::HashValue, move_core_types::account_address::AccountAddress};
 
