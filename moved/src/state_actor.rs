@@ -2,11 +2,11 @@ pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
 
 use {
     crate::{
-        block::{Block, BlockHash, BlockRepository, GasFee, Header},
+        block::{Block, BlockHash, BlockRepository, ExtendedBlock, GasFee, Header},
         genesis::config::GenesisConfig,
         merkle_tree::MerkleRootExt,
         move_execution::{execute_transaction, LogsBloom},
-        primitives::{B256, U64},
+        primitives::{B256, U256, U64},
         storage::State,
         types::{
             engine_api::{
@@ -14,7 +14,7 @@ use {
                 WithPayloadAttributes,
             },
             state::{ExecutionOutcome, StateMessage, WithExecutionOutcome},
-            transactions::ExtendedTxEnvelope,
+            transactions::{ExtendedTxEnvelope, NormalizedExtendedTxEnvelope},
         },
         Error::{InvalidTransaction, InvariantViolation, User},
     },
@@ -109,11 +109,8 @@ impl<
                 let id = self.payload_id.new_payload_id(input);
                 response_channel.send(id.clone()).ok();
                 let block = self.create_block(payload_attributes);
-                let hash = self.block_hash.block_hash(&block.header);
-                let block = block.with_hash(hash);
                 self.block_repository.add(block.clone());
                 let payload = GetPayloadResponseV3::from(block);
-                self.execution_payloads.insert(hash, payload.clone());
                 self.pending_payload = Some((id, payload));
             }
             StateMessage::GetPayload {
@@ -151,7 +148,7 @@ impl<
         }
     }
 
-    fn create_block(&mut self, payload_attributes: PayloadAttributesV3) -> Block {
+    fn create_block(&mut self, payload_attributes: PayloadAttributesV3) -> ExtendedBlock {
         // Include transactions from both `payload_attributes` and internal mem-pool
         let transactions = payload_attributes
             .transactions
@@ -159,67 +156,86 @@ impl<
             .filter_map(|tx_bytes| {
                 let mut slice: &[u8] = tx_bytes.as_ref();
                 let tx_hash = B256::new(keccak256(slice).0);
+                let tx = ExtendedTxEnvelope::decode(&mut slice)
+                    .inspect_err(|_| {
+                        println!("WARN: Failed to RLP decode transaction in payload_attributes")
+                    })
+                    .ok()?;
 
-                match ExtendedTxEnvelope::decode(&mut slice) {
-                    Ok(tx) => Some((tx_hash, tx)),
-                    Err(_) => {
-                        println!("WARN: Failed to RLP decode transaction in payload_attributes");
-                        None
-                    }
-                }
+                Some((tx_hash, tx))
             })
             .chain(self.mem_pool.drain())
             .collect::<Vec<_>>();
-
-        let execution_outcome = self.execute_transactions(&transactions);
-
-        let transactions_root = transactions
-            .iter()
-            .map(|(.., tx)| tx)
-            .map(alloy_rlp::encode)
-            .map(keccak256)
-            .merkle_root();
         let parent = self
             .block_repository
             .by_hash(self.head)
             .expect("Parent block should exist");
+        let base_fee = self.gas_fee.base_fee_per_gas(
+            parent.block.header.gas_limit,
+            parent.block.header.gas_used,
+            parent.block.header.base_fee_per_gas,
+        );
+
+        let execution_outcome = self.execute_transactions(
+            transactions
+                .iter()
+                .cloned()
+                .filter_map(|(tx_hash, tx)| tx.try_into().ok().map(|tx| (tx_hash, tx))),
+            base_fee,
+        );
+
+        let transactions: Vec<_> = transactions.into_iter().map(|(_, tx)| tx).collect();
+        let transactions_root = transactions
+            .iter()
+            .map(alloy_rlp::encode)
+            .map(keccak256)
+            .merkle_root();
+        let total_tip = execution_outcome.total_tip;
         // TODO: Compute `withdrawals_root`
         let header = Header::new(self.head, self.height + 1)
             .with_payload_attributes(payload_attributes)
             .with_execution_outcome(execution_outcome)
             .with_transactions_root(transactions_root)
-            .with_base_fee_per_gas(self.gas_fee.base_fee_per_gas(
-                parent.block.header.gas_limit,
-                parent.block.header.gas_used,
-                parent.block.header.base_fee_per_gas,
-            ));
-        let transactions = transactions.into_iter().map(|(_, tx)| tx).collect();
+            .with_base_fee_per_gas(base_fee);
+
+        let hash = self.block_hash.block_hash(&header);
 
         Block::new(header, transactions)
+            .with_hash(hash)
+            .with_value(total_tip)
     }
 
     fn execute_transactions(
         &mut self,
-        transactions: &[(B256, ExtendedTxEnvelope)],
+        transactions: impl Iterator<Item = (B256, NormalizedExtendedTxEnvelope)>,
+        base_fee: U256,
     ) -> ExecutionOutcome {
+        let mut total_tip = U256::ZERO;
         let mut outcomes = Vec::new();
 
         // TODO: parallel transaction processing?
         for (tx_hash, tx) in transactions {
-            let outcome =
-                match execute_transaction(tx, tx_hash, self.state.resolver(), &self.genesis_config)
-                {
-                    Ok(outcome) => outcome,
-                    Err(User(_)) => unreachable!("User errors are handled in execution"),
-                    Err(InvalidTransaction(_)) => continue,
-                    Err(InvariantViolation(e)) => panic!("ERROR: execution error {e:?}"),
-                };
+            let outcome = match execute_transaction(
+                &tx,
+                &tx_hash,
+                self.state.resolver(),
+                &self.genesis_config,
+            ) {
+                Ok(outcome) => outcome,
+                Err(User(_)) => unreachable!("User errors are handled in execution"),
+                Err(InvalidTransaction(_)) => continue,
+                Err(InvariantViolation(e)) => panic!("ERROR: execution error {e:?}"),
+            };
 
             self.state
                 .apply(outcome.changes)
                 .unwrap_or_else(|_| panic!("ERROR: state update failed for transaction {tx:?}"));
 
             outcomes.push((outcome.vm_outcome.is_ok(), outcome.gas_used, outcome.logs));
+
+            total_tip = total_tip.saturating_add(
+                U256::from(outcome.gas_used).saturating_mul(tx.tip_per_gas(base_fee)),
+            );
         }
 
         let mut cumulative_gas_used = 0u64;
@@ -246,6 +262,7 @@ impl<
             gas_used: U64::from(cumulative_gas_used),
             receipts_root,
             logs_bloom,
+            total_tip,
         }
     }
 }

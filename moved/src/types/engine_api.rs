@@ -3,7 +3,7 @@
 
 use {
     crate::{
-        block::{BlockWithHash, Header},
+        block::{BlockWithHash, ExtendedBlock, Header},
         primitives::{Address, Bytes, ToU64, B2048, B256, U256, U64},
         state_actor::NewPayloadIdInput,
     },
@@ -225,12 +225,12 @@ impl<'a> ToPayloadIdInput<'a> for PayloadAttributesV3 {
     }
 }
 
-impl From<BlockWithHash> for GetPayloadResponseV3 {
-    fn from(value: BlockWithHash) -> Self {
+impl From<ExtendedBlock> for GetPayloadResponseV3 {
+    fn from(value: ExtendedBlock) -> Self {
         GetPayloadResponseV3 {
             parent_beacon_block_root: value.block.header.parent_beacon_block_root,
-            execution_payload: ExecutionPayloadV3::from(value),
-            block_value: U256::ZERO, // TODO: value?
+            block_value: value.value,
+            execution_payload: ExecutionPayloadV3::from(value.without_value()),
             blobs_bundle: Default::default(),
             should_override_builder: false,
         }

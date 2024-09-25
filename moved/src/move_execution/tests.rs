@@ -5,7 +5,7 @@ use {
         primitives::{ToMoveAddress, B256, U256, U64},
         storage::{InMemoryState, State},
         tests::{signer::Signer, EVM_ADDRESS, PRIVATE_KEY},
-        types::transactions::DepositedTx,
+        types::transactions::{DepositedTx, ExtendedTxEnvelope},
     },
     alloy::network::TxSignerSync,
     alloy_consensus::{transaction::TxEip1559, SignableTransaction, TxEnvelope},
@@ -398,10 +398,15 @@ fn test_deposit_tx() {
         B256::new(keccak256(bytes).0)
     };
 
-    execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config)
-        .unwrap()
-        .vm_outcome
-        .unwrap();
+    execute_transaction(
+        &tx.try_into().unwrap(),
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+    )
+    .unwrap()
+    .vm_outcome
+    .unwrap();
 }
 
 #[test]
@@ -497,7 +502,7 @@ fn test_transaction_chain_id() {
     let signature = signer.inner.sign_transaction_sync(&mut tx).unwrap();
     let signed_tx = TxEnvelope::Eip1559(tx.into_signed(signature));
     let tx_hash = B256::new(signed_tx.tx_hash().0);
-    let signed_tx = ExtendedTxEnvelope::Canonical(signed_tx);
+    let signed_tx = NormalizedExtendedTxEnvelope::Canonical(signed_tx.try_into().unwrap());
 
     let err =
         execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap_err();
@@ -534,7 +539,7 @@ fn test_out_of_gas() {
     let signature = signer.inner.sign_transaction_sync(&mut tx).unwrap();
     let signed_tx = TxEnvelope::Eip1559(tx.into_signed(signature));
     let tx_hash = B256::new(signed_tx.tx_hash().0);
-    let signed_tx = ExtendedTxEnvelope::Canonical(signed_tx);
+    let signed_tx = NormalizedExtendedTxEnvelope::Canonical(signed_tx.try_into().unwrap());
 
     let err =
         execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap_err();
@@ -819,7 +824,7 @@ fn create_transaction(
     signer: &mut Signer,
     to: TxKind,
     input: Vec<u8>,
-) -> (B256, ExtendedTxEnvelope) {
+) -> (B256, NormalizedExtendedTxEnvelope) {
     let mut tx = TxEip1559 {
         chain_id: CHAIN_ID,
         nonce: signer.nonce,
@@ -835,7 +840,10 @@ fn create_transaction(
     let signature = signer.inner.sign_transaction_sync(&mut tx).unwrap();
     let signed_tx = TxEnvelope::Eip1559(tx.into_signed(signature));
     let tx_hash = B256::new(signed_tx.tx_hash().0);
-    (tx_hash, ExtendedTxEnvelope::Canonical(signed_tx))
+    (
+        tx_hash,
+        NormalizedExtendedTxEnvelope::Canonical(signed_tx.try_into().unwrap()),
+    )
 }
 
 fn move_compile(package_name: &str, address: &AccountAddress) -> anyhow::Result<Vec<u8>> {

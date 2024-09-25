@@ -7,7 +7,7 @@ use {
     super::engine_api::GetPayloadResponseV3,
     crate::{
         block::Header,
-        primitives::{ToU64, B2048, B256, U64},
+        primitives::{ToU64, B2048, B256, U256, U64},
         types::engine_api::{PayloadAttributesV3, PayloadId},
     },
     alloy_consensus::transaction::TxEnvelope,
@@ -42,6 +42,7 @@ pub struct ExecutionOutcome {
     pub state_root: B256,
     pub logs_bloom: B2048,
     pub gas_used: U64,
+    pub total_tip: U256,
 }
 
 pub(crate) trait WithExecutionOutcome {
