@@ -17,6 +17,12 @@ pub struct InMemoryBlockRepository {
     hashes: HashMap<B256, usize>,
 }
 
+impl Default for InMemoryBlockRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InMemoryBlockRepository {
     pub fn new() -> Self {
         Self {

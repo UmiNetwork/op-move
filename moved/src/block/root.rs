@@ -15,8 +15,8 @@ pub trait BlockRepository: Debug {
 
 #[derive(Debug, Clone)]
 pub struct BlockWithHash {
-    pub(crate) hash: B256,
-    pub(crate) block: Block,
+    pub hash: B256,
+    pub block: Block,
 }
 
 impl BlockWithHash {
