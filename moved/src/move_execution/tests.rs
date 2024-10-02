@@ -844,7 +844,7 @@ fn move_compile(package_name: &str, address: &AccountAddress) -> anyhow::Result<
 fn test_execute_sui_contract() {
     let genesis_config = GenesisConfig::default();
     let mut signer = Signer::new(&PRIVATE_KEY);
-    let (module_id, state) = deploy_sui_contract("suinatives", &mut signer, &genesis_config);
+    let (module_id, state) = deploy_sui_contract("sui_natives", &mut signer, &genesis_config);
     println!("SUI CONTRACT CALL");
 
     // Call entry function to run the internal native hashing methods
@@ -881,7 +881,7 @@ fn deploy_sui_contract(
 
     let outcome =
         execute_transaction(&signed_tx, &tx_hash, state.resolver(), genesis_config).unwrap();
-    println!("\nDEPLOY OUTCOME: {:?}\n", outcome);
+    // println!("\nDEPLOY OUTCOME: {:?}\n", outcome);
     state.apply(outcome.changes).unwrap();
 
     // Code was deployed

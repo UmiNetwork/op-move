@@ -93,11 +93,19 @@ fn convert_value(
 }
 
 pub fn create_move_vm() -> crate::Result<MoveVM> {
+    let aptos_natives = aptos_natives(
+        LATEST_GAS_FEATURE_VERSION,
+        NativeGasParameters::zeros(),
+        MiscGasParameters::zeros(),
+        TimedFeaturesBuilder::enable_all().build(),
+        Features::default(),
+    );
+
     let sui_natives = all_natives(true)
         .into_iter()
         .map(|n| {
             let mut address = n.0.into_bytes();
-            address[AccountAddress::LENGTH - 1] += 20;
+            address[AccountAddress::LENGTH - 1] += 0x20;
             (
                 AccountAddress::new(address),
                 Identifier::from_utf8(n.1.into_bytes()).expect("Module identifier should exist"),
@@ -124,17 +132,7 @@ pub fn create_move_vm() -> crate::Result<MoveVM> {
         })
         .collect::<Vec<_>>();
 
-    // println!("CREATE MOVE VM - NATIVES: {:?}", new_natives);
-    // MoveVM::new(new_natives)?;
-
-    let natives = aptos_natives(
-        LATEST_GAS_FEATURE_VERSION,
-        NativeGasParameters::zeros(),
-        MiscGasParameters::zeros(),
-        TimedFeaturesBuilder::enable_all().build(),
-        Features::default(),
-    );
-    let natives: Vec<_> = natives.into_iter().chain(sui_natives.into_iter()).collect();
+    let natives: Vec<_> = aptos_natives.into_iter().chain(sui_natives.into_iter()).collect();
     let vm = MoveVM::new(natives)?;
     Ok(vm)
 }
