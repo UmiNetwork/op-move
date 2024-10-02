@@ -14,15 +14,33 @@ use {
     },
     aptos_gas_schedule::{MiscGasParameters, NativeGasParameters, LATEST_GAS_FEATURE_VERSION},
     aptos_table_natives::{NativeTableContext, TableResolver},
-    aptos_types::on_chain_config::{Features, TimedFeaturesBuilder},
+    aptos_types::{
+        account_address::AccountAddress,
+        on_chain_config::{Features, TimedFeaturesBuilder},
+    },
     aptos_vm::natives::aptos_natives,
     canonical::execute_canonical_transaction,
     deposited::execute_deposited_transaction,
-    move_binary_format::errors::PartialVMError,
-    move_core_types::resolver::MoveResolver,
+    move_binary_format::errors::{PartialVMError, PartialVMResult},
+    move_core_types::{identifier::Identifier, resolver::MoveResolver},
     move_vm_runtime::{
-        move_vm::MoveVM, native_extensions::NativeContextExtensions, session::Session,
+        move_vm::MoveVM,
+        native_extensions::NativeContextExtensions,
+        native_functions::{NativeContext, NativeFunction},
+        session::Session,
     },
+    move_vm_types::{
+        loaded_data::runtime_types::Type,
+        natives::function::NativeResult,
+        values::{VMValueCast, Value},
+    },
+    std::{collections::VecDeque, sync::Arc},
+    sui_move_natives_latest::all_natives,
+    sui_move_vm_types::{
+        loaded_data::runtime_types::{CachedTypeIndex, Type as SuiType},
+        values::Value as SuiValue,
+    },
+    triomphe::Arc as TriompheArc,
 };
 
 mod canonical;
@@ -36,7 +54,79 @@ mod tag_validation;
 #[cfg(test)]
 mod tests;
 
+fn convert_type(t: Type) -> SuiType {
+    match t {
+        Type::Address => SuiType::Address,
+        Type::Bool => SuiType::Bool,
+        Type::MutableReference(t) => SuiType::MutableReference(Box::new(convert_type(*t))),
+        Type::Reference(t) => SuiType::Reference(Box::new(convert_type(*t))),
+        Type::Signer => SuiType::Signer,
+        Type::Struct { idx, .. } => SuiType::Datatype(CachedTypeIndex(idx.0)),
+        Type::StructInstantiation { idx, ty_args, .. } => {
+            SuiType::DatatypeInstantiation(Box::new((
+                CachedTypeIndex(idx.0),
+                ty_args
+                    .to_vec()
+                    .into_iter()
+                    .map(convert_type)
+                    .collect::<Vec<_>>(),
+            )))
+        }
+        Type::TyParam(u) => SuiType::TyParam(u),
+        Type::Vector(t) => SuiType::Vector(Box::new(convert_type(TriompheArc::unwrap_or_clone(t)))),
+        Type::U8 => SuiType::U8,
+        Type::U16 => SuiType::U16,
+        Type::U32 => SuiType::U32,
+        Type::U64 => SuiType::U64,
+        Type::U128 => SuiType::U128,
+        Type::U256 => SuiType::U256,
+    }
+}
+
+fn convert_value(
+    v: Value,
+) -> std::result::Result<SuiValue, move_binary_format::errors::PartialVMError> {
+    println!("VALUE: {:?}", v.to_string());
+    Err(PartialVMError::new(
+        aptos_types::vm_status::StatusCode::ABORTED,
+    ))
+}
+
 pub fn create_move_vm() -> crate::Result<MoveVM> {
+    let sui_natives = all_natives(true)
+        .into_iter()
+        .map(|n| {
+            let mut address = n.0.into_bytes();
+            address[AccountAddress::LENGTH - 1] += 20;
+            (
+                AccountAddress::new(address),
+                Identifier::from_utf8(n.1.into_bytes()).expect("Module identifier should exist"),
+                Identifier::from_utf8(n.2.into_bytes()).expect("Function identifier should exist"),
+                Arc::new(
+                    |a: &mut NativeContext,
+                     b: Vec<Type>,
+                     c: VecDeque<Value>|
+                     -> PartialVMResult<NativeResult> {
+                        println!("CONTEXT - GAS: {:?}", a.gas_balance());
+                        println!("TYPE: {:?}", b);
+                        println!("VALUE: {:?}", c);
+                        // Convert the native function inputs to Sui variants
+                        let types = b.into_iter().map(convert_type).collect::<Vec<_>>();
+                        let values = c.into_iter().map(convert_value).collect::<Vec<_>>();
+
+                        // Call the Sui native function
+                        Err(PartialVMError::new(
+                            aptos_types::vm_status::StatusCode::ABORTED,
+                        ))
+                    },
+                ) as NativeFunction,
+            )
+        })
+        .collect::<Vec<_>>();
+
+    // println!("CREATE MOVE VM - NATIVES: {:?}", new_natives);
+    // MoveVM::new(new_natives)?;
+
     let natives = aptos_natives(
         LATEST_GAS_FEATURE_VERSION,
         NativeGasParameters::zeros(),
@@ -44,6 +134,7 @@ pub fn create_move_vm() -> crate::Result<MoveVM> {
         TimedFeaturesBuilder::enable_all().build(),
         Features::default(),
     );
+    let natives: Vec<_> = natives.into_iter().chain(sui_natives.into_iter()).collect();
     let vm = MoveVM::new(natives)?;
     Ok(vm)
 }

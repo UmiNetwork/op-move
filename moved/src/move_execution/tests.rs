@@ -35,6 +35,9 @@ use {
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
     move_vm_types::gas::UnmeteredGasMeter,
     std::collections::BTreeSet,
+    sui_move_compiler::{
+        editions::Edition as SuiEdition, shared::{NumberFormat as SuiNumberFormat, NumericalAddress as SuiNumericalAddress, PackageConfig}, Compiler as SuiCompiler
+    },
 };
 
 #[test]
@@ -834,5 +837,111 @@ fn move_compile(package_name: &str, address: &AccountAddress) -> anyhow::Result<
         .context(format!("Failed to compile {package_name}.move"))?;
     let compiled_unit = result.unwrap().0.pop().unwrap().into_compiled_unit();
     let bytes = compiled_unit.serialize(None);
+    Ok(bytes)
+}
+
+#[test]
+fn test_execute_sui_contract() {
+    let genesis_config = GenesisConfig::default();
+    let mut signer = Signer::new(&PRIVATE_KEY);
+    let (module_id, state) = deploy_sui_contract("sui-natives", &mut signer, &genesis_config);
+    println!("SUI CONTRACT CALL");
+
+    // Call entry function to run the internal native hashing methods
+    let entry_fn = EntryFunction::new(
+        module_id,
+        Identifier::new("hashing").unwrap(),
+        Vec::new(),
+        vec![],
+    );
+    let (tx_hash, signed_tx) = create_transaction(
+        &mut signer,
+        TxKind::Call(EVM_ADDRESS),
+        bcs::to_bytes(&entry_fn).unwrap(),
+    );
+
+    let changes = execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config);
+    println!("EXECUTE CHANGES: {:?}", changes);
+    assert!(changes.is_ok());
+    assert!(changes.unwrap().vm_outcome.is_ok());
+}
+
+fn deploy_sui_contract(
+    module_name: &str,
+    signer: &mut Signer,
+    genesis_config: &GenesisConfig,
+) -> (ModuleId, InMemoryState) {
+    let mut state = InMemoryState::new();
+    init_state(genesis_config, &mut state);
+
+    let move_address = EVM_ADDRESS.to_move_address();
+
+    let module_bytes = sui_move_compile(module_name, &move_address).unwrap();
+    let (tx_hash, signed_tx) = create_transaction(signer, TxKind::Create, module_bytes);
+
+    let outcome =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), genesis_config).unwrap();
+    println!("\nDEPLOY OUTCOME: {:?}\n", outcome);
+    state.apply(outcome.changes).unwrap();
+
+    // Code was deployed
+    let module_id = ModuleId::new(move_address, Identifier::new(module_name).unwrap());
+    println!("DEPLOY MODULE ID: {:?}\n", module_id);
+    assert!(
+        state.resolver().get_module(&module_id).unwrap().is_some(),
+        "Code should be deployed"
+    );
+    (module_id, state)
+}
+
+fn sui_move_compile(package_name: &str, address: &AccountAddress) -> anyhow::Result<Vec<u8>> {
+    let named_address_mapping: std::collections::BTreeMap<_, _> = [
+        (
+            package_name.to_string(),
+            SuiNumericalAddress::new(address.into(), SuiNumberFormat::Hex),
+        ),
+        (
+            "std".to_string(),
+            SuiNumericalAddress::parse_str("0x21").unwrap(),
+        ),
+        (
+            "sui".to_string(),
+            SuiNumericalAddress::parse_str("0x22").unwrap(),
+        ),
+    ]
+    .into_iter()
+    .collect();
+
+    // The bundle is used just to list the file names
+    let path = std::path::Path::new(sui_framework::DEFAULT_FRAMEWORK_PATH);
+    let stdlib = path.join("packages").join("move-stdlib");
+    let framework = path.join("packages").join("sui-framework");
+    let bundle = aptos_framework::ReleaseBundle::new(
+        vec![],
+        vec![
+            stdlib.to_string_lossy().clone().to_string(),
+            framework.to_string_lossy().clone().to_string(),
+        ],
+    );
+    println!("FILES: {:?}\n", bundle.files());
+
+    let base_dir = format!("src/tests/res/{package_name}").replace('_', "-");
+    let compiler = SuiCompiler::from_files(
+        None,
+        vec![format!("{base_dir}/sources/{package_name}.move")],
+        bundle
+            .files()
+            .context(format!("Failed to get {package_name} file names"))?,
+        named_address_mapping,
+    );
+
+    let mut config = PackageConfig::default();
+    config.edition = SuiEdition::E2024_BETA;
+    let (_, result) = compiler
+        .set_default_config(config)
+        .build()
+        .context(format!("Failed to compile {package_name}.move"))?;
+    let compiled_unit = result.unwrap().0.pop().unwrap().into_compiled_unit();
+    let bytes = compiled_unit.serialize();
     Ok(bytes)
 }

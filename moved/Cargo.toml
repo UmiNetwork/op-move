@@ -34,12 +34,17 @@ serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
 sui-framework.workspace = true
+sui-move-vm-types.workspace = true
+sui-move-natives-latest.workspace = true
+sui-move-vm-runtime.workspace = true
 sui-types.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
+triomphe.workspace = true
 
 [dev-dependencies]
 alloy.workspace = true
 anyhow.workspace = true
 move-compiler.workspace = true
+sui-move-compiler.workspace = true
 test-case.workspace = true

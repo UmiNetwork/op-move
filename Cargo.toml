@@ -60,10 +60,15 @@ serde_json = "1"
 sha2 = "0.10"
 sui-framework = { git = "https://github.com/MystenLabs/sui", tag = "testnet-v1.28.3" }
 sui-move-build = { git = "https://github.com/MystenLabs/sui", tag = "testnet-v1.28.3" }
+sui-move-compiler = { git = "https://github.com/MystenLabs/sui", tag = "testnet-v1.28.3", package = "move-compiler" }
+sui-move-vm-types = { git = "https://github.com/MystenLabs/sui", tag = "testnet-v1.28.3", package = "move-vm-types" }
+sui-move-natives-latest = { git = "https://github.com/MystenLabs/sui", tag = "testnet-v1.28.3" }
+sui-move-vm-runtime = { git = "https://github.com/MystenLabs/sui", tag = "testnet-v1.28.3", package = "move-vm-runtime" }
 sui-types = { git = "https://github.com/MystenLabs/sui", tag = "testnet-v1.28.3" }
 test-case = "3"
 thiserror = "1"
 tokio = { version = "1", features = ["full"] }
+triomphe = "0.1"
 warp = "0.3"
 warp-reverse-proxy = "1"
 
