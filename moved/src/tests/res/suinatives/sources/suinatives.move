@@ -1,4 +1,4 @@
-module 0x8fd379246834eac74b8419ffda202cf8051f7a03::natives {
+module 0x8fd379246834eac74b8419ffda202cf8051f7a03::suinatives {
     use 0x21::hash::sha3_256;
 
     /// Test out hashing native functions

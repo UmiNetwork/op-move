@@ -36,7 +36,7 @@ use {
     move_vm_types::gas::UnmeteredGasMeter,
     std::collections::BTreeSet,
     sui_move_compiler::{
-        editions::Edition as SuiEdition, shared::{NumberFormat as SuiNumberFormat, NumericalAddress as SuiNumericalAddress, PackageConfig}, Compiler as SuiCompiler
+        editions::{Edition as SuiEdition, Flavor}, shared::{NumberFormat as SuiNumberFormat, NumericalAddress as SuiNumericalAddress, PackageConfig}, Compiler as SuiCompiler
     },
 };
 
@@ -844,7 +844,7 @@ fn move_compile(package_name: &str, address: &AccountAddress) -> anyhow::Result<
 fn test_execute_sui_contract() {
     let genesis_config = GenesisConfig::default();
     let mut signer = Signer::new(&PRIVATE_KEY);
-    let (module_id, state) = deploy_sui_contract("sui-natives", &mut signer, &genesis_config);
+    let (module_id, state) = deploy_sui_contract("suinatives", &mut signer, &genesis_config);
     println!("SUI CONTRACT CALL");
 
     // Call entry function to run the internal native hashing methods
@@ -923,7 +923,6 @@ fn sui_move_compile(package_name: &str, address: &AccountAddress) -> anyhow::Res
             framework.to_string_lossy().clone().to_string(),
         ],
     );
-    println!("FILES: {:?}\n", bundle.files());
 
     let base_dir = format!("src/tests/res/{package_name}").replace('_', "-");
     let compiler = SuiCompiler::from_files(
@@ -937,6 +936,7 @@ fn sui_move_compile(package_name: &str, address: &AccountAddress) -> anyhow::Res
 
     let mut config = PackageConfig::default();
     config.edition = SuiEdition::E2024_BETA;
+    config.flavor = Flavor::Sui;
     let (_, result) = compiler
         .set_default_config(config)
         .build()
