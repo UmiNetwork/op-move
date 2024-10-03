@@ -30,12 +30,11 @@ use {
         session::Session,
     },
     move_vm_types::{
-        loaded_data::runtime_types::Type,
-        natives::function::NativeResult,
-        values::{VMValueCast, Value},
+        loaded_data::runtime_types::Type, natives::function::NativeResult, values::Value,
     },
     std::{collections::VecDeque, sync::Arc},
     sui_move_natives_latest::all_natives,
+    sui_move_vm_runtime::native_functions::NativeContext as SuiNativeContext,
     sui_move_vm_types::{
         loaded_data::runtime_types::{CachedTypeIndex, Type as SuiType},
         values::Value as SuiValue,
@@ -93,7 +92,7 @@ fn convert_value(
 }
 
 pub fn create_move_vm() -> crate::Result<MoveVM> {
-    let aptos_natives = aptos_natives(
+    let natives = aptos_natives(
         LATEST_GAS_FEATURE_VERSION,
         NativeGasParameters::zeros(),
         MiscGasParameters::zeros(),
@@ -119,20 +118,37 @@ pub fn create_move_vm() -> crate::Result<MoveVM> {
                         println!("TYPE: {:?}", b);
                         println!("VALUE: {:?}", c);
                         // Convert the native function inputs to Sui variants
-                        let types = b.into_iter().map(convert_type).collect::<Vec<_>>();
-                        let values = c.into_iter().map(convert_value).collect::<Vec<_>>();
+                        // let types = b.into_iter().map(convert_type).collect::<Vec<_>>();
+                        // let values = c.into_iter().map(convert_value).collect::<Vec<_>>();
+
+                        let natives = aptos_natives(
+                            LATEST_GAS_FEATURE_VERSION,
+                            NativeGasParameters::zeros(),
+                            MiscGasParameters::zeros(),
+                            TimedFeaturesBuilder::enable_all().build(),
+                            Features::default(),
+                        );
+                        let hashing = natives.iter().find(|n| {
+                            n.0 == AccountAddress::ONE
+                                && n.1 == Identifier::from_utf8("hash".as_bytes().to_vec()).unwrap()
+                                && n.2
+                                    == Identifier::from_utf8("sha3_256".as_bytes().to_vec())
+                                        .unwrap()
+                        });
 
                         // Call the Sui native function
-                        Err(PartialVMError::new(
-                            aptos_types::vm_status::StatusCode::ABORTED,
-                        ))
+                        hashing.unwrap().3(a, b, c)
+
+                        // Err(PartialVMError::new(
+                        //     aptos_types::vm_status::StatusCode::ABORTED,
+                        // ))
                     },
                 ) as NativeFunction,
             )
         })
         .collect::<Vec<_>>();
 
-    let natives: Vec<_> = aptos_natives.into_iter().chain(sui_natives.into_iter()).collect();
+    let natives: Vec<_> = natives.into_iter().chain(sui_natives.into_iter()).collect();
     let vm = MoveVM::new(natives)?;
     Ok(vm)
 }
