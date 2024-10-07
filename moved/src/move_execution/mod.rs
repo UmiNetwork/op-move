@@ -22,7 +22,7 @@ use {
     canonical::execute_canonical_transaction,
     deposited::execute_deposited_transaction,
     move_binary_format::errors::{PartialVMError, PartialVMResult},
-    move_core_types::{identifier::Identifier, resolver::MoveResolver},
+    move_core_types::{gas_algebra::GasQuantity, identifier::Identifier, resolver::MoveResolver},
     move_vm_runtime::{
         move_vm::MoveVM,
         native_extensions::NativeContextExtensions,
@@ -32,13 +32,14 @@ use {
     move_vm_types::{
         loaded_data::runtime_types::Type, natives::function::NativeResult, values::Value,
     },
-    std::{collections::VecDeque, sync::Arc},
+    smallvec::SmallVec,
+    std::{collections::VecDeque, mem::transmute, sync::Arc},
     sui_move_natives_latest::all_natives,
-    sui_move_vm_runtime::native_functions::NativeContext as SuiNativeContext,
     sui_move_vm_types::{
         loaded_data::runtime_types::{CachedTypeIndex, Type as SuiType},
         values::Value as SuiValue,
     },
+    sui_move_vm_runtime::native_functions::NativeContext as SuiNativeContext,
     triomphe::Arc as TriompheArc,
 };
 
@@ -82,13 +83,8 @@ fn convert_type(t: Type) -> SuiType {
     }
 }
 
-fn convert_value(
-    v: Value,
-) -> std::result::Result<SuiValue, move_binary_format::errors::PartialVMError> {
-    println!("VALUE: {:?}", v.to_string());
-    Err(PartialVMError::new(
-        aptos_types::vm_status::StatusCode::ABORTED,
-    ))
+fn convert_value(v: Value) -> SuiValue {
+    unsafe { transmute(v) }
 }
 
 pub fn create_move_vm() -> crate::Result<MoveVM> {
@@ -105,12 +101,13 @@ pub fn create_move_vm() -> crate::Result<MoveVM> {
         .map(|n| {
             let mut address = n.0.into_bytes();
             address[AccountAddress::LENGTH - 1] += 0x20;
+            let func = n.3;
             (
                 AccountAddress::new(address),
                 Identifier::from_utf8(n.1.into_bytes()).expect("Module identifier should exist"),
                 Identifier::from_utf8(n.2.into_bytes()).expect("Function identifier should exist"),
                 Arc::new(
-                    |a: &mut NativeContext,
+                    move |a: &mut NativeContext,
                      b: Vec<Type>,
                      c: VecDeque<Value>|
                      -> PartialVMResult<NativeResult> {
@@ -118,30 +115,20 @@ pub fn create_move_vm() -> crate::Result<MoveVM> {
                         println!("TYPE: {:?}", b);
                         println!("VALUE: {:?}", c);
                         // Convert the native function inputs to Sui variants
-                        // let types = b.into_iter().map(convert_type).collect::<Vec<_>>();
-                        // let values = c.into_iter().map(convert_value).collect::<Vec<_>>();
+                        let types = b.into_iter().map(convert_type).collect::<Vec<_>>();
+                        let values = c.into_iter().map(convert_value).collect::<VecDeque<_>>();
 
-                        let natives = aptos_natives(
-                            LATEST_GAS_FEATURE_VERSION,
-                            NativeGasParameters::zeros(),
-                            MiscGasParameters::zeros(),
-                            TimedFeaturesBuilder::enable_all().build(),
-                            Features::default(),
-                        );
-                        let hashing = natives.iter().find(|n| {
-                            n.0 == AccountAddress::ONE
-                                && n.1 == Identifier::from_utf8("hash".as_bytes().to_vec()).unwrap()
-                                && n.2
-                                    == Identifier::from_utf8("sha3_256".as_bytes().to_vec())
-                                        .unwrap()
-                        });
+                        // We need to convert native context correctly. Transmute will have memory issues.
+                        let context = unsafe { transmute(a) };
 
                         // Call the Sui native function
-                        hashing.unwrap().3(a, b, c)
-
-                        // Err(PartialVMError::new(
-                        //     aptos_types::vm_status::StatusCode::ABORTED,
-                        // ))
+                        let result = func(context, types, values);
+                        match result {
+                            Ok(_s) => Ok(NativeResult::ok(GasQuantity::one(), SmallVec::new())),
+                            Err(_e) => Err(PartialVMError::new(
+                                aptos_types::vm_status::StatusCode::ABORTED,
+                            ))
+                        }
                     },
                 ) as NativeFunction,
             )
