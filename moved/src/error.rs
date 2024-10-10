@@ -153,6 +153,8 @@ pub enum NonceChecking {
 pub enum EthToken {
     #[error("Function mint always succeeds")]
     MintAlwaysSucceeds,
+    #[error("Function transfer always succeeds")]
+    TransferAlwaysSucceeds,
     #[error("Function get_balance always succeeds")]
     GetBalanceAlwaysSucceeds,
     #[error("Function get_balance has a return value")]
