@@ -4,7 +4,7 @@ use {
         genesis::{config::CHAIN_ID, init_state},
         primitives::{ToMoveAddress, B256, U256, U64},
         storage::{InMemoryState, State},
-        tests::{signer::Signer, EVM_ADDRESS, PRIVATE_KEY},
+        tests::{signer::Signer, ALT_EVM_ADDRESS, ALT_PRIVATE_KEY, EVM_ADDRESS, PRIVATE_KEY},
         types::transactions::{DepositedTx, ScriptOrModule},
     },
     alloy::network::TxSignerSync,
@@ -12,7 +12,7 @@ use {
     alloy_primitives::{hex, keccak256, FixedBytes, TxKind},
     alloy_rlp::Encodable,
     anyhow::Context,
-    aptos_types::transaction::{EntryFunction, Module},
+    aptos_types::transaction::{EntryFunction, Module, Script, TransactionArgument},
     move_binary_format::{
         file_format::{
             AbilitySet, FieldDefinition, IdentifierIndex, ModuleHandleIndex, SignatureToken,
@@ -137,6 +137,53 @@ fn test_execute_counter_contract() {
     )
     .unwrap();
     assert_eq!(resource, initial_value + 1);
+}
+
+#[test]
+fn test_execute_counter_script() {
+    let genesis_config = GenesisConfig::default();
+    let module_name = "counter";
+    let mut signer = Signer::new(&PRIVATE_KEY);
+    let (module_id, mut state) = deploy_contract(module_name, &mut signer, &genesis_config);
+
+    let counter_value = 13;
+    let script_code = ScriptCompileJob::new("counter_script", &["counter"])
+        .compile()
+        .unwrap();
+    let script = Script::new(
+        script_code,
+        Vec::new(),
+        vec![TransactionArgument::U64(counter_value)],
+    );
+    let tx_data = bcs::to_bytes(&ScriptOrModule::Script(script)).unwrap();
+    // We use a different signer than who deployed the contract because the script should work
+    // with any signer.
+    let mut script_signer = Signer::new(&ALT_PRIVATE_KEY);
+    let (tx_hash, signed_tx) = create_transaction(&mut script_signer, TxKind::Create, tx_data);
+
+    let outcome =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
+    state.apply(outcome.changes).unwrap();
+
+    // Transaction should succeed
+    outcome.vm_outcome.unwrap();
+
+    // After the transaction there should be a Counter at the script signer's address
+    let struct_tag = StructTag {
+        address: module_id.address,
+        module: Identifier::new(module_name).unwrap(),
+        name: Identifier::new("Counter").unwrap(),
+        type_args: Vec::new(),
+    };
+    let resource: u64 = bcs::from_bytes(
+        &state
+            .resolver()
+            .get_resource(&ALT_EVM_ADDRESS.to_move_address(), &struct_tag)
+            .unwrap()
+            .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(resource, counter_value + 1);
 }
 
 #[test]
@@ -886,5 +933,50 @@ impl CompileJob for ModuleCompileJob {
 
     fn named_addresses(&self) -> BTreeMap<String, NumericalAddress> {
         self.named_addresses_inner.clone()
+    }
+}
+
+struct ScriptCompileJob {
+    targets_inner: Vec<String>,
+    deps_inner: Vec<String>,
+}
+
+impl ScriptCompileJob {
+    pub fn new(script_name: &str, local_deps: &[&str]) -> Self {
+        let base_dir = format!("src/tests/res/{script_name}").replace('_', "-");
+        let targets = vec![format!("{base_dir}/sources/{script_name}.move")];
+
+        let local_deps = local_deps.iter().map(|package_name| {
+            let base_dir = format!("src/tests/res/{package_name}").replace('_', "-");
+            format!("{base_dir}/sources/{package_name}.move")
+        });
+        let deps = {
+            let mut framework = aptos_framework::testnet_release_bundle()
+                .files()
+                .expect("Must be able to find Aptos Framework files");
+
+            local_deps.for_each(|d| framework.push(d));
+
+            framework
+        };
+
+        Self {
+            targets_inner: targets,
+            deps_inner: deps,
+        }
+    }
+}
+
+impl CompileJob for ScriptCompileJob {
+    fn targets(&self) -> Vec<String> {
+        self.targets_inner.clone()
+    }
+
+    fn deps(&self) -> Vec<String> {
+        self.deps_inner.clone()
+    }
+
+    fn named_addresses(&self) -> BTreeMap<String, NumericalAddress> {
+        aptos_framework::named_addresses().clone()
     }
 }
