@@ -46,6 +46,10 @@ impl Error {
     pub const fn entry_fn_invariant_violation(invariant: EntryFunctionValue) -> Self {
         Self::InvariantViolation(InvariantViolation::EntryFunctionValue(invariant))
     }
+
+    pub const fn script_tx_invariant_violation(invariant: ScriptTransaction) -> Self {
+        Self::InvariantViolation(InvariantViolation::ScriptTransaction(invariant))
+    }
 }
 
 impl<T> From<T> for Error
@@ -125,6 +129,8 @@ pub enum InvariantViolation {
     EthToken(EthToken),
     #[error("Entry function type check invariant violation: {0}")]
     EntryFunctionValue(EntryFunctionValue),
+    #[error("Script transaction invariant violation: {0}")]
+    ScriptTransaction(ScriptTransaction),
 }
 
 #[derive(Debug, Error)]
@@ -183,6 +189,12 @@ pub enum EntryFunctionValue {
     ObjectCoreTypeExists,
     #[error("Object parameter type must be defined")]
     ObjectInnerTypeExists,
+}
+
+#[derive(Debug, Error)]
+pub enum ScriptTransaction {
+    #[error("Script arguments must serialize")]
+    ArgsMustSerialize,
 }
 
 #[cfg(test)]

@@ -4,7 +4,10 @@ use {
     alloy_eips::eip2930::AccessList,
     alloy_primitives::{Address, Bytes, Keccak256, Log, LogData, TxKind, B256, U256, U64},
     alloy_rlp::{Buf, Decodable, Encodable, RlpDecodable, RlpEncodable},
-    aptos_types::contract_event::ContractEvent,
+    aptos_types::{
+        contract_event::ContractEvent,
+        transaction::{Module, Script},
+    },
     move_core_types::{effects::ChangeSet, language_storage::TypeTag},
     serde::{Deserialize, Serialize},
 };
@@ -212,6 +215,12 @@ impl TryFrom<Signed<TxLegacy>> for NormalizedEthTransaction {
             access_list: AccessList(Vec::new()),
         })
     }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Deserialize, Serialize)]
+pub enum ScriptOrModule {
+    Script(Script),
+    Module(Module),
 }
 
 pub(crate) trait ToLog {

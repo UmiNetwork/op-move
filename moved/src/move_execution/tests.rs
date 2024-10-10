@@ -5,14 +5,14 @@ use {
         primitives::{ToMoveAddress, B256, U256, U64},
         storage::{InMemoryState, State},
         tests::{signer::Signer, EVM_ADDRESS, PRIVATE_KEY},
-        types::transactions::DepositedTx,
+        types::transactions::{DepositedTx, ScriptOrModule},
     },
     alloy::network::TxSignerSync,
     alloy_consensus::{transaction::TxEip1559, SignableTransaction, TxEnvelope},
     alloy_primitives::{hex, keccak256, FixedBytes, TxKind},
     alloy_rlp::Encodable,
     anyhow::Context,
-    aptos_types::transaction::EntryFunction,
+    aptos_types::transaction::{EntryFunction, Module},
     move_binary_format::{
         file_format::{
             AbilitySet, FieldDefinition, IdentifierIndex, ModuleHandleIndex, SignatureToken,
@@ -611,7 +611,8 @@ fn test_recursive_struct() {
     let mut signer = Signer::new(&PRIVATE_KEY);
     // Deploy some other contract to ensure the state is properly initialized.
     let (_, state) = deploy_contract("natives", &mut signer, &genesis_config);
-    let (tx_hash, signed_tx) = create_transaction(&mut signer, TxKind::Create, module_bytes);
+    let tx_data = module_bytes_to_tx_data(module_bytes);
+    let (tx_hash, signed_tx) = create_transaction(&mut signer, TxKind::Create, tx_data);
     let outcome =
         execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
     let err = outcome.vm_outcome.unwrap_err();
@@ -747,7 +748,8 @@ fn test_deeply_nested_type() {
     let mut signer = Signer::new(&PRIVATE_KEY);
     // Deploy some other contract to ensure the state is properly initialized.
     let (_, state) = deploy_contract("natives", &mut signer, &genesis_config);
-    let (tx_hash, signed_tx) = create_transaction(&mut signer, TxKind::Create, module_bytes);
+    let tx_data = module_bytes_to_tx_data(module_bytes);
+    let (tx_hash, signed_tx) = create_transaction(&mut signer, TxKind::Create, tx_data);
     let outcome =
         execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
     // The deployment fails because the Aptos code refuses to deserialize
@@ -770,7 +772,8 @@ fn deploy_contract(
     let move_address = EVM_ADDRESS.to_move_address();
 
     let module_bytes = move_compile(module_name, &move_address).unwrap();
-    let (tx_hash, signed_tx) = create_transaction(signer, TxKind::Create, module_bytes);
+    let tx_data = module_bytes_to_tx_data(module_bytes);
+    let (tx_hash, signed_tx) = create_transaction(signer, TxKind::Create, tx_data);
 
     let outcome =
         execute_transaction(&signed_tx, &tx_hash, state.resolver(), genesis_config).unwrap();
@@ -783,6 +786,11 @@ fn deploy_contract(
         "Code should be deployed"
     );
     (module_id, state)
+}
+
+// Serialize module bytes to be used as a transaction payload
+fn module_bytes_to_tx_data(module_bytes: Vec<u8>) -> Vec<u8> {
+    bcs::to_bytes(&ScriptOrModule::Module(Module::new(module_bytes))).unwrap()
 }
 
 fn create_transaction(
