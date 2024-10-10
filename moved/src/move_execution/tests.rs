@@ -34,7 +34,7 @@ use {
     },
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
     move_vm_types::gas::UnmeteredGasMeter,
-    std::collections::BTreeSet,
+    std::collections::{BTreeMap, BTreeSet},
 };
 
 #[test]
@@ -571,7 +571,9 @@ fn test_recursive_struct() {
     // Load a real module
     let module_name = "signer_struct";
     let move_address = EVM_ADDRESS.to_move_address();
-    let mut module_bytes = move_compile(module_name, &move_address).unwrap();
+    let mut module_bytes = ModuleCompileJob::new(module_name, &move_address)
+        .compile()
+        .unwrap();
     let mut compiled_module = CompiledModule::deserialize(&module_bytes).unwrap();
 
     // Modify to include a recursive struct (it has one field which has type
@@ -631,7 +633,9 @@ fn test_deeply_nested_type() {
     // Load a real module
     let module_name = "signer_struct";
     let move_address = EVM_ADDRESS.to_move_address();
-    let mut module_bytes = move_compile(module_name, &move_address).unwrap();
+    let mut module_bytes = ModuleCompileJob::new(module_name, &move_address)
+        .compile()
+        .unwrap();
     let mut compiled_module = CompiledModule::deserialize(&module_bytes).unwrap();
 
     // Define a procedure which wraps the argument to the function `main` in an
@@ -771,7 +775,9 @@ fn deploy_contract(
 
     let move_address = EVM_ADDRESS.to_move_address();
 
-    let module_bytes = move_compile(module_name, &move_address).unwrap();
+    let module_bytes = ModuleCompileJob::new(module_name, &move_address)
+        .compile()
+        .unwrap();
     let tx_data = module_bytes_to_tx_data(module_bytes);
     let (tx_hash, signed_tx) = create_transaction(signer, TxKind::Create, tx_data);
 
@@ -816,31 +822,69 @@ fn create_transaction(
     (tx_hash, ExtendedTxEnvelope::Canonical(signed_tx))
 }
 
-fn move_compile(package_name: &str, address: &AccountAddress) -> anyhow::Result<Vec<u8>> {
-    let known_attributes = BTreeSet::new();
-    let named_address_mapping: std::collections::BTreeMap<_, _> = [(
-        package_name.to_string(),
-        NumericalAddress::new(address.into(), NumberFormat::Hex),
-    )]
-    .into_iter()
-    .chain(aptos_framework::named_addresses().clone())
-    .collect();
+trait CompileJob {
+    fn targets(&self) -> Vec<String>;
+    fn deps(&self) -> Vec<String>;
+    fn named_addresses(&self) -> BTreeMap<String, NumericalAddress>;
 
-    let base_dir = format!("src/tests/res/{package_name}").replace('_', "-");
-    let compiler = Compiler::from_files(
-        vec![format!("{base_dir}/sources/{package_name}.move")],
-        // Project needs access to the framework source files to compile
+    fn known_attributes(&self) -> BTreeSet<String> {
+        BTreeSet::new()
+    }
+
+    fn compile(&self) -> anyhow::Result<Vec<u8>> {
+        let targets = self.targets();
+        let error_context = format!("Failed to compile {targets:?}");
+        let compiler = Compiler::from_files(
+            targets,
+            self.deps(),
+            self.named_addresses(),
+            Flags::empty(),
+            &self.known_attributes(),
+        );
+        let (_, result) = compiler.build().context(error_context)?;
+        let compiled_unit = result.unwrap().0.pop().unwrap().into_compiled_unit();
+        let bytes = compiled_unit.serialize(None);
+        Ok(bytes)
+    }
+}
+
+struct ModuleCompileJob {
+    targets_inner: Vec<String>,
+    named_addresses_inner: BTreeMap<String, NumericalAddress>,
+}
+
+impl ModuleCompileJob {
+    pub fn new(package_name: &str, address: &AccountAddress) -> Self {
+        let named_address_mapping: std::collections::BTreeMap<_, _> = [(
+            package_name.to_string(),
+            NumericalAddress::new(address.into(), NumberFormat::Hex),
+        )]
+        .into_iter()
+        .chain(aptos_framework::named_addresses().clone())
+        .collect();
+
+        let base_dir = format!("src/tests/res/{package_name}").replace('_', "-");
+        let targets = vec![format!("{base_dir}/sources/{package_name}.move")];
+
+        Self {
+            targets_inner: targets,
+            named_addresses_inner: named_address_mapping,
+        }
+    }
+}
+
+impl CompileJob for ModuleCompileJob {
+    fn targets(&self) -> Vec<String> {
+        self.targets_inner.clone()
+    }
+
+    fn deps(&self) -> Vec<String> {
         aptos_framework::testnet_release_bundle()
             .files()
-            .context(format!("Failed to compile {package_name}.move"))?,
-        named_address_mapping,
-        Flags::empty(),
-        &known_attributes,
-    );
-    let (_, result) = compiler
-        .build()
-        .context(format!("Failed to compile {package_name}.move"))?;
-    let compiled_unit = result.unwrap().0.pop().unwrap().into_compiled_unit();
-    let bytes = compiled_unit.serialize(None);
-    Ok(bytes)
+            .expect("Must be able to find Aptos Framework files")
+    }
+
+    fn named_addresses(&self) -> BTreeMap<String, NumericalAddress> {
+        self.named_addresses_inner.clone()
+    }
 }
