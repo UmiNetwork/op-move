@@ -43,9 +43,9 @@ pub(super) fn execute_canonical_transaction(
 
     // TODO: How to model script-type transactions?
     let maybe_entry_fn: Option<EntryFunction> = match tx.to {
-        TxKind::Call(_to) => {
+        TxKind::Call(to) => {
             let entry_fn: EntryFunction = bcs::from_bytes(&tx.data)?;
-            if entry_fn.module().address() != &sender_move_address {
+            if entry_fn.module().address() != &to.to_move_address() {
                 Err(InvalidTransactionCause::InvalidDestination)?
             }
             Some(entry_fn)

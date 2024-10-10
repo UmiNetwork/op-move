@@ -438,6 +438,37 @@ fn test_transaction_replay_is_forbidden() {
 }
 
 #[test]
+fn test_transaction_incorrect_destination() {
+    // If a transaction uses an EntryFunction to call a module
+    // then that EntryFunction's address must match the to field
+    // of the user's transaction.
+
+    let genesis_config = GenesisConfig::default();
+
+    // Deploy a contract
+    let mut signer = Signer::new(&PRIVATE_KEY);
+    let (module_id, state) = deploy_contract("natives", &mut signer, &genesis_config);
+
+    // Try to call a function of that contract
+    let entry_fn = EntryFunction::new(
+        module_id,
+        Identifier::new("hashing").unwrap(),
+        Vec::new(),
+        vec![],
+    );
+    let (tx_hash, signed_tx) = create_transaction(
+        &mut signer,
+        TxKind::Call(Default::default()), // Wrong address!
+        bcs::to_bytes(&entry_fn).unwrap(),
+    );
+
+    // Send the same transaction again; this fails with a nonce error
+    let err =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap_err();
+    assert_eq!(err.to_string(), "tx.to must match payload module address");
+}
+
+#[test]
 fn test_transaction_chain_id() {
     let genesis_config = GenesisConfig::default();
 
