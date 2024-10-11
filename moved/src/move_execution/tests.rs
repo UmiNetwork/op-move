@@ -462,7 +462,6 @@ fn test_transaction_incorrect_destination() {
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    // Send the same transaction again; this fails with a nonce error
     let err =
         execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap_err();
     assert_eq!(err.to_string(), "tx.to must match payload module address");
