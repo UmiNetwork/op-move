@@ -1,8 +1,10 @@
 use {
     super::tag_validation::{validate_entry_type_tag, validate_entry_value},
-    crate::InvalidTransactionCause,
-    aptos_types::transaction::{EntryFunction, Module},
-    move_core_types::account_address::AccountAddress,
+    crate::{error::Error, InvalidTransactionCause, ScriptTransaction},
+    aptos_types::transaction::{EntryFunction, Module, Script},
+    move_core_types::{
+        account_address::AccountAddress, language_storage::TypeTag, value::MoveValue,
+    },
     move_vm_runtime::{module_traversal::TraversalContext, session::Session},
     move_vm_types::{gas::GasMeter, loaded_data::runtime_types::Type, values::Value},
 };
@@ -51,6 +53,58 @@ pub(super) fn execute_entry_function<G: GasMeter>(
         &module_id,
         &function_name,
         ty_args,
+        args,
+        gas_meter,
+        traversal_context,
+    )?;
+    Ok(())
+}
+
+pub(super) fn execute_script<G: GasMeter>(
+    script: Script,
+    signer: &AccountAddress,
+    session: &mut Session,
+    traversal_context: &mut TraversalContext,
+    gas_meter: &mut G,
+) -> crate::Result<()> {
+    let function = session.load_script(script.code(), script.ty_args().to_vec())?;
+    let serialized_signer = MoveValue::Signer(*signer).simple_serialize().ok_or(
+        Error::script_tx_invariant_violation(ScriptTransaction::ArgsMustSerialize),
+    )?;
+    let args = {
+        let mut result = Vec::with_capacity(function.param_tys.len());
+        let mut given_args = script.args().iter();
+        for ty in &function.param_tys {
+            let ty = strip_reference(ty)?;
+            let tag = session.get_type_tag(ty)?;
+
+            // Script arguments cannot encode signers so we implicitly
+            // insert the known signer to all script parameters that take
+            // a Signer type.
+            if let TypeTag::Signer = tag {
+                result.push(serialized_signer.clone());
+                continue;
+            }
+
+            let arg = given_args
+                .next()
+                .ok_or(InvalidTransactionCause::MismatchedArgumentCount)?;
+            let serialized_value = MoveValue::from(arg.clone()).simple_serialize().ok_or(
+                Error::script_tx_invariant_violation(ScriptTransaction::ArgsMustSerialize),
+            )?;
+            result.push(serialized_value);
+        }
+
+        // All the args should have been used up.
+        if given_args.next().is_some() {
+            return Err(InvalidTransactionCause::MismatchedArgumentCount.into());
+        }
+
+        result
+    };
+    session.execute_script(
+        script.code(),
+        script.ty_args().to_vec(),
         args,
         gas_meter,
         traversal_context,

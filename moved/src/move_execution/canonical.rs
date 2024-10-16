@@ -3,7 +3,7 @@ use {
         genesis::config::GenesisConfig,
         move_execution::{
             create_move_vm, create_vm_session,
-            execute::{deploy_module, execute_entry_function},
+            execute::{deploy_module, execute_entry_function, execute_script},
             gas::{new_gas_meter, total_gas_used},
             nonces::check_nonce,
             Logs,
@@ -11,7 +11,7 @@ use {
         primitives::{ToMoveAddress, B256},
         types::{
             session_id::SessionId,
-            transactions::{NormalizedEthTransaction, TransactionExecutionOutcome},
+            transactions::{NormalizedEthTransaction, ScriptOrModule, TransactionExecutionOutcome},
         },
         Error::{InvalidTransaction, User},
         InvalidTransactionCause,
@@ -20,7 +20,7 @@ use {
     alloy_primitives::TxKind,
     aptos_gas_meter::AptosGasMeter,
     aptos_table_natives::TableResolver,
-    aptos_types::transaction::{EntryFunction, Module},
+    aptos_types::transaction::EntryFunction,
     move_binary_format::errors::PartialVMError,
     move_core_types::resolver::MoveResolver,
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
@@ -41,7 +41,6 @@ pub(super) fn execute_canonical_transaction(
     let tx = NormalizedEthTransaction::try_from(tx.clone())?;
     let sender_move_address = tx.signer.to_move_address();
 
-    // TODO: How to model script-type transactions?
     let maybe_entry_fn: Option<EntryFunction> = match tx.to {
         TxKind::Call(to) => {
             let entry_fn: EntryFunction = bcs::from_bytes(&tx.data)?;
@@ -90,14 +89,20 @@ pub(super) fn execute_canonical_transaction(
             &mut gas_meter,
         ),
         None => {
-            // Assume EVM create type transactions are module deployments in Move
-            let module = Module::new(tx.data.to_vec());
-            deploy_module(
-                module,
-                tx.signer.to_move_address(),
-                &mut session,
-                &mut gas_meter,
-            )
+            // Assume EVM create type transactions are either scripts or module deployments
+            let script_or_module: ScriptOrModule = bcs::from_bytes(&tx.data)?;
+            match script_or_module {
+                ScriptOrModule::Script(script) => execute_script(
+                    script,
+                    &sender_move_address,
+                    &mut session,
+                    &mut traversal_context,
+                    &mut gas_meter,
+                ),
+                ScriptOrModule::Module(module) => {
+                    deploy_module(module, sender_move_address, &mut session, &mut gas_meter)
+                }
+            }
         }
     };
 

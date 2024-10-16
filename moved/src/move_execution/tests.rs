@@ -4,15 +4,15 @@ use {
         genesis::{config::CHAIN_ID, init_state},
         primitives::{ToMoveAddress, B256, U256, U64},
         storage::{InMemoryState, State},
-        tests::{signer::Signer, EVM_ADDRESS, PRIVATE_KEY},
-        types::transactions::DepositedTx,
+        tests::{signer::Signer, ALT_EVM_ADDRESS, ALT_PRIVATE_KEY, EVM_ADDRESS, PRIVATE_KEY},
+        types::transactions::{DepositedTx, ScriptOrModule},
     },
     alloy::network::TxSignerSync,
     alloy_consensus::{transaction::TxEip1559, SignableTransaction, TxEnvelope},
     alloy_primitives::{hex, keccak256, FixedBytes, TxKind},
     alloy_rlp::Encodable,
     anyhow::Context,
-    aptos_types::transaction::EntryFunction,
+    aptos_types::transaction::{EntryFunction, Module, Script, TransactionArgument},
     move_binary_format::{
         file_format::{
             AbilitySet, FieldDefinition, IdentifierIndex, ModuleHandleIndex, SignatureToken,
@@ -34,7 +34,7 @@ use {
     },
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
     move_vm_types::gas::UnmeteredGasMeter,
-    std::collections::BTreeSet,
+    std::collections::{BTreeMap, BTreeSet},
 };
 
 #[test]
@@ -137,6 +137,53 @@ fn test_execute_counter_contract() {
     )
     .unwrap();
     assert_eq!(resource, initial_value + 1);
+}
+
+#[test]
+fn test_execute_counter_script() {
+    let genesis_config = GenesisConfig::default();
+    let module_name = "counter";
+    let mut signer = Signer::new(&PRIVATE_KEY);
+    let (module_id, mut state) = deploy_contract(module_name, &mut signer, &genesis_config);
+
+    let counter_value = 13;
+    let script_code = ScriptCompileJob::new("counter_script", &["counter"])
+        .compile()
+        .unwrap();
+    let script = Script::new(
+        script_code,
+        Vec::new(),
+        vec![TransactionArgument::U64(counter_value)],
+    );
+    let tx_data = bcs::to_bytes(&ScriptOrModule::Script(script)).unwrap();
+    // We use a different signer than who deployed the contract because the script should work
+    // with any signer.
+    let mut script_signer = Signer::new(&ALT_PRIVATE_KEY);
+    let (tx_hash, signed_tx) = create_transaction(&mut script_signer, TxKind::Create, tx_data);
+
+    let outcome =
+        execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
+    state.apply(outcome.changes).unwrap();
+
+    // Transaction should succeed
+    outcome.vm_outcome.unwrap();
+
+    // After the transaction there should be a Counter at the script signer's address
+    let struct_tag = StructTag {
+        address: module_id.address,
+        module: Identifier::new(module_name).unwrap(),
+        name: Identifier::new("Counter").unwrap(),
+        type_args: Vec::new(),
+    };
+    let resource: u64 = bcs::from_bytes(
+        &state
+            .resolver()
+            .get_resource(&ALT_EVM_ADDRESS.to_move_address(), &struct_tag)
+            .unwrap()
+            .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(resource, counter_value + 1);
 }
 
 #[test]
@@ -601,7 +648,9 @@ fn test_recursive_struct() {
     // Load a real module
     let module_name = "signer_struct";
     let move_address = EVM_ADDRESS.to_move_address();
-    let mut module_bytes = move_compile(module_name, &move_address).unwrap();
+    let mut module_bytes = ModuleCompileJob::new(module_name, &move_address)
+        .compile()
+        .unwrap();
     let mut compiled_module = CompiledModule::deserialize(&module_bytes).unwrap();
 
     // Modify to include a recursive struct (it has one field which has type
@@ -641,7 +690,8 @@ fn test_recursive_struct() {
     let mut signer = Signer::new(&PRIVATE_KEY);
     // Deploy some other contract to ensure the state is properly initialized.
     let (_, state) = deploy_contract("natives", &mut signer, &genesis_config);
-    let (tx_hash, signed_tx) = create_transaction(&mut signer, TxKind::Create, module_bytes);
+    let tx_data = module_bytes_to_tx_data(module_bytes);
+    let (tx_hash, signed_tx) = create_transaction(&mut signer, TxKind::Create, tx_data);
     let outcome =
         execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
     let err = outcome.vm_outcome.unwrap_err();
@@ -660,7 +710,9 @@ fn test_deeply_nested_type() {
     // Load a real module
     let module_name = "signer_struct";
     let move_address = EVM_ADDRESS.to_move_address();
-    let mut module_bytes = move_compile(module_name, &move_address).unwrap();
+    let mut module_bytes = ModuleCompileJob::new(module_name, &move_address)
+        .compile()
+        .unwrap();
     let mut compiled_module = CompiledModule::deserialize(&module_bytes).unwrap();
 
     // Define a procedure which wraps the argument to the function `main` in an
@@ -777,7 +829,8 @@ fn test_deeply_nested_type() {
     let mut signer = Signer::new(&PRIVATE_KEY);
     // Deploy some other contract to ensure the state is properly initialized.
     let (_, state) = deploy_contract("natives", &mut signer, &genesis_config);
-    let (tx_hash, signed_tx) = create_transaction(&mut signer, TxKind::Create, module_bytes);
+    let tx_data = module_bytes_to_tx_data(module_bytes);
+    let (tx_hash, signed_tx) = create_transaction(&mut signer, TxKind::Create, tx_data);
     let outcome =
         execute_transaction(&signed_tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
     // The deployment fails because the Aptos code refuses to deserialize
@@ -799,8 +852,11 @@ fn deploy_contract(
 
     let move_address = EVM_ADDRESS.to_move_address();
 
-    let module_bytes = move_compile(module_name, &move_address).unwrap();
-    let (tx_hash, signed_tx) = create_transaction(signer, TxKind::Create, module_bytes);
+    let module_bytes = ModuleCompileJob::new(module_name, &move_address)
+        .compile()
+        .unwrap();
+    let tx_data = module_bytes_to_tx_data(module_bytes);
+    let (tx_hash, signed_tx) = create_transaction(signer, TxKind::Create, tx_data);
 
     let outcome =
         execute_transaction(&signed_tx, &tx_hash, state.resolver(), genesis_config).unwrap();
@@ -813,6 +869,11 @@ fn deploy_contract(
         "Code should be deployed"
     );
     (module_id, state)
+}
+
+// Serialize module bytes to be used as a transaction payload
+fn module_bytes_to_tx_data(module_bytes: Vec<u8>) -> Vec<u8> {
+    bcs::to_bytes(&ScriptOrModule::Module(Module::new(module_bytes))).unwrap()
 }
 
 fn create_transaction(
@@ -838,31 +899,114 @@ fn create_transaction(
     (tx_hash, ExtendedTxEnvelope::Canonical(signed_tx))
 }
 
-fn move_compile(package_name: &str, address: &AccountAddress) -> anyhow::Result<Vec<u8>> {
-    let known_attributes = BTreeSet::new();
-    let named_address_mapping: std::collections::BTreeMap<_, _> = [(
-        package_name.to_string(),
-        NumericalAddress::new(address.into(), NumberFormat::Hex),
-    )]
-    .into_iter()
-    .chain(aptos_framework::named_addresses().clone())
-    .collect();
+trait CompileJob {
+    fn targets(&self) -> Vec<String>;
+    fn deps(&self) -> Vec<String>;
+    fn named_addresses(&self) -> BTreeMap<String, NumericalAddress>;
 
-    let base_dir = format!("src/tests/res/{package_name}").replace('_', "-");
-    let compiler = Compiler::from_files(
-        vec![format!("{base_dir}/sources/{package_name}.move")],
-        // Project needs access to the framework source files to compile
+    fn known_attributes(&self) -> BTreeSet<String> {
+        BTreeSet::new()
+    }
+
+    fn compile(&self) -> anyhow::Result<Vec<u8>> {
+        let targets = self.targets();
+        let error_context = format!("Failed to compile {targets:?}");
+        let compiler = Compiler::from_files(
+            targets,
+            self.deps(),
+            self.named_addresses(),
+            Flags::empty(),
+            &self.known_attributes(),
+        );
+        let (_, result) = compiler.build().context(error_context)?;
+        let compiled_unit = result.unwrap().0.pop().unwrap().into_compiled_unit();
+        let bytes = compiled_unit.serialize(None);
+        Ok(bytes)
+    }
+}
+
+struct ModuleCompileJob {
+    targets_inner: Vec<String>,
+    named_addresses_inner: BTreeMap<String, NumericalAddress>,
+}
+
+impl ModuleCompileJob {
+    pub fn new(package_name: &str, address: &AccountAddress) -> Self {
+        let named_address_mapping: std::collections::BTreeMap<_, _> = [(
+            package_name.to_string(),
+            NumericalAddress::new(address.into(), NumberFormat::Hex),
+        )]
+        .into_iter()
+        .chain(aptos_framework::named_addresses().clone())
+        .collect();
+
+        let base_dir = format!("src/tests/res/{package_name}").replace('_', "-");
+        let targets = vec![format!("{base_dir}/sources/{package_name}.move")];
+
+        Self {
+            targets_inner: targets,
+            named_addresses_inner: named_address_mapping,
+        }
+    }
+}
+
+impl CompileJob for ModuleCompileJob {
+    fn targets(&self) -> Vec<String> {
+        self.targets_inner.clone()
+    }
+
+    fn deps(&self) -> Vec<String> {
         aptos_framework::testnet_release_bundle()
             .files()
-            .context(format!("Failed to compile {package_name}.move"))?,
-        named_address_mapping,
-        Flags::empty(),
-        &known_attributes,
-    );
-    let (_, result) = compiler
-        .build()
-        .context(format!("Failed to compile {package_name}.move"))?;
-    let compiled_unit = result.unwrap().0.pop().unwrap().into_compiled_unit();
-    let bytes = compiled_unit.serialize(None);
-    Ok(bytes)
+            .expect("Must be able to find Aptos Framework files")
+    }
+
+    fn named_addresses(&self) -> BTreeMap<String, NumericalAddress> {
+        self.named_addresses_inner.clone()
+    }
+}
+
+struct ScriptCompileJob {
+    targets_inner: Vec<String>,
+    deps_inner: Vec<String>,
+}
+
+impl ScriptCompileJob {
+    pub fn new(script_name: &str, local_deps: &[&str]) -> Self {
+        let base_dir = format!("src/tests/res/{script_name}").replace('_', "-");
+        let targets = vec![format!("{base_dir}/sources/{script_name}.move")];
+
+        let local_deps = local_deps.iter().map(|package_name| {
+            let base_dir = format!("src/tests/res/{package_name}").replace('_', "-");
+            format!("{base_dir}/sources/{package_name}.move")
+        });
+        let deps = {
+            let mut framework = aptos_framework::testnet_release_bundle()
+                .files()
+                .expect("Must be able to find Aptos Framework files");
+
+            local_deps.for_each(|d| framework.push(d));
+
+            framework
+        };
+
+        Self {
+            targets_inner: targets,
+            deps_inner: deps,
+        }
+    }
+}
+
+impl CompileJob for ScriptCompileJob {
+    fn targets(&self) -> Vec<String> {
+        self.targets_inner.clone()
+    }
+
+    fn deps(&self) -> Vec<String> {
+        self.deps_inner.clone()
+    }
+
+    fn named_addresses(&self) -> BTreeMap<String, NumericalAddress> {
+        aptos_framework::named_addresses().clone()
+    }
 }
