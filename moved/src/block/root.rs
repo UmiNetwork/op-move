@@ -35,24 +35,9 @@ impl ExtendedBlock {
         Self { hash, value, block }
     }
 
-    pub fn without_value(self) -> BlockWithHash {
-        BlockWithHash::new(self.hash, self.block)
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct BlockWithHash {
-    pub hash: B256,
-    pub block: Block,
-}
-
-impl BlockWithHash {
-    pub fn new(hash: B256, block: Block) -> Self {
-        Self { hash, block }
-    }
-
-    pub fn with_value(self, value: U256) -> ExtendedBlock {
-        ExtendedBlock::new(self.hash, value, self.block)
+    pub fn with_value(mut self, value: U256) -> Self {
+        self.value = value;
+        self
     }
 }
 
@@ -71,8 +56,8 @@ impl Block {
         }
     }
 
-    pub fn with_hash(self, hash: B256) -> BlockWithHash {
-        BlockWithHash::new(hash, self)
+    pub fn with_hash(self, hash: B256) -> ExtendedBlock {
+        ExtendedBlock::new(hash, U256::ZERO, self)
     }
 }
 

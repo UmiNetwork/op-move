@@ -189,9 +189,7 @@ mod tests {
     use {
         super::*,
         crate::{
-            block::{
-                Block, BlockRepository, BlockWithHash, Eip1559GasFee, InMemoryBlockRepository,
-            },
+            block::{Block, BlockRepository, Eip1559GasFee, InMemoryBlockRepository},
             genesis::{config::GenesisConfig, init_state},
             methods::{forkchoice_updated, get_payload},
             primitives::{Address, Bytes, B2048, U256, U64},
@@ -277,7 +275,7 @@ mod tests {
         let head_hash = B256::new(hex!(
             "781f09c5b7629a7ca30668e440ea40557f01461ad6f105b371f61ff5824b2449"
         ));
-        let genesis_block = BlockWithHash::new(head_hash, Block::default()).with_value(U256::ZERO);
+        let genesis_block = Block::default().with_hash(head_hash).with_value(U256::ZERO);
 
         let mut repository = InMemoryBlockRepository::new();
         repository.add(genesis_block);
