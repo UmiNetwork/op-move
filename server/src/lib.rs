@@ -4,7 +4,7 @@ use {
     jsonwebtoken::{DecodingKey, Validation},
     moved::{
         block::{
-            Block, BlockHash, BlockRepository, BlockWithHash, Eip1559GasFee, ExtendedBlock, Header,
+            Block, BlockHash, BlockRepository, Eip1559GasFee, ExtendedBlock, Header,
             InMemoryBlockRepository, MovedBlockHash,
         },
         genesis::{config::GenesisConfig, init_state},
@@ -130,7 +130,7 @@ fn create_genesis_block(
     let hash = block_hash.block_hash(&genesis_header);
     let genesis_block = Block::new(genesis_header, Vec::new());
 
-    BlockWithHash::new(hash, genesis_block).with_value(U256::ZERO)
+    genesis_block.with_hash(hash).with_value(U256::ZERO)
 }
 
 pub fn validate_jwt() -> impl Filter<Extract = (String,), Error = Rejection> + Clone {
