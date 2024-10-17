@@ -3,6 +3,7 @@ use {
         genesis::config::GenesisConfig,
         move_execution::{
             create_move_vm, create_vm_session,
+            eth_token::{self, TransferArgs},
             execute::{deploy_module, execute_entry_function, execute_script},
             gas::{new_gas_meter, total_gas_used},
             nonces::check_nonce,
@@ -11,15 +12,16 @@ use {
         primitives::{ToMoveAddress, B256},
         types::{
             session_id::SessionId,
-            transactions::{NormalizedEthTransaction, ScriptOrModule, TransactionExecutionOutcome},
+            transactions::{
+                NormalizedEthTransaction, ScriptOrModule, TransactionData,
+                TransactionExecutionOutcome,
+            },
         },
         Error::{InvalidTransaction, User},
         InvalidTransactionCause,
     },
-    alloy_primitives::TxKind,
     aptos_gas_meter::AptosGasMeter,
     aptos_table_natives::TableResolver,
-    aptos_types::transaction::EntryFunction,
     move_binary_format::errors::PartialVMError,
     move_core_types::resolver::MoveResolver,
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
@@ -39,20 +41,11 @@ pub(super) fn execute_canonical_transaction(
 
     let sender_move_address = tx.signer.to_move_address();
 
-    let maybe_entry_fn: Option<EntryFunction> = match tx.to {
-        TxKind::Call(to) => {
-            let entry_fn: EntryFunction = bcs::from_bytes(&tx.data)?;
-            if entry_fn.module().address() != &to.to_move_address() {
-                Err(InvalidTransactionCause::InvalidDestination)?
-            }
-            Some(entry_fn)
-        }
-        TxKind::Create => None,
-    };
+    let tx_data = TransactionData::parse_from(tx)?;
 
     let move_vm = create_move_vm()?;
     let session_id =
-        SessionId::new_from_canonical(tx, maybe_entry_fn.as_ref(), tx_hash, genesis_config);
+        SessionId::new_from_canonical(tx, tx_data.maybe_entry_fn(), tx_hash, genesis_config);
     let mut session = create_vm_session(&move_vm, state, session_id);
     let traversal_storage = TraversalStorage::new();
     let mut traversal_context = TraversalContext::new(&traversal_storage);
@@ -78,29 +71,35 @@ pub(super) fn execute_canonical_transaction(
         &mut gas_meter,
     )?;
 
-    let vm_outcome = match maybe_entry_fn {
-        Some(entry_fn) => execute_entry_function(
+    let vm_outcome = match tx_data {
+        TransactionData::EntryFunction(entry_fn) => execute_entry_function(
             entry_fn,
             &sender_move_address,
             &mut session,
             &mut traversal_context,
             &mut gas_meter,
         ),
-        None => {
-            // Assume EVM create type transactions are either scripts or module deployments
-            let script_or_module: ScriptOrModule = bcs::from_bytes(&tx.data)?;
-            match script_or_module {
-                ScriptOrModule::Script(script) => execute_script(
-                    script,
-                    &sender_move_address,
-                    &mut session,
-                    &mut traversal_context,
-                    &mut gas_meter,
-                ),
-                ScriptOrModule::Module(module) => {
-                    deploy_module(module, sender_move_address, &mut session, &mut gas_meter)
-                }
-            }
+        TransactionData::ScriptOrModule(ScriptOrModule::Script(script)) => execute_script(
+            script,
+            &sender_move_address,
+            &mut session,
+            &mut traversal_context,
+            &mut gas_meter,
+        ),
+        TransactionData::ScriptOrModule(ScriptOrModule::Module(module)) => {
+            deploy_module(module, sender_move_address, &mut session, &mut gas_meter)
+        }
+        TransactionData::EoaBaseTokenTransfer(to) => {
+            let to = to.to_move_address();
+            // TODO: handle U256 properly
+            let amount = tx.value.as_limbs()[0];
+            let args = TransferArgs {
+                to: &to,
+                from: &sender_move_address,
+                amount,
+            };
+
+            eth_token::transfer_eth(args, &mut session, &mut traversal_context, &mut gas_meter)
         }
     };
 
