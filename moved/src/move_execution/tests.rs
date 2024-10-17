@@ -10,7 +10,7 @@ use {
     },
     alloy::network::TxSignerSync,
     alloy_consensus::{transaction::TxEip1559, SignableTransaction, TxEnvelope},
-    alloy_primitives::{hex, keccak256, FixedBytes, TxKind},
+    alloy_primitives::{hex, keccak256, Address, FixedBytes, TxKind},
     alloy_rlp::Encodable,
     anyhow::Context,
     aptos_types::transaction::{EntryFunction, Module, Script, TransactionArgument},
@@ -429,30 +429,9 @@ fn test_deposit_tx() {
     let (_, mut state) = deploy_contract("natives", &mut signer, &genesis_config);
 
     let mint_amount = U256::from(123u64);
-    let tx = ExtendedTxEnvelope::DepositedTx(DepositedTx {
-        to: EVM_ADDRESS,
-        value: mint_amount,
-        source_hash: FixedBytes::default(),
-        from: EVM_ADDRESS,
-        mint: U256::ZERO,
-        gas: U64::from(u64::MAX),
-        is_system_tx: false,
-        data: Vec::new().into(),
-    });
-    let tx_hash = {
-        let capacity = tx.length();
-        let mut bytes = Vec::with_capacity(capacity);
-        tx.encode(&mut bytes);
-        B256::new(keccak256(bytes).0)
-    };
+    let (tx_hash, tx) = create_deposit_transaction(mint_amount, EVM_ADDRESS);
 
-    let outcome = execute_transaction(
-        &tx.try_into().unwrap(),
-        &tx_hash,
-        state.resolver(),
-        &genesis_config,
-    )
-    .unwrap();
+    let outcome = execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
 
     // Transaction should succeed
     outcome.vm_outcome.unwrap();
@@ -460,6 +439,55 @@ fn test_deposit_tx() {
 
     let balance = quick_get_eth_balance(&EVM_ADDRESS.to_move_address(), state.resolver());
     assert_eq!(balance, mint_amount.as_limbs()[0]);
+}
+
+#[test]
+fn test_eoa_base_token_transfer() {
+    // Initialize state
+    let genesis_config = GenesisConfig::default();
+    let mut signer = Signer::new(&PRIVATE_KEY);
+    let (_, mut state) = deploy_contract("natives", &mut signer, &genesis_config);
+
+    // Mint tokens in sender account
+    let sender = EVM_ADDRESS;
+    let mint_amount = U256::from(123u64);
+    let (tx_hash, tx) = create_deposit_transaction(mint_amount, sender);
+    let outcome = execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
+    state.apply(outcome.changes).unwrap();
+
+    // Transfer to receiver account
+    let receiver = ALT_EVM_ADDRESS;
+
+    // Should fail when transfer is larger than account balance
+    let transfer_amount = mint_amount.saturating_add(U256::from_limbs([1, 0, 0, 0]));
+    let (tx_hash, tx) = create_transaction_with_value(
+        &mut signer,
+        TxKind::Call(receiver),
+        Vec::new(),
+        transfer_amount,
+    );
+    let outcome = execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
+    outcome.vm_outcome.unwrap_err();
+    state.apply(outcome.changes).unwrap();
+
+    // Should work with proper transfer
+    let transfer_amount = mint_amount.wrapping_shr(1);
+    let (tx_hash, tx) = create_transaction_with_value(
+        &mut signer,
+        TxKind::Call(receiver),
+        Vec::new(),
+        transfer_amount,
+    );
+    let outcome = execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
+    outcome.vm_outcome.unwrap();
+    state.apply(outcome.changes).unwrap();
+
+    let mint_amount = mint_amount.as_limbs()[0];
+    let transfer_amount = transfer_amount.as_limbs()[0];
+    let sender_balance = quick_get_eth_balance(&sender.to_move_address(), state.resolver());
+    let receiver_balance = quick_get_eth_balance(&receiver.to_move_address(), state.resolver());
+    assert_eq!(sender_balance, mint_amount - transfer_amount);
+    assert_eq!(receiver_balance, transfer_amount);
 }
 
 #[test]
@@ -892,6 +920,15 @@ fn create_transaction(
     to: TxKind,
     input: Vec<u8>,
 ) -> (B256, NormalizedExtendedTxEnvelope) {
+    create_transaction_with_value(signer, to, input, U256::ZERO)
+}
+
+fn create_transaction_with_value(
+    signer: &mut Signer,
+    to: TxKind,
+    input: Vec<u8>,
+    value: U256,
+) -> (B256, NormalizedExtendedTxEnvelope) {
     let mut tx = TxEip1559 {
         chain_id: CHAIN_ID,
         nonce: signer.nonce,
@@ -899,7 +936,7 @@ fn create_transaction(
         max_fee_per_gas: 0,
         max_priority_fee_per_gas: 0,
         to,
-        value: Default::default(),
+        value,
         access_list: Default::default(),
         input: input.into(),
     };
@@ -911,6 +948,27 @@ fn create_transaction(
         tx_hash,
         NormalizedExtendedTxEnvelope::Canonical(signed_tx.try_into().unwrap()),
     )
+}
+
+fn create_deposit_transaction(amount: U256, to: Address) -> (B256, NormalizedExtendedTxEnvelope) {
+    let tx = ExtendedTxEnvelope::DepositedTx(DepositedTx {
+        to,
+        value: amount,
+        source_hash: FixedBytes::default(),
+        from: to,
+        mint: U256::ZERO,
+        gas: U64::from(u64::MAX),
+        is_system_tx: false,
+        data: Vec::new().into(),
+    });
+    let tx_hash = {
+        let capacity = tx.length();
+        let mut bytes = Vec::with_capacity(capacity);
+        tx.encode(&mut bytes);
+        B256::new(keccak256(bytes).0)
+    };
+
+    (tx_hash, tx.try_into().unwrap())
 }
 
 trait CompileJob {
