@@ -35,7 +35,10 @@ use {
     },
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
     move_vm_types::gas::UnmeteredGasMeter,
-    std::collections::{BTreeMap, BTreeSet},
+    std::{
+        collections::{BTreeMap, BTreeSet},
+        path::Path,
+    },
 };
 
 #[test]
@@ -459,7 +462,7 @@ fn test_eoa_base_token_transfer() {
     let receiver = ALT_EVM_ADDRESS;
 
     // Should fail when transfer is larger than account balance
-    let transfer_amount = mint_amount.saturating_add(U256::from_limbs([1, 0, 0, 0]));
+    let transfer_amount = mint_amount.saturating_add(U256::from(1_u64));
     let (tx_hash, tx) = create_transaction_with_value(
         &mut signer,
         TxKind::Call(receiver),
@@ -488,6 +491,99 @@ fn test_eoa_base_token_transfer() {
     let receiver_balance = quick_get_eth_balance(&receiver.to_move_address(), state.resolver());
     assert_eq!(sender_balance, mint_amount - transfer_amount);
     assert_eq!(receiver_balance, transfer_amount);
+}
+
+#[test]
+fn test_marketplace() {
+    // Shows an example of users spending base tokens via a contract.
+    // In the EVM this would be done via the value field of a transaction,
+    // but in MoveVM we need to use a script which creates the `FungibleAsset`
+    // object and passes it to the function as an argument.
+
+    let genesis_config = GenesisConfig::default();
+    let mut signer = Signer::new(&PRIVATE_KEY);
+    let (module_id, mut state) = deploy_contract("marketplace", &mut signer, &genesis_config);
+
+    // Initialize marketplace
+    let market_address = EVM_ADDRESS.to_move_address();
+    let signer_input_arg = MoveValue::Signer(market_address);
+    let entry_fn = EntryFunction::new(
+        module_id.clone(),
+        Identifier::new("init").unwrap(),
+        Vec::new(),
+        vec![bcs::to_bytes(&signer_input_arg).unwrap()],
+    );
+    let (tx_hash, tx) = create_transaction(
+        &mut signer,
+        TxKind::Call(EVM_ADDRESS),
+        bcs::to_bytes(&entry_fn).unwrap(),
+    );
+    let outcome = execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
+    outcome.vm_outcome.unwrap();
+    state.apply(outcome.changes).unwrap();
+
+    // List an item for sale
+    let seller_address = EVM_ADDRESS.to_move_address();
+    let price = 123_u64;
+    let entry_fn = EntryFunction::new(
+        module_id.clone(),
+        Identifier::new("list").unwrap(),
+        Vec::new(),
+        vec![
+            bcs::to_bytes(&MoveValue::Address(market_address)).unwrap(),
+            bcs::to_bytes(&MoveValue::U64(price)).unwrap(),
+            bcs::to_bytes(&MoveValue::vector_u8(b"Something valuable".to_vec())).unwrap(),
+            bcs::to_bytes(&signer_input_arg).unwrap(),
+        ],
+    );
+    let (tx_hash, tx) = create_transaction(
+        &mut signer,
+        TxKind::Call(EVM_ADDRESS),
+        bcs::to_bytes(&entry_fn).unwrap(),
+    );
+    let outcome = execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
+    outcome.vm_outcome.unwrap();
+    state.apply(outcome.changes).unwrap();
+
+    // Mint tokens for the buyer to spend
+    let buyer_address = ALT_EVM_ADDRESS.to_move_address();
+    let mint_amount = 567_u64;
+    let (tx_hash, tx) = create_deposit_transaction(U256::from(mint_amount), ALT_EVM_ADDRESS);
+    let outcome = execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
+    outcome.vm_outcome.unwrap();
+    state.apply(outcome.changes).unwrap();
+    assert_eq!(
+        quick_get_eth_balance(&buyer_address, state.resolver()),
+        mint_amount
+    );
+
+    // Buy the from the marketplace using the script
+    let script_code = ScriptCompileJob::new("marketplace_script", &["marketplace"])
+        .compile()
+        .unwrap();
+    let script = Script::new(
+        script_code,
+        Vec::new(),
+        vec![
+            TransactionArgument::Address(market_address),
+            TransactionArgument::U64(0),
+            TransactionArgument::U64(price),
+        ],
+    );
+    let tx_data = bcs::to_bytes(&ScriptOrModule::Script(script)).unwrap();
+    let mut alt_signer = Signer::new(&ALT_PRIVATE_KEY);
+    let (tx_hash, tx) = create_transaction(&mut alt_signer, TxKind::Create, tx_data);
+    let outcome = execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config).unwrap();
+    outcome.vm_outcome.unwrap();
+    state.apply(outcome.changes).unwrap();
+    assert_eq!(
+        quick_get_eth_balance(&buyer_address, state.resolver()),
+        mint_amount - price
+    );
+    assert_eq!(
+        quick_get_eth_balance(&seller_address, state.resolver()),
+        price
+    );
 }
 
 #[test]
@@ -1004,10 +1100,16 @@ struct ModuleCompileJob {
 
 impl ModuleCompileJob {
     pub fn new(package_name: &str, address: &AccountAddress) -> Self {
-        let named_address_mapping: std::collections::BTreeMap<_, _> = [(
-            package_name.to_string(),
-            NumericalAddress::new(address.into(), NumberFormat::Hex),
-        )]
+        let named_address_mapping: std::collections::BTreeMap<_, _> = [
+            (
+                package_name.to_string(),
+                NumericalAddress::new(address.into(), NumberFormat::Hex),
+            ),
+            (
+                "EthToken".into(),
+                NumericalAddress::parse_str("0x1").unwrap(),
+            ),
+        ]
         .into_iter()
         .chain(aptos_framework::named_addresses().clone())
         .collect();
@@ -1028,9 +1130,11 @@ impl CompileJob for ModuleCompileJob {
     }
 
     fn deps(&self) -> Vec<String> {
-        aptos_framework::testnet_release_bundle()
+        let mut framework = aptos_framework::testnet_release_bundle()
             .files()
-            .expect("Must be able to find Aptos Framework files")
+            .expect("Must be able to find Aptos Framework files");
+        add_eth_token_path(&mut framework);
+        framework
     }
 
     fn named_addresses(&self) -> BTreeMap<String, NumericalAddress> {
@@ -1057,6 +1161,7 @@ impl ScriptCompileJob {
                 .files()
                 .expect("Must be able to find Aptos Framework files");
 
+            add_eth_token_path(&mut framework);
             local_deps.for_each(|d| framework.push(d));
 
             framework
@@ -1079,6 +1184,20 @@ impl CompileJob for ScriptCompileJob {
     }
 
     fn named_addresses(&self) -> BTreeMap<String, NumericalAddress> {
-        aptos_framework::named_addresses().clone()
+        let mut result = aptos_framework::named_addresses().clone();
+        result.insert(
+            "EthToken".into(),
+            NumericalAddress::parse_str("0x1").unwrap(),
+        );
+        result
     }
+}
+
+fn add_eth_token_path(files: &mut Vec<String>) {
+    let base_path = Path::new(std::env!("CARGO_MANIFEST_DIR"));
+    let eth_token_path = base_path
+        .join("../genesis-builder/framework/eth-token/sources/EthToken.move")
+        .canonicalize()
+        .unwrap();
+    files.push(eth_token_path.to_string_lossy().into());
 }
