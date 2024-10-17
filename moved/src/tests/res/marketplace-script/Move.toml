@@ -1,0 +1,10 @@
+[package]
+name = "marketplace_script"
+version = "0.0.0"
+
+[addresses]
+
+[dependencies]
+AptosFramework = { local = "../../../../../target/aptos-core/aptos-move/framework/aptos-framework/" }
+EthToken = { local = "../../../../../genesis-builder/framework/eth-token/" }
+marketplace = { local = "../marketplace" }
