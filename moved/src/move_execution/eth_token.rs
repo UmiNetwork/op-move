@@ -16,9 +16,9 @@ const TRANSFER_FUNCTION_NAME: &IdentStr = ident_str!("transfer");
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TransferArgs<'a> {
-    from: &'a AccountAddress,
-    to: &'a AccountAddress,
-    amount: u64,
+    pub from: &'a AccountAddress,
+    pub to: &'a AccountAddress,
+    pub amount: u64,
 }
 
 pub fn mint_eth<G: GasMeter>(
@@ -66,23 +66,20 @@ pub fn transfer_eth<G: GasMeter>(
     let to_arg = bcs::to_bytes(args.to).expect("to address can serialize");
     let amount_arg = bcs::to_bytes(&MoveValue::U64(args.amount)).expect("amount can serialize");
 
-    session
-        .execute_entry_function(
-            &token_module_id,
-            TRANSFER_FUNCTION_NAME,
-            Vec::new(),
-            vec![
-                admin_arg.as_slice(),
-                from_arg.as_slice(),
-                to_arg.as_slice(),
-                amount_arg.as_slice(),
-            ],
-            gas_meter,
-            traversal_context,
-        )
-        .map_err(|_| {
-            crate::Error::eth_token_invariant_violation(EthToken::TransferAlwaysSucceeds)
-        })?;
+    // Note: transfer function can fail if user has insufficient balance.
+    session.execute_entry_function(
+        &token_module_id,
+        TRANSFER_FUNCTION_NAME,
+        Vec::new(),
+        vec![
+            admin_arg.as_slice(),
+            from_arg.as_slice(),
+            to_arg.as_slice(),
+            amount_arg.as_slice(),
+        ],
+        gas_meter,
+        traversal_context,
+    )?;
 
     Ok(())
 }

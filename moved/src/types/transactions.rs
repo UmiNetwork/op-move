@@ -1,12 +1,15 @@
 use {
-    crate::{primitives::ToEthAddress, Error, InvalidTransactionCause, UserError},
+    crate::{
+        primitives::{ToEthAddress, ToMoveAddress},
+        Error, InvalidTransactionCause, UserError,
+    },
     alloy_consensus::{Signed, Transaction, TxEip1559, TxEip2930, TxEnvelope, TxLegacy},
     alloy_eips::eip2930::AccessList,
     alloy_primitives::{Address, Bytes, Keccak256, Log, LogData, TxKind, B256, U256, U64},
     alloy_rlp::{Buf, Decodable, Encodable, RlpDecodable, RlpEncodable},
     aptos_types::{
         contract_event::ContractEvent,
-        transaction::{Module, Script},
+        transaction::{EntryFunction, Module, Script},
     },
     move_core_types::{effects::ChangeSet, language_storage::TypeTag},
     serde::{Deserialize, Serialize},
@@ -250,6 +253,47 @@ impl TryFrom<Signed<TxLegacy>> for NormalizedEthTransaction {
 pub enum ScriptOrModule {
     Script(Script),
     Module(Module),
+}
+
+/// Possible parsings of transaction data from a non-deposit transaction.
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum TransactionData {
+    EoaBaseTokenTransfer(Address),
+    EntryFunction(EntryFunction),
+    ScriptOrModule(ScriptOrModule),
+}
+
+impl TransactionData {
+    pub fn parse_from(tx: &NormalizedEthTransaction) -> crate::Result<Self> {
+        match tx.to {
+            TxKind::Call(to) => {
+                if tx.data.is_empty() {
+                    // When there is no transaction data then we interpret the
+                    // transaction as a base token transfer between EOAs.
+                    Ok(Self::EoaBaseTokenTransfer(to))
+                } else {
+                    let entry_fn: EntryFunction = bcs::from_bytes(&tx.data)?;
+                    if entry_fn.module().address() != &to.to_move_address() {
+                        Err(InvalidTransactionCause::InvalidDestination)?
+                    }
+                    Ok(Self::EntryFunction(entry_fn))
+                }
+            }
+            TxKind::Create => {
+                // Assume EVM create type transactions are either scripts or module deployments
+                let script_or_module: ScriptOrModule = bcs::from_bytes(&tx.data)?;
+                Ok(Self::ScriptOrModule(script_or_module))
+            }
+        }
+    }
+
+    pub fn maybe_entry_fn(&self) -> Option<&EntryFunction> {
+        if let Self::EntryFunction(entry_fn) = self {
+            Some(entry_fn)
+        } else {
+            None
+        }
+    }
 }
 
 pub(crate) trait ToLog {
