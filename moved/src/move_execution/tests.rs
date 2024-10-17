@@ -2,6 +2,7 @@ use {
     super::*,
     crate::{
         genesis::{config::CHAIN_ID, init_state},
+        move_execution::eth_token::quick_get_eth_balance,
         primitives::{ToMoveAddress, B256, U256, U64},
         storage::{InMemoryState, State},
         tests::{signer::Signer, ALT_EVM_ADDRESS, ALT_PRIVATE_KEY, EVM_ADDRESS, PRIVATE_KEY},
@@ -425,7 +426,7 @@ fn test_execute_natives_contract() {
 fn test_deposit_tx() {
     let genesis_config = GenesisConfig::default();
     let mut signer = Signer::new(&PRIVATE_KEY);
-    let (_, state) = deploy_contract("natives", &mut signer, &genesis_config);
+    let (_, mut state) = deploy_contract("natives", &mut signer, &genesis_config);
 
     let mint_amount = U256::from(123u64);
     let tx = ExtendedTxEnvelope::DepositedTx(DepositedTx {
@@ -445,15 +446,20 @@ fn test_deposit_tx() {
         B256::new(keccak256(bytes).0)
     };
 
-    execute_transaction(
+    let outcome = execute_transaction(
         &tx.try_into().unwrap(),
         &tx_hash,
         state.resolver(),
         &genesis_config,
     )
-    .unwrap()
-    .vm_outcome
     .unwrap();
+
+    // Transaction should succeed
+    outcome.vm_outcome.unwrap();
+    state.apply(outcome.changes).unwrap();
+
+    let balance = quick_get_eth_balance(&EVM_ADDRESS.to_move_address(), state.resolver());
+    assert_eq!(balance, mint_amount.as_limbs()[0]);
 }
 
 #[test]

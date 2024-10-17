@@ -8,6 +8,13 @@ use {
     move_vm_types::{gas::GasMeter, values::Value},
 };
 
+#[cfg(test)]
+use {
+    crate::types::session_id::SessionId, aptos_table_natives::TableResolver,
+    move_binary_format::errors::PartialVMError, move_core_types::resolver::MoveResolver,
+    move_vm_runtime::module_traversal::TraversalStorage, move_vm_types::gas::UnmeteredGasMeter,
+};
+
 const TOKEN_ADMIN: AccountAddress = FRAMEWORK_ADDRESS;
 const TOKEN_MODULE_NAME: &IdentStr = ident_str!("eth_token");
 const MINT_FUNCTION_NAME: &IdentStr = ident_str!("mint");
@@ -126,4 +133,24 @@ pub fn get_eth_balance<G: GasMeter>(
             EthToken::GetBalanceReturnsU64,
         )),
     }
+}
+
+/// Simplified API for getting the base token balance for use in tests.
+#[cfg(test)]
+pub fn quick_get_eth_balance(
+    account: &AccountAddress,
+    state: &(impl MoveResolver<PartialVMError> + TableResolver),
+) -> u64 {
+    let move_vm = super::create_move_vm().unwrap();
+    let mut session = super::create_vm_session(&move_vm, state, SessionId::default());
+    let traversal_storage = TraversalStorage::new();
+    let mut traversal_context = TraversalContext::new(&traversal_storage);
+    let mut gas_meter = UnmeteredGasMeter;
+    get_eth_balance(
+        account,
+        &mut session,
+        &mut traversal_context,
+        &mut gas_meter,
+    )
+    .unwrap()
 }
