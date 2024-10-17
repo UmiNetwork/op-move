@@ -1,3 +1,4 @@
+use alloy_rlp::Encodable;
 pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
 
 use {
@@ -5,8 +6,8 @@ use {
         block::{Block, BlockHash, BlockRepository, ExtendedBlock, GasFee, Header},
         genesis::config::GenesisConfig,
         merkle_tree::MerkleRootExt,
-        move_execution::{execute_transaction, LogsBloom},
-        primitives::{B256, U256, U64},
+        move_execution::{execute_transaction, L1GasFee, L1GasFeeInput, LogsBloom},
+        primitives::{ToSaturatedU64, B256, U256, U64},
         storage::State,
         types::{
             engine_api::{
@@ -29,7 +30,14 @@ use {
 mod payload;
 
 #[derive(Debug)]
-pub struct StateActor<S: State, P: NewPayloadId, H: BlockHash, R: BlockRepository, G: GasFee> {
+pub struct StateActor<
+    S: State,
+    P: NewPayloadId,
+    H: BlockHash,
+    R: BlockRepository,
+    G: GasFee,
+    L1G: L1GasFee,
+> {
     genesis_config: GenesisConfig,
     rx: Receiver<StateMessage>,
     head: B256,
@@ -39,9 +47,10 @@ pub struct StateActor<S: State, P: NewPayloadId, H: BlockHash, R: BlockRepositor
     gas_fee: G,
     execution_payloads: HashMap<B256, GetPayloadResponseV3>,
     pending_payload: Option<(PayloadId, GetPayloadResponseV3)>,
-    mem_pool: HashMap<B256, ExtendedTxEnvelope>,
+    mem_pool: HashMap<B256, (ExtendedTxEnvelope, L1GasFeeInput)>,
     state: S,
     block_repository: R,
+    l1_fee: L1G,
 }
 
 impl<
@@ -50,7 +59,8 @@ impl<
         H: BlockHash + Send + Sync + 'static,
         R: BlockRepository + Send + Sync + 'static,
         G: GasFee + Send + Sync + 'static,
-    > StateActor<S, P, H, R, G>
+        L1G: L1GasFee + Send + Sync + 'static,
+    > StateActor<S, P, H, R, G, L1G>
 {
     pub fn spawn(mut self) -> JoinHandle<()> {
         tokio::spawn(async move {
@@ -67,7 +77,8 @@ impl<
         H: BlockHash,
         R: BlockRepository,
         G: GasFee,
-    > StateActor<S, P, H, R, G>
+        L1G: L1GasFee,
+    > StateActor<S, P, H, R, G, L1G>
 {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -79,6 +90,7 @@ impl<
         block_hash: H,
         block_repository: R,
         base_fee_per_gas: G,
+        l1_fee: L1G,
     ) -> Self {
         Self {
             genesis_config,
@@ -93,6 +105,7 @@ impl<
             block_hash,
             block_repository,
             gas_fee: base_fee_per_gas,
+            l1_fee,
         }
     }
 
@@ -142,8 +155,11 @@ impl<
             }
             StateMessage::AddTransaction { tx } => {
                 let tx_hash = tx.tx_hash().0.into();
+                let mut encoded = Vec::new();
+                tx.encode(&mut encoded);
+                let encoded = encoded.as_slice().into();
                 self.mem_pool
-                    .insert(tx_hash, ExtendedTxEnvelope::Canonical(tx));
+                    .insert(tx_hash, (ExtendedTxEnvelope::Canonical(tx), encoded));
             }
         }
     }
@@ -162,7 +178,7 @@ impl<
                     })
                     .ok()?;
 
-                Some((tx_hash, tx))
+                Some((tx_hash, (tx, L1GasFeeInput::from(slice))))
             })
             .chain(self.mem_pool.drain())
             .collect::<Vec<_>>();
@@ -180,11 +196,13 @@ impl<
             transactions
                 .iter()
                 .cloned()
-                .filter_map(|(tx_hash, tx)| tx.try_into().ok().map(|tx| (tx_hash, tx))),
+                .filter_map(|(tx_hash, (tx, bytes))| {
+                    tx.try_into().ok().map(|tx| (tx_hash, tx, bytes))
+                }),
             base_fee,
         );
 
-        let transactions: Vec<_> = transactions.into_iter().map(|(_, tx)| tx).collect();
+        let transactions: Vec<_> = transactions.into_iter().map(|(_, (tx, _))| tx).collect();
         let transactions_root = transactions
             .iter()
             .map(alloy_rlp::encode)
@@ -207,19 +225,20 @@ impl<
 
     fn execute_transactions(
         &mut self,
-        transactions: impl Iterator<Item = (B256, NormalizedExtendedTxEnvelope)>,
+        transactions: impl Iterator<Item = (B256, NormalizedExtendedTxEnvelope, L1GasFeeInput)>,
         base_fee: U256,
     ) -> ExecutionOutcome {
         let mut total_tip = U256::ZERO;
         let mut outcomes = Vec::new();
 
         // TODO: parallel transaction processing?
-        for (tx_hash, tx) in transactions {
+        for (tx_hash, tx, l1_cost_input) in transactions {
             let outcome = match execute_transaction(
                 &tx,
                 &tx_hash,
                 self.state.resolver(),
                 &self.genesis_config,
+                self.l1_fee.l1_fee(l1_cost_input).to_saturated_u64(),
             ) {
                 Ok(outcome) => outcome,
                 Err(User(_)) => unreachable!("User errors are handled in execution"),

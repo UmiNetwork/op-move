@@ -1,3 +1,5 @@
+pub use gas::{EcotoneL1GasFee, L1GasFee, L1GasFeeInput};
+
 use {
     crate::{
         genesis::config::GenesisConfig,
@@ -87,13 +89,14 @@ pub fn execute_transaction(
     tx_hash: &B256,
     state: &(impl MoveResolver<PartialVMError> + TableResolver),
     genesis_config: &GenesisConfig,
+    l1_cost: u64,
 ) -> crate::Result<TransactionExecutionOutcome> {
     match tx {
         NormalizedExtendedTxEnvelope::DepositedTx(tx) => {
             execute_deposited_transaction(tx, tx_hash, state, genesis_config)
         }
         NormalizedExtendedTxEnvelope::Canonical(tx) => {
-            execute_canonical_transaction(tx, tx_hash, state, genesis_config)
+            execute_canonical_transaction(tx, tx_hash, state, genesis_config, l1_cost)
         }
     }
 }

@@ -52,11 +52,36 @@ impl NormalizedEthTransaction {
 }
 
 pub trait L1GasFee {
-    fn l1_fee(&self, tx_data: &[u8]) -> U256;
+    fn l1_fee(&self, input: L1GasFeeInput) -> U256;
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct L1GasFeeInput {
+    zero_bytes: U256,
+    non_zero_bytes: U256,
+}
+
+impl L1GasFeeInput {
+    pub fn new(zero_bytes: U256, non_zero_bytes: U256) -> Self {
+        Self {
+            zero_bytes,
+            non_zero_bytes,
+        }
+    }
+}
+
+impl<T: AsRef<[u8]>> From<T> for L1GasFeeInput {
+    fn from(value: T) -> Self {
+        let tx_data = value.as_ref();
+        let zero_bytes = U256::from(tx_data.iter().filter(|&&v| v == 0).count());
+        let non_zero_bytes = U256::from(tx_data.len()) - zero_bytes;
+
+        Self::new(zero_bytes, non_zero_bytes)
+    }
 }
 
 #[derive(Debug)]
-struct EcotoneL1GasFee {
+pub struct EcotoneL1GasFee {
     base_fee: U256,
     base_fee_scalar: U256,
     blob_base_fee: U256,
@@ -83,16 +108,26 @@ impl EcotoneL1GasFee {
 }
 
 impl L1GasFee for EcotoneL1GasFee {
-    fn l1_fee(&self, tx_data: &[u8]) -> U256 {
-        let zero_bytes = U256::from(tx_data.iter().filter(|&&v| v == 0).count());
-        let non_zero_bytes = U256::from(tx_data.len()) - zero_bytes;
+    fn l1_fee(&self, input: L1GasFeeInput) -> U256 {
+        let zero_bytes = input.zero_bytes;
+        let non_zero_bytes = input.non_zero_bytes;
         let tx_compressed_size = (zero_bytes * Self::ZERO_BYTE_MULTIPLIER
             + non_zero_bytes * Self::GAS_PRICE_MULTIPLIER)
             / Self::GAS_PRICE_MULTIPLIER;
         let weighted_gas_price = Self::GAS_PRICE_MULTIPLIER * self.base_fee_scalar * self.base_fee
             + self.blob_base_fee_scalar * self.blob_base_fee;
-        
 
         tx_compressed_size * weighted_gas_price
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    impl L1GasFee for U256 {
+        fn l1_fee(&self, _input: L1GasFeeInput) -> U256 {
+            *self
+        }
     }
 }

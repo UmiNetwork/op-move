@@ -1,5 +1,4 @@
 pub use alloy_primitives::{aliases::B2048, Address, Bytes, B256, U256, U64};
-
 use {aptos_crypto::HashValue, move_core_types::account_address::AccountAddress};
 
 pub(crate) trait ToEthAddress {
@@ -47,11 +46,25 @@ impl ToU64 for U64 {
     }
 }
 
+pub(crate) trait ToSaturatedU64 {
+    fn to_saturated_u64(self) -> u64;
+}
+
+impl ToSaturatedU64 for U256 {
+    fn to_saturated_u64(self) -> u64 {
+        match self.into_limbs() {
+            [value, 0, 0, 0] => value,
+            _ => u64::MAX,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use {
         super::*,
         alloy_primitives::{address, hex},
+        test_case::test_case,
     };
 
     #[test]
@@ -141,5 +154,16 @@ mod tests {
             eth_address, rt_eth_address,
             "Round trip eth to move address must cause no change"
         );
+    }
+
+    #[test_case(U256::from_limbs([4, 4, 0, 0]), u64::MAX; "U256 number greater than 2^64 - 1")]
+    #[test_case(U256::from_limbs([4, 0, 0, 0]), 4; "U256 number less than 2^64 - 1")]
+    fn test_converting_to_saturated_u64_saturates_at_numerical_bound(
+        n: impl ToSaturatedU64,
+        expected: u64,
+    ) {
+        let actual = n.to_saturated_u64();
+
+        assert_eq!(actual, expected);
     }
 }

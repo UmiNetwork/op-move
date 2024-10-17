@@ -9,6 +9,7 @@ use {
         },
         genesis::{config::GenesisConfig, init_state},
         json_utils, methods,
+        move_execution::EcotoneL1GasFee,
         primitives::{B256, U256},
         state_actor::StatePayloadId,
         storage::InMemoryState,
@@ -91,6 +92,8 @@ pub async fn run() {
             EIP1559_ELASTICITY_MULTIPLIER,
             EIP1559_BASE_FEE_MAX_CHANGE_DENOMINATOR,
         ),
+        // TODO extract parameters from block
+        EcotoneL1GasFee::new(U256::ZERO, 0, U256::ZERO, 0),
     );
 
     let http_state_channel = state_channel.clone();

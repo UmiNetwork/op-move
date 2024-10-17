@@ -62,6 +62,7 @@ mod tests {
         super::*,
         crate::{
             block::{Eip1559GasFee, InMemoryBlockRepository},
+            primitives::U256,
             state_actor::StatePayloadId,
             storage::InMemoryState,
         },
@@ -80,6 +81,7 @@ mod tests {
             B256::ZERO,
             InMemoryBlockRepository::default(),
             Eip1559GasFee::default(),
+            U256::ZERO,
         );
         let state_handle = state.spawn();
 
