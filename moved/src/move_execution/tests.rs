@@ -557,7 +557,7 @@ fn test_marketplace() {
         mint_amount
     );
 
-    // Buy the from the marketplace using the script
+    // Buy the item from the marketplace using the script
     let script_code = ScriptCompileJob::new("marketplace_script", &["marketplace"])
         .compile()
         .unwrap();
