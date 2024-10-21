@@ -45,6 +45,18 @@ pub enum NormalizedExtendedTxEnvelope {
     DepositedTx(DepositedTx),
 }
 
+impl NormalizedExtendedTxEnvelope {
+    /// In case this transaction is a deposit, returns `Some` containing a reference to the
+    /// underlying [`DepositedTx`]. Otherwise, returns `None`.
+    pub fn as_deposited(&self) -> Option<&DepositedTx> {
+        if let Self::DepositedTx(deposited_tx) = self {
+            Some(deposited_tx)
+        } else {
+            None
+        }
+    }
+}
+
 impl Encodable for ExtendedTxEnvelope {
     fn length(&self) -> usize {
         match self {
