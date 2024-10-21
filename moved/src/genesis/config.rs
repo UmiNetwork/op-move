@@ -3,6 +3,7 @@ use {
     alloy::primitives::hex,
     aptos_gas_schedule::{InitialGasSchedule, VMGasParameters},
     aptos_vm_types::storage::StorageGasParameters,
+    move_core_types::account_address::AccountAddress,
 };
 
 pub const CHAIN_ID: u64 = 404;
@@ -19,6 +20,7 @@ pub struct GenesisConfig {
     pub chain_id: u64,
     pub initial_state_root: B256,
     pub gas_costs: GasCosts,
+    pub treasury: AccountAddress,
 }
 
 impl Default for GasCosts {
@@ -39,6 +41,7 @@ impl Default for GenesisConfig {
                 "2503e9898a861f2753c4bd406d6454acba57f101096fa13ab01c5d7d585fcbf4"
             )),
             gas_costs: GasCosts::default(),
+            treasury: AccountAddress::ONE, // todo: fill in the real address
         }
     }
 }
