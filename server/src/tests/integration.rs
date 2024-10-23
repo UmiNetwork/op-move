@@ -444,19 +444,20 @@ async fn deploy_erc20_token() -> Result<()> {
 fn cleanup_files() -> Result<()> {
     let base = "src/tests/optimism/packages/contracts-bedrock";
     std::fs::remove_dir_all("src/tests/optimism/l1_datadir")?;
-    std::fs::remove_dir_all("src/tests/optimism/datadir")?;
+    std::fs::remove_dir_all(format!("{}/artifacts", base))?;
     std::fs::remove_dir_all(format!("{}/broadcast", base))?;
     std::fs::remove_dir_all(format!("{}/cache", base))?;
     std::fs::remove_dir_all(format!("{}/forge-artifacts", base))?;
     std::fs::remove_file(format!("{}/deploy-config/moved.json", base))?;
-    std::fs::remove_file(format!("{}/deployments/31337-deploy.json", base))?;
     std::fs::remove_file(format!("{}/deployments/1337-deploy.json", base))?;
-    std::fs::remove_file(format!("{}/deployments/genesis.json", base))?;
-    std::fs::remove_file(format!("{}/deployments/jwt.txt", base))?;
-    std::fs::remove_file(format!("{}/deployments/rollup.json", base))?;
+    std::fs::remove_file(format!("{}/deployments/31337-deploy.json", base))?;
     std::fs::remove_file(format!("{}/state-dump-42069.json", base))?;
     std::fs::remove_file(format!("{}/state-dump-42069-delta.json", base))?;
     std::fs::remove_file(format!("{}/state-dump-42069-ecotone.json", base))?;
+    std::fs::remove_file(format!("{}/deployments/genesis.json", base))?;
+    std::fs::remove_file(format!("{}/deployments/jwt.txt", base))?;
+    std::fs::remove_file(format!("{}/deployments/rollup.json", base))?;
+    std::fs::remove_dir_all("src/tests/optimism/datadir")?;
     Ok(())
 }
 
