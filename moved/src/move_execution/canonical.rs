@@ -32,6 +32,7 @@ pub(super) fn execute_canonical_transaction(
     tx_hash: &B256,
     state: &(impl MoveResolver<PartialVMError> + TableResolver),
     genesis_config: &GenesisConfig,
+    _l1_cost: u64,
 ) -> crate::Result<TransactionExecutionOutcome> {
     if let Some(chain_id) = tx.chain_id {
         if chain_id != genesis_config.chain_id {

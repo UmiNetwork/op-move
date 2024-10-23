@@ -247,6 +247,7 @@ pub(super) mod tests {
             B256::ZERO,
             repository,
             Eip1559GasFee::default(),
+            U256::ZERO,
         );
         let state_handle = state.spawn();
         let request = example_request();
