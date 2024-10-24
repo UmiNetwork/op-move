@@ -1,4 +1,4 @@
-pub use alloy_primitives::{aliases::B2048, Address, Bytes, B256, U256, U64};
+pub use alloy::primitives::{aliases::B2048, Address, Bytes, B256, U256, U64};
 use {aptos_crypto::HashValue, move_core_types::account_address::AccountAddress};
 
 pub(crate) trait ToEthAddress {
@@ -63,7 +63,7 @@ impl ToSaturatedU64 for U256 {
 mod tests {
     use {
         super::*,
-        alloy_primitives::{address, hex},
+        alloy::primitives::{address, hex},
         test_case::test_case,
     };
 
@@ -144,7 +144,7 @@ mod tests {
                 .duration_since(SystemTime::UNIX_EPOCH)
                 .unwrap()
                 .as_nanos();
-            let bytes = alloy_primitives::keccak256(ns.to_be_bytes());
+            let bytes = alloy::primitives::keccak256(ns.to_be_bytes());
             Address::from_word(bytes)
         };
         let move_address = eth_address.to_move_address();

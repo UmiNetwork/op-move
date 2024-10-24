@@ -195,7 +195,7 @@ mod tests {
             primitives::{Address, Bytes, B2048, U256, U64},
             storage::InMemoryState,
         },
-        alloy_primitives::hex,
+        alloy::primitives::hex,
     };
 
     #[test]

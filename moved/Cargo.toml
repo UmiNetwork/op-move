@@ -5,11 +5,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-alloy-consensus.workspace = true
-alloy-eips.workspace = true
-alloy-primitives.workspace = true
+alloy.workspace = true
 alloy-rlp.workspace = true
-alloy-serde.workspace = true
 aptos-crypto.workspace = true
 aptos-framework.workspace = true
 aptos-gas-meter.workspace = true
@@ -39,7 +36,6 @@ thiserror.workspace = true
 tokio.workspace = true
 
 [dev-dependencies]
-alloy.workspace = true
 anyhow.workspace = true
 move-compiler.workspace = true
 test-case.workspace = true

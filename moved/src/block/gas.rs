@@ -32,7 +32,7 @@ pub trait GasFee {
 /// The formula can be controlled by the given parameters. Their effect is:
 /// * The greater the `elasticity_multiplier`, the smaller the *gas target*.
 /// * The greater the `base_fee_max_change_denominator`, the smaller the increase or decrease of
-/// the fee.
+///   the fee.
 pub struct Eip1559GasFee {
     /// Magnifies the difference between target gas amount and limit. Here are some facts about this
     /// parameter:

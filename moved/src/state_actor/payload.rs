@@ -3,7 +3,7 @@ use {
         primitives::{Address, B256},
         types::engine_api::PayloadId,
     },
-    alloy_eips::eip4895::Withdrawal,
+    alloy::eips::eip4895::Withdrawal,
     sha2::{Digest, Sha256},
 };
 
@@ -84,7 +84,7 @@ impl NewPayloadId for StatePayloadId {
         hasher.update(input.fee_recipient.0.as_slice());
         let mut buffer =
             Vec::with_capacity(input.withdrawals.len() * std::mem::size_of::<Withdrawal>());
-        alloy_rlp::encode_list(&input.withdrawals, &mut buffer);
+        alloy::rlp::encode_list(&input.withdrawals, &mut buffer);
         hasher.update(buffer);
         if let Some(beacon_root) = input.beacon_root {
             hasher.update(beacon_root.as_slice());

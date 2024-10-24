@@ -19,12 +19,8 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace.dependencies]
-alloy = { version = "0.2", features = ["full", "signer-keystore"] }
-alloy-consensus = { version = "0.2", features = ["k256"] }
-alloy-eips = { version = "0.2" }
-alloy-primitives = { version = "0.7", features = ["k256", "rlp"] }
+alloy = { version = "0.5", features = ["full", "rlp", "serde", "signer-keystore"] }
 alloy-rlp = { version = "0.3", features = ["derive"] }
-alloy-serde = "0.2"
 anyhow = "1"
 aptos-framework = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 aptos-gas-meter = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }

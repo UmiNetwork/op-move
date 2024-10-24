@@ -99,7 +99,7 @@ pub(super) mod tests {
             primitives::{Address, Bytes, B256, U256, U64},
             storage::InMemoryState,
         },
-        alloy_primitives::hex,
+        alloy::primitives::hex,
     };
 
     pub fn example_request() -> serde_json::Value {

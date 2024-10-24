@@ -4,8 +4,7 @@ use {
         primitives::{Bytes, B256},
         types::{jsonrpc::JsonRpcError, state::StateMessage},
     },
-    alloy_consensus::transaction::TxEnvelope,
-    alloy_rlp::Decodable,
+    alloy::{consensus::transaction::TxEnvelope, rlp::Decodable},
     tokio::sync::mpsc,
 };
 

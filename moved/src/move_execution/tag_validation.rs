@@ -325,7 +325,7 @@ mod tests {
             tests::EVM_ADDRESS,
             types::session_id::SessionId,
         },
-        alloy_primitives::address,
+        alloy::primitives::address,
         move_core_types::value::MoveStruct,
     };
 

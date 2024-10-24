@@ -18,9 +18,11 @@ use {
         },
         Error::{InvalidTransaction, InvariantViolation, User},
     },
-    alloy_consensus::{Receipt, ReceiptWithBloom},
-    alloy_primitives::{keccak256, Bloom},
-    alloy_rlp::{Decodable, Encodable},
+    alloy::{
+        consensus::{Receipt, ReceiptWithBloom},
+        primitives::{keccak256, Bloom},
+        rlp::{Decodable, Encodable},
+    },
     move_binary_format::errors::PartialVMError,
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
@@ -204,7 +206,7 @@ impl<
         let transactions: Vec<_> = transactions.into_iter().map(|(_, (tx, _))| tx).collect();
         let transactions_root = transactions
             .iter()
-            .map(alloy_rlp::encode)
+            .map(alloy::rlp::encode)
             .map(keccak256)
             .merkle_root();
         let total_tip = execution_outcome.total_tip;
@@ -282,7 +284,10 @@ impl<
             ReceiptWithBloom::new(receipt, bloom)
         });
 
-        let receipts_root = receipts.map(alloy_rlp::encode).map(keccak256).merkle_root();
+        let receipts_root = receipts
+            .map(alloy::rlp::encode)
+            .map(keccak256)
+            .merkle_root();
         let logs_bloom = logs_bloom.into();
 
         ExecutionOutcome {

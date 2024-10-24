@@ -10,7 +10,7 @@ use {
         primitives::{ToU64, B2048, B256, U256, U64},
         types::engine_api::{PayloadAttributesV3, PayloadId},
     },
-    alloy_consensus::transaction::TxEnvelope,
+    alloy::consensus::transaction::TxEnvelope,
     tokio::sync::oneshot,
 };
 

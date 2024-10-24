@@ -5,7 +5,7 @@ use {
         primitives::{ToMoveAddress, B256},
         types::transactions::NormalizedEthTransaction,
     },
-    alloy_primitives::U256,
+    alloy::primitives::U256,
     aptos_types::transaction::EntryFunction,
     aptos_vm::move_vm_ext::UserTransactionContext,
 };

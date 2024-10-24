@@ -71,7 +71,7 @@ mod tests {
             primitives::{B256, U256},
             storage::InMemoryState,
         },
-        alloy_primitives::hex,
+        alloy::primitives::hex,
     };
 
     #[test]

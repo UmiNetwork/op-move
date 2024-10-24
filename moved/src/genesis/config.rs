@@ -1,6 +1,6 @@
 use {
     crate::primitives::B256,
-    alloy_primitives::hex,
+    alloy::primitives::hex,
     aptos_gas_schedule::{InitialGasSchedule, VMGasParameters},
     aptos_vm_types::storage::StorageGasParameters,
 };
