@@ -1,4 +1,4 @@
-pub use gas::{EcotoneL1GasFee, L1GasFee, L1GasFeeInput};
+pub use gas::{CreateEcotoneL1GasFee, CreateL1GasFee, EcotoneL1GasFee, L1GasFee, L1GasFeeInput};
 
 use {
     crate::{

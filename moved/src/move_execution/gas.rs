@@ -121,12 +121,45 @@ impl L1GasFee for EcotoneL1GasFee {
     }
 }
 
+/// Creates algorithm for calculating cost of publishing a transaction to layer-1 blockchain.
+pub trait CreateL1GasFee {
+    /// Extracts parameters from deposit transaction and creates the algorithm for calculating L1
+    /// gas cost.
+    fn for_deposit(&self, data: &[u8]) -> impl L1GasFee + '_;
+}
+
+pub struct CreateEcotoneL1GasFee;
+
+impl CreateL1GasFee for CreateEcotoneL1GasFee {
+    fn for_deposit(&self, data: &[u8]) -> impl L1GasFee + '_ {
+        let l1_base_fee = U256::from_be_slice(&data[36..68]);
+        let l1_blob_base_fee = U256::from_be_slice(&data[68..100]);
+        let l1_base_fee_scalar =
+            u32::from_be_bytes(data[4..8].try_into().expect("Slice should be 4 bytes"));
+        let l1_blob_base_fee_scalar =
+            u32::from_be_bytes(data[8..12].try_into().expect("Slice should be 4 bytes"));
+
+        EcotoneL1GasFee::new(
+            l1_base_fee,
+            l1_base_fee_scalar,
+            l1_blob_base_fee,
+            l1_blob_base_fee_scalar,
+        )
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     impl L1GasFee for U256 {
         fn l1_fee(&self, _input: L1GasFeeInput) -> U256 {
+            *self
+        }
+    }
+
+    impl CreateL1GasFee for U256 {
+        fn for_deposit(&self, _data: &[u8]) -> impl L1GasFee + '_ {
             *self
         }
     }

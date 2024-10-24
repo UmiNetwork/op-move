@@ -1,4 +1,3 @@
-use alloy_rlp::Encodable;
 pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
 
 use {
@@ -6,7 +5,7 @@ use {
         block::{Block, BlockHash, BlockRepository, ExtendedBlock, GasFee, Header},
         genesis::config::GenesisConfig,
         merkle_tree::MerkleRootExt,
-        move_execution::{execute_transaction, L1GasFee, L1GasFeeInput, LogsBloom},
+        move_execution::{execute_transaction, CreateL1GasFee, L1GasFee, L1GasFeeInput, LogsBloom},
         primitives::{ToSaturatedU64, B256, U256, U64},
         storage::State,
         types::{
@@ -21,7 +20,7 @@ use {
     },
     alloy_consensus::{Receipt, ReceiptWithBloom},
     alloy_primitives::{keccak256, Bloom},
-    alloy_rlp::Decodable,
+    alloy_rlp::{Decodable, Encodable},
     move_binary_format::errors::PartialVMError,
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
@@ -36,7 +35,7 @@ pub struct StateActor<
     H: BlockHash,
     R: BlockRepository,
     G: GasFee,
-    L1G: L1GasFee,
+    L1G: CreateL1GasFee,
 > {
     genesis_config: GenesisConfig,
     rx: Receiver<StateMessage>,
@@ -59,7 +58,7 @@ impl<
         H: BlockHash + Send + Sync + 'static,
         R: BlockRepository + Send + Sync + 'static,
         G: GasFee + Send + Sync + 'static,
-        L1G: L1GasFee + Send + Sync + 'static,
+        L1G: CreateL1GasFee + Send + Sync + 'static,
     > StateActor<S, P, H, R, G, L1G>
 {
     pub fn spawn(mut self) -> JoinHandle<()> {
@@ -77,7 +76,7 @@ impl<
         H: BlockHash,
         R: BlockRepository,
         G: GasFee,
-        L1G: L1GasFee,
+        L1G: CreateL1GasFee,
     > StateActor<S, P, H, R, G, L1G>
 {
     #[allow(clippy::too_many_arguments)]
@@ -230,6 +229,13 @@ impl<
     ) -> ExecutionOutcome {
         let mut total_tip = U256::ZERO;
         let mut outcomes = Vec::new();
+        let mut transactions = transactions.peekable();
+
+        // https://github.com/ethereum-optimism/specs/blob/9dbc6b0/specs/protocol/deposits.md#kinds-of-deposited-transactions
+        let l1_fee = transactions
+            .peek()
+            .and_then(|(_, v, _)| v.as_deposited())
+            .map(|v| self.l1_fee.for_deposit(v.data.as_ref()));
 
         // TODO: parallel transaction processing?
         for (tx_hash, tx, l1_cost_input) in transactions {
@@ -238,7 +244,10 @@ impl<
                 &tx_hash,
                 self.state.resolver(),
                 &self.genesis_config,
-                self.l1_fee.l1_fee(l1_cost_input).to_saturated_u64(),
+                l1_fee
+                    .as_ref()
+                    .map(|v| v.l1_fee(l1_cost_input).to_saturated_u64())
+                    .unwrap_or(0),
             ) {
                 Ok(outcome) => outcome,
                 Err(User(_)) => unreachable!("User errors are handled in execution"),
