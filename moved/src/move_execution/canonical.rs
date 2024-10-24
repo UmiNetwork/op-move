@@ -4,6 +4,7 @@ use {
         move_execution::{
             create_move_vm, create_vm_session,
             eth_token::{BaseTokenAccounts, TransferArgs},
+            evm_native,
             execute::{deploy_module, execute_entry_function, execute_script},
             gas::{new_gas_meter, total_gas_used},
             nonces::check_nonce,
@@ -113,8 +114,12 @@ pub(super) fn execute_canonical_transaction(
         }
     };
 
-    let (changes, mut extensions) = session.finish_with_extensions()?;
+    let (mut changes, mut extensions) = session.finish_with_extensions()?;
     let logs = extensions.logs().collect();
+    let evm_changes = evm_native::extract_evm_changes(&extensions);
+    changes
+        .squash(evm_changes)
+        .expect("EVM changes must merge with other session changes");
     let gas_used = total_gas_used(&gas_meter, genesis_config);
 
     match vm_outcome {
