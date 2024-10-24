@@ -1,6 +1,6 @@
 use {
     crate::iter::{PairIteratorExt, PairOrSingle},
-    alloy_primitives::{keccak256, B256},
+    alloy::primitives::{keccak256, B256},
 };
 
 /// This trait is defined by a single [`Self::merkle_root`] operation.

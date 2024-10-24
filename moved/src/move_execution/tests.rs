@@ -8,10 +8,12 @@ use {
         tests::{signer::Signer, ALT_EVM_ADDRESS, ALT_PRIVATE_KEY, EVM_ADDRESS, PRIVATE_KEY},
         types::transactions::{DepositedTx, ExtendedTxEnvelope, ScriptOrModule},
     },
-    alloy::network::TxSignerSync,
-    alloy_consensus::{transaction::TxEip1559, SignableTransaction, TxEnvelope},
-    alloy_primitives::{hex, keccak256, Address, FixedBytes, TxKind},
-    alloy_rlp::Encodable,
+    alloy::{
+        consensus::{transaction::TxEip1559, SignableTransaction, TxEnvelope},
+        network::TxSignerSync,
+        primitives::{hex, keccak256, Address, FixedBytes, TxKind},
+        rlp::Encodable,
+    },
     anyhow::Context,
     aptos_types::transaction::{EntryFunction, Module, Script, TransactionArgument},
     move_binary_format::{
@@ -654,7 +656,7 @@ fn test_transaction_chain_id() {
         // Intentionally setting the wrong chain id
         chain_id: genesis_config.chain_id + 1,
         nonce: signer.nonce,
-        gas_limit: u64::MAX.into(),
+        gas_limit: u64::MAX,
         max_fee_per_gas: 0,
         max_priority_fee_per_gas: 0,
         to: TxKind::Call(EVM_ADDRESS),
@@ -1011,7 +1013,7 @@ fn create_transaction_with_value(
     let mut tx = TxEip1559 {
         chain_id: CHAIN_ID,
         nonce: signer.nonce,
-        gas_limit: u64::MAX.into(),
+        gas_limit: u64::MAX,
         max_fee_per_gas: 0,
         max_priority_fee_per_gas: 0,
         to,

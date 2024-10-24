@@ -9,7 +9,7 @@
 //! [`Display`] trait, they serve only an informative purpose and a human-readable representation.   
 
 use {
-    alloy_consensus::TxType,
+    alloy::consensus::TxType,
     move_binary_format::errors::{PartialVMError, VMError},
     move_core_types::language_storage::TypeTag,
     thiserror::Error,
@@ -69,7 +69,7 @@ pub enum UserError {
     #[error("{0}")]
     PartialVm(#[from] PartialVMError),
     #[error("{0}")]
-    InvalidSignature(#[from] alloy_primitives::SignatureError),
+    InvalidSignature(#[from] alloy::primitives::SignatureError),
 }
 
 /// The error caused by invalid transaction input parameter.
@@ -237,7 +237,7 @@ mod tests {
         "Unknown transaction type: Legacy"
     )]
     #[test_case(
-        alloy_primitives::SignatureError::InvalidParity(0),
+        alloy::primitives::SignatureError::InvalidParity(0),
         "invalid parity: 0"
     )]
     #[test_case(bcs::Error::Eof, "unexpected end of input")]

@@ -1,6 +1,6 @@
 pub mod signer;
 
-use alloy_primitives::{address, Address};
+use alloy::primitives::{address, Address};
 
 pub const EVM_ADDRESS: Address = address!("8fd379246834eac74b8419ffda202cf8051f7a03");
 

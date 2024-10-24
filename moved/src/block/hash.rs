@@ -1,7 +1,9 @@
 use {
     crate::block::Header,
-    alloy_primitives::{Keccak256, B256},
-    alloy_rlp::Encodable,
+    alloy::{
+        primitives::{Keccak256, B256},
+        rlp::Encodable,
+    },
 };
 
 /// Represents an algorithm that computes the block hash.

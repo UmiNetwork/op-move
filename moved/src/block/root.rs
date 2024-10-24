@@ -3,8 +3,7 @@ use {
         primitives::{Address, Bytes, B2048, B256, U256},
         types::transactions::ExtendedTxEnvelope,
     },
-    alloy_primitives::hex,
-    alloy_rlp::RlpEncodable,
+    alloy::{primitives::hex, rlp::RlpEncodable},
     std::fmt::Debug,
 };
 

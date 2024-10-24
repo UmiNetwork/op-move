@@ -9,7 +9,7 @@ use {
             transactions::{NormalizedExtendedTxEnvelope, ToLog, TransactionExecutionOutcome},
         },
     },
-    alloy_primitives::{Bloom, Log},
+    alloy::primitives::{Bloom, Log},
     aptos_framework::natives::{
         event::NativeEventContext, object::NativeObjectContext,
         transaction_context::NativeTransactionContext,

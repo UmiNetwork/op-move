@@ -7,8 +7,7 @@ use {
         primitives::{Address, Bytes, ToU64, B2048, B256, U256, U64},
         state_actor::NewPayloadIdInput,
     },
-    alloy_eips::eip4895::Withdrawal,
-    alloy_rlp::Encodable,
+    alloy::{eips::eip4895::Withdrawal, rlp::Encodable},
     serde::{Deserialize, Serialize},
     std::str::FromStr,
 };
