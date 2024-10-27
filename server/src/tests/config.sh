@@ -107,8 +107,8 @@ config=$(cat << EOL
   "l2GenesisDeltaTimeOffset": "0x0",
   "l2GenesisCanyonTimeOffset": "0x0",
 
-  "gasPriceOracleOverhead": 0,
-  "gasPriceOracleScalar": 1000000
+  "gasPriceOracleBaseFeeScalar": 141648,
+  "gasPriceOracleBlobBaseFeeScalar": 810831
 }
 EOL
 )
