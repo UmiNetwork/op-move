@@ -9,7 +9,7 @@ use {
         },
         genesis::{config::GenesisConfig, init_state},
         json_utils, methods,
-        move_execution::CreateEcotoneL1GasFee,
+        move_execution::{CreateEcotoneL1GasFee, MovedBaseTokenAccounts},
         primitives::{B256, U256},
         state_actor::StatePayloadId,
         storage::InMemoryState,
@@ -80,6 +80,7 @@ pub async fn run() {
     let mut state = InMemoryState::new();
     init_state(&genesis_config, &mut state);
 
+    let base_token = MovedBaseTokenAccounts::new(genesis_config.treasury);
     let state = moved::state_actor::StateActor::new(
         rx,
         state,
@@ -93,6 +94,7 @@ pub async fn run() {
             EIP1559_BASE_FEE_MAX_CHANGE_DENOMINATOR,
         ),
         CreateEcotoneL1GasFee,
+        base_token,
     );
 
     let http_state_channel = state_channel.clone();
