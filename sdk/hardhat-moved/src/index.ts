@@ -1,3 +1,4 @@
+import { BCS, getRustConfig } from '@benfen/bcs';
 import * as ChildProcess from 'child_process';
 import * as Fs from 'fs';
 import { TASK_COMPILE_GET_COMPILATION_TASKS } from 'hardhat/builtin-tasks/task-names';
@@ -187,13 +188,23 @@ async function movePackageBuild(moveType: MoveType, movePath: string, packagePat
  *   toolchain.
  *
  **************************************************************************************/
- async function loadBytecode(packagePath: string, contractName: string): Promise<Result<string, ChainedError>> {
-     const bytecodePath = Path.join(packagePath, "build", contractName, 'bytecode_modules', `${contractName}.mv`);
-     let readFileRes = await readBytecodeFile(bytecodePath);
-     if (readFileRes.isErr()) {
-         return err(new ChainedError(`Failed to load bytecode from ${bytecodePath}`, readFileRes.error));
-     }
-     return ok(readFileRes.value);
+async function loadBytecode(packagePath: string, contractName: string): Promise<Result<string, ChainedError>> {
+    const bytecodePath = Path.join(packagePath, "build", contractName, 'bytecode_modules', `${contractName}.mv`);
+    let readFileRes = await readBytecodeFile(bytecodePath);
+    if (readFileRes.isErr()) {
+        return err(new ChainedError(`Failed to load bytecode from ${bytecodePath}`, readFileRes.error));
+    }
+
+    const bcs = new BCS(getRustConfig());
+    // Modules are encapsulated in an enum along with script transactions
+    bcs.registerEnumType('ScriptOrModule', {
+        Script: 'Vec<u8>',
+        Module: 'Vec<u8>',
+    });
+    // Extract the byte array to serialize within the higher level enum
+    const code = Uint8Array.from(Buffer.from(readFileRes.value, 'hex'));
+    const module = bcs.ser('ScriptOrModule', { Module: code });
+    return ok(module.toString('hex'));
 }
 
 async function listCompiledContracts(packagePath: string): Promise<Result<string[], ChainedError>> {
