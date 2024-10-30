@@ -1,5 +1,5 @@
 use {
-    crate::types::jsonrpc::JsonRpcError,
+    crate::jsonrpc::JsonRpcError,
     serde::de::DeserializeOwned,
     std::{any, fmt},
 };
@@ -28,9 +28,5 @@ pub fn deserialize<T: DeserializeOwned>(x: &serde_json::Value) -> Result<T, Json
 }
 
 pub fn access_state_error<E: fmt::Debug>(e: E) -> JsonRpcError {
-    JsonRpcError {
-        code: -1,
-        data: serde_json::Value::Null,
-        message: format!("Failed to access state: {e:?}"),
-    }
+    JsonRpcError::without_data(-1, format!("Failed to access state: {e:?}"))
 }

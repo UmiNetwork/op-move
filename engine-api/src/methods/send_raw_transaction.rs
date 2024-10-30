@@ -1,10 +1,13 @@
 use {
     crate::{
         json_utils::{self, access_state_error},
-        primitives::{Bytes, B256},
-        types::{jsonrpc::JsonRpcError, state::StateMessage},
+        jsonrpc::JsonRpcError,
     },
     alloy::{consensus::transaction::TxEnvelope, rlp::Decodable},
+    moved::{
+        primitives::{Bytes, B256},
+        types::state::StateMessage,
+    },
     tokio::sync::mpsc,
 };
 
@@ -59,7 +62,7 @@ async fn inner_execute(
 mod tests {
     use {
         super::*,
-        crate::{
+        moved::{
             block::{Eip1559GasFee, InMemoryBlockRepository},
             primitives::U256,
             state_actor::StatePayloadId,
@@ -69,9 +72,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_execute() {
-        let genesis_config = crate::genesis::config::GenesisConfig::default();
+        let genesis_config = moved::genesis::config::GenesisConfig::default();
         let (state_channel, rx) = mpsc::channel(10);
-        let state = crate::state_actor::StateActor::new(
+        let state = moved::state_actor::StateActor::new(
             rx,
             InMemoryState::new(),
             B256::ZERO,

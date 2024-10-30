@@ -25,7 +25,7 @@ impl BlockHash for MovedBlockHash {
     }
 }
 
-#[cfg(test)]
+#[cfg(any(feature = "test-doubles", test))]
 mod tests {
     use super::*;
 

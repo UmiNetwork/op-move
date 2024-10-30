@@ -1,4 +1,4 @@
-use {crate::types::jsonrpc::JsonRpcError, std::str::FromStr};
+use {crate::jsonrpc::JsonRpcError, std::str::FromStr};
 
 #[derive(Debug)]
 pub enum MethodName {
@@ -23,11 +23,10 @@ impl FromStr for MethodName {
             "engine_forkchoiceUpdatedV2" => Ok(Self::ForkChoiceUpdatedV2),
             "engine_getPayloadV2" => Ok(Self::GetPayloadV2),
             "engine_newPayloadV2" => Ok(Self::NewPayloadV2),
-            other => Err(JsonRpcError {
-                code: -32601,
-                data: serde_json::Value::Null,
-                message: format!("Unsupported method: {other}"),
-            }),
+            other => Err(JsonRpcError::without_data(
+                -32601,
+                format!("Unsupported method: {other}"),
+            )),
         }
     }
 }

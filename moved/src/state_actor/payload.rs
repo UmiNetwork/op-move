@@ -98,15 +98,20 @@ impl NewPayloadId for StatePayloadId {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use {super::*, test_case::test_case};
+#[cfg(any(feature = "test-doubles", test))]
+mod test_doubles {
+    use super::*;
 
     impl NewPayloadId for u64 {
         fn new_payload_id(&self, _input: NewPayloadIdInput) -> PayloadId {
             PayloadId::from(*self)
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use {super::*, test_case::test_case};
 
     macro_rules! b256_0_ended {
         ($x: expr) => {

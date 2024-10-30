@@ -1,14 +1,11 @@
 use {
-    crate::{
-        json_utils::{self, access_state_error},
-        types::{
-            engine_api::{
-                ForkchoiceStateV1, ForkchoiceUpdatedResponseV1, PayloadAttributesV3,
-                PayloadStatusV1, Status,
-            },
-            jsonrpc::JsonRpcError,
-            state::StateMessage,
+    crate::{json_utils, json_utils::access_state_error, jsonrpc::JsonRpcError},
+    moved::types::{
+        engine_api::{
+            ForkchoiceStateV1, ForkchoiceUpdatedResponseV1, PayloadAttributesV3, PayloadStatusV1,
+            Status,
         },
+        state::StateMessage,
     },
     tokio::sync::{mpsc, oneshot},
 };
@@ -93,13 +90,13 @@ async fn inner_execute_v3(
 pub(super) mod tests {
     use {
         super::*,
-        crate::{
+        alloy::primitives::hex,
+        moved::{
             block::{Block, BlockRepository, Eip1559GasFee, InMemoryBlockRepository},
             genesis::{config::GenesisConfig, init_state},
             primitives::{Address, Bytes, B256, U256, U64},
             storage::InMemoryState,
         },
-        alloy::primitives::hex,
     };
 
     pub fn example_request() -> serde_json::Value {
@@ -238,7 +235,7 @@ pub(super) mod tests {
         let mut state = InMemoryState::new();
         init_state(&genesis_config, &mut state);
 
-        let state = crate::state_actor::StateActor::new(
+        let state = moved::state_actor::StateActor::new(
             rx,
             state,
             head_hash,
