@@ -1118,7 +1118,7 @@ fn test_deeply_nested_type() {
     );
 }
 
-fn deploy_contract(
+pub fn deploy_contract(
     module_name: &str,
     signer: &mut Signer,
     genesis_config: &GenesisConfig,
@@ -1152,7 +1152,7 @@ fn module_bytes_to_tx_data(module_bytes: Vec<u8>) -> Vec<u8> {
     bcs::to_bytes(&ScriptOrModule::Module(Module::new(module_bytes))).unwrap()
 }
 
-fn create_transaction(
+pub fn create_transaction(
     signer: &mut Signer,
     to: TxKind,
     input: Vec<u8>,
