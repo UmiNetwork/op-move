@@ -77,8 +77,8 @@ pub fn append_evm_natives(natives: &mut NativeFunctionTable, builder: &SafeNativ
         natives.push((EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE.into(), name, native));
     };
 
-    push_native(ident_str!("evm_call").into(), evm_call);
-    push_native(ident_str!("evm_create").into(), evm_create);
+    push_native(ident_str!("native_evm_call").into(), evm_call);
+    push_native(ident_str!("native_evm_create").into(), evm_create);
 }
 
 pub fn extract_evm_changes(extensions: &NativeContextExtensions) -> ChangeSet {

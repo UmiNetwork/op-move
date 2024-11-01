@@ -204,8 +204,8 @@ fn deploy_sui_framework(session: &mut Session) -> crate::Result<()> {
 mod tests {
     use {super::*, crate::storage::InMemoryState};
 
-    // Aptos framework has 114 modules and Sui has 69. They are kept mutually exclusive.
-    const APTOS_MODULES_LEN: usize = 114;
+    // Aptos framework has 115 modules and Sui has 69. They are kept mutually exclusive.
+    const APTOS_MODULES_LEN: usize = 115;
     const SUI_MODULES_LEN: usize = 69;
     const TOTAL_MODULES_LEN: usize = APTOS_MODULES_LEN + SUI_MODULES_LEN;
 
