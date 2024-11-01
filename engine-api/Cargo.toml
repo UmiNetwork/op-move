@@ -1,0 +1,15 @@
+[package]
+name = "moved-engine-api"
+description = "Moved execution Ethereum engine JSON-RPC API"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+moved.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+alloy.workspace = true
+
+[dev-dependencies]
+moved = { workspace = true, features = ["test-doubles"] }

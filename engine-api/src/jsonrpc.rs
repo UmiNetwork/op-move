@@ -5,6 +5,16 @@ pub struct JsonRpcError {
     pub message: String,
 }
 
+impl JsonRpcError {
+    pub fn without_data(code: i64, message: impl Into<String>) -> Self {
+        Self {
+            code,
+            message: message.into(),
+            data: serde_json::Value::Null,
+        }
+    }
+}
+
 #[derive(Debug, serde::Serialize)]
 pub struct JsonRpcResponse {
     pub id: serde_json::Value,

@@ -1,10 +1,12 @@
 use {
     crate::{
         json_utils::{self, access_state_error},
+        jsonrpc::JsonRpcError,
+    },
+    moved::{
         primitives::B256,
         types::{
             engine_api::{ExecutionPayloadV3, GetPayloadResponseV3, PayloadStatusV1, Status},
-            jsonrpc::JsonRpcError,
             state::StateMessage,
         },
     },
@@ -188,14 +190,14 @@ fn validate_payload(
 mod tests {
     use {
         super::*,
-        crate::{
+        crate::methods::{forkchoice_updated, get_payload},
+        alloy::primitives::hex,
+        moved::{
             block::{Block, BlockRepository, Eip1559GasFee, InMemoryBlockRepository},
             genesis::{config::GenesisConfig, init_state},
-            methods::{forkchoice_updated, get_payload},
             primitives::{Address, Bytes, B2048, U256, U64},
             storage::InMemoryState,
         },
-        alloy::primitives::hex,
     };
 
     #[test]
@@ -283,7 +285,7 @@ mod tests {
         let mut state = InMemoryState::new();
         init_state(&genesis_config, &mut state);
 
-        let state = crate::state_actor::StateActor::new(
+        let state = moved::state_actor::StateActor::new(
             rx,
             state,
             head_hash,

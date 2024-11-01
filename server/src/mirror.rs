@@ -1,4 +1,4 @@
-use {super::jsonrpc::JsonRpcResponse, serde::Serialize};
+use {moved_engine_api::jsonrpc::JsonRpcResponse, serde::Serialize};
 
 #[derive(Debug, Serialize)]
 pub struct MirrorLog<'a> {

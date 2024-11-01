@@ -148,7 +148,7 @@ impl CreateL1GasFee for CreateEcotoneL1GasFee {
     }
 }
 
-#[cfg(test)]
+#[cfg(any(feature = "test-doubles", test))]
 mod tests {
     use super::*;
 

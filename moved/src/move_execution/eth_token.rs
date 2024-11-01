@@ -217,7 +217,7 @@ pub fn quick_get_eth_balance(
     .unwrap()
 }
 
-#[cfg(test)]
+#[cfg(any(feature = "test-doubles", test))]
 mod tests {
     use {super::*, crate::Error};
 

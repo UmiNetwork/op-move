@@ -1,4 +1,5 @@
 use {
+    crate::mirror::MirrorLog,
     clap::Parser,
     flate2::read::GzDecoder,
     jsonwebtoken::{DecodingKey, Validation},
@@ -8,17 +9,11 @@ use {
             InMemoryBlockRepository, MovedBlockHash,
         },
         genesis::{config::GenesisConfig, init_state},
-        json_utils, methods,
         move_execution::{CreateEcotoneL1GasFee, MovedBaseTokenAccounts},
         primitives::{B256, U256},
         state_actor::StatePayloadId,
         storage::InMemoryState,
-        types::{
-            jsonrpc::{JsonRpcError, JsonRpcResponse},
-            method_name::MethodName,
-            mirror::MirrorLog,
-            state::StateMessage,
-        },
+        types::state::StateMessage,
     },
     once_cell::sync::Lazy,
     std::{
@@ -38,6 +33,8 @@ use {
         QueryParameters,
     },
 };
+
+mod mirror;
 
 #[cfg(test)]
 mod tests;
@@ -214,7 +211,7 @@ async fn mirror(
         };
 
     let request = request.expect("geth responded, so body must have been JSON");
-    let op_move_response = handle_request(request.clone(), state_channel).await;
+    let op_move_response = moved_engine_api::request::handle(request.clone(), state_channel).await;
     let log = MirrorLog {
         request: &request,
         geth_response: &parsed_geth_response,
@@ -245,61 +242,6 @@ async fn proxy(
         body,
     )
     .await
-}
-
-async fn handle_request(
-    request: serde_json::Value,
-    state_channel: mpsc::Sender<StateMessage>,
-) -> JsonRpcResponse {
-    let id = json_utils::get_field(&request, "id");
-    let jsonrpc = json_utils::get_field(&request, "jsonrpc");
-    let result = match inner_handle_request(request, state_channel).await {
-        Ok(r) => r,
-        Err(e) => {
-            return JsonRpcResponse {
-                id,
-                jsonrpc,
-                result: None,
-                error: Some(e),
-            }
-        }
-    };
-    JsonRpcResponse {
-        id,
-        jsonrpc,
-        result: Some(result),
-        error: None,
-    }
-}
-
-async fn inner_handle_request(
-    request: serde_json::Value,
-    state_channel: mpsc::Sender<StateMessage>,
-) -> std::result::Result<serde_json::Value, JsonRpcError> {
-    let method: MethodName = match json_utils::get_field(&request, "method") {
-        serde_json::Value::String(m) => m.parse()?,
-        _ => {
-            return Err(JsonRpcError {
-                code: -32601,
-                data: serde_json::Value::Null,
-                message: "Invalid/missing method".into(),
-            });
-        }
-    };
-
-    match method {
-        MethodName::ForkChoiceUpdatedV3 => {
-            methods::forkchoice_updated::execute_v3(request, state_channel).await
-        }
-        MethodName::GetPayloadV3 => methods::get_payload::execute_v3(request, state_channel).await,
-        MethodName::NewPayloadV3 => methods::new_payload::execute_v3(request, state_channel).await,
-        MethodName::SendRawTransaction => {
-            methods::send_raw_transaction::execute(request, state_channel).await
-        }
-        MethodName::ForkChoiceUpdatedV2 => todo!(),
-        MethodName::GetPayloadV2 => todo!(),
-        MethodName::NewPayloadV2 => todo!(),
-    }
 }
 
 fn try_decompress(raw_bytes: &[u8]) -> std::io::Result<Vec<u8>> {

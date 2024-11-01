@@ -101,12 +101,18 @@ impl GasFee for Eip1559GasFee {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(any(feature = "test-doubles", test))]
+mod test_doubles {
     use super::*;
 
     const ELASTICITY_MULTIPLIER: u64 = 2;
     const BASE_FEE_MAX_CHANGE_DENOMINATOR: U256 = U256::from_limbs([8, 0, 0, 0]);
+
+    impl Default for Eip1559GasFee {
+        fn default() -> Self {
+            Self::new(ELASTICITY_MULTIPLIER, BASE_FEE_MAX_CHANGE_DENOMINATOR)
+        }
+    }
 
     impl Eip1559GasFee {
         /// Creates a new [`Eip1559GasFee`] that always makes the gas target equal to gas limit.
@@ -115,12 +121,11 @@ mod tests {
             self
         }
     }
+}
 
-    impl Default for Eip1559GasFee {
-        fn default() -> Self {
-            Self::new(ELASTICITY_MULTIPLIER, BASE_FEE_MAX_CHANGE_DENOMINATOR)
-        }
-    }
+#[cfg(test)]
+mod tests {
+    use super::*;
 
     #[test]
     fn test_fee_is_not_changed_when_gas_used_matches_gas_target() {

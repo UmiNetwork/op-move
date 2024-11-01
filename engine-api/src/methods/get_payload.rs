@@ -1,11 +1,11 @@
 use {
     crate::{
         json_utils::{self, access_state_error},
-        types::{
-            engine_api::{GetPayloadResponseV3, PayloadId},
-            jsonrpc::JsonRpcError,
-            state::StateMessage,
-        },
+        jsonrpc::JsonRpcError,
+    },
+    moved::types::{
+        engine_api::{GetPayloadResponseV3, PayloadId},
+        state::StateMessage,
     },
     tokio::sync::{mpsc, oneshot},
 };
@@ -64,14 +64,14 @@ async fn inner_execute_v3(
 mod tests {
     use {
         super::*,
-        crate::{
+        crate::methods::forkchoice_updated,
+        alloy::primitives::hex,
+        moved::{
             block::{Block, BlockRepository, Eip1559GasFee, InMemoryBlockRepository},
             genesis::{config::GenesisConfig, init_state},
-            methods::forkchoice_updated,
             primitives::{B256, U256},
             storage::InMemoryState,
         },
-        alloy::primitives::hex,
     };
 
     #[test]
@@ -114,7 +114,7 @@ mod tests {
         let mut state = InMemoryState::new();
         init_state(&genesis_config, &mut state);
 
-        let state = crate::state_actor::StateActor::new(
+        let state = moved::state_actor::StateActor::new(
             rx,
             state,
             head_hash,
