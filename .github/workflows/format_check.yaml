@@ -12,12 +12,13 @@ env:
 jobs:
   format_check:
     name: latest
-    runs-on: codebuild-MovedNetworkBuild-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rs/toolchain@v1
         with:
           default: true
           toolchain: nightly
+      - run: rustup component add --toolchain nightly rustfmt
       - name: format
         run: cargo +nightly fmt -- --check
