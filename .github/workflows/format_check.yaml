@@ -19,5 +19,6 @@ jobs:
         with:
           default: true
           toolchain: nightly
+      - run: rustup component add rustfmt
       - name: format
         run: cargo +nightly fmt -- --check
