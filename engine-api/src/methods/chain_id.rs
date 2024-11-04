@@ -52,17 +52,12 @@ mod tests {
         );
         let state_handle = state.spawn();
 
-        let request: serde_json::Value = serde_json::from_str(
-            r#"
-            {
-                "id": 30054,
-                "jsonrpc": "2.0",
-                "method": "eth_chainId",
-                "params": []
-            }
-        "#,
-        )
-        .unwrap();
+        let request = serde_json::json!({
+            "id": 30054,
+            "jsonrpc": "2.0",
+            "method": "eth_chainId",
+            "params": []
+        });
 
         let expected_response: serde_json::Value = serde_json::from_str(r#""0x194""#).unwrap();
 
