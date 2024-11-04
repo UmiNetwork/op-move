@@ -12,11 +12,10 @@ use {
         primitives::{ToSaturatedU64, B256, U256, U64},
         storage::State,
         types::{
-            engine_api::{
-                GetPayloadResponseV3, PayloadAttributesV3, PayloadId, ToPayloadIdInput,
-                WithPayloadAttributes,
+            state::{
+                ExecutionOutcome, Payload, PayloadId, PayloadResponse, StateMessage,
+                ToPayloadIdInput, WithExecutionOutcome, WithPayloadAttributes,
             },
-            state::{ExecutionOutcome, StateMessage, WithExecutionOutcome},
             transactions::{ExtendedTxEnvelope, NormalizedExtendedTxEnvelope},
         },
         Error::{InvalidTransaction, InvariantViolation, User},
@@ -50,8 +49,8 @@ pub struct StateActor<
     payload_id: P,
     block_hash: H,
     gas_fee: G,
-    execution_payloads: HashMap<B256, GetPayloadResponseV3>,
-    pending_payload: Option<(PayloadId, GetPayloadResponseV3)>,
+    execution_payloads: HashMap<B256, PayloadResponse>,
+    pending_payload: Option<(PayloadId, PayloadResponse)>,
     mem_pool: HashMap<B256, (ExtendedTxEnvelope, L1GasFeeInput)>,
     state: S,
     block_repository: R,
@@ -130,10 +129,10 @@ impl<
             } => {
                 let input = payload_attributes.to_payload_id_input(&self.head);
                 let id = self.payload_id.new_payload_id(input);
-                response_channel.send(id.clone()).ok();
+                response_channel.send(id).ok();
                 let block = self.create_block(payload_attributes);
                 self.block_repository.add(block.clone());
-                let payload = GetPayloadResponseV3::from(block);
+                let payload = PayloadResponse::from(block);
                 self.pending_payload = Some((id, payload));
             }
             StateMessage::GetPayload {
@@ -146,10 +145,9 @@ impl<
                         self.execution_payloads
                             .insert(payload.execution_payload.block_hash, payload);
                     } else {
-                        let request_str: String = request_id.into();
-                        println!("WARN: unexpected PayloadId: {request_str}");
+                        println!("WARN: unexpected PayloadId: {request_id}");
                         response_channel.send(None).ok();
-                        self.pending_payload = Some((id, payload));
+                        self.pending_payload.replace((id, payload));
                     }
                 }
                 None => {
@@ -174,7 +172,7 @@ impl<
         }
     }
 
-    fn create_block(&mut self, payload_attributes: PayloadAttributesV3) -> ExtendedBlock {
+    fn create_block(&mut self, payload_attributes: Payload) -> ExtendedBlock {
         // Include transactions from both `payload_attributes` and internal mem-pool
         let transactions = payload_attributes
             .transactions

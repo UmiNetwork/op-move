@@ -2,14 +2,9 @@ use {
     crate::{
         json_utils::{self, access_state_error},
         jsonrpc::JsonRpcError,
+        schema::{ExecutionPayloadV3, GetPayloadResponseV3, PayloadStatusV1, Status},
     },
-    moved::{
-        primitives::B256,
-        types::{
-            engine_api::{ExecutionPayloadV3, GetPayloadResponseV3, PayloadStatusV1, Status},
-            state::StateMessage,
-        },
-    },
+    moved::{primitives::B256, types::state::StateMessage},
     tokio::sync::{mpsc, oneshot},
 };
 
@@ -74,12 +69,14 @@ async fn inner_execute_v3(
     let maybe_response = rx.await.map_err(access_state_error)?;
 
     // TODO: in theory we should start syncing to learn about this block hash.
-    let response = maybe_response.ok_or(JsonRpcError {
-        code: -1,
-        data: serde_json::to_value(execution_payload.block_hash)
-            .expect("Must serialize block hash"),
-        message: "Unknown block hash".into(),
-    })?;
+    let response = maybe_response
+        .ok_or(JsonRpcError {
+            code: -1,
+            data: serde_json::to_value(execution_payload.block_hash)
+                .expect("Must serialize block hash"),
+            message: "Unknown block hash".into(),
+        })?
+        .into();
 
     validate_payload(
         execution_payload,

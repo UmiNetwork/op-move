@@ -1,7 +1,7 @@
 use {
     crate::{
         primitives::{Address, B256},
-        types::engine_api::PayloadId,
+        types::state::PayloadId,
     },
     alloy::eips::eip4895::Withdrawal,
     sha2::{Digest, Sha256},
@@ -152,7 +152,7 @@ mod tests {
         random: B256,
         fee_recipient: Address,
         withdrawals: impl IntoIterator<Item = Withdrawal>,
-        expected_payload_id: impl Into<PayloadId>,
+        expected_payload_id: u64,
     ) {
         let actual_payload_id = StatePayloadId.new_payload_id(NewPayloadIdInput {
             parent: &parent,
@@ -163,7 +163,7 @@ mod tests {
             beacon_root: None,
             version: 0,
         });
-        let expected_payload_id = expected_payload_id.into();
+        let expected_payload_id = PayloadId::from(expected_payload_id);
 
         assert_eq!(actual_payload_id, expected_payload_id,);
     }

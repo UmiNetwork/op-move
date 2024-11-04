@@ -1,12 +1,14 @@
 use {
-    crate::{json_utils, json_utils::access_state_error, jsonrpc::JsonRpcError},
-    moved::types::{
-        engine_api::{
-            ForkchoiceStateV1, ForkchoiceUpdatedResponseV1, PayloadAttributesV3, PayloadStatusV1,
-            Status,
+    crate::{
+        json_utils,
+        json_utils::access_state_error,
+        jsonrpc::JsonRpcError,
+        schema::{
+            ForkchoiceStateV1, ForkchoiceUpdatedResponseV1, PayloadAttributesV3, PayloadId,
+            PayloadStatusV1, Status,
         },
-        state::StateMessage,
     },
+    moved::types::state::StateMessage,
     tokio::sync::{mpsc, oneshot},
 };
 
@@ -71,11 +73,11 @@ async fn inner_execute_v3(
     let payload_id = if let Some(attrs) = payload_attributes {
         let (tx, rx) = oneshot::channel();
         let msg = StateMessage::StartBlockBuild {
-            payload_attributes: attrs,
+            payload_attributes: attrs.into(),
             response_channel: tx,
         };
         state_channel.send(msg).await.map_err(access_state_error)?;
-        Some(rx.await.map_err(access_state_error)?)
+        Some(PayloadId(rx.await.map_err(access_state_error)?))
     } else {
         None
     };
