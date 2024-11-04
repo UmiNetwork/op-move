@@ -171,6 +171,9 @@ impl<
                 self.mem_pool
                     .insert(tx_hash, (ExtendedTxEnvelope::Canonical(tx), encoded));
             }
+            StateMessage::ChainId { response_channel } => {
+                response_channel.send(self.genesis_config.chain_id).ok();
+            }
         }
     }
 
