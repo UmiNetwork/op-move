@@ -2,12 +2,10 @@
 //! for specification of types.
 
 use {
-    crate::{
-        block::{ExtendedBlock, Header},
-        primitives::{Address, Bytes, ToU64, B2048, B256, U256, U64},
-        state_actor::NewPayloadIdInput,
+    moved::{
+        primitives::{Address, Bytes, B2048, B256, U256, U64},
+        types::state::{BlobsBundle, ExecutionPayload, Payload, PayloadResponse, Withdrawal},
     },
-    alloy::{eips::eip4895::Withdrawal, rlp::Encodable},
     serde::{Deserialize, Serialize},
     std::str::FromStr,
 };
@@ -137,6 +135,12 @@ impl<U: Into<u64>> From<U> for PayloadId {
     }
 }
 
+impl From<PayloadId> for U64 {
+    fn from(value: PayloadId) -> Self {
+        value.0
+    }
+}
+
 impl From<PayloadId> for String {
     fn from(value: PayloadId) -> Self {
         let inner: u64 = value.0.into_limbs()[0];
@@ -187,104 +191,130 @@ pub struct GetPayloadResponseV3 {
     pub parent_beacon_block_root: B256,
 }
 
-trait ToWithdrawal {
-    fn to_withdrawal(&self) -> Withdrawal;
-}
-
-impl ToWithdrawal for WithdrawalV1 {
-    fn to_withdrawal(&self) -> Withdrawal {
-        Withdrawal {
-            index: self.index.into_limbs()[0],
-            validator_index: self.validator_index.into_limbs()[0],
-            address: self.address,
-            amount: self.amount.into_limbs()[0],
-        }
-    }
-}
-
-pub(crate) trait ToPayloadIdInput<'a> {
-    fn to_payload_id_input(&'a self, head: &'a B256) -> NewPayloadIdInput<'a>;
-}
-
-impl<'a> ToPayloadIdInput<'a> for PayloadAttributesV3 {
-    fn to_payload_id_input(&'a self, head: &'a B256) -> NewPayloadIdInput<'a> {
-        NewPayloadIdInput::new_v3(
-            head,
-            self.timestamp.into_limbs()[0],
-            &self.prev_randao,
-            &self.suggested_fee_recipient,
-        )
-        .with_beacon_root(&self.parent_beacon_block_root)
-        .with_withdrawals(
-            self.withdrawals
-                .iter()
-                .map(ToWithdrawal::to_withdrawal)
-                .collect::<Vec<_>>(),
-        )
-    }
-}
-
-impl From<ExtendedBlock> for GetPayloadResponseV3 {
-    fn from(value: ExtendedBlock) -> Self {
-        GetPayloadResponseV3 {
-            parent_beacon_block_root: value.block.header.parent_beacon_block_root,
-            block_value: value.value,
-            execution_payload: ExecutionPayloadV3::from(value),
-            blobs_bundle: Default::default(),
-            should_override_builder: false,
-        }
-    }
-}
-
-impl From<ExtendedBlock> for ExecutionPayloadV3 {
-    fn from(value: ExtendedBlock) -> Self {
-        let transactions = value
-            .block
-            .transactions
-            .into_iter()
-            .map(|tx| {
-                let capacity = tx.length();
-                let mut bytes = Vec::with_capacity(capacity);
-                tx.encode(&mut bytes);
-                bytes.into()
-            })
-            .collect();
-
+impl From<GetPayloadResponseV3> for PayloadResponse {
+    fn from(value: GetPayloadResponseV3) -> Self {
         Self {
-            block_hash: value.hash,
-            parent_hash: value.block.header.parent_hash,
-            fee_recipient: value.block.header.beneficiary,
-            state_root: value.block.header.state_root,
-            receipts_root: value.block.header.receipts_root,
-            logs_bloom: value.block.header.logs_bloom,
-            prev_randao: value.block.header.prev_randao,
-            block_number: U64::from(value.block.header.number),
-            gas_limit: U64::from(value.block.header.gas_limit),
-            gas_used: U64::from(value.block.header.gas_used),
-            timestamp: U64::from(value.block.header.timestamp),
-            extra_data: value.block.header.extra_data,
-            base_fee_per_gas: value.block.header.base_fee_per_gas,
-            transactions,
-            withdrawals: Vec::new(), // TODO: withdrawals
-            blob_gas_used: U64::from(value.block.header.blob_gas_used),
-            excess_blob_gas: U64::from(value.block.header.excess_blob_gas),
+            execution_payload: value.execution_payload.into(),
+            block_value: value.block_value,
+            blobs_bundle: value.blobs_bundle.into(),
+            should_override_builder: value.should_override_builder,
+            parent_beacon_block_root: value.parent_beacon_block_root,
         }
     }
 }
 
-pub(crate) trait WithPayloadAttributes {
-    fn with_payload_attributes(self, payload: PayloadAttributesV3) -> Self;
+impl From<PayloadResponse> for GetPayloadResponseV3 {
+    fn from(value: PayloadResponse) -> Self {
+        Self {
+            execution_payload: value.execution_payload.into(),
+            block_value: value.block_value,
+            blobs_bundle: value.blobs_bundle.into(),
+            should_override_builder: value.should_override_builder,
+            parent_beacon_block_root: value.parent_beacon_block_root,
+        }
+    }
 }
 
-impl WithPayloadAttributes for Header {
-    fn with_payload_attributes(self, payload: PayloadAttributesV3) -> Self {
+impl From<BlobsBundleV1> for BlobsBundle {
+    fn from(value: BlobsBundleV1) -> Self {
         Self {
-            beneficiary: payload.suggested_fee_recipient,
-            gas_limit: payload.gas_limit.to_u64(),
-            timestamp: payload.timestamp.to_u64(),
-            prev_randao: payload.prev_randao,
-            parent_beacon_block_root: payload.parent_beacon_block_root,
-            ..self
+            commitments: value.commitments,
+            proofs: value.proofs,
+            blobs: value.blobs,
+        }
+    }
+}
+
+impl From<BlobsBundle> for BlobsBundleV1 {
+    fn from(value: BlobsBundle) -> Self {
+        Self {
+            commitments: value.commitments,
+            proofs: value.proofs,
+            blobs: value.blobs,
+        }
+    }
+}
+
+impl From<ExecutionPayloadV3> for ExecutionPayload {
+    fn from(value: ExecutionPayloadV3) -> Self {
+        Self {
+            parent_hash: value.parent_hash,
+            fee_recipient: value.fee_recipient,
+            state_root: value.state_root,
+            receipts_root: value.receipts_root,
+            logs_bloom: value.logs_bloom,
+            prev_randao: value.prev_randao,
+            block_number: value.block_number,
+            gas_limit: value.gas_limit,
+            gas_used: value.gas_used,
+            timestamp: value.timestamp,
+            extra_data: value.extra_data,
+            base_fee_per_gas: value.base_fee_per_gas,
+            block_hash: value.block_hash,
+            transactions: value.transactions,
+            withdrawals: value.withdrawals.into_iter().map(Into::into).collect(),
+            blob_gas_used: value.blob_gas_used,
+            excess_blob_gas: value.excess_blob_gas,
+        }
+    }
+}
+
+impl From<ExecutionPayload> for ExecutionPayloadV3 {
+    fn from(value: ExecutionPayload) -> Self {
+        Self {
+            parent_hash: value.parent_hash,
+            fee_recipient: value.fee_recipient,
+            state_root: value.state_root,
+            receipts_root: value.receipts_root,
+            logs_bloom: value.logs_bloom,
+            prev_randao: value.prev_randao,
+            block_number: value.block_number,
+            gas_limit: value.gas_limit,
+            gas_used: value.gas_used,
+            timestamp: value.timestamp,
+            extra_data: value.extra_data,
+            base_fee_per_gas: value.base_fee_per_gas,
+            block_hash: value.block_hash,
+            transactions: value.transactions,
+            withdrawals: value.withdrawals.into_iter().map(Into::into).collect(),
+            blob_gas_used: value.blob_gas_used,
+            excess_blob_gas: value.excess_blob_gas,
+        }
+    }
+}
+
+impl From<WithdrawalV1> for Withdrawal {
+    fn from(value: WithdrawalV1) -> Self {
+        Self {
+            index: value.index,
+            validator_index: value.validator_index,
+            address: value.address,
+            amount: value.amount,
+        }
+    }
+}
+
+impl From<Withdrawal> for WithdrawalV1 {
+    fn from(value: Withdrawal) -> Self {
+        Self {
+            index: value.index,
+            validator_index: value.validator_index,
+            address: value.address,
+            amount: value.amount,
+        }
+    }
+}
+
+impl From<PayloadAttributesV3> for Payload {
+    fn from(value: PayloadAttributesV3) -> Self {
+        Self {
+            timestamp: value.timestamp,
+            prev_randao: value.prev_randao,
+            suggested_fee_recipient: value.suggested_fee_recipient,
+            withdrawals: value.withdrawals.into_iter().map(Into::into).collect(),
+            parent_beacon_block_root: value.parent_beacon_block_root,
+            transactions: value.transactions,
+            gas_limit: value.gas_limit,
         }
     }
 }

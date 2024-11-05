@@ -2,11 +2,9 @@ use {
     crate::{
         json_utils::{self, access_state_error},
         jsonrpc::JsonRpcError,
+        schema::{GetPayloadResponseV3, PayloadId},
     },
-    moved::types::{
-        engine_api::{GetPayloadResponseV3, PayloadId},
-        state::StateMessage,
-    },
+    moved::types::state::StateMessage,
     tokio::sync::{mpsc, oneshot},
 };
 
@@ -47,11 +45,11 @@ async fn inner_execute_v3(
 
     let (tx, rx) = oneshot::channel();
     let msg = StateMessage::GetPayload {
-        id: payload_id.clone(),
+        id: payload_id.clone().into(),
         response_channel: tx,
     };
     state_channel.send(msg).await.map_err(access_state_error)?;
-    let maybe_response = rx.await.map_err(access_state_error)?;
+    let maybe_response = rx.await.map_err(access_state_error)?.map(Into::into);
 
     maybe_response.ok_or_else(|| JsonRpcError {
         code: -38001,

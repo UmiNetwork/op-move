@@ -3,3 +3,4 @@ pub mod jsonrpc;
 pub mod method_name;
 pub mod methods;
 pub mod request;
+pub mod schema;

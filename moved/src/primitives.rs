@@ -36,7 +36,7 @@ impl ToB256 for HashValue {
     }
 }
 
-pub(crate) trait ToU64 {
+pub trait ToU64 {
     fn to_u64(self) -> u64;
 }
 
