@@ -5,7 +5,6 @@ use {
 };
 
 pub async fn execute(
-    _request: serde_json::Value,
     state_channel: mpsc::Sender<StateMessage>,
 ) -> Result<serde_json::Value, JsonRpcError> {
     let response = inner_execute(state_channel).await?;
@@ -52,16 +51,9 @@ mod tests {
         );
         let state_handle = state.spawn();
 
-        let request = serde_json::json!({
-            "id": 30054,
-            "jsonrpc": "2.0",
-            "method": "eth_chainId",
-            "params": []
-        });
-
         let expected_response: serde_json::Value = serde_json::from_str(r#""0x194""#).unwrap();
 
-        let response = execute(request, state_channel).await.unwrap();
+        let response = execute(state_channel).await.unwrap();
 
         assert_eq!(response, expected_response);
         state_handle.await.unwrap();
