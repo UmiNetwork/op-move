@@ -9,7 +9,7 @@ use {
         primitives::{Address, Bytes, ToU64, B2048, B256, U256, U64},
         state_actor::NewPayloadIdInput,
     },
-    alloy::consensus::transaction::TxEnvelope,
+    alloy::{consensus::transaction::TxEnvelope, eips::BlockNumberOrTag},
     alloy_rlp::Encodable,
     tokio::sync::oneshot,
 };
@@ -93,6 +93,11 @@ pub enum StateMessage {
         tx: TxEnvelope,
     },
     ChainId {
+        response_channel: oneshot::Sender<u64>,
+    },
+    GetBalance {
+        address: Address,
+        block_number: BlockNumberOrTag,
         response_channel: oneshot::Sender<u64>,
     },
 }

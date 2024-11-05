@@ -5,11 +5,12 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+alloy.workspace = true
 moved.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
-alloy.workspace = true
 
 [dev-dependencies]
 moved = { workspace = true, features = ["test-doubles"] }
+test-case.workspace = true

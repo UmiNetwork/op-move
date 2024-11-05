@@ -48,6 +48,7 @@ async fn inner_handle_request(
         NewPayloadV3 => new_payload::execute_v3(request, state_channel).await,
         SendRawTransaction => send_raw_transaction::execute(request, state_channel).await,
         ChainId => chain_id::execute(state_channel).await,
+        GetBalance => get_balance::execute(request, state_channel).await,
         ForkChoiceUpdatedV2 => todo!(),
         GetPayloadV2 => todo!(),
         NewPayloadV2 => todo!(),

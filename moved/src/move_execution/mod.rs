@@ -1,5 +1,5 @@
 pub use {
-    eth_token::{BaseTokenAccounts, MovedBaseTokenAccounts},
+    eth_token::{quick_get_eth_balance, BaseTokenAccounts, MovedBaseTokenAccounts},
     gas::{CreateEcotoneL1GasFee, CreateL1GasFee, EcotoneL1GasFee, L1GasFee, L1GasFeeInput},
 };
 

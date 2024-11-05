@@ -10,6 +10,7 @@ pub enum MethodName {
     NewPayloadV3,
     SendRawTransaction,
     ChainId,
+    GetBalance,
 }
 
 impl FromStr for MethodName {
@@ -22,6 +23,7 @@ impl FromStr for MethodName {
             "engine_newPayloadV3" => Ok(Self::NewPayloadV3),
             "eth_sendRawTransaction" => Ok(Self::SendRawTransaction),
             "eth_chainId" => Ok(Self::ChainId),
+            "eth_getBalance" => Ok(Self::GetBalance),
             "engine_forkchoiceUpdatedV2" => Ok(Self::ForkChoiceUpdatedV2),
             "engine_getPayloadV2" => Ok(Self::GetPayloadV2),
             "engine_newPayloadV2" => Ok(Self::NewPayloadV2),
