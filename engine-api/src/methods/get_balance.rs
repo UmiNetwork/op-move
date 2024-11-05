@@ -2,14 +2,13 @@ use {
     crate::{json_utils, json_utils::access_state_error, jsonrpc::JsonRpcError},
     alloy::{eips::BlockNumberOrTag, primitives::Address},
     moved::types::state::StateMessage,
-    serde_json::Value,
     tokio::sync::{mpsc, oneshot},
 };
 
 pub async fn execute(
-    request: Value,
+    request: serde_json::Value,
     state_channel: mpsc::Sender<StateMessage>,
-) -> Result<Value, JsonRpcError> {
+) -> Result<serde_json::Value, JsonRpcError> {
     let (address, block_number) = parse_params(request)?;
     let response = inner_execute(address, block_number, state_channel).await?;
 
@@ -18,7 +17,7 @@ pub async fn execute(
         .expect("Must be able to JSON-serialize response"))
 }
 
-fn parse_params(request: Value) -> Result<(Address, BlockNumberOrTag), JsonRpcError> {
+fn parse_params(request: serde_json::Value) -> Result<(Address, BlockNumberOrTag), JsonRpcError> {
     let params = json_utils::get_params_list(&request);
     match params {
         [] => Err(JsonRpcError {
@@ -57,7 +56,18 @@ async fn inner_execute(
 
 #[cfg(test)]
 mod tests {
-    use {super::*, moved::primitives::U64, std::str::FromStr, test_case::test_case};
+    use {
+        super::*,
+        moved::{
+            block::{Eip1559GasFee, InMemoryBlockRepository},
+            genesis::init_state,
+            primitives::{B256, U256, U64},
+            state_actor::StatePayloadId,
+            storage::InMemoryState,
+        },
+        std::str::FromStr,
+        test_case::test_case,
+    };
 
     #[test_case("0x1")]
     #[test_case("latest")]
@@ -67,7 +77,7 @@ mod tests {
             "jsonrpc": "2.0",
             "method": "eth_getBalance",
             "params": [
-                "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+                "0x0000000000000000000000000000000000000001",
                 block,
             ],
             "id": 1
@@ -76,7 +86,7 @@ mod tests {
         let (address, block_number) = parse_params(request).unwrap();
         assert_eq!(
             address,
-            Address::from_str("0x742d35Cc6634C0532925a3b844Bc454e4438f44e").unwrap()
+            Address::from_str("0x0000000000000000000000000000000000000001").unwrap()
         );
         match block {
             "latest" => assert_eq!(block_number, BlockNumberOrTag::Latest),
@@ -86,5 +96,46 @@ mod tests {
                 BlockNumberOrTag::Number(U64::from_str(block).unwrap().into_limbs()[0])
             ),
         }
+    }
+
+    #[test_case("0x1")]
+    #[test_case("latest")]
+    #[test_case("pending")]
+    #[tokio::test]
+    async fn test_execute(block: &str) {
+        let genesis_config = moved::genesis::config::GenesisConfig::default();
+        let mut state = InMemoryState::new();
+        init_state(&genesis_config, &mut state);
+
+        let (state_channel, rx) = mpsc::channel(10);
+        let state_actor = moved::state_actor::StateActor::new(
+            rx,
+            state,
+            B256::ZERO,
+            genesis_config,
+            StatePayloadId,
+            B256::ZERO,
+            InMemoryBlockRepository::default(),
+            Eip1559GasFee::default(),
+            U256::ZERO,
+            (),
+        );
+
+        let state_handle = state_actor.spawn();
+        let request: serde_json::Value = serde_json::json!({
+            "jsonrpc": "2.0",
+            "method": "eth_getBalance",
+            "params": [
+                "0x0000000000000000000000000000000000000001",
+                block,
+            ],
+            "id": 1
+        });
+
+        let expected_response: serde_json::Value = serde_json::from_str(r#""0x0""#).unwrap();
+        let response = execute(request, state_channel).await.unwrap();
+
+        assert_eq!(response, expected_response);
+        state_handle.await.unwrap();
     }
 }

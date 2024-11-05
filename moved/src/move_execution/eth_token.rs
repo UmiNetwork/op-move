@@ -198,7 +198,8 @@ pub fn get_eth_balance<G: GasMeter>(
     }
 }
 
-/// Simplified API for getting the base token balance for use in tests.
+/// Simplified API for getting the base token balance with no side effects.
+/// Use it only for view methods as it does not use a VM session in the request pipeline.
 pub fn quick_get_eth_balance(
     account: &AccountAddress,
     state: &(impl MoveResolver<PartialVMError> + TableResolver),
