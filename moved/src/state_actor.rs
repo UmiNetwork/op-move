@@ -6,10 +6,10 @@ use {
         genesis::config::GenesisConfig,
         merkle_tree::MerkleRootExt,
         move_execution::{
-            execute_transaction, BaseTokenAccounts, CreateL1GasFee, L1GasFee, L1GasFeeInput,
-            LogsBloom,
+            execute_transaction, quick_get_eth_balance, BaseTokenAccounts, CreateL1GasFee,
+            L1GasFee, L1GasFeeInput, LogsBloom,
         },
-        primitives::{ToSaturatedU64, B256, U256, U64},
+        primitives::{ToMoveAddress, ToSaturatedU64, B256, U256, U64},
         storage::State,
         types::{
             state::{
@@ -171,6 +171,16 @@ impl<
             }
             StateMessage::ChainId { response_channel } => {
                 response_channel.send(self.genesis_config.chain_id).ok();
+            }
+            StateMessage::GetBalance {
+                address,
+                response_channel,
+                ..
+            } => {
+                // TODO: Support balance from arbitrary blocks
+                let account = address.to_move_address();
+                let balance = quick_get_eth_balance(&account, self.state.resolver());
+                response_channel.send(balance).ok();
             }
         }
     }

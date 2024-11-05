@@ -1,18 +1,19 @@
 use {
-    crate::{genesis::FRAMEWORK_ADDRESS, EthToken},
+    crate::{genesis::FRAMEWORK_ADDRESS, types::session_id::SessionId, EthToken},
+    aptos_table_natives::TableResolver,
+    move_binary_format::errors::PartialVMError,
     move_core_types::{
         account_address::AccountAddress, ident_str, identifier::IdentStr,
-        language_storage::ModuleId, value::MoveValue,
+        language_storage::ModuleId, resolver::MoveResolver, value::MoveValue,
     },
-    move_vm_runtime::{module_traversal::TraversalContext, session::Session},
-    move_vm_types::{gas::GasMeter, values::Value},
-};
-
-#[cfg(test)]
-use {
-    crate::types::session_id::SessionId, aptos_table_natives::TableResolver,
-    move_binary_format::errors::PartialVMError, move_core_types::resolver::MoveResolver,
-    move_vm_runtime::module_traversal::TraversalStorage, move_vm_types::gas::UnmeteredGasMeter,
+    move_vm_runtime::{
+        module_traversal::{TraversalContext, TraversalStorage},
+        session::Session,
+    },
+    move_vm_types::{
+        gas::{GasMeter, UnmeteredGasMeter},
+        values::Value,
+    },
 };
 
 const TOKEN_ADMIN: AccountAddress = FRAMEWORK_ADDRESS;
@@ -197,8 +198,8 @@ pub fn get_eth_balance<G: GasMeter>(
     }
 }
 
-/// Simplified API for getting the base token balance for use in tests.
-#[cfg(test)]
+/// Simplified API for getting the base token balance with no side effects.
+/// Use it only for view methods as it does not use a VM session in the request pipeline.
 pub fn quick_get_eth_balance(
     account: &AccountAddress,
     state: &(impl MoveResolver<PartialVMError> + TableResolver),

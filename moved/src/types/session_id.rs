@@ -15,6 +15,7 @@ use {
 /// his is based on the corresponding [Aptos type](https://github.com/aptos-labs/aptos-core/blob/aptos-node-v1.14.0/aptos-move/aptos-vm/src/move_vm_ext/session/session_id.rs#L16)
 /// plus the extra parameter Aptos includes in its
 /// [session creation function](https://github.com/aptos-labs/aptos-core/blob/aptos-node-v1.14.0/aptos-move/aptos-vm/src/move_vm_ext/vm.rs#L130).
+#[derive(Default)]
 pub struct SessionId {
     pub txn_hash: [u8; 32],
     pub script_hash: Option<[u8; 32]>,
@@ -72,19 +73,6 @@ impl SessionId {
             script_hash: None,
             chain_id,
             user_txn_context: Some(user_context),
-        }
-    }
-}
-
-/// A default session id to use in tests where we don't care about the transaction details.
-#[cfg(test)]
-impl Default for SessionId {
-    fn default() -> Self {
-        Self {
-            txn_hash: [0; 32],
-            script_hash: None,
-            chain_id: 1,
-            user_txn_context: None,
         }
     }
 }
