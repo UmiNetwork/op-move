@@ -92,6 +92,9 @@ pub enum StateMessage {
     AddTransaction {
         tx: TxEnvelope,
     },
+    ChainId {
+        response_channel: oneshot::Sender<u64>,
+    },
 }
 
 #[derive(Debug)]
