@@ -111,6 +111,7 @@ mod tests {
         init_state(&genesis_config, &mut state);
 
         let (state_channel, rx) = mpsc::channel(10);
+
         let state_actor = moved::state_actor::StateActor::new(
             rx,
             state,
@@ -118,7 +119,7 @@ mod tests {
             genesis_config,
             StatePayloadId,
             B256::ZERO,
-            InMemoryBlockRepository::default(),
+            InMemoryBlockRepository::new(),
             Eip1559GasFee::default(),
             U256::ZERO,
             (),

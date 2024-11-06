@@ -6,10 +6,12 @@
 use {
     crate::{
         block::{ExtendedBlock, Header},
-        primitives::{Address, Bytes, ToU64, B2048, B256, U256, U64},
+        primitives::{Address, Bytes, ToSaturatedU64, ToU64, B2048, B256, U256, U64},
         state_actor::NewPayloadIdInput,
     },
-    alloy::{consensus::transaction::TxEnvelope, eips::BlockNumberOrTag},
+    alloy::{
+        consensus::transaction::TxEnvelope, eips::BlockNumberOrTag, rpc::types::BlockTransactions,
+    },
     alloy_rlp::Encodable,
     tokio::sync::oneshot,
 };
@@ -100,6 +102,46 @@ pub enum StateMessage {
         block_number: BlockNumberOrTag,
         response_channel: oneshot::Sender<U256>,
     },
+}
+
+pub type BlockResponse = alloy::rpc::types::Block<alloy::rpc::types::Transaction>;
+
+impl From<ExtendedBlock> for BlockResponse {
+    fn from(value: ExtendedBlock) -> Self {
+        Self {
+            header: alloy::rpc::types::Header {
+                hash: value.hash,
+                number: value.block.header.number,
+                parent_hash: value.block.header.parent_hash,
+                uncles_hash: value.block.header.ommers_hash,
+                nonce: Some(value.block.header.nonce.into()),
+                base_fee_per_gas: Some(value.block.header.base_fee_per_gas.to_saturated_u64()),
+                blob_gas_used: Some(value.block.header.blob_gas_used),
+                excess_blob_gas: Some(value.block.header.excess_blob_gas),
+                parent_beacon_block_root: Some(value.block.header.parent_beacon_block_root),
+                logs_bloom: value.block.header.logs_bloom.into(),
+                transactions_root: value.block.header.transactions_root,
+                state_root: value.block.header.state_root,
+                receipts_root: value.block.header.receipts_root,
+                difficulty: value.block.header.difficulty,
+                extra_data: value.block.header.extra_data,
+                gas_limit: value.block.header.gas_limit,
+                gas_used: value.block.header.gas_used,
+                timestamp: value.block.header.timestamp,
+                // TODO: review fields below
+                mix_hash: None,
+                requests_hash: None,
+                withdrawals_root: None,
+                miner: Default::default(),
+                total_difficulty: None,
+            },
+            transactions: BlockTransactions::Uncle,
+            // TODO: review fields below
+            uncles: Vec::new(),
+            size: None,
+            withdrawals: None,
+        }
+    }
 }
 
 #[derive(Debug)]

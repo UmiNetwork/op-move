@@ -79,6 +79,7 @@ pub async fn run() {
 
     let block_hash = MovedBlockHash;
     let genesis_block = create_genesis_block(&block_hash, &genesis_config);
+
     let mut repository = InMemoryBlockRepository::new();
     let head = genesis_block.hash;
     repository.add(genesis_block);
