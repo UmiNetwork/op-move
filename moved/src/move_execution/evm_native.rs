@@ -1,5 +1,8 @@
 use {
-    crate::primitives::{ToEthAddress, ToMoveAddress},
+    crate::{
+        block::HeaderForExecution,
+        primitives::{ToEthAddress, ToMoveAddress},
+    },
     alloy::{hex::ToHexExt, primitives::map::HashMap},
     aptos_native_interface::{
         safely_pop_arg, SafeNativeBuilder, SafeNativeContext, SafeNativeError, SafeNativeResult,
@@ -26,8 +29,8 @@ use {
     revm::{
         db::{CacheDB, DatabaseCommit, DatabaseRef},
         primitives::{
-            utilities::KECCAK_EMPTY, Account, AccountInfo, Address, Bytecode, EVMError,
-            ExecutionResult, Log, TxEnv, TxKind, B256, U256,
+            utilities::KECCAK_EMPTY, Account, AccountInfo, Address, BlobExcessGasAndPrice,
+            BlockEnv, Bytecode, EVMError, ExecutionResult, Log, TxEnv, TxKind, B256, U256,
         },
         Evm,
     },
@@ -53,16 +56,21 @@ pub struct NativeEVMContext<'a> {
     resolver: &'a dyn MoveResolver<PartialVMError>,
     db: CacheDB<ResolverBackedDB<'a>>,
     state_changes: Vec<HashMap<Address, Account>>,
+    block_header: HeaderForExecution,
 }
 
 impl<'a> NativeEVMContext<'a> {
-    pub fn new(state: &'a impl MoveResolver<PartialVMError>) -> Self {
+    pub fn new(
+        state: &'a impl MoveResolver<PartialVMError>,
+        block_header: HeaderForExecution,
+    ) -> Self {
         let inner_db = ResolverBackedDB { resolver: state };
         let db = CacheDB::new(inner_db);
         Self {
             resolver: state,
             db,
             state_changes: Vec::new(),
+            block_header,
         }
     }
 }
@@ -371,7 +379,6 @@ fn evm_transact_inner(
     let gas_limit: u64 = context.gas_balance().into();
 
     let evm_native_ctx = context.extensions_mut().get_mut::<NativeEVMContext>();
-    // TODO: also need to set block env context
     let mut evm = Evm::builder()
         .with_db(&mut evm_native_ctx.db)
         .with_tx_env(TxEnv {
@@ -395,6 +402,19 @@ fn evm_transact_inner(
             blob_hashes: Vec::new(),
             max_fee_per_blob_gas: None,
             authorization_list: None,
+        })
+        .with_block_env(BlockEnv {
+            number: U256::from(evm_native_ctx.block_header.number),
+            coinbase: Address::ZERO,
+            timestamp: U256::from(evm_native_ctx.block_header.timestamp),
+            gas_limit: U256::from(u64::MAX),
+            basefee: U256::ZERO,
+            difficulty: U256::ZERO,
+            prevrandao: Some(evm_native_ctx.block_header.prev_randao),
+            blob_excess_gas_and_price: Some(BlobExcessGasAndPrice {
+                excess_blob_gas: 0,
+                blob_gasprice: 0,
+            }),
         })
         .build();
 
@@ -598,8 +618,16 @@ mod tests {
             bcs::to_bytes(&entry_fn).unwrap(),
         );
 
-        let outcome =
-            execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap();
+        let outcome = execute_transaction(
+            &tx,
+            &tx_hash,
+            state.resolver(),
+            &genesis_config,
+            0,
+            &(),
+            HeaderForExecution::default(),
+        )
+        .unwrap();
         outcome.vm_outcome.unwrap();
         state.apply(outcome.changes).unwrap();
 

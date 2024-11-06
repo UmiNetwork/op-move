@@ -1,5 +1,6 @@
 use {
     crate::{
+        block::HeaderForExecution,
         genesis::config::GenesisConfig,
         move_execution::{
             create_move_vm, create_vm_session,
@@ -35,6 +36,7 @@ pub(super) fn execute_canonical_transaction(
     genesis_config: &GenesisConfig,
     l1_cost: u64,
     base_token: &impl BaseTokenAccounts,
+    block_header: HeaderForExecution,
 ) -> crate::Result<TransactionExecutionOutcome> {
     if let Some(chain_id) = tx.chain_id {
         if chain_id != genesis_config.chain_id {
@@ -47,8 +49,13 @@ pub(super) fn execute_canonical_transaction(
     let tx_data = TransactionData::parse_from(tx)?;
 
     let move_vm = create_move_vm()?;
-    let session_id =
-        SessionId::new_from_canonical(tx, tx_data.maybe_entry_fn(), tx_hash, genesis_config);
+    let session_id = SessionId::new_from_canonical(
+        tx,
+        tx_data.maybe_entry_fn(),
+        tx_hash,
+        genesis_config,
+        block_header,
+    );
     let mut session = create_vm_session(&move_vm, state, session_id);
     let traversal_storage = TraversalStorage::new();
     let mut traversal_context = TraversalContext::new(&traversal_storage);

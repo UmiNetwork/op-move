@@ -1,5 +1,6 @@
 use {
     crate::{
+        block::HeaderForExecution,
         genesis::config::GenesisConfig,
         move_execution::{
             create_move_vm, create_vm_session, eth_token,
@@ -23,13 +24,14 @@ pub(super) fn execute_deposited_transaction(
     tx_hash: &B256,
     state: &(impl MoveResolver<PartialVMError> + TableResolver),
     genesis_config: &GenesisConfig,
+    block_header: HeaderForExecution,
 ) -> crate::Result<TransactionExecutionOutcome> {
     // TODO: handle U256 properly
     let amount = tx.mint.as_limbs()[0].saturating_add(tx.value.as_limbs()[0]);
     let to = tx.to.to_move_address();
 
     let move_vm = create_move_vm()?;
-    let session_id = SessionId::new_from_deposited(tx, tx_hash, genesis_config);
+    let session_id = SessionId::new_from_deposited(tx, tx_hash, genesis_config, block_header);
     let mut session = create_vm_session(&move_vm, state, session_id);
     let traversal_storage = TraversalStorage::new();
     let mut traversal_context = TraversalContext::new(&traversal_storage);

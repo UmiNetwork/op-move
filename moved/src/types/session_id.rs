@@ -1,6 +1,7 @@
 use {
     super::transactions::DepositedTx,
     crate::{
+        block::HeaderForExecution,
         genesis::config::{GenesisConfig, CHAIN_ID},
         primitives::{ToMoveAddress, B256},
         types::transactions::NormalizedEthTransaction,
@@ -21,6 +22,7 @@ pub struct SessionId {
     pub script_hash: Option<[u8; 32]>,
     pub chain_id: u8,
     pub user_txn_context: Option<UserTransactionContext>,
+    pub block_header: HeaderForExecution,
 }
 
 impl SessionId {
@@ -29,6 +31,7 @@ impl SessionId {
         maybe_entry_fn: Option<&EntryFunction>,
         tx_hash: &B256,
         genesis_config: &GenesisConfig,
+        block_header: HeaderForExecution,
     ) -> Self {
         let chain_id = u8_chain_id(genesis_config);
         let sender = tx.signer.to_move_address();
@@ -48,6 +51,7 @@ impl SessionId {
             script_hash: None,
             chain_id,
             user_txn_context: Some(user_context),
+            block_header,
         }
     }
 
@@ -55,6 +59,7 @@ impl SessionId {
         tx: &DepositedTx,
         tx_hash: &B256,
         genesis_config: &GenesisConfig,
+        block_header: HeaderForExecution,
     ) -> Self {
         let chain_id = u8_chain_id(genesis_config);
         let sender = tx.from.to_move_address();
@@ -73,6 +78,7 @@ impl SessionId {
             script_hash: None,
             chain_id,
             user_txn_context: Some(user_context),
+            block_header,
         }
     }
 }
