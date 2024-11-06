@@ -226,7 +226,7 @@ fn add_account_changes(
 }
 
 fn account_info_struct_tag(address: &Address) -> StructTag {
-    let name = format!("Info_{}", address.encode_hex());
+    let name = format!("Account_{}", address.encode_hex());
     let name = Identifier::new(name).expect("Account info name is valid");
     StructTag {
         address: EVM_NATIVE_ADDRESS,
