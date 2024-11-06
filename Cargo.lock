@@ -6433,6 +6433,7 @@ dependencies = [
  "anyhow",
  "aptos-crypto",
  "aptos-framework",
+ "aptos-gas-algebra",
  "aptos-gas-meter",
  "aptos-gas-schedule",
  "aptos-jellyfish-merkle",

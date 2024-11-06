@@ -4,6 +4,7 @@ use {
         primitives::{ToEthAddress, ToMoveAddress},
     },
     alloy::{hex::ToHexExt, primitives::map::HashMap},
+    aptos_gas_algebra::{GasExpression, GasQuantity, InternalGasUnit},
     aptos_native_interface::{
         safely_pop_arg, SafeNativeBuilder, SafeNativeContext, SafeNativeError, SafeNativeResult,
     },
@@ -426,9 +427,6 @@ fn evm_transact_inner(
     })?;
     drop(evm);
 
-    // TODO: need to figure out how to charge gas using the SafeNativeContext.
-    // context.charge(outcome.result.gas_used())?;
-
     // Capture changes in native context so that they can be
     // converted into Move changes when the session is finalized
     evm_native_ctx.state_changes.push(outcome.state.clone());
@@ -437,8 +435,34 @@ fn evm_transact_inner(
     // the same session will see them.
     evm_native_ctx.db.commit(outcome.state);
 
+    let gas_used = EvmGasUsed::new(outcome.result.gas_used());
+    context.charge(gas_used)?;
+
     let result = outcome.result;
     Ok(smallvec::smallvec![evm_result_to_move_value(result)])
+}
+
+struct EvmGasUsed {
+    amount: u64,
+}
+
+impl EvmGasUsed {
+    fn new(amount: u64) -> Self {
+        Self { amount }
+    }
+}
+
+impl<Env> GasExpression<Env> for EvmGasUsed {
+    // TODO: does it make sense for EVM gas to be 1:1 with MoveVM gas?
+    type Unit = InternalGasUnit;
+
+    fn evaluate(&self, _feature_version: u64, _env: &Env) -> GasQuantity<Self::Unit> {
+        GasQuantity::new(self.amount)
+    }
+
+    fn visit(&self, visitor: &mut impl aptos_gas_algebra::GasExpressionVisitor) {
+        visitor.quantity::<Self::Unit>(GasQuantity::new(self.amount));
+    }
 }
 
 struct ResolverBackedDB<'a> {
