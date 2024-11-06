@@ -32,7 +32,7 @@ impl SessionId {
         tx_hash: &B256,
         genesis_config: &GenesisConfig,
         block_header: HeaderForExecution,
-        script_hash: Option<[u8; 32]>,
+        script_hash: Option<B256>,
     ) -> Self {
         let chain_id = u8_chain_id(genesis_config);
         let sender = tx.signer.to_move_address();
@@ -48,7 +48,7 @@ impl SessionId {
         );
         Self {
             txn_hash: tx_hash.0,
-            script_hash,
+            script_hash: script_hash.map(|x| x.0),
             chain_id,
             user_txn_context: Some(user_context),
             block_header,

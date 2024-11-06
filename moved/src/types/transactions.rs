@@ -309,11 +309,11 @@ impl TransactionData {
         }
     }
 
-    pub fn script_hash(&self) -> Option<[u8; 32]> {
+    pub fn script_hash(&self) -> Option<B256> {
         if let Self::ScriptOrModule(ScriptOrModule::Script(script)) = self {
             let bytes = bcs::to_bytes(script).expect("Script must serialize");
             let hash = alloy::primitives::keccak256(bytes);
-            Some(hash.0)
+            Some(hash)
         } else {
             None
         }
