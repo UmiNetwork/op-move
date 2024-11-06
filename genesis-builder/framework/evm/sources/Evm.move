@@ -9,7 +9,7 @@ module Evm::evm {
     /// This restriction may be lifted in the future.
     const ENOT_OWNER: u64 = 1;
 
-    const OWNER: address = @0x1;
+    const OWNER: address = @evm_admin;
 
     /// TODO: what capabilities should this have?
     struct EvmLog has drop {

@@ -6,6 +6,7 @@ version = "1.0.0"
 aptos_framework = "0x1"
 EthToken = "0x1"
 Evm = "0x1"
+evm_admin = "0x1"
 
 [dependencies]
 AptosFramework = { local = "../../../target/aptos-core/aptos-move/framework/aptos-framework/" }
