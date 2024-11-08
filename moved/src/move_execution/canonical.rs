@@ -55,6 +55,7 @@ pub(super) fn execute_canonical_transaction(
         tx_hash,
         genesis_config,
         block_header,
+        tx_data.script_hash(),
     );
     let mut session = create_vm_session(&move_vm, state, session_id);
     let traversal_storage = TraversalStorage::new();
