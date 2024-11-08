@@ -42,7 +42,7 @@ static MOVED_FRAMEWORK_DIR: Lazy<PathBuf> =
 static APTOS_DIR: Lazy<PathBuf> = Lazy::new(|| TARGET_ROOT.join("aptos-core"));
 static APTOS_FRAMEWORK_DIR: Lazy<PathBuf> =
     Lazy::new(|| APTOS_DIR.join("aptos-move").join("framework"));
-static APTOS_PACKAGE_PATHS: Lazy<[PathBuf; 6]> = Lazy::new(|| {
+static APTOS_PACKAGE_PATHS: Lazy<[PathBuf; 7]> = Lazy::new(|| {
     [
         APTOS_FRAMEWORK_DIR.join("move-stdlib"),
         APTOS_FRAMEWORK_DIR.join("aptos-stdlib"),
@@ -50,6 +50,7 @@ static APTOS_PACKAGE_PATHS: Lazy<[PathBuf; 6]> = Lazy::new(|| {
         APTOS_FRAMEWORK_DIR.join("aptos-token"),
         APTOS_FRAMEWORK_DIR.join("aptos-token-objects"),
         MOVED_FRAMEWORK_DIR.join("eth-token"),
+        MOVED_FRAMEWORK_DIR.join("evm"),
     ]
 });
 static APTOS_ADDRESS_MAPPING: Lazy<BTreeMap<&str, &str>> = Lazy::new(|| {

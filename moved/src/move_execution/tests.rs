@@ -1,6 +1,7 @@
 use {
     super::*,
     crate::{
+        block::HeaderForExecution,
         genesis::{config::CHAIN_ID, init_state},
         move_execution::eth_token::quick_get_eth_balance,
         primitives::{ToMoveAddress, B256, U256, U64},
@@ -69,8 +70,16 @@ fn test_execute_counter_contract() {
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let outcome =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap();
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
     state.apply(outcome.changes).unwrap();
 
     // Calling the function with an incorrect signer causes an error
@@ -89,8 +98,16 @@ fn test_execute_counter_contract() {
         TxKind::Call(EVM_ADDRESS),
         bcs::to_bytes(&entry_fn).unwrap(),
     );
-    let err =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap_err();
+    let err = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap_err();
     assert_eq!(
         err.to_string(),
         "Signer does not match transaction signature"
@@ -129,8 +146,16 @@ fn test_execute_counter_contract() {
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let outcome =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap();
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
     state.apply(outcome.changes).unwrap();
 
     // Resource was modified
@@ -167,8 +192,16 @@ fn test_execute_counter_script() {
     let mut script_signer = Signer::new(&ALT_PRIVATE_KEY);
     let (tx_hash, tx) = create_transaction(&mut script_signer, TxKind::Create, tx_data);
 
-    let outcome =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap();
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
     state.apply(outcome.changes).unwrap();
 
     // Transaction should succeed
@@ -216,8 +249,16 @@ fn test_execute_signer_struct_contract() {
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let outcome =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap();
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
     assert!(outcome.vm_outcome.is_ok());
     state.apply(outcome.changes).unwrap();
 
@@ -237,8 +278,16 @@ fn test_execute_signer_struct_contract() {
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let err =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap_err();
+    let err = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap_err();
     assert_eq!(
         err.to_string(),
         "Signer does not match transaction signature"
@@ -269,8 +318,16 @@ fn test_execute_hello_strings_contract() {
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let outcome =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap();
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
     outcome.vm_outcome.unwrap();
     state.apply(outcome.changes).unwrap();
 
@@ -291,8 +348,16 @@ fn test_execute_hello_strings_contract() {
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let err =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap_err();
+    let err = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap_err();
     assert_eq!(err.to_string(), "String must be UTF-8 encoded bytes",);
 }
 
@@ -322,8 +387,16 @@ fn test_execute_object_playground_contract() {
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let outcome =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap();
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
     outcome.vm_outcome.unwrap();
     state.apply(outcome.changes).unwrap();
 
@@ -350,8 +423,16 @@ fn test_execute_object_playground_contract() {
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let outcome =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap();
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
     outcome.vm_outcome.unwrap();
     state.apply(outcome.changes).unwrap();
 
@@ -370,8 +451,16 @@ fn test_execute_object_playground_contract() {
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let outcome =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap();
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
     outcome.vm_outcome.unwrap();
     state.apply(outcome.changes).unwrap();
 
@@ -395,8 +484,16 @@ fn test_execute_object_playground_contract() {
         TxKind::Call(EVM_ADDRESS),
         bcs::to_bytes(&entry_fn).unwrap(),
     );
-    let err =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap_err();
+    let err = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap_err();
     assert_eq!(
         err.to_string(),
         "Object must already exist to pass as an entry function argument",
@@ -422,7 +519,15 @@ fn test_execute_natives_contract() {
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let changes = execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &());
+    let changes = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    );
     assert!(changes.is_ok());
 }
 
@@ -436,8 +541,16 @@ fn test_deposit_tx() {
     let mint_amount = U256::from(123u64);
     let (tx_hash, tx) = create_deposit_transaction(mint_amount, EVM_ADDRESS);
 
-    let outcome =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap();
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
 
     // Transaction should succeed
     outcome.vm_outcome.unwrap();
@@ -458,8 +571,16 @@ fn test_eoa_base_token_transfer() {
     let sender = EVM_ADDRESS;
     let mint_amount = U256::from(123u64);
     let (tx_hash, tx) = create_deposit_transaction(mint_amount, sender);
-    let outcome =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap();
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
     state.apply(outcome.changes).unwrap();
 
     // Transfer to receiver account
@@ -482,6 +603,7 @@ fn test_eoa_base_token_transfer() {
         &genesis_config,
         0,
         &base_token,
+        HeaderForExecution::default(),
     )
     .unwrap();
     outcome.vm_outcome.unwrap_err();
@@ -502,6 +624,7 @@ fn test_eoa_base_token_transfer() {
         &genesis_config,
         0,
         &base_token,
+        HeaderForExecution::default(),
     )
     .unwrap();
     outcome.vm_outcome.unwrap();
@@ -526,8 +649,16 @@ fn test_treasury_charges_l1_cost_to_sender_account_on_success() {
     let sender = EVM_ADDRESS;
     let mint_amount = U256::from(123u64);
     let (tx_hash, tx) = create_deposit_transaction(mint_amount, sender);
-    let outcome =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap();
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
     state.apply(outcome.changes).unwrap();
 
     let eth_treasury = AccountAddress::ZERO;
@@ -550,6 +681,7 @@ fn test_treasury_charges_l1_cost_to_sender_account_on_success() {
         &genesis_config,
         l1_cost,
         &base_token,
+        HeaderForExecution::default(),
     )
     .unwrap();
     outcome.vm_outcome.unwrap();
@@ -576,8 +708,16 @@ fn test_treasury_charges_l1_cost_to_sender_account_on_user_error() {
     let sender = EVM_ADDRESS;
     let mint_amount = U256::from(123u64);
     let (tx_hash, tx) = create_deposit_transaction(mint_amount, sender);
-    let outcome =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap();
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
     state.apply(outcome.changes).unwrap();
 
     // Transfer to receiver account
@@ -602,6 +742,7 @@ fn test_treasury_charges_l1_cost_to_sender_account_on_user_error() {
         &genesis_config,
         l1_cost,
         &base_token,
+        HeaderForExecution::default(),
     )
     .unwrap();
     outcome.vm_outcome.unwrap_err();
@@ -641,8 +782,16 @@ fn test_marketplace() {
         TxKind::Call(EVM_ADDRESS),
         bcs::to_bytes(&entry_fn).unwrap(),
     );
-    let outcome =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap();
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
     outcome.vm_outcome.unwrap();
     state.apply(outcome.changes).unwrap();
 
@@ -665,8 +814,16 @@ fn test_marketplace() {
         TxKind::Call(EVM_ADDRESS),
         bcs::to_bytes(&entry_fn).unwrap(),
     );
-    let outcome =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap();
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
     outcome.vm_outcome.unwrap();
     state.apply(outcome.changes).unwrap();
 
@@ -674,8 +831,16 @@ fn test_marketplace() {
     let buyer_address = ALT_EVM_ADDRESS.to_move_address();
     let mint_amount = 567_u64;
     let (tx_hash, tx) = create_deposit_transaction(U256::from(mint_amount), ALT_EVM_ADDRESS);
-    let outcome =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap();
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
     outcome.vm_outcome.unwrap();
     state.apply(outcome.changes).unwrap();
     assert_eq!(
@@ -699,8 +864,16 @@ fn test_marketplace() {
     let tx_data = bcs::to_bytes(&ScriptOrModule::Script(script)).unwrap();
     let mut alt_signer = Signer::new(&ALT_PRIVATE_KEY);
     let (tx_hash, tx) = create_transaction(&mut alt_signer, TxKind::Create, tx_data);
-    let outcome =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap();
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
     outcome.vm_outcome.unwrap();
     state.apply(outcome.changes).unwrap();
     assert_eq!(
@@ -736,13 +909,29 @@ fn test_transaction_replay_is_forbidden() {
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let outcome =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap();
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
     state.apply(outcome.changes).unwrap();
 
     // Send the same transaction again; this fails with a nonce error
-    let err =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap_err();
+    let err = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap_err();
     assert_eq!(err.to_string(), "Incorrect nonce: given=1 expected=2");
 }
 
@@ -771,8 +960,16 @@ fn test_transaction_incorrect_destination() {
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let err =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap_err();
+    let err = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap_err();
     assert_eq!(err.to_string(), "tx.to must match payload module address");
 }
 
@@ -815,6 +1012,7 @@ fn test_transaction_chain_id() {
         &genesis_config,
         0,
         &(),
+        HeaderForExecution::default(),
     )
     .unwrap_err();
     assert_eq!(err.to_string(), "Incorrect chain id");
@@ -859,6 +1057,7 @@ fn test_out_of_gas() {
         &genesis_config,
         0,
         &(),
+        HeaderForExecution::default(),
     )
     .unwrap_err();
     assert_eq!(err.to_string(), "Insufficient intrinsic gas");
@@ -968,8 +1167,16 @@ fn test_recursive_struct() {
     let (_, state) = deploy_contract("natives", &mut signer, &genesis_config);
     let tx_data = module_bytes_to_tx_data(module_bytes);
     let (tx_hash, tx) = create_transaction(&mut signer, TxKind::Create, tx_data);
-    let outcome =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap();
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
     let err = outcome.vm_outcome.unwrap_err();
     assert!(format!("{err:?}").contains("RECURSIVE_STRUCT_DEFINITION"));
 }
@@ -1107,8 +1314,16 @@ fn test_deeply_nested_type() {
     let (_, state) = deploy_contract("natives", &mut signer, &genesis_config);
     let tx_data = module_bytes_to_tx_data(module_bytes);
     let (tx_hash, tx) = create_transaction(&mut signer, TxKind::Create, tx_data);
-    let outcome =
-        execute_transaction(&tx, &tx_hash, state.resolver(), &genesis_config, 0, &()).unwrap();
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
     // The deployment fails because the Aptos code refuses to deserialize
     // the module with too deep recursion.
     let err = outcome.vm_outcome.unwrap_err();
@@ -1118,7 +1333,7 @@ fn test_deeply_nested_type() {
     );
 }
 
-fn deploy_contract(
+pub fn deploy_contract(
     module_name: &str,
     signer: &mut Signer,
     genesis_config: &GenesisConfig,
@@ -1134,8 +1349,16 @@ fn deploy_contract(
     let tx_data = module_bytes_to_tx_data(module_bytes);
     let (tx_hash, tx) = create_transaction(signer, TxKind::Create, tx_data);
 
-    let outcome =
-        execute_transaction(&tx, &tx_hash, state.resolver(), genesis_config, 0, &()).unwrap();
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
     state.apply(outcome.changes).unwrap();
 
     // Code was deployed
@@ -1152,7 +1375,7 @@ fn module_bytes_to_tx_data(module_bytes: Vec<u8>) -> Vec<u8> {
     bcs::to_bytes(&ScriptOrModule::Module(Module::new(module_bytes))).unwrap()
 }
 
-fn create_transaction(
+pub fn create_transaction(
     signer: &mut Signer,
     to: TxKind,
     input: Vec<u8>,

@@ -1,5 +1,7 @@
 pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
 
+use crate::block::HeaderForExecution;
+
 use {
     crate::{
         block::{Block, BlockHash, BlockRepository, ExtendedBlock, GasFee, Header},
@@ -213,6 +215,11 @@ impl<
             parent.block.header.base_fee_per_gas,
         );
 
+        let header_for_execution = HeaderForExecution {
+            number: self.height + 1,
+            timestamp: payload_attributes.timestamp.as_limbs()[0],
+            prev_randao: payload_attributes.prev_randao,
+        };
         let execution_outcome = self.execute_transactions(
             transactions
                 .iter()
@@ -221,6 +228,7 @@ impl<
                     tx.try_into().ok().map(|tx| (tx_hash, tx, bytes))
                 }),
             base_fee,
+            &header_for_execution,
         );
 
         let transactions: Vec<_> = transactions.into_iter().map(|(_, (tx, _))| tx).collect();
@@ -231,7 +239,7 @@ impl<
             .merkle_root();
         let total_tip = execution_outcome.total_tip;
         // TODO: Compute `withdrawals_root`
-        let header = Header::new(self.head, self.height + 1)
+        let header = Header::new(self.head, header_for_execution.number)
             .with_payload_attributes(payload_attributes)
             .with_execution_outcome(execution_outcome)
             .with_transactions_root(transactions_root)
@@ -248,6 +256,7 @@ impl<
         &mut self,
         transactions: impl Iterator<Item = (B256, NormalizedExtendedTxEnvelope, L1GasFeeInput)>,
         base_fee: U256,
+        block_header: &HeaderForExecution,
     ) -> ExecutionOutcome {
         let mut total_tip = U256::ZERO;
         let mut outcomes = Vec::new();
@@ -271,6 +280,7 @@ impl<
                     .map(|v| v.l1_fee(l1_cost_input).to_saturated_u64())
                     .unwrap_or(0),
                 &self.base_token,
+                block_header.clone(),
             ) {
                 Ok(outcome) => outcome,
                 Err(User(_)) => unreachable!("User errors are handled in execution"),
