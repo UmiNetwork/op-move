@@ -43,7 +43,7 @@ async fn test_on_ethereum() -> Result<()> {
     // 1. Check the accounts in env vars and Optimism binaries
     check_env_vars();
     check_programs();
-    let _ = cleanup_files(); // No unwrap(), so it doesn't fail if the files don't exist
+    cleanup_files();
     let geth = start_geth().await?;
 
     // 2. Fund all the OP and deployer accounts, then deploy the factory deployer contract
@@ -80,7 +80,7 @@ async fn test_on_ethereum() -> Result<()> {
     deploy_erc20_token().await?;
 
     // 12. Cleanup generated files and folders
-    let _ = cleanup_files();
+    cleanup_files();
     op_move_runtime.shutdown_background();
     cleanup_processes(vec![geth, op_geth, op_node, op_batcher, op_proposer])
 }
@@ -441,24 +441,24 @@ async fn deploy_erc20_token() -> Result<()> {
     Ok(())
 }
 
-fn cleanup_files() -> Result<()> {
+fn cleanup_files() {
     let base = "src/tests/optimism/packages/contracts-bedrock";
-    std::fs::remove_dir_all("src/tests/optimism/l1_datadir")?;
-    std::fs::remove_dir_all(format!("{}/artifacts", base))?;
-    std::fs::remove_dir_all(format!("{}/broadcast", base))?;
-    std::fs::remove_dir_all(format!("{}/cache", base))?;
-    std::fs::remove_dir_all(format!("{}/forge-artifacts", base))?;
-    std::fs::remove_file(format!("{}/deploy-config/moved.json", base))?;
-    std::fs::remove_file(format!("{}/deployments/1337-deploy.json", base))?;
-    std::fs::remove_file(format!("{}/deployments/31337-deploy.json", base))?;
-    std::fs::remove_file(format!("{}/state-dump-42069.json", base))?;
-    std::fs::remove_file(format!("{}/state-dump-42069-delta.json", base))?;
-    std::fs::remove_file(format!("{}/state-dump-42069-ecotone.json", base))?;
-    std::fs::remove_file(format!("{}/deployments/genesis.json", base))?;
-    std::fs::remove_file(format!("{}/deployments/jwt.txt", base))?;
-    std::fs::remove_file(format!("{}/deployments/rollup.json", base))?;
-    std::fs::remove_dir_all("src/tests/optimism/datadir")?;
-    Ok(())
+    // No unwrap() anywhere, so it doesn't fail if the files don't exist
+    std::fs::remove_dir_all("src/tests/optimism/l1_datadir").ok();
+    std::fs::remove_dir_all(format!("{}/artifacts", base)).ok();
+    std::fs::remove_dir_all(format!("{}/broadcast", base)).ok();
+    std::fs::remove_dir_all(format!("{}/cache", base)).ok();
+    std::fs::remove_dir_all(format!("{}/forge-artifacts", base)).ok();
+    std::fs::remove_file(format!("{}/deploy-config/moved.json", base)).ok();
+    std::fs::remove_file(format!("{}/deployments/1337-deploy.json", base)).ok();
+    std::fs::remove_file(format!("{}/deployments/31337-deploy.json", base)).ok();
+    std::fs::remove_file(format!("{}/state-dump-42069.json", base)).ok();
+    std::fs::remove_file(format!("{}/state-dump-42069-delta.json", base)).ok();
+    std::fs::remove_file(format!("{}/state-dump-42069-ecotone.json", base)).ok();
+    std::fs::remove_file(format!("{}/deployments/genesis.json", base)).ok();
+    std::fs::remove_file(format!("{}/deployments/jwt.txt", base)).ok();
+    std::fs::remove_file(format!("{}/deployments/rollup.json", base)).ok();
+    std::fs::remove_dir_all("src/tests/optimism/datadir").ok();
 }
 
 fn cleanup_processes(processes: Vec<Child>) -> Result<()> {
