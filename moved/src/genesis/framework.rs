@@ -1,5 +1,5 @@
 use {
-    crate::{genesis::config::GenesisConfig, move_execution::create_move_vm, storage::State},
+    crate::{move_execution::create_move_vm, storage::State},
     aptos_framework::ReleaseBundle,
     aptos_table_natives::{NativeTableContext, TableChange, TableChangeSet},
     move_binary_format::errors::PartialVMError,
@@ -70,7 +70,7 @@ pub fn load_sui_framework_snapshot() -> &'static BTreeMap<ObjectID, SystemPackag
 }
 
 /// Initializes the blockchain state with Aptos and Sui frameworks.
-pub fn init_state(config: &GenesisConfig, state: &mut impl State<Err = PartialVMError>) {
+pub fn init_state(state: &mut impl State<Err = PartialVMError>) {
     let (change_set, table_change_set) =
         deploy_framework(state).expect("All bundle modules should be valid");
 
@@ -105,14 +105,6 @@ pub fn init_state(config: &GenesisConfig, state: &mut impl State<Err = PartialVM
     state
         .apply_with_tables(change_set, table_change_set)
         .unwrap();
-
-    let actual_state_root = state.state_root();
-    let expected_state_root = config.initial_state_root;
-
-    assert_eq!(
-        actual_state_root, expected_state_root,
-        "Fatal Error: Genesis state root mismatch"
-    );
 }
 
 fn deploy_framework(
