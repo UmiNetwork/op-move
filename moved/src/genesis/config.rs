@@ -4,6 +4,7 @@ use {
     aptos_gas_schedule::{InitialGasSchedule, VMGasParameters},
     aptos_vm_types::storage::StorageGasParameters,
     move_core_types::account_address::AccountAddress,
+    std::path::{Path, PathBuf},
 };
 
 pub const CHAIN_ID: u64 = 404;
@@ -21,6 +22,8 @@ pub struct GenesisConfig {
     pub initial_state_root: B256,
     pub gas_costs: GasCosts,
     pub treasury: AccountAddress,
+    // TODO: the genesis config should be self-contained instead of referring to an external file.
+    pub l2_contract_genesis: PathBuf,
 }
 
 impl Default for GasCosts {
@@ -38,10 +41,11 @@ impl Default for GenesisConfig {
         Self {
             chain_id: CHAIN_ID,
             initial_state_root: B256::from(hex!(
-                "42b5f5c32cf1bb32e09bf6b9f8eb1c2d2bb1b3a79b84a23afa3f06af6d1171b0"
+                "cb4475f0e47539e8ada1163493102bf56f2e125c315ae76d4b142e7e8f395b29"
             )),
             gas_costs: GasCosts::default(),
             treasury: AccountAddress::ONE, // todo: fill in the real address
+            l2_contract_genesis: Path::new("../moved/src/tests/res/l2_genesis_tests.json").into(),
         }
     }
 }

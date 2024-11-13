@@ -20,6 +20,7 @@ use {
         fs,
         io::Read,
         net::{Ipv4Addr, SocketAddr, SocketAddrV4},
+        path::Path,
         time::SystemTime,
     },
     tokio::sync::mpsc,
@@ -66,7 +67,15 @@ static JWTSECRET: Lazy<Vec<u8>> = Lazy::new(|| {
 pub async fn run() {
     // TODO: think about channel size bound
     let (state_channel, rx) = mpsc::channel(1_000);
-    let genesis_config = GenesisConfig::default();
+
+    // TODO: genesis should come from a file (path specified by CLI)
+    let genesis_config = GenesisConfig {
+        l2_contract_genesis: Path::new(
+            "src/tests/optimism/packages/contracts-bedrock/deployments/genesis.json",
+        )
+        .into(),
+        ..Default::default()
+    };
 
     let block_hash = MovedBlockHash;
     let genesis_block = create_genesis_block(&block_hash, &genesis_config);

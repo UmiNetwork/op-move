@@ -30,8 +30,9 @@ use {
     revm::{
         db::{CacheDB, DatabaseCommit, DatabaseRef},
         primitives::{
-            utilities::KECCAK_EMPTY, Account, AccountInfo, Address, BlobExcessGasAndPrice,
-            BlockEnv, Bytecode, EVMError, ExecutionResult, Log, TxEnv, TxKind, B256, U256,
+            utilities::KECCAK_EMPTY, Account, AccountInfo, AccountStatus, Address,
+            BlobExcessGasAndPrice, BlockEnv, Bytecode, EVMError, EvmStorageSlot, ExecutionResult,
+            Log, TxEnv, TxKind, B256, U256,
         },
         Evm,
     },
@@ -103,6 +104,57 @@ pub fn append_evm_natives(natives: &mut NativeFunctionTable, builder: &SafeNativ
 
     push_native(ident_str!("native_evm_call").into(), evm_call);
     push_native(ident_str!("native_evm_create").into(), evm_create);
+}
+
+pub fn genesis_state_changes(
+    genesis: alloy::genesis::Genesis,
+    resolver: &impl MoveResolver<PartialVMError>,
+) -> ChangeSet {
+    let mut result = ChangeSet::new();
+    let empty_changes = AccountChangeSet::new();
+    let mut account_changes = AccountChangeSet::new();
+    for (address, genesis_account) in genesis.alloc {
+        let (code_hash, code) = match genesis_account.code {
+            Some(raw) => {
+                let code = Bytecode::new_legacy(raw);
+                (code.hash_slow(), Some(code))
+            }
+            None => (KECCAK_EMPTY, None),
+        };
+        let storage = genesis_account
+            .storage
+            .map(|xs| {
+                xs.into_iter()
+                    .map(|(index, data)| {
+                        let index = U256::from_be_bytes(index.0);
+                        let data = U256::from_be_bytes(data.0);
+                        (index, EvmStorageSlot::new(data))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+        let account = Account {
+            info: AccountInfo {
+                balance: genesis_account.balance,
+                nonce: genesis_account.nonce.unwrap_or_default(),
+                code_hash,
+                code,
+            },
+            storage,
+            status: AccountStatus::Touched,
+        };
+        add_account_changes(
+            &address,
+            &account,
+            resolver,
+            &empty_changes,
+            &mut account_changes,
+        );
+    }
+    result
+        .add_account_changeset(EVM_NATIVE_ADDRESS, account_changes)
+        .expect("EVM native changes must be added");
+    result
 }
 
 pub fn extract_evm_changes(extensions: &NativeContextExtensions) -> ChangeSet {
