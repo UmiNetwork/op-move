@@ -72,7 +72,9 @@ module Evm::evm {
 
     /// Encode the move value into bytes using the Solidity ABI
     /// such that it would be suitable for passing to a Solidity contract's function.
-    public native fun abi_encode_params<T>(value: &T): vector<u8>;
+    /// The prefix can be used to prepend the output with a Solidity 4-byte function
+    /// selector if needed.
+    public native fun abi_encode_params<T>(prefix: vector<u8>, value: T): vector<u8>;
 
     fun get_asset_value(f: FungibleAsset): u256 {
         let amount = fungible_asset::amount(&f);

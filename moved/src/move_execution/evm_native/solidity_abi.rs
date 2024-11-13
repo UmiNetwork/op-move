@@ -6,7 +6,7 @@ use {
     move_core_types::{
         ident_str,
         language_storage::StructTag,
-        value::{MoveStruct, MoveTypeLayout, MoveValue},
+        value::{MoveStructLayout, MoveTypeLayout, MoveValue},
     },
     move_vm_types::{loaded_data::runtime_types::Type, values::Value},
     revm::primitives::U256,
@@ -44,28 +44,43 @@ pub fn abi_encode_params(
         1,
         "abi_encode arg includes the type of the thing to encode"
     );
-    debug_assert_eq!(args.len(), 1, "abi_encode arg is only the value to encode");
+    debug_assert_eq!(
+        args.len(),
+        2,
+        "abi_encode args: prefix bytes, arg to encode"
+    );
 
     // Safety: unwrap is safe because of the length check above
     let value = args.pop_back().unwrap();
+    let prefix = args.pop_back().unwrap().value_as::<Vec<u8>>()?;
     let ty_arg = safely_pop_type_arg!(ty_args);
 
     // TODO: need to figure out how much gas to charge for these operations.
-    let layout = context.type_to_fully_annotated_layout(&ty_arg)?;
-    let result = inner_abi_encode_params(value, &layout);
 
-    let result = Value::vector_u8(result);
+    let undecorated_layout = context.type_to_type_layout(&ty_arg)?;
+    let annotated_layout = context.type_to_fully_annotated_layout(&ty_arg)?;
+    let encoding = inner_abi_encode_params(value, &undecorated_layout, &annotated_layout);
+
+    let result = Value::vector_u8(prefix.into_iter().chain(encoding));
     Ok(smallvec![result])
 }
 
 /// Encode the move value into bytes using the Solidity ABI
 /// such that it would be suitable for passing to a Solidity contract's function.
-fn inner_abi_encode_params(value: Value, layout: &MoveTypeLayout) -> Vec<u8> {
-    let mv = value.as_move_value(layout);
-    move_value_to_sol_value(mv).abi_encode_params()
+fn inner_abi_encode_params(
+    value: Value,
+    undecorated_layout: &MoveTypeLayout,
+    annotated_layout: &MoveTypeLayout,
+) -> Vec<u8> {
+    // It's not possible to construct a `MoveValue` using the annotated layout
+    // (the aptos code panics), so we use the undecorated layout to construct the value
+    // and then pass in the annotated layout to make use of when converting to a
+    // Solidity value.
+    let mv = value.as_move_value(undecorated_layout);
+    move_value_to_sol_value(mv, annotated_layout).abi_encode_params()
 }
 
-fn move_value_to_sol_value(mv: MoveValue) -> DynSolValue {
+fn move_value_to_sol_value(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> DynSolValue {
     match mv {
         MoveValue::Signer(move_address) | MoveValue::Address(move_address) => {
             let evm_address = move_address.to_eth_address();
@@ -84,17 +99,29 @@ fn move_value_to_sol_value(mv: MoveValue) -> DynSolValue {
                 return DynSolValue::Bytes(xs.into_iter().map(force_to_u8).collect());
             }
 
-            DynSolValue::Array(xs.into_iter().map(move_value_to_sol_value).collect())
-        }
-        MoveValue::Struct(inner) => {
-            let (struct_tag, mut fields) = match inner {
-                MoveStruct::WithTypes { type_, fields } => (type_, fields),
-                _ => unreachable!("Must have type because layout is constructed with `type_to_fully_annotated_layout`"),
+            let MoveTypeLayout::Vector(inner_layout) = annotated_layout else {
+                unreachable!("The annotated layout must match the MoveValue")
             };
 
+            DynSolValue::Array(
+                xs.into_iter()
+                    .map(|x| move_value_to_sol_value(x, inner_layout))
+                    .collect(),
+            )
+        }
+        MoveValue::Struct(inner) => {
+            let MoveTypeLayout::Struct(struct_layout) = annotated_layout else {
+                unreachable!("The annotated layout must match the MoveValue")
+            };
+            let (struct_tag, field_layouts) = match struct_layout {
+                MoveStructLayout::WithTypes { type_, fields } => (type_, fields),
+                _ => unreachable!("Must have type because layout is constructed with `type_to_fully_annotated_layout`"),
+            };
+            let mut fields = inner.into_fields();
+
             // Special case data marked as being fixed bytes
-            if FIXED_BYTES_TAG.eq(&struct_tag) {
-                let Some((_, MoveValue::Vector(data))) = fields.pop() else {
+            if FIXED_BYTES_TAG.eq(struct_tag) {
+                let Some(MoveValue::Vector(data)) = fields.pop() else {
                     unreachable!("SolidityFixedBytes contains a vector")
                 };
                 // Solidity only supports fixed bytes up to 32.
@@ -117,16 +144,27 @@ fn move_value_to_sol_value(mv: MoveValue) -> DynSolValue {
             if FIXED_ARRAY_TAG.module_id() == struct_tag.module_id()
                 && FIXED_ARRAY_TAG.name == struct_tag.name
             {
-                let Some((_, MoveValue::Vector(data))) = fields.pop() else {
+                let Some(MoveValue::Vector(data)) = fields.pop() else {
                     unreachable!("SolidityFixedArray contains a vector")
                 };
-                let data = data.into_iter().map(move_value_to_sol_value).collect();
+                let MoveTypeLayout::Vector(inner_layout) = &field_layouts[0].layout else {
+                    unreachable!("The annotated layout must match the MoveValue")
+                };
+                let data = data
+                    .into_iter()
+                    .map(|x| move_value_to_sol_value(x, inner_layout))
+                    .collect();
                 return DynSolValue::FixedArray(data);
             }
 
             // Assume all other structs are meant to be tuples.
-            let fields = fields.into_iter().map(|(_, mv)| mv);
-            DynSolValue::Tuple(fields.map(move_value_to_sol_value).collect())
+            DynSolValue::Tuple(
+                fields
+                    .into_iter()
+                    .zip(field_layouts)
+                    .map(|(x, l)| move_value_to_sol_value(x, &l.layout))
+                    .collect(),
+            )
         }
     }
 }
