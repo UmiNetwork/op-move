@@ -25,6 +25,18 @@ module Evm::evm {
         logs: vector<EvmLog>,
     }
 
+    /// Mark a byte as being of fixed length for the purpose
+    /// of encoding it into the Solidity ABI.
+    struct SolidityFixedBytes has drop {
+        data: vector<u8>,
+    }
+
+    /// Mark a collection of values as being of fixed length for the purpose
+    /// of encoding it into the Solidity ABI.
+    struct SolidityFixedArray<T> has drop {
+        elements: vector<T>,
+    }
+
     /// Same as `evm_call`, but with the type signature modified to follow the rules of
     /// entry functions (namely: `value` must be zero because `FungibleAsset` cannot
     /// be exernally constructed, and there cannot be a return value).
@@ -57,6 +69,10 @@ module Evm::evm {
 
         native_evm_create(caller_addr, get_asset_value(value), data)
     }
+
+    /// Encode the move value into bytes using the Solidity ABI
+    /// such that it would be suitable for passing to a Solidity contract's function.
+    public native fun abi_encode_params<T>(value: &T): vector<u8>;
 
     fun get_asset_value(f: FungibleAsset): u256 {
         let amount = fungible_asset::amount(&f);
