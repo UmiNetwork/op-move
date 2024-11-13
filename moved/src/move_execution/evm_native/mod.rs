@@ -1,3 +1,9 @@
+pub use self::{
+    native_evm_context::NativeEVMContext,
+    native_impl::append_evm_natives,
+    state_changes::{extract_evm_changes, genesis_state_changes},
+};
+
 use {
     move_core_types::{
         account_address::AccountAddress,
@@ -42,9 +48,3 @@ static ACCOUNT_INFO_LAYOUT: LazyLock<MoveTypeLayout> = LazyLock::new(|| {
         MoveTypeLayout::Vector(Box::new(MoveTypeLayout::U8)), // code_hash
     ]))
 });
-
-pub use {
-    native_evm_context::NativeEVMContext,
-    native_impl::append_evm_natives,
-    state_changes::{extract_evm_changes, genesis_state_changes},
-};
