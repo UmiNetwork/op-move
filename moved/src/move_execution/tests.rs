@@ -1557,10 +1557,7 @@ impl CompileJob for ScriptCompileJob {
             "EthToken".into(),
             NumericalAddress::parse_str("0x1").unwrap(),
         );
-        result.insert(
-            "Evm".into(),
-            NumericalAddress::parse_str("0x1").unwrap(),
-        );
+        result.insert("Evm".into(), NumericalAddress::parse_str("0x1").unwrap());
         result.insert(
             "evm_admin".into(),
             NumericalAddress::parse_str("0x1").unwrap(),
