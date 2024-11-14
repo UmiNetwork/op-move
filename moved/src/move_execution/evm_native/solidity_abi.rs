@@ -173,6 +173,6 @@ fn force_to_u8(mv: MoveValue) -> u8 {
     if let MoveValue::U8(x) = mv {
         x
     } else {
-        0
+        unreachable!("Only call force_to_u8 with MoveValue::U8")
     }
 }
