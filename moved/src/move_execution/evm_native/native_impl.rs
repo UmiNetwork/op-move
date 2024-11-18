@@ -1,6 +1,7 @@
 use {
     super::{
         native_evm_context::NativeEVMContext,
+        solidity_abi::abi_encode_params,
         type_utils::{evm_result_to_move_value, from_move_u256},
         EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
     },
@@ -36,6 +37,7 @@ pub fn append_evm_natives(natives: &mut NativeFunctionTable, builder: &SafeNativ
 
     push_native(ident_str!("native_evm_call").into(), evm_call);
     push_native(ident_str!("native_evm_create").into(), evm_create);
+    push_native(ident_str!("abi_encode_params").into(), abi_encode_params);
 }
 
 fn evm_call(

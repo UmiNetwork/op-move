@@ -16,6 +16,7 @@ use {
 
 mod native_evm_context;
 mod native_impl;
+mod solidity_abi;
 mod state_changes;
 mod type_utils;
 

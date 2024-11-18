@@ -4,10 +4,14 @@ module Evm::evm {
     use EthToken::eth_token::get_metadata;
     use std::error;
     use std::signer;
+    use std::vector::length;
 
     /// For now deploying EVM contracts is restricted to an admin account.
     /// This restriction may be lifted in the future.
     const ENOT_OWNER: u64 = 1;
+
+    /// Solidity FixedBytes must have length between 1 and 32 (inclusive).
+    const EINVALID_FIXED_BYTES_SIZE: u64 = 1;
 
     const OWNER: address = @evm_admin;
 
@@ -23,6 +27,28 @@ module Evm::evm {
         is_success: bool,
         output: vector<u8>,
         logs: vector<EvmLog>,
+    }
+
+    /// Mark a byte as being of fixed length for the purpose
+    /// of encoding it into the Solidity ABI.
+    struct SolidityFixedBytes has drop {
+        data: vector<u8>,
+    }
+
+    /// Mark a collection of values as being of fixed length for the purpose
+    /// of encoding it into the Solidity ABI.
+    struct SolidityFixedArray<T> has drop {
+        elements: vector<T>,
+    }
+
+    public fun as_fixed_bytes(data: vector<u8>): SolidityFixedBytes {
+        let size = length(&data);
+        assert!(0 < size && size <= 32, error::invalid_argument(EINVALID_FIXED_BYTES_SIZE));
+        SolidityFixedBytes { data }
+    }
+
+    public fun as_fixed_array<T>(elements: vector<T>): SolidityFixedArray<T> {
+        SolidityFixedArray { elements }
     }
 
     /// Same as `evm_call`, but with the type signature modified to follow the rules of
@@ -57,6 +83,12 @@ module Evm::evm {
 
         native_evm_create(caller_addr, get_asset_value(value), data)
     }
+
+    /// Encode the move value into bytes using the Solidity ABI
+    /// such that it would be suitable for passing to a Solidity contract's function.
+    /// The prefix can be used to prepend the output with a Solidity 4-byte function
+    /// selector if needed.
+    public native fun abi_encode_params<T>(prefix: vector<u8>, value: T): vector<u8>;
 
     fun get_asset_value(f: FungibleAsset): u256 {
         let amount = fungible_asset_u256::amount(&f);
