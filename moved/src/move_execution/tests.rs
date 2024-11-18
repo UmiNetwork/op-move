@@ -1472,6 +1472,11 @@ impl ModuleCompileJob {
                 "EthToken".into(),
                 NumericalAddress::parse_str("0x1").unwrap(),
             ),
+            ("Evm".into(), NumericalAddress::parse_str("0x1").unwrap()),
+            (
+                "evm_admin".into(),
+                NumericalAddress::parse_str("0x1").unwrap(),
+            ),
         ]
         .into_iter()
         .chain(aptos_framework::named_addresses().clone())
@@ -1496,7 +1501,7 @@ impl CompileJob for ModuleCompileJob {
         let mut framework = aptos_framework::testnet_release_bundle()
             .files()
             .expect("Must be able to find Aptos Framework files");
-        add_eth_token_path(&mut framework);
+        add_custom_framework_paths(&mut framework);
         framework
     }
 
@@ -1524,7 +1529,7 @@ impl ScriptCompileJob {
                 .files()
                 .expect("Must be able to find Aptos Framework files");
 
-            add_eth_token_path(&mut framework);
+            add_custom_framework_paths(&mut framework);
             local_deps.for_each(|d| framework.push(d));
 
             framework
@@ -1552,14 +1557,26 @@ impl CompileJob for ScriptCompileJob {
             "EthToken".into(),
             NumericalAddress::parse_str("0x1").unwrap(),
         );
+        result.insert("Evm".into(), NumericalAddress::parse_str("0x1").unwrap());
+        result.insert(
+            "evm_admin".into(),
+            NumericalAddress::parse_str("0x1").unwrap(),
+        );
         result
     }
 }
 
-fn add_eth_token_path(files: &mut Vec<String>) {
+fn add_custom_framework_paths(files: &mut Vec<String>) {
+    add_framework_path("eth-token", "EthToken", files);
+    add_framework_path("evm", "Evm", files);
+}
+
+fn add_framework_path(folder_name: &str, source_name: &str, files: &mut Vec<String>) {
     let base_path = Path::new(std::env!("CARGO_MANIFEST_DIR"));
     let eth_token_path = base_path
-        .join("../genesis-builder/framework/eth-token/sources/EthToken.move")
+        .join(format!(
+            "../genesis-builder/framework/{folder_name}/sources/{source_name}.move"
+        ))
         .canonicalize()
         .unwrap();
     files.push(eth_token_path.to_string_lossy().into());

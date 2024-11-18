@@ -5,9 +5,12 @@ use {
     crate::{
         block::HeaderForExecution,
         genesis::config::GenesisConfig,
-        move_execution::{create_move_vm, create_vm_session, execute_transaction, tests::*},
+        move_execution::{
+            create_move_vm, create_vm_session, evm_native::type_utils::to_move_u256,
+            execute_transaction, tests::*,
+        },
         primitives::{ToEthAddress, ToMoveAddress},
-        storage::State,
+        storage::{InMemoryState, State},
         tests::{signer::Signer, ALT_EVM_ADDRESS, EVM_ADDRESS, PRIVATE_KEY},
         types::session_id::SessionId,
     },
@@ -52,7 +55,8 @@ fn test_evm() {
     // -------- Initialize state
     let genesis_config = GenesisConfig::default();
     let mut signer = Signer::new(&PRIVATE_KEY);
-    let (_, mut state) = deploy_contract("natives", &mut signer, &genesis_config);
+    let (erc20_move_interface, mut state) =
+        deploy_contract("erc20_interface", &mut signer, &genesis_config);
 
     // -------- Setup ERC-20 interface
     let mint_amount = parse_ether("1").unwrap();
@@ -77,6 +81,7 @@ fn test_evm() {
     // We can use this log to get the address of the newly deployed contract.
     let contract_address = outcome.logs[0].address;
     let deployed_contract = ERC20::new(contract_address, &provider);
+    let contract_move_address = contract_address.to_move_address();
 
     let evm_changes = extract_evm_changes(&extensions);
     changes.squash(evm_changes).unwrap();
@@ -85,10 +90,10 @@ fn test_evm() {
     state.apply(changes).unwrap();
 
     // -------- Transfer ERC-20 tokens
-    let transfer_amount = parse_ether("0.25").unwrap();
+    let transfer_amount = parse_ether("0.35").unwrap();
     let user_address = EVM_ADDRESS.to_move_address();
     let signer_input_arg = MoveValue::Signer(user_address);
-    let to_input_arg = MoveValue::Address(contract_address.to_move_address());
+    let to_input_arg = MoveValue::Address(contract_move_address);
     let transfer_call = deployed_contract.transfer(ALT_EVM_ADDRESS, transfer_amount);
     let data_input_arg = Value::vector_u8(transfer_call.calldata().clone());
     let entry_fn = EntryFunction::new(
@@ -121,8 +126,7 @@ fn test_evm() {
     state.apply(outcome.changes).unwrap();
 
     // -------- Validate ERC-20 balances
-    let contract_move_address = contract_address.to_move_address();
-    let balance_of = |address| {
+    let balance_of = |address, state: &InMemoryState| {
         let balance_of_call = deployed_contract.balanceOf(address);
         let (outcome, _, _) = evm_quick_call(
             EVM_NATIVE_ADDRESS,
@@ -132,11 +136,55 @@ fn test_evm() {
         );
         U256::from_be_slice(&outcome.output)
     };
-    let sender_balance = balance_of(EVM_ADDRESS);
-    let receiver_balance = balance_of(ALT_EVM_ADDRESS);
+    let sender_balance = balance_of(EVM_ADDRESS, &state);
+    let receiver_balance = balance_of(ALT_EVM_ADDRESS, &state);
 
     assert_eq!(sender_balance, mint_amount - transfer_amount);
     assert_eq!(receiver_balance, transfer_amount);
+
+    // -------- Transfer ERC-20 tokens (Move interface this time)
+    let token_address_input_arg = MoveValue::Address(contract_move_address);
+    let to_input_arg = MoveValue::Address(ALT_EVM_ADDRESS.to_move_address());
+    let amount_arg = MoveValue::U256(to_move_u256(&transfer_amount));
+    let entry_fn = EntryFunction::new(
+        erc20_move_interface,
+        ident_str!("erc20_transfer").into(),
+        Vec::new(),
+        vec![
+            bcs::to_bytes(&token_address_input_arg).unwrap(),
+            bcs::to_bytes(&signer_input_arg).unwrap(),
+            bcs::to_bytes(&to_input_arg).unwrap(),
+            bcs::to_bytes(&amount_arg).unwrap(),
+        ],
+    );
+    let (tx_hash, tx) = create_transaction(
+        &mut signer,
+        TxKind::Call(EVM_ADDRESS),
+        bcs::to_bytes(&entry_fn).unwrap(),
+    );
+
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
+    outcome.vm_outcome.unwrap();
+    state.apply(outcome.changes).unwrap();
+
+    // -------- Validate ERC-20 balances (again)
+    let sender_balance = balance_of(EVM_ADDRESS, &state);
+    let receiver_balance = balance_of(ALT_EVM_ADDRESS, &state);
+
+    assert_eq!(
+        sender_balance,
+        mint_amount - transfer_amount - transfer_amount
+    );
+    assert_eq!(receiver_balance, transfer_amount + transfer_amount);
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
