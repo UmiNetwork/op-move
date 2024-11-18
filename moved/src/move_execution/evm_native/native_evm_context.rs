@@ -2,16 +2,16 @@ use {
     super::{
         type_utils::{
             account_info_struct_tag, account_storage_struct_tag, code_hash_struct_tag,
-            from_move_u256, move_value_to_account_info,
+            move_value_to_account_info,
         },
         ACCOUNT_INFO_LAYOUT, ACCOUNT_STORAGE_LAYOUT, CODE_LAYOUT, EVM_NATIVE_ADDRESS,
     },
-    crate::block::HeaderForExecution,
+    crate::{block::HeaderForExecution, primitives::ToU256},
     alloy::primitives::map::HashMap,
     aptos_types::vm_status::StatusCode,
     better_any::{Tid, TidAble},
     move_binary_format::errors::PartialVMError,
-    move_core_types::resolver::MoveResolver,
+    move_core_types::{resolver::MoveResolver, u256},
     move_vm_types::values::{VMValueCast, Value},
     revm::{
         db::{CacheDB, DatabaseRef},
@@ -95,7 +95,7 @@ impl<'a> DatabaseRef for ResolverBackedDB<'a> {
             Some(bytes) => {
                 let value = Value::simple_deserialize(&bytes, &ACCOUNT_STORAGE_LAYOUT)
                     .expect("EVM account storage must deserialize correctly");
-                from_move_u256(value.cast()?)
+                value.value_as::<u256::U256>()?.to_u256()
             }
             None => {
                 // Zero is the default value when there is no entry

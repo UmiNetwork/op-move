@@ -5,11 +5,8 @@ use {
     crate::{
         block::HeaderForExecution,
         genesis::config::GenesisConfig,
-        move_execution::{
-            create_move_vm, create_vm_session, evm_native::type_utils::to_move_u256,
-            execute_transaction, tests::*,
-        },
-        primitives::{ToEthAddress, ToMoveAddress},
+        move_execution::{create_move_vm, create_vm_session, execute_transaction, tests::*},
+        primitives::{ToEthAddress, ToMoveAddress, ToMoveU256},
         storage::{InMemoryState, State},
         tests::{signer::Signer, ALT_EVM_ADDRESS, EVM_ADDRESS, PRIVATE_KEY},
         types::session_id::SessionId,
@@ -145,7 +142,7 @@ fn test_evm() {
     // -------- Transfer ERC-20 tokens (Move interface this time)
     let token_address_input_arg = MoveValue::Address(contract_move_address);
     let to_input_arg = MoveValue::Address(ALT_EVM_ADDRESS.to_move_address());
-    let amount_arg = MoveValue::U256(to_move_u256(&transfer_amount));
+    let amount_arg = transfer_amount.to_move_u256();
     let entry_fn = EntryFunction::new(
         erc20_move_interface,
         ident_str!("erc20_transfer").into(),
@@ -409,15 +406,15 @@ fn extract_evm_result(outcome: SerializedReturnValues) -> EvmNativeOutcome {
 fn serialize_fungible_asset_value(value: u64) -> Vec<u8> {
     // Fungible asset Move type is a struct with two fields:
     // 1. another struct with a single address field,
-    // 2. a u64 value.
+    // 2. a u256 value.
     let fungible_asset_layout = MoveTypeLayout::Struct(MoveStructLayout::Runtime(vec![
         MoveTypeLayout::Struct(MoveStructLayout::Runtime(vec![MoveTypeLayout::Address])),
-        MoveTypeLayout::U64,
+        MoveTypeLayout::U256,
     ]));
 
     Value::struct_(Struct::pack([
         Value::struct_(Struct::pack([Value::address(AccountAddress::ZERO)])),
-        Value::u64(value),
+        Value::u256(value.into()),
     ]))
     .simple_serialize(&fungible_asset_layout)
     .unwrap()

@@ -159,8 +159,8 @@ pub enum EthToken {
     GetBalanceReturnsAValue,
     #[error("Function get_balance return value can be deserialized")]
     GetBalanceReturnDeserializes,
-    #[error("Function get_balance returns a value of type u64")]
-    GetBalanceReturnsU64,
+    #[error("Function get_balance returns a value of type u256")]
+    GetBalanceReturnsU256,
 }
 
 #[derive(Debug, Error)]

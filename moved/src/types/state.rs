@@ -98,7 +98,7 @@ pub enum StateMessage {
     GetBalance {
         address: Address,
         block_number: BlockNumberOrTag,
-        response_channel: oneshot::Sender<u64>,
+        response_channel: oneshot::Sender<U256>,
     },
 }
 

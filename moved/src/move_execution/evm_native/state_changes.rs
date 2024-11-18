@@ -3,10 +3,11 @@ use {
         native_evm_context::NativeEVMContext,
         type_utils::{
             account_info_struct_tag, account_info_to_move_value, account_storage_struct_tag,
-            code_hash_struct_tag, get_account_code_hash, to_move_u256,
+            code_hash_struct_tag, get_account_code_hash,
         },
         ACCOUNT_INFO_LAYOUT, ACCOUNT_STORAGE_LAYOUT, CODE_LAYOUT, EVM_NATIVE_ADDRESS,
     },
+    crate::primitives::ToMoveU256,
     move_binary_format::errors::PartialVMError,
     move_core_types::{
         effects::{AccountChangeSet, ChangeSet, Op},
@@ -177,7 +178,7 @@ fn add_account_changes(
         let op = if value.present_value.is_zero() {
             Op::Delete
         } else {
-            let move_value = Value::u256(to_move_u256(&value.present_value))
+            let move_value = Value::u256(value.present_value.to_move_u256())
                 .simple_serialize(&ACCOUNT_STORAGE_LAYOUT)
                 .expect("EVM storage value must serialize");
             if value.original_value.is_zero() {

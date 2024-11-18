@@ -1,6 +1,6 @@
 module Evm::evm {
-    use aptos_framework::fungible_asset::{Self, FungibleAsset};
-    use aptos_framework::primary_fungible_store::ensure_primary_store_exists;
+    use aptos_framework::fungible_asset_u256::{Self, FungibleAsset};
+    use aptos_framework::primary_fungible_store_u256::ensure_primary_store_exists;
     use EthToken::eth_token::get_metadata;
     use std::error;
     use std::signer;
@@ -60,7 +60,7 @@ module Evm::evm {
         data: vector<u8>
     ) {
         let eth_metadata = get_metadata();
-        let value = fungible_asset::zero(eth_metadata);
+        let value = fungible_asset_u256::zero(eth_metadata);
         evm_call(caller, to, value, data);
     }
 
@@ -91,15 +91,15 @@ module Evm::evm {
     public native fun abi_encode_params<T>(prefix: vector<u8>, value: T): vector<u8>;
 
     fun get_asset_value(f: FungibleAsset): u256 {
-        let amount = fungible_asset::amount(&f);
+        let amount = fungible_asset_u256::amount(&f);
         if (amount == 0) {
-            fungible_asset::destroy_zero(f);
+            fungible_asset_u256::destroy_zero(f);
             return 0
         };
         let eth_metadata = get_metadata();
         let store = ensure_primary_store_exists(OWNER, eth_metadata);
-        fungible_asset::deposit(store, f);
-        (amount as u256)
+        fungible_asset_u256::deposit(store, f);
+        amount
     }
 
     native fun native_evm_call(caller: address, to: address, value: u256, data: vector<u8>): EvmResult;

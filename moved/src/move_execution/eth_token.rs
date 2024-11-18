@@ -1,5 +1,11 @@
 use {
-    crate::{genesis::FRAMEWORK_ADDRESS, types::session_id::SessionId, EthToken},
+    crate::{
+        genesis::FRAMEWORK_ADDRESS,
+        primitives::{ToMoveU256, ToU256},
+        types::session_id::SessionId,
+        EthToken,
+    },
+    alloy::primitives::U256,
     aptos_table_natives::TableResolver,
     move_binary_format::errors::PartialVMError,
     move_core_types::{
@@ -26,7 +32,7 @@ const TRANSFER_FUNCTION_NAME: &IdentStr = ident_str!("transfer");
 pub struct TransferArgs<'a> {
     pub from: &'a AccountAddress,
     pub to: &'a AccountAddress,
-    pub amount: u64,
+    pub amount: U256,
 }
 
 pub trait BaseTokenAccounts {
@@ -72,7 +78,7 @@ impl BaseTokenAccounts for MovedBaseTokenAccounts {
             TransferArgs {
                 from,
                 to: &self.eth_treasury,
-                amount,
+                amount: U256::from(amount),
             },
             session,
             traversal_context,
@@ -93,7 +99,7 @@ impl BaseTokenAccounts for MovedBaseTokenAccounts {
 
 pub fn mint_eth<G: GasMeter>(
     to: &AccountAddress,
-    amount: u64,
+    amount: U256,
     session: &mut Session,
     traversal_context: &mut TraversalContext,
     gas_meter: &mut G,
@@ -101,7 +107,8 @@ pub fn mint_eth<G: GasMeter>(
     let token_module_id = ModuleId::new(FRAMEWORK_ADDRESS, TOKEN_MODULE_NAME.into());
     let admin_arg = bcs::to_bytes(&MoveValue::Signer(TOKEN_ADMIN)).expect("signer can serialize");
     let to_arg = bcs::to_bytes(to).expect("address can serialize");
-    let amount_arg = bcs::to_bytes(&MoveValue::U64(amount)).expect("amount can serialize");
+    let amount_arg =
+        bcs::to_bytes(&MoveValue::U256(amount.to_move_u256())).expect("amount can serialize");
 
     session
         .execute_entry_function(
@@ -134,7 +141,8 @@ pub fn transfer_eth<G: GasMeter>(
     let admin_arg = bcs::to_bytes(&MoveValue::Signer(TOKEN_ADMIN)).expect("signer can serialize");
     let from_arg = bcs::to_bytes(args.from).expect("from address can serialize");
     let to_arg = bcs::to_bytes(args.to).expect("to address can serialize");
-    let amount_arg = bcs::to_bytes(&MoveValue::U64(args.amount)).expect("amount can serialize");
+    let amount_arg =
+        bcs::to_bytes(&MoveValue::U256(args.amount.to_move_u256())).expect("amount can serialize");
 
     // Note: transfer function can fail if user has insufficient balance.
     session.execute_entry_function(
@@ -159,7 +167,7 @@ pub fn get_eth_balance<G: GasMeter>(
     session: &mut Session,
     traversal_context: &mut TraversalContext,
     gas_meter: &mut G,
-) -> Result<u64, crate::Error> {
+) -> Result<U256, crate::Error> {
     let addr_arg = bcs::to_bytes(account).expect("address can serialize");
     let token_module_id = ModuleId::new(FRAMEWORK_ADDRESS, TOKEN_MODULE_NAME.into());
 
@@ -191,9 +199,9 @@ pub fn get_eth_balance<G: GasMeter>(
         .as_move_value(layout);
 
     match value {
-        MoveValue::U64(balance) => Ok(balance),
+        MoveValue::U256(balance) => Ok(balance.to_u256()),
         _ => Err(crate::Error::eth_token_invariant_violation(
-            EthToken::GetBalanceReturnsU64,
+            EthToken::GetBalanceReturnsU256,
         )),
     }
 }
@@ -203,7 +211,7 @@ pub fn get_eth_balance<G: GasMeter>(
 pub fn quick_get_eth_balance(
     account: &AccountAddress,
     state: &(impl MoveResolver<PartialVMError> + TableResolver),
-) -> u64 {
+) -> U256 {
     let move_vm = super::create_move_vm().unwrap();
     let mut session = super::create_vm_session(&move_vm, state, SessionId::default());
     let traversal_storage = TraversalStorage::new();

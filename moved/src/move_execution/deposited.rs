@@ -26,8 +26,7 @@ pub(super) fn execute_deposited_transaction(
     genesis_config: &GenesisConfig,
     block_header: HeaderForExecution,
 ) -> crate::Result<TransactionExecutionOutcome> {
-    // TODO: handle U256 properly
-    let amount = tx.mint.as_limbs()[0].saturating_add(tx.value.as_limbs()[0]);
+    let amount = tx.mint.saturating_add(tx.value);
     let to = tx.to.to_move_address();
 
     let move_vm = create_move_vm()?;
@@ -48,8 +47,7 @@ pub(super) fn execute_deposited_transaction(
     )?;
 
     debug_assert!(
-        eth_token::get_eth_balance(&to, &mut session, &mut traversal_context, &mut gas_meter)
-            .unwrap()
+        eth_token::get_eth_balance(&to, &mut session, &mut traversal_context, &mut gas_meter)?
             >= amount,
         "tokens were minted"
     );

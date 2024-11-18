@@ -6,7 +6,7 @@ use {
     once_cell::sync::Lazy,
     std::{
         collections::BTreeMap,
-        fs::{read_to_string, remove_dir_all, write, OpenOptions},
+        fs::{copy, read_to_string, remove_dir_all, write, OpenOptions},
         io::{BufRead, BufReader},
         path::PathBuf,
         process::Command,
@@ -126,6 +126,22 @@ fn fix_aptos_packages() -> anyhow::Result<()> {
         }
         write(move_toml_file, content)?;
     }
+
+    // Object module should also friend the new u256 version of the fungible store
+    let object_move_file = &APTOS_FRAMEWORK_DIR
+        .join("aptos-framework")
+        .join("sources")
+        .join("object.move");
+    let mut content = read_to_string(object_move_file)?;
+    content = content.replace(
+        "friend aptos_framework::primary_fungible_store;",
+        "friend aptos_framework::primary_fungible_store;\n    friend aptos_framework::primary_fungible_store_u256;"
+    );
+    write(object_move_file, content)?;
+
+    // Include the u256 version of fungible asset and store modules into the aptos_framework
+    copy_aptos_file("fungible_asset_u256.move")?;
+    copy_aptos_file("primary_fungible_store_u256.move")?;
     Ok(())
 }
 
@@ -237,4 +253,17 @@ fn build_packages_with_move_config(config: MoveBuildConfig) -> anyhow::Result<()
     write(TARGET_ROOT.join(SUI_SNAPSHOT_NAME), binary)?;
     println!("Generated Sui snapshot bundle");
     Ok(())
+}
+
+fn copy_aptos_file(name: &str) -> Result<u64, std::io::Error> {
+    copy(
+        MOVED_FRAMEWORK_DIR
+            .join("aptos-framework")
+            .join("sources")
+            .join(name),
+        APTOS_FRAMEWORK_DIR
+            .join("aptos-framework")
+            .join("sources")
+            .join(name),
+    )
 }
