@@ -1,4 +1,3 @@
-use move_core_types::u256;
 use {
     super::{
         type_utils::{
@@ -12,7 +11,7 @@ use {
     aptos_types::vm_status::StatusCode,
     better_any::{Tid, TidAble},
     move_binary_format::errors::PartialVMError,
-    move_core_types::resolver::MoveResolver,
+    move_core_types::{resolver::MoveResolver, u256},
     move_vm_types::values::{VMValueCast, Value},
     revm::{
         db::{CacheDB, DatabaseRef},
