@@ -1,6 +1,9 @@
 use {
     crate::{json_utils, json_utils::access_state_error, jsonrpc::JsonRpcError},
-    alloy::{eips::BlockNumberOrTag, primitives::Address},
+    alloy::{
+        eips::BlockNumberOrTag,
+        primitives::{Address, U256},
+    },
     moved::types::state::StateMessage,
     tokio::sync::{mpsc, oneshot},
 };
@@ -42,7 +45,7 @@ async fn inner_execute(
     address: Address,
     block_number: BlockNumberOrTag,
     state_channel: mpsc::Sender<StateMessage>,
-) -> Result<u64, JsonRpcError> {
+) -> Result<U256, JsonRpcError> {
     let (tx, rx) = oneshot::channel();
     let msg = StateMessage::GetBalance {
         address,

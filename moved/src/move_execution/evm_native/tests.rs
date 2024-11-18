@@ -311,15 +311,15 @@ fn extract_evm_result(outcome: SerializedReturnValues) -> EvmNativeOutcome {
 fn serialize_fungible_asset_value(value: u64) -> Vec<u8> {
     // Fungible asset Move type is a struct with two fields:
     // 1. another struct with a single address field,
-    // 2. a u64 value.
+    // 2. a u256 value.
     let fungible_asset_layout = MoveTypeLayout::Struct(MoveStructLayout::Runtime(vec![
         MoveTypeLayout::Struct(MoveStructLayout::Runtime(vec![MoveTypeLayout::Address])),
-        MoveTypeLayout::U64,
+        MoveTypeLayout::U256,
     ]));
 
     Value::struct_(Struct::pack([
         Value::struct_(Struct::pack([Value::address(AccountAddress::ZERO)])),
-        Value::u64(value),
+        Value::u256(value.into()),
     ]))
     .simple_serialize(&fungible_asset_layout)
     .unwrap()

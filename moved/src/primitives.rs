@@ -1,5 +1,8 @@
 pub use alloy::primitives::{aliases::B2048, Address, Bytes, B256, U256, U64};
-use {aptos_crypto::HashValue, move_core_types::account_address::AccountAddress};
+use {
+    aptos_crypto::HashValue,
+    move_core_types::{account_address::AccountAddress, u256::U256 as MoveU256},
+};
 
 pub(crate) trait ToEthAddress {
     fn to_eth_address(&self) -> Address;
@@ -56,6 +59,26 @@ impl ToSaturatedU64 for U256 {
             [value, 0, 0, 0] => value,
             _ => u64::MAX,
         }
+    }
+}
+
+pub(crate) trait ToU256 {
+    fn to_u256(self) -> U256;
+}
+
+impl ToU256 for MoveU256 {
+    fn to_u256(self) -> U256 {
+        U256::from_le_bytes(self.to_le_bytes())
+    }
+}
+
+pub(crate) trait ToMoveU256 {
+    fn to_move_u256(self) -> MoveU256;
+}
+
+impl ToMoveU256 for U256 {
+    fn to_move_u256(self) -> MoveU256 {
+        MoveU256::from_le_bytes(&self.to_le_bytes())
     }
 }
 

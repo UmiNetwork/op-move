@@ -110,8 +110,7 @@ pub(super) fn execute_canonical_transaction(
         }
         TransactionData::EoaBaseTokenTransfer(to) => {
             let to = to.to_move_address();
-            // TODO: handle U256 properly
-            let amount = tx.value.as_limbs()[0];
+            let amount = tx.value;
             let args = TransferArgs {
                 to: &to,
                 from: &sender_move_address,

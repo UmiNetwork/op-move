@@ -4,7 +4,7 @@ use {
         block::HeaderForExecution,
         genesis::{config::CHAIN_ID, init_state},
         move_execution::eth_token::quick_get_eth_balance,
-        primitives::{ToMoveAddress, B256, U256, U64},
+        primitives::{ToMoveAddress, ToMoveU256, B256, U256, U64},
         storage::{InMemoryState, State},
         tests::{signer::Signer, ALT_EVM_ADDRESS, ALT_PRIVATE_KEY, EVM_ADDRESS, PRIVATE_KEY},
         types::transactions::{DepositedTx, ExtendedTxEnvelope, ScriptOrModule},
@@ -557,7 +557,7 @@ fn test_deposit_tx() {
     state.apply(outcome.changes).unwrap();
 
     let balance = quick_get_eth_balance(&EVM_ADDRESS.to_move_address(), state.resolver());
-    assert_eq!(balance, mint_amount.as_limbs()[0]);
+    assert_eq!(balance, mint_amount);
 }
 
 #[test]
@@ -630,8 +630,6 @@ fn test_eoa_base_token_transfer() {
     outcome.vm_outcome.unwrap();
     state.apply(outcome.changes).unwrap();
 
-    let mint_amount = mint_amount.as_limbs()[0];
-    let transfer_amount = transfer_amount.as_limbs()[0];
     let sender_balance = quick_get_eth_balance(&sender.to_move_address(), state.resolver());
     let receiver_balance = quick_get_eth_balance(&receiver.to_move_address(), state.resolver());
     assert_eq!(sender_balance, mint_amount - transfer_amount);
@@ -687,14 +685,15 @@ fn test_treasury_charges_l1_cost_to_sender_account_on_success() {
     outcome.vm_outcome.unwrap();
     state.apply(outcome.changes).unwrap();
 
-    let mint_amount = mint_amount.as_limbs()[0];
-    let transfer_amount = transfer_amount.as_limbs()[0];
     let sender_balance = quick_get_eth_balance(&sender.to_move_address(), state.resolver());
     let receiver_balance = quick_get_eth_balance(&receiver.to_move_address(), state.resolver());
     let treasury_balance = quick_get_eth_balance(&eth_treasury, state.resolver());
-    assert_eq!(sender_balance, mint_amount - transfer_amount - l1_cost);
+    assert_eq!(
+        sender_balance,
+        mint_amount - transfer_amount - U256::from(l1_cost)
+    );
     assert_eq!(receiver_balance, transfer_amount);
-    assert_eq!(treasury_balance, l1_cost);
+    assert_eq!(treasury_balance, U256::from(l1_cost));
 }
 
 #[test]
@@ -748,13 +747,12 @@ fn test_treasury_charges_l1_cost_to_sender_account_on_user_error() {
     outcome.vm_outcome.unwrap_err();
     state.apply(outcome.changes).unwrap();
 
-    let mint_amount = mint_amount.as_limbs()[0];
     let sender_balance = quick_get_eth_balance(&sender.to_move_address(), state.resolver());
     let receiver_balance = quick_get_eth_balance(&receiver.to_move_address(), state.resolver());
     let treasury_balance = quick_get_eth_balance(&eth_treasury, state.resolver());
-    assert_eq!(sender_balance, mint_amount - l1_cost);
-    assert_eq!(receiver_balance, 0);
-    assert_eq!(treasury_balance, l1_cost);
+    assert_eq!(sender_balance, mint_amount - U256::from(l1_cost));
+    assert_eq!(receiver_balance, U256::ZERO);
+    assert_eq!(treasury_balance, U256::from(l1_cost));
 }
 
 #[test]
@@ -797,14 +795,14 @@ fn test_marketplace() {
 
     // List an item for sale
     let seller_address = EVM_ADDRESS.to_move_address();
-    let price = 123_u64;
+    let price = U256::from(123);
     let entry_fn = EntryFunction::new(
         module_id.clone(),
         Identifier::new("list").unwrap(),
         Vec::new(),
         vec![
             bcs::to_bytes(&MoveValue::Address(market_address)).unwrap(),
-            bcs::to_bytes(&MoveValue::U64(price)).unwrap(),
+            bcs::to_bytes(&MoveValue::U256(price.to_move_u256())).unwrap(),
             bcs::to_bytes(&MoveValue::vector_u8(b"Something valuable".to_vec())).unwrap(),
             bcs::to_bytes(&signer_input_arg).unwrap(),
         ],
@@ -829,8 +827,8 @@ fn test_marketplace() {
 
     // Mint tokens for the buyer to spend
     let buyer_address = ALT_EVM_ADDRESS.to_move_address();
-    let mint_amount = 567_u64;
-    let (tx_hash, tx) = create_deposit_transaction(U256::from(mint_amount), ALT_EVM_ADDRESS);
+    let mint_amount = U256::from(567);
+    let (tx_hash, tx) = create_deposit_transaction(mint_amount, ALT_EVM_ADDRESS);
     let outcome = execute_transaction(
         &tx,
         &tx_hash,
@@ -858,7 +856,7 @@ fn test_marketplace() {
         vec![
             TransactionArgument::Address(market_address),
             TransactionArgument::U64(0),
-            TransactionArgument::U64(price),
+            TransactionArgument::U256(price.to_move_u256()),
         ],
     );
     let tx_data = bcs::to_bytes(&ScriptOrModule::Script(script)).unwrap();
@@ -1496,6 +1494,11 @@ impl CompileJob for ModuleCompileJob {
         let mut framework = aptos_framework::testnet_release_bundle()
             .files()
             .expect("Must be able to find Aptos Framework files");
+        let genesis_base = "../genesis-builder/framework/aptos-framework/sources";
+        framework.append(&mut vec![
+            format!("{genesis_base}/fungible_asset_u256.move"),
+            format!("{genesis_base}/primary_fungible_store_u256.move"),
+        ]);
         add_eth_token_path(&mut framework);
         framework
     }
@@ -1523,6 +1526,11 @@ impl ScriptCompileJob {
             let mut framework = aptos_framework::testnet_release_bundle()
                 .files()
                 .expect("Must be able to find Aptos Framework files");
+            let genesis_base = "../genesis-builder/framework/aptos-framework/sources";
+            framework.append(&mut vec![
+                format!("{genesis_base}/fungible_asset_u256.move"),
+                format!("{genesis_base}/primary_fungible_store_u256.move"),
+            ]);
 
             add_eth_token_path(&mut framework);
             local_deps.for_each(|d| framework.push(d));
