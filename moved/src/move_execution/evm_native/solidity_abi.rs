@@ -1,6 +1,6 @@
 use {
-    super::{type_utils::from_move_u256, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE},
-    crate::primitives::ToEthAddress,
+    super::{EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE},
+    crate::primitives::{ToEthAddress, ToU256},
     alloy::dyn_abi::DynSolValue,
     aptos_native_interface::{safely_pop_type_arg, SafeNativeContext, SafeNativeResult},
     move_core_types::{
@@ -92,7 +92,7 @@ fn move_value_to_sol_value(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> 
         MoveValue::U32(x) => DynSolValue::Uint(U256::from(x), 32),
         MoveValue::U64(x) => DynSolValue::Uint(U256::from(x), 64),
         MoveValue::U128(x) => DynSolValue::Uint(U256::from(x), 128),
-        MoveValue::U256(x) => DynSolValue::Uint(from_move_u256(x), 256),
+        MoveValue::U256(x) => DynSolValue::Uint(x.to_u256(), 256),
         MoveValue::Vector(xs) => {
             // Special case for byte arrays
             if let Some(MoveValue::U8(_)) = xs.first() {

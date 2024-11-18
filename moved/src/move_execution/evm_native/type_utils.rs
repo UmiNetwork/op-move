@@ -1,6 +1,6 @@
 use {
     super::{EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE},
-    crate::primitives::ToMoveAddress,
+    crate::primitives::{ToMoveAddress, ToMoveU256, ToU256},
     alloy::hex::ToHexExt,
     move_binary_format::errors::PartialVMError,
     move_core_types::{identifier::Identifier, language_storage::StructTag},
@@ -57,17 +57,9 @@ pub fn get_account_code_hash(info: &AccountInfo) -> B256 {
     }
 }
 
-pub fn to_move_u256(x: &U256) -> move_core_types::u256::U256 {
-    move_core_types::u256::U256::from_le_bytes(&x.to_le_bytes())
-}
-
-pub fn from_move_u256(x: move_core_types::u256::U256) -> U256 {
-    U256::from_le_bytes(x.to_le_bytes())
-}
-
 pub fn account_info_to_move_value(info: &AccountInfo, code_hash: B256) -> Value {
     let fields = [
-        Value::u256(to_move_u256(&info.balance)),
+        Value::u256(info.balance.to_move_u256()),
         Value::u64(info.nonce),
         Value::vector_u8(code_hash),
     ];
@@ -83,7 +75,7 @@ pub fn move_value_to_account_info(value: Value) -> Result<AccountInfo, PartialVM
     let code_hash: Vec<u8> = fields.next().unwrap().cast()?;
     let code_hash: B256 = B256::from_slice(&code_hash);
     Ok(AccountInfo {
-        balance: from_move_u256(balance),
+        balance: balance.to_u256(),
         nonce,
         code_hash,
         code: None,
@@ -93,12 +85,7 @@ pub fn move_value_to_account_info(value: Value) -> Result<AccountInfo, PartialVM
 pub fn evm_log_to_move_value(log: Log) -> Value {
     let fields = [
         Value::address(log.address.to_move_address()),
-        Value::vector_u256(
-            log.data
-                .topics()
-                .iter()
-                .map(|x| to_move_u256(&U256::from_le_bytes(x.0))),
-        ),
+        Value::vector_u256(log.data.topics().iter().map(|x| x.to_move_u256())),
         Value::vector_u8(log.data.data),
     ];
     Value::struct_(Struct::pack(fields))

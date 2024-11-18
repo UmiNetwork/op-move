@@ -76,6 +76,12 @@ pub(crate) trait ToMoveU256 {
     fn to_move_u256(self) -> MoveU256;
 }
 
+impl ToMoveU256 for B256 {
+    fn to_move_u256(self) -> MoveU256 {
+        MoveU256::from_le_bytes(&self.0)
+    }
+}
+
 impl ToMoveU256 for U256 {
     fn to_move_u256(self) -> MoveU256 {
         MoveU256::from_le_bytes(&self.to_le_bytes())

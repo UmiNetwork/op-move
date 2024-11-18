@@ -1,11 +1,9 @@
 use {
     super::{
-        native_evm_context::NativeEVMContext,
-        solidity_abi::abi_encode_params,
-        type_utils::{evm_result_to_move_value, from_move_u256},
-        EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
+        native_evm_context::NativeEVMContext, solidity_abi::abi_encode_params,
+        type_utils::evm_result_to_move_value, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
     },
-    crate::primitives::ToEthAddress,
+    crate::primitives::{ToEthAddress, ToU256},
     aptos_gas_algebra::{GasExpression, GasQuantity, InternalGasUnit},
     aptos_native_interface::{
         safely_pop_arg, SafeNativeBuilder, SafeNativeContext, SafeNativeError, SafeNativeResult,
@@ -64,7 +62,7 @@ fn evm_call(
         context,
         caller.to_eth_address(),
         TxKind::Call(transact_to.to_eth_address()),
-        from_move_u256(value),
+        value.to_u256(),
         data,
     )
 }
@@ -88,7 +86,7 @@ fn evm_create(
         context,
         caller.to_eth_address(),
         TxKind::Create,
-        from_move_u256(value),
+        value.to_u256(),
         data,
     )
 }

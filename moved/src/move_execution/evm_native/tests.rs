@@ -5,11 +5,8 @@ use {
     crate::{
         block::HeaderForExecution,
         genesis::config::GenesisConfig,
-        move_execution::{
-            create_move_vm, create_vm_session, evm_native::type_utils::to_move_u256,
-            execute_transaction, tests::*,
-        },
-        primitives::{ToEthAddress, ToMoveAddress},
+        move_execution::{create_move_vm, create_vm_session, execute_transaction, tests::*},
+        primitives::{ToEthAddress, ToMoveAddress, ToMoveU256},
         storage::{InMemoryState, State},
         tests::{signer::Signer, ALT_EVM_ADDRESS, EVM_ADDRESS, PRIVATE_KEY},
         types::session_id::SessionId,
@@ -145,7 +142,7 @@ fn test_evm() {
     // -------- Transfer ERC-20 tokens (Move interface this time)
     let token_address_input_arg = MoveValue::Address(contract_move_address);
     let to_input_arg = MoveValue::Address(ALT_EVM_ADDRESS.to_move_address());
-    let amount_arg = MoveValue::U256(to_move_u256(&transfer_amount));
+    let amount_arg = transfer_amount.to_move_u256();
     let entry_fn = EntryFunction::new(
         erc20_move_interface,
         ident_str!("erc20_transfer").into(),
