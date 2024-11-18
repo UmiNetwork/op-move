@@ -124,8 +124,14 @@ fn move_value_to_sol_value(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> 
                 let Some(MoveValue::Vector(data)) = fields.pop() else {
                     unreachable!("SolidityFixedBytes contains a vector")
                 };
+                let size = data.len();
+
                 // Solidity only supports fixed bytes up to 32.
-                let size = std::cmp::min(data.len(), 32);
+                debug_assert!(
+                    0 < size && size <= 32,
+                    "Solidity only supports length between 1 and 32 (inclusive). This condition is enforced by the constructor in the Evm.move module"
+                );
+
                 // Fill the fixed-sized buffer with the given bytes
                 let mut buf = [0u8; 32];
                 for (b, x) in buf

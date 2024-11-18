@@ -187,6 +187,56 @@ fn test_evm() {
     assert_eq!(receiver_balance, transfer_amount + transfer_amount);
 }
 
+#[test]
+fn test_solidity_fixed_bytes() {
+    let genesis_config = GenesisConfig::default();
+    let mut signer = Signer::new(&PRIVATE_KEY);
+    let (contract, mut state) =
+        deploy_contract("solidity_fixed_bytes", &mut signer, &genesis_config);
+
+    let mut call_contract = |input: Vec<u8>, state: &InMemoryState| {
+        let arg = MoveValue::vector_u8(input);
+        let entry_fn = EntryFunction::new(
+            contract.clone(),
+            ident_str!("encode_fixed_bytes").into(),
+            Vec::new(),
+            vec![bcs::to_bytes(&arg).unwrap()],
+        );
+        let (tx_hash, tx) = create_transaction(
+            &mut signer,
+            TxKind::Call(EVM_ADDRESS),
+            bcs::to_bytes(&entry_fn).unwrap(),
+        );
+        execute_transaction(
+            &tx,
+            &tx_hash,
+            state.resolver(),
+            &genesis_config,
+            0,
+            &(),
+            HeaderForExecution::default(),
+        )
+        .unwrap()
+    };
+
+    // Calling with empty bytes is an error
+    let outcome = call_contract(Vec::new(), &state);
+    outcome.vm_outcome.unwrap_err();
+    state.apply(outcome.changes).unwrap();
+
+    // Calling with bytes longer than 32 is an error
+    let outcome = call_contract(vec![0x88; 33], &state);
+    outcome.vm_outcome.unwrap_err();
+    state.apply(outcome.changes).unwrap();
+
+    // Calling with any length between 1 and 32 (inclusive) works
+    for n in 1..=32 {
+        let outcome = call_contract(vec![0x88; n], &state);
+        outcome.vm_outcome.unwrap();
+        state.apply(outcome.changes).unwrap();
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct EvmNativeOutcome {
     is_success: bool,
