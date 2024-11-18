@@ -4,10 +4,14 @@ module Evm::evm {
     use EthToken::eth_token::get_metadata;
     use std::error;
     use std::signer;
+    use std::vector::length;
 
     /// For now deploying EVM contracts is restricted to an admin account.
     /// This restriction may be lifted in the future.
     const ENOT_OWNER: u64 = 1;
+
+    /// Solidity FixedBytes must have length between 1 and 32 (inclusive).
+    const EINVALID_FIXED_BYTES_SIZE: u64 = 1;
 
     const OWNER: address = @evm_admin;
 
@@ -35,6 +39,16 @@ module Evm::evm {
     /// of encoding it into the Solidity ABI.
     struct SolidityFixedArray<T> has drop {
         elements: vector<T>,
+    }
+
+    public fun as_fixed_bytes(data: vector<u8>): SolidityFixedBytes {
+        let size = length(&data);
+        assert!(0 < size && size <= 32, error::invalid_argument(EINVALID_FIXED_BYTES_SIZE));
+        SolidityFixedBytes { data }
+    }
+
+    public fun as_fixed_array<T>(elements: vector<T>): SolidityFixedArray<T> {
+        SolidityFixedArray { elements }
     }
 
     /// Same as `evm_call`, but with the type signature modified to follow the rules of
