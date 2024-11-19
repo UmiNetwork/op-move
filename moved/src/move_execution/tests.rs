@@ -561,6 +561,67 @@ fn test_deposit_tx() {
 }
 
 #[test]
+fn test_withdrawal_tx() {
+    let genesis_config = GenesisConfig::default();
+    let mut signer = Signer::new(&PRIVATE_KEY);
+    let (_, mut state) = deploy_contract("natives", &mut signer, &genesis_config);
+
+    // 1. Deposit ETH to user
+    let mint_amount = U256::from(123u64);
+    let (tx_hash, tx) = create_deposit_transaction(mint_amount, EVM_ADDRESS);
+
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
+
+    outcome.vm_outcome.unwrap();
+    state.apply(outcome.changes).unwrap();
+
+    let user_address = EVM_ADDRESS.to_move_address();
+    let balance = quick_get_eth_balance(&user_address, state.resolver());
+    assert_eq!(balance, mint_amount);
+
+    // 2. Use script to withdraw
+    let script_code = ScriptCompileJob::new("withdrawal_script", &[])
+        .compile()
+        .unwrap();
+    let target = EVM_ADDRESS.to_move_address();
+    let script = Script::new(
+        script_code,
+        Vec::new(),
+        vec![
+            TransactionArgument::Address(target),
+            TransactionArgument::U256(mint_amount.to_move_u256()),
+        ],
+    );
+    let tx_data = bcs::to_bytes(&ScriptOrModule::Script(script)).unwrap();
+    let (tx_hash, tx) = create_transaction(&mut signer, TxKind::Create, tx_data);
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        &genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
+    outcome.vm_outcome.unwrap();
+    state.apply(outcome.changes).unwrap();
+    assert_eq!(
+        quick_get_eth_balance(&user_address, state.resolver()),
+        U256::ZERO,
+    );
+}
+
+#[test]
 fn test_eoa_base_token_transfer() {
     // Initialize state
     let genesis_config = GenesisConfig::default();
@@ -1475,6 +1536,10 @@ impl ModuleCompileJob {
                 "evm_admin".into(),
                 NumericalAddress::parse_str("0x1").unwrap(),
             ),
+            (
+                "L2CrossDomainMessenger".into(),
+                NumericalAddress::parse_str("0x4200000000000000000000000000000000000007").unwrap(),
+            ),
         ]
         .into_iter()
         .chain(aptos_framework::named_addresses().clone())
@@ -1570,6 +1635,10 @@ impl CompileJob for ScriptCompileJob {
             "evm_admin".into(),
             NumericalAddress::parse_str("0x1").unwrap(),
         );
+        result.insert(
+            "L2CrossDomainMessenger".into(),
+            NumericalAddress::parse_str("0x4200000000000000000000000000000000000007").unwrap(),
+        );
         result
     }
 }
@@ -1577,6 +1646,7 @@ impl CompileJob for ScriptCompileJob {
 fn add_custom_framework_paths(files: &mut Vec<String>) {
     add_framework_path("eth-token", "EthToken", files);
     add_framework_path("evm", "Evm", files);
+    add_framework_path("l2-cross-domain-messenger", "L2CrossDomainMessenger", files);
 }
 
 fn add_framework_path(folder_name: &str, source_name: &str, files: &mut Vec<String>) {

@@ -139,6 +139,11 @@ fn evm_transact_inner(
                 blob_gasprice: 0,
             }),
         })
+        .modify_cfg_env(|env| {
+            // We can safely disable the transaction-level check because
+            // the Move side ensures the funds for `value` were present.
+            env.disable_balance_check = true;
+        })
         .build();
 
     let outcome = evm.transact().map_err(|e| match e {
