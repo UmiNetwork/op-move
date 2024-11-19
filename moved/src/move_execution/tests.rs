@@ -2,7 +2,7 @@ use {
     super::*,
     crate::{
         block::HeaderForExecution,
-        genesis::{config::CHAIN_ID, init_state},
+        genesis::{config::CHAIN_ID, init_state, L2_CROSS_DOMAIN_MESSENGER_ADDRESS},
         move_execution::eth_token::quick_get_eth_balance,
         primitives::{ToMoveAddress, ToMoveU256, B256, U256, U64},
         storage::{InMemoryState, State},
@@ -12,11 +12,14 @@ use {
     alloy::{
         consensus::{transaction::TxEip1559, SignableTransaction, TxEnvelope},
         network::TxSignerSync,
-        primitives::{hex, keccak256, Address, FixedBytes, TxKind},
+        primitives::{address, hex, keccak256, Address, Bytes, FixedBytes, TxKind},
         rlp::Encodable,
     },
     anyhow::Context,
-    aptos_types::transaction::{EntryFunction, Module, Script, TransactionArgument},
+    aptos_types::{
+        contract_event::ContractEventV2,
+        transaction::{EntryFunction, Module, Script, TransactionArgument},
+    },
     move_binary_format::{
         file_format::{
             AbilitySet, FieldDefinition, IdentifierIndex, ModuleHandleIndex, SignatureToken,
@@ -43,6 +46,33 @@ use {
         path::Path,
     },
 };
+
+#[test]
+fn test_move_event_converts_to_eth_log_successfully() {
+    let data = vec![0u8, 1, 2, 3];
+    let type_tag = TypeTag::Struct(Box::new(StructTag {
+        address: hex!("0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff").into(),
+        module: Identifier::new("moved").unwrap(),
+        name: Identifier::new("test").unwrap(),
+        type_args: vec![],
+    }));
+    let event = ContractEvent::V2(ContractEventV2::new(type_tag, data));
+
+    let actual_log = {
+        let mut tmp = Vec::with_capacity(1);
+        push_logs(&event, &mut tmp);
+        tmp.pop().unwrap()
+    };
+    let expected_log = Log::new_unchecked(
+        address!("6666777788889999aaaabbbbccccddddeeeeffff"),
+        vec![keccak256(
+            "0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff::moved::test",
+        )],
+        Bytes::from([0u8, 1, 2, 3]),
+    );
+
+    assert_eq!(actual_log, expected_log);
+}
 
 #[test]
 fn test_execute_counter_contract() {
@@ -618,6 +648,13 @@ fn test_withdrawal_tx() {
     assert_eq!(
         quick_get_eth_balance(&user_address, state.resolver()),
         U256::ZERO,
+    );
+    assert!(
+        outcome
+            .logs
+            .iter()
+            .any(|log| log.address.to_move_address() == L2_CROSS_DOMAIN_MESSENGER_ADDRESS),
+        "Outcome must have logs from the L2CrossDomainMessenger contract"
     );
 }
 

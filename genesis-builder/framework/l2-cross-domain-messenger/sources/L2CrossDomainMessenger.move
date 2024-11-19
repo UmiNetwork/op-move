@@ -1,6 +1,6 @@
 module L2CrossDomainMessenger::l2_cross_domain_messenger {
     use aptos_framework::fungible_asset_u256::FungibleAsset;
-    use Evm::evm::{abi_encode_params, evm_call, is_result_success, EvmResult};
+    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, is_result_success, EvmResult};
     use std::error;
 
     /// The EVM execution failed for some reason.
@@ -38,6 +38,9 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
 
         // The EVM execution must succeed.
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
+
+        // Include the EVM logs in MoveVM output
+        emit_evm_logs(&result);
 
         result
     }

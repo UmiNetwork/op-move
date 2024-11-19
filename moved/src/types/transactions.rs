@@ -1,19 +1,13 @@
 use {
-    crate::{
-        primitives::{ToEthAddress, ToMoveAddress},
-        Error, InvalidTransactionCause, UserError,
-    },
+    crate::{primitives::ToMoveAddress, Error, InvalidTransactionCause, UserError},
     alloy::{
         consensus::{Signed, Transaction, TxEip1559, TxEip2930, TxEnvelope, TxLegacy},
         eips::eip2930::AccessList,
-        primitives::{Address, Bytes, Keccak256, Log, LogData, TxKind, B256, U256, U64},
+        primitives::{Address, Bytes, Log, LogData, TxKind, B256, U256, U64},
         rlp::{Buf, Decodable, Encodable, RlpDecodable, RlpEncodable},
     },
-    aptos_types::{
-        contract_event::ContractEvent,
-        transaction::{EntryFunction, Module, Script},
-    },
-    move_core_types::{effects::ChangeSet, language_storage::TypeTag},
+    aptos_types::transaction::{EntryFunction, Module, Script},
+    move_core_types::effects::ChangeSet,
     serde::{Deserialize, Serialize},
 };
 
@@ -320,76 +314,15 @@ impl TransactionData {
     }
 }
 
-pub(crate) trait ToLog {
-    fn to_log(&self) -> Log<LogData>;
-}
-
-impl ToLog for ContractEvent {
-    fn to_log(&self) -> Log<LogData> {
-        let (type_tag, event_data) = match self {
-            ContractEvent::V1(event) => (event.type_tag(), event.event_data()),
-            ContractEvent::V2(event) => (event.type_tag(), event.event_data()),
-        };
-
-        let address = match type_tag {
-            TypeTag::Struct(struct_tag) => struct_tag.address,
-            _ => unreachable!("This would break move event extension invariant"),
-        };
-
-        let address = address.to_eth_address();
-
-        let mut hasher = Keccak256::new();
-        let type_string = type_tag.to_canonical_string();
-        hasher.update(type_string.as_bytes());
-        let type_hash = hasher.finalize();
-
-        let topics = vec![type_hash];
-
-        let data = event_data.to_vec();
-        let data = data.into();
-
-        Log::new_unchecked(address, topics, data)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use {
         super::*,
         alloy::{
-            primitives::{address, hex, keccak256},
+            primitives::hex,
             rlp::{Decodable, Encodable},
         },
-        aptos_types::contract_event::{ContractEvent, ContractEventV2},
-        move_core_types::{
-            identifier::Identifier,
-            language_storage::{StructTag, TypeTag},
-        },
     };
-
-    #[test]
-    fn test_move_event_converts_to_eth_log_successfully() {
-        let data = vec![0u8, 1, 2, 3];
-        let type_tag = TypeTag::Struct(Box::new(StructTag {
-            address: hex!("0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff")
-                .into(),
-            module: Identifier::new("moved").unwrap(),
-            name: Identifier::new("test").unwrap(),
-            type_args: vec![],
-        }));
-        let event = ContractEvent::V2(ContractEventV2::new(type_tag, data));
-
-        let actual_log = event.to_log();
-        let expected_log = Log::new_unchecked(
-            address!("6666777788889999aaaabbbbccccddddeeeeffff"),
-            vec![keccak256(
-                "0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff::moved::test",
-            )],
-            Bytes::from([0u8, 1, 2, 3]),
-        );
-
-        assert_eq!(actual_log, expected_log);
-    }
 
     #[test]
     fn test_extended_tx_envelope_rlp() {

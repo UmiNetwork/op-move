@@ -2,7 +2,7 @@ use {
     self::config::GenesisConfig, crate::storage::State, move_binary_format::errors::PartialVMError,
 };
 
-pub use framework::FRAMEWORK_ADDRESS;
+pub use framework::{FRAMEWORK_ADDRESS, L2_CROSS_DOMAIN_MESSENGER_ADDRESS};
 
 pub mod config;
 mod framework;
