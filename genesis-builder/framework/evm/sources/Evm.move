@@ -90,6 +90,10 @@ module Evm::evm {
     /// selector if needed.
     public native fun abi_encode_params<T>(prefix: vector<u8>, value: T): vector<u8>;
 
+    public fun is_result_success(result: &EvmResult): bool {
+        result.is_success
+    }
+
     fun get_asset_value(f: FungibleAsset): u256 {
         let amount = fungible_asset_u256::amount(&f);
         if (amount == 0) {
