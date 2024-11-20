@@ -44,7 +44,11 @@ pub fn genesis_state_changes(
                     .map(|(index, data)| {
                         let index = U256::from_be_bytes(index.0);
                         let data = U256::from_be_bytes(data.0);
-                        (index, EvmStorageSlot::new(data))
+                        let mut slot = EvmStorageSlot::new(data);
+                        // Original value must be marked as 0 to make sure we
+                        // know it is now a new value.
+                        slot.original_value = U256::ZERO;
+                        (index, slot)
                     })
                     .collect()
             })

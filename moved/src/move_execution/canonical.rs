@@ -122,7 +122,7 @@ pub(super) fn execute_canonical_transaction(
     };
 
     let (mut changes, mut extensions) = session.finish_with_extensions()?;
-    let logs = extensions.logs().collect();
+    let logs = extensions.logs();
     let evm_changes = evm_native::extract_evm_changes(&extensions);
     changes
         .squash(evm_changes)

@@ -54,7 +54,7 @@ pub(super) fn execute_deposited_transaction(
 
     let (changes, mut extensions) = session.finish_with_extensions()?;
     let gas_used = total_gas_used(&gas_meter, genesis_config);
-    let logs = extensions.logs().collect();
+    let logs = extensions.logs();
 
     Ok(TransactionExecutionOutcome::new(
         Ok(()),

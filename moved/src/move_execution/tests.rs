@@ -2,7 +2,7 @@ use {
     super::*,
     crate::{
         block::HeaderForExecution,
-        genesis::{config::CHAIN_ID, init_state},
+        genesis::{config::CHAIN_ID, init_state, L2_CROSS_DOMAIN_MESSENGER_ADDRESS},
         move_execution::eth_token::quick_get_eth_balance,
         primitives::{ToMoveAddress, ToMoveU256, B256, U256, U64},
         storage::{InMemoryState, State},
@@ -12,11 +12,14 @@ use {
     alloy::{
         consensus::{transaction::TxEip1559, SignableTransaction, TxEnvelope},
         network::TxSignerSync,
-        primitives::{hex, keccak256, Address, FixedBytes, TxKind},
+        primitives::{address, hex, keccak256, Address, Bytes, FixedBytes, TxKind},
         rlp::Encodable,
     },
     anyhow::Context,
-    aptos_types::transaction::{EntryFunction, Module, Script, TransactionArgument},
+    aptos_types::{
+        contract_event::ContractEventV2,
+        transaction::{EntryFunction, Module, Script, TransactionArgument},
+    },
     move_binary_format::{
         file_format::{
             AbilitySet, FieldDefinition, IdentifierIndex, ModuleHandleIndex, SignatureToken,
@@ -43,6 +46,33 @@ use {
         path::Path,
     },
 };
+
+#[test]
+fn test_move_event_converts_to_eth_log_successfully() {
+    let data = vec![0u8, 1, 2, 3];
+    let type_tag = TypeTag::Struct(Box::new(StructTag {
+        address: hex!("0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff").into(),
+        module: Identifier::new("moved").unwrap(),
+        name: Identifier::new("test").unwrap(),
+        type_args: vec![],
+    }));
+    let event = ContractEvent::V2(ContractEventV2::new(type_tag, data));
+
+    let actual_log = {
+        let mut tmp = Vec::with_capacity(1);
+        push_logs(&event, &mut tmp);
+        tmp.pop().unwrap()
+    };
+    let expected_log = Log::new_unchecked(
+        address!("6666777788889999aaaabbbbccccddddeeeeffff"),
+        vec![keccak256(
+            "0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff::moved::test",
+        )],
+        Bytes::from([0u8, 1, 2, 3]),
+    );
+
+    assert_eq!(actual_log, expected_log);
+}
 
 #[test]
 fn test_execute_counter_contract() {
@@ -539,8 +569,41 @@ fn test_deposit_tx() {
     let (_, mut state) = deploy_contract("natives", &mut signer, &genesis_config);
 
     let mint_amount = U256::from(123u64);
-    let (tx_hash, tx) = create_deposit_transaction(mint_amount, EVM_ADDRESS);
+    deposit_eth(mint_amount, EVM_ADDRESS, &genesis_config, &mut state);
 
+    let balance = quick_get_eth_balance(&EVM_ADDRESS.to_move_address(), state.resolver());
+    assert_eq!(balance, mint_amount);
+}
+
+#[test]
+fn test_withdrawal_tx() {
+    let genesis_config = GenesisConfig::default();
+    let mut signer = Signer::new(&PRIVATE_KEY);
+    let (_, mut state) = deploy_contract("natives", &mut signer, &genesis_config);
+
+    // 1. Deposit ETH to user
+    let mint_amount = U256::from(123u64);
+    deposit_eth(mint_amount, EVM_ADDRESS, &genesis_config, &mut state);
+
+    let user_address = EVM_ADDRESS.to_move_address();
+    let balance = quick_get_eth_balance(&user_address, state.resolver());
+    assert_eq!(balance, mint_amount);
+
+    // 2. Use script to withdraw
+    let script_code = ScriptCompileJob::new("withdrawal_script", &[])
+        .compile()
+        .unwrap();
+    let target = EVM_ADDRESS.to_move_address();
+    let script = Script::new(
+        script_code,
+        Vec::new(),
+        vec![
+            TransactionArgument::Address(target),
+            TransactionArgument::U256(mint_amount.to_move_u256()),
+        ],
+    );
+    let tx_data = bcs::to_bytes(&ScriptOrModule::Script(script)).unwrap();
+    let (tx_hash, tx) = create_transaction(&mut signer, TxKind::Create, tx_data);
     let outcome = execute_transaction(
         &tx,
         &tx_hash,
@@ -551,13 +614,19 @@ fn test_deposit_tx() {
         HeaderForExecution::default(),
     )
     .unwrap();
-
-    // Transaction should succeed
     outcome.vm_outcome.unwrap();
     state.apply(outcome.changes).unwrap();
-
-    let balance = quick_get_eth_balance(&EVM_ADDRESS.to_move_address(), state.resolver());
-    assert_eq!(balance, mint_amount);
+    assert_eq!(
+        quick_get_eth_balance(&user_address, state.resolver()),
+        U256::ZERO,
+    );
+    assert!(
+        outcome
+            .logs
+            .iter()
+            .any(|log| log.address.to_move_address() == L2_CROSS_DOMAIN_MESSENGER_ADDRESS),
+        "Outcome must have logs from the L2CrossDomainMessenger contract"
+    );
 }
 
 #[test]
@@ -570,18 +639,7 @@ fn test_eoa_base_token_transfer() {
     // Mint tokens in sender account
     let sender = EVM_ADDRESS;
     let mint_amount = U256::from(123u64);
-    let (tx_hash, tx) = create_deposit_transaction(mint_amount, sender);
-    let outcome = execute_transaction(
-        &tx,
-        &tx_hash,
-        state.resolver(),
-        &genesis_config,
-        0,
-        &(),
-        HeaderForExecution::default(),
-    )
-    .unwrap();
-    state.apply(outcome.changes).unwrap();
+    deposit_eth(mint_amount, sender, &genesis_config, &mut state);
 
     // Transfer to receiver account
     let receiver = ALT_EVM_ADDRESS;
@@ -646,18 +704,7 @@ fn test_treasury_charges_l1_cost_to_sender_account_on_success() {
     // Mint tokens in sender account
     let sender = EVM_ADDRESS;
     let mint_amount = U256::from(123u64);
-    let (tx_hash, tx) = create_deposit_transaction(mint_amount, sender);
-    let outcome = execute_transaction(
-        &tx,
-        &tx_hash,
-        state.resolver(),
-        &genesis_config,
-        0,
-        &(),
-        HeaderForExecution::default(),
-    )
-    .unwrap();
-    state.apply(outcome.changes).unwrap();
+    deposit_eth(mint_amount, sender, &genesis_config, &mut state);
 
     let eth_treasury = AccountAddress::ZERO;
     let base_token = MovedBaseTokenAccounts::new(eth_treasury);
@@ -706,18 +753,7 @@ fn test_treasury_charges_l1_cost_to_sender_account_on_user_error() {
     // Mint tokens in sender account
     let sender = EVM_ADDRESS;
     let mint_amount = U256::from(123u64);
-    let (tx_hash, tx) = create_deposit_transaction(mint_amount, sender);
-    let outcome = execute_transaction(
-        &tx,
-        &tx_hash,
-        state.resolver(),
-        &genesis_config,
-        0,
-        &(),
-        HeaderForExecution::default(),
-    )
-    .unwrap();
-    state.apply(outcome.changes).unwrap();
+    deposit_eth(mint_amount, sender, &genesis_config, &mut state);
 
     // Transfer to receiver account
     let receiver = ALT_EVM_ADDRESS;
@@ -828,19 +864,7 @@ fn test_marketplace() {
     // Mint tokens for the buyer to spend
     let buyer_address = ALT_EVM_ADDRESS.to_move_address();
     let mint_amount = U256::from(567);
-    let (tx_hash, tx) = create_deposit_transaction(mint_amount, ALT_EVM_ADDRESS);
-    let outcome = execute_transaction(
-        &tx,
-        &tx_hash,
-        state.resolver(),
-        &genesis_config,
-        0,
-        &(),
-        HeaderForExecution::default(),
-    )
-    .unwrap();
-    outcome.vm_outcome.unwrap();
-    state.apply(outcome.changes).unwrap();
+    deposit_eth(mint_amount, ALT_EVM_ADDRESS, &genesis_config, &mut state);
     assert_eq!(
         quick_get_eth_balance(&buyer_address, state.resolver()),
         mint_amount
@@ -1331,6 +1355,29 @@ fn test_deeply_nested_type() {
     );
 }
 
+fn deposit_eth(
+    mint_amount: U256,
+    address: Address,
+    genesis_config: &GenesisConfig,
+    state: &mut InMemoryState,
+) {
+    let (tx_hash, tx) = create_deposit_transaction(mint_amount, address);
+
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
+
+    outcome.vm_outcome.unwrap();
+    state.apply(outcome.changes).unwrap();
+}
+
 pub fn deploy_contract(
     module_name: &str,
     signer: &mut Signer,
@@ -1461,22 +1508,11 @@ struct ModuleCompileJob {
 
 impl ModuleCompileJob {
     pub fn new(package_name: &str, address: &AccountAddress) -> Self {
-        let named_address_mapping: std::collections::BTreeMap<_, _> = [
-            (
-                package_name.to_string(),
-                NumericalAddress::new(address.into(), NumberFormat::Hex),
-            ),
-            (
-                "EthToken".into(),
-                NumericalAddress::parse_str("0x1").unwrap(),
-            ),
-            ("Evm".into(), NumericalAddress::parse_str("0x1").unwrap()),
-            (
-                "evm_admin".into(),
-                NumericalAddress::parse_str("0x1").unwrap(),
-            ),
-        ]
-        .into_iter()
+        let named_address_mapping: std::collections::BTreeMap<_, _> = std::iter::once((
+            package_name.to_string(),
+            NumericalAddress::new(address.into(), NumberFormat::Hex),
+        ))
+        .chain(custom_framework_named_addresses())
         .chain(aptos_framework::named_addresses().clone())
         .collect();
 
@@ -1561,22 +1597,36 @@ impl CompileJob for ScriptCompileJob {
 
     fn named_addresses(&self) -> BTreeMap<String, NumericalAddress> {
         let mut result = aptos_framework::named_addresses().clone();
-        result.insert(
-            "EthToken".into(),
-            NumericalAddress::parse_str("0x1").unwrap(),
-        );
-        result.insert("Evm".into(), NumericalAddress::parse_str("0x1").unwrap());
-        result.insert(
-            "evm_admin".into(),
-            NumericalAddress::parse_str("0x1").unwrap(),
-        );
+        for (name, address) in custom_framework_named_addresses() {
+            result.insert(name, address);
+        }
         result
     }
+}
+
+fn custom_framework_named_addresses() -> impl Iterator<Item = (String, NumericalAddress)> {
+    [
+        (
+            "EthToken".into(),
+            NumericalAddress::parse_str("0x1").unwrap(),
+        ),
+        ("Evm".into(), NumericalAddress::parse_str("0x1").unwrap()),
+        (
+            "evm_admin".into(),
+            NumericalAddress::parse_str("0x1").unwrap(),
+        ),
+        (
+            "L2CrossDomainMessenger".into(),
+            NumericalAddress::parse_str("0x4200000000000000000000000000000000000007").unwrap(),
+        ),
+    ]
+    .into_iter()
 }
 
 fn add_custom_framework_paths(files: &mut Vec<String>) {
     add_framework_path("eth-token", "EthToken", files);
     add_framework_path("evm", "Evm", files);
+    add_framework_path("l2-cross-domain-messenger", "L2CrossDomainMessenger", files);
 }
 
 fn add_framework_path(folder_name: &str, source_name: &str, files: &mut Vec<String>) {

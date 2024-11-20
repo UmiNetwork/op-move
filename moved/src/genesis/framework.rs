@@ -1,5 +1,6 @@
 use {
     crate::{move_execution::create_move_vm, storage::State},
+    alloy::primitives::address,
     aptos_framework::ReleaseBundle,
     aptos_table_natives::{NativeTableContext, TableChange, TableChangeSet},
     move_binary_format::errors::PartialVMError,
@@ -26,6 +27,8 @@ pub const CRATE_ROOT: &str = env!("CARGO_MANIFEST_DIR");
 pub const APTOS_SNAPSHOT_NAME: &str = "aptos.mrb";
 pub const SUI_SNAPSHOT_NAME: &str = "sui.mrb";
 pub const FRAMEWORK_ADDRESS: AccountAddress = AccountAddress::ONE;
+pub const L2_CROSS_DOMAIN_MESSENGER_ADDRESS: AccountAddress =
+    eth_address(&address!("4200000000000000000000000000000000000007").0 .0);
 pub const TOKEN_ADDRESS: AccountAddress = small_account_address(0x13);
 pub const TOKEN_OBJECT_ADDRESS: AccountAddress = small_account_address(0x14);
 pub const SUI_STDLIB_ADDRESS: AccountAddress = small_account_address(0x21);
@@ -48,6 +51,16 @@ static SUI_SYSTEM_PACKAGES: Lazy<BTreeMap<ObjectID, SystemPackage>> = Lazy::new(
         bcs::from_bytes(&binary).expect("bcs should deserialize Sui snapshot file");
     snapshot.into_iter().map(|pkg| (pkg.id, pkg)).collect()
 });
+
+const fn eth_address(value: &[u8; 20]) -> AccountAddress {
+    let mut buf = [0u8; 32];
+    let mut i = 0;
+    while i < 20 {
+        buf[i + 12] = value[i];
+        i += 1;
+    }
+    AccountAddress::new(buf)
+}
 
 const fn small_account_address(value: u8) -> AccountAddress {
     let mut buf = [0u8; 32];
@@ -160,7 +173,8 @@ fn deploy_aptos_framework(session: &mut Session) -> crate::Result<()> {
         assert!(
             sender == FRAMEWORK_ADDRESS
                 || sender == TOKEN_ADDRESS
-                || sender == TOKEN_OBJECT_ADDRESS,
+                || sender == TOKEN_OBJECT_ADDRESS
+                || sender == L2_CROSS_DOMAIN_MESSENGER_ADDRESS,
             "The framework should be deployed to a statically known address. {sender} not known."
         );
 
@@ -196,8 +210,8 @@ fn deploy_sui_framework(session: &mut Session) -> crate::Result<()> {
 mod tests {
     use {super::*, crate::storage::InMemoryState};
 
-    // Aptos framework has 117 modules and Sui has 69. They are kept mutually exclusive.
-    const APTOS_MODULES_LEN: usize = 117;
+    // Aptos framework has 118 modules and Sui has 69. They are kept mutually exclusive.
+    const APTOS_MODULES_LEN: usize = 118;
     const SUI_MODULES_LEN: usize = 69;
     const TOTAL_MODULES_LEN: usize = APTOS_MODULES_LEN + SUI_MODULES_LEN;
 

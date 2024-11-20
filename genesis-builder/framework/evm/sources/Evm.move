@@ -1,4 +1,5 @@
 module Evm::evm {
+    use aptos_framework::event;
     use aptos_framework::fungible_asset_u256::{Self, FungibleAsset};
     use aptos_framework::primary_fungible_store_u256::ensure_primary_store_exists;
     use EthToken::eth_token::get_metadata;
@@ -15,11 +16,15 @@ module Evm::evm {
 
     const OWNER: address = @evm_admin;
 
-    /// TODO: what capabilities should this have?
-    struct EvmLog has drop {
+    struct EvmLog has copy, store, drop {
         addr: address,
         topics: vector<u256>,
         data: vector<u8>,
+    }
+
+    #[event]
+    struct EvmLogsEvent has store, drop {
+        logs: vector<EvmLog>
     }
 
     /// TODO: what capabilities should this have?
@@ -89,6 +94,16 @@ module Evm::evm {
     /// The prefix can be used to prepend the output with a Solidity 4-byte function
     /// selector if needed.
     public native fun abi_encode_params<T>(prefix: vector<u8>, value: T): vector<u8>;
+
+    /// View function for checking if EVM execution was successful.
+    public fun is_result_success(result: &EvmResult): bool {
+        result.is_success
+    }
+
+    /// Emit the EVM logs to MoveVM logging system
+    public fun emit_evm_logs(result: &EvmResult) {
+        event::emit(EvmLogsEvent { logs: result.logs } );
+    }
 
     fun get_asset_value(f: FungibleAsset): u256 {
         let amount = fungible_asset_u256::amount(&f);

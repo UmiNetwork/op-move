@@ -14,6 +14,7 @@ use {
     std::sync::LazyLock,
 };
 
+pub mod events;
 mod native_evm_context;
 mod native_impl;
 mod solidity_abi;
