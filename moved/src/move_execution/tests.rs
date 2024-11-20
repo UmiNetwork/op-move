@@ -569,22 +569,7 @@ fn test_deposit_tx() {
     let (_, mut state) = deploy_contract("natives", &mut signer, &genesis_config);
 
     let mint_amount = U256::from(123u64);
-    let (tx_hash, tx) = create_deposit_transaction(mint_amount, EVM_ADDRESS);
-
-    let outcome = execute_transaction(
-        &tx,
-        &tx_hash,
-        state.resolver(),
-        &genesis_config,
-        0,
-        &(),
-        HeaderForExecution::default(),
-    )
-    .unwrap();
-
-    // Transaction should succeed
-    outcome.vm_outcome.unwrap();
-    state.apply(outcome.changes).unwrap();
+    deposit_eth(mint_amount, EVM_ADDRESS, &genesis_config, &mut state);
 
     let balance = quick_get_eth_balance(&EVM_ADDRESS.to_move_address(), state.resolver());
     assert_eq!(balance, mint_amount);
@@ -598,21 +583,7 @@ fn test_withdrawal_tx() {
 
     // 1. Deposit ETH to user
     let mint_amount = U256::from(123u64);
-    let (tx_hash, tx) = create_deposit_transaction(mint_amount, EVM_ADDRESS);
-
-    let outcome = execute_transaction(
-        &tx,
-        &tx_hash,
-        state.resolver(),
-        &genesis_config,
-        0,
-        &(),
-        HeaderForExecution::default(),
-    )
-    .unwrap();
-
-    outcome.vm_outcome.unwrap();
-    state.apply(outcome.changes).unwrap();
+    deposit_eth(mint_amount, EVM_ADDRESS, &genesis_config, &mut state);
 
     let user_address = EVM_ADDRESS.to_move_address();
     let balance = quick_get_eth_balance(&user_address, state.resolver());
@@ -668,18 +639,7 @@ fn test_eoa_base_token_transfer() {
     // Mint tokens in sender account
     let sender = EVM_ADDRESS;
     let mint_amount = U256::from(123u64);
-    let (tx_hash, tx) = create_deposit_transaction(mint_amount, sender);
-    let outcome = execute_transaction(
-        &tx,
-        &tx_hash,
-        state.resolver(),
-        &genesis_config,
-        0,
-        &(),
-        HeaderForExecution::default(),
-    )
-    .unwrap();
-    state.apply(outcome.changes).unwrap();
+    deposit_eth(mint_amount, sender, &genesis_config, &mut state);
 
     // Transfer to receiver account
     let receiver = ALT_EVM_ADDRESS;
@@ -744,18 +704,7 @@ fn test_treasury_charges_l1_cost_to_sender_account_on_success() {
     // Mint tokens in sender account
     let sender = EVM_ADDRESS;
     let mint_amount = U256::from(123u64);
-    let (tx_hash, tx) = create_deposit_transaction(mint_amount, sender);
-    let outcome = execute_transaction(
-        &tx,
-        &tx_hash,
-        state.resolver(),
-        &genesis_config,
-        0,
-        &(),
-        HeaderForExecution::default(),
-    )
-    .unwrap();
-    state.apply(outcome.changes).unwrap();
+    deposit_eth(mint_amount, sender, &genesis_config, &mut state);
 
     let eth_treasury = AccountAddress::ZERO;
     let base_token = MovedBaseTokenAccounts::new(eth_treasury);
@@ -804,18 +753,7 @@ fn test_treasury_charges_l1_cost_to_sender_account_on_user_error() {
     // Mint tokens in sender account
     let sender = EVM_ADDRESS;
     let mint_amount = U256::from(123u64);
-    let (tx_hash, tx) = create_deposit_transaction(mint_amount, sender);
-    let outcome = execute_transaction(
-        &tx,
-        &tx_hash,
-        state.resolver(),
-        &genesis_config,
-        0,
-        &(),
-        HeaderForExecution::default(),
-    )
-    .unwrap();
-    state.apply(outcome.changes).unwrap();
+    deposit_eth(mint_amount, sender, &genesis_config, &mut state);
 
     // Transfer to receiver account
     let receiver = ALT_EVM_ADDRESS;
@@ -926,19 +864,7 @@ fn test_marketplace() {
     // Mint tokens for the buyer to spend
     let buyer_address = ALT_EVM_ADDRESS.to_move_address();
     let mint_amount = U256::from(567);
-    let (tx_hash, tx) = create_deposit_transaction(mint_amount, ALT_EVM_ADDRESS);
-    let outcome = execute_transaction(
-        &tx,
-        &tx_hash,
-        state.resolver(),
-        &genesis_config,
-        0,
-        &(),
-        HeaderForExecution::default(),
-    )
-    .unwrap();
-    outcome.vm_outcome.unwrap();
-    state.apply(outcome.changes).unwrap();
+    deposit_eth(mint_amount, ALT_EVM_ADDRESS, &genesis_config, &mut state);
     assert_eq!(
         quick_get_eth_balance(&buyer_address, state.resolver()),
         mint_amount
@@ -1427,6 +1353,29 @@ fn test_deeply_nested_type() {
         format!("{err:?}").contains("Maximum recursion depth reached"),
         "Actual error: {err:?}"
     );
+}
+
+fn deposit_eth(
+    mint_amount: U256,
+    address: Address,
+    genesis_config: &GenesisConfig,
+    state: &mut InMemoryState,
+) {
+    let (tx_hash, tx) = create_deposit_transaction(mint_amount, address);
+
+    let outcome = execute_transaction(
+        &tx,
+        &tx_hash,
+        state.resolver(),
+        genesis_config,
+        0,
+        &(),
+        HeaderForExecution::default(),
+    )
+    .unwrap();
+
+    outcome.vm_outcome.unwrap();
+    state.apply(outcome.changes).unwrap();
 }
 
 pub fn deploy_contract(
