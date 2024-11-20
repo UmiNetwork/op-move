@@ -50,6 +50,8 @@ mod tag_validation;
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod tests2;
 
 pub fn create_move_vm() -> crate::Result<MoveVM> {
     let mut builder = SafeNativeBuilder::new(
