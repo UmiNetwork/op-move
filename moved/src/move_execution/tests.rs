@@ -1559,26 +1559,11 @@ struct ModuleCompileJob {
 
 impl ModuleCompileJob {
     pub fn new(package_name: &str, address: &AccountAddress) -> Self {
-        let named_address_mapping: std::collections::BTreeMap<_, _> = [
-            (
-                package_name.to_string(),
-                NumericalAddress::new(address.into(), NumberFormat::Hex),
-            ),
-            (
-                "EthToken".into(),
-                NumericalAddress::parse_str("0x1").unwrap(),
-            ),
-            ("Evm".into(), NumericalAddress::parse_str("0x1").unwrap()),
-            (
-                "evm_admin".into(),
-                NumericalAddress::parse_str("0x1").unwrap(),
-            ),
-            (
-                "L2CrossDomainMessenger".into(),
-                NumericalAddress::parse_str("0x4200000000000000000000000000000000000007").unwrap(),
-            ),
-        ]
-        .into_iter()
+        let named_address_mapping: std::collections::BTreeMap<_, _> = std::iter::once((
+            package_name.to_string(),
+            NumericalAddress::new(address.into(), NumberFormat::Hex),
+        ))
+        .chain(custom_framework_named_addresses())
         .chain(aptos_framework::named_addresses().clone())
         .collect();
 
@@ -1663,21 +1648,30 @@ impl CompileJob for ScriptCompileJob {
 
     fn named_addresses(&self) -> BTreeMap<String, NumericalAddress> {
         let mut result = aptos_framework::named_addresses().clone();
-        result.insert(
-            "EthToken".into(),
-            NumericalAddress::parse_str("0x1").unwrap(),
-        );
-        result.insert("Evm".into(), NumericalAddress::parse_str("0x1").unwrap());
-        result.insert(
-            "evm_admin".into(),
-            NumericalAddress::parse_str("0x1").unwrap(),
-        );
-        result.insert(
-            "L2CrossDomainMessenger".into(),
-            NumericalAddress::parse_str("0x4200000000000000000000000000000000000007").unwrap(),
-        );
+        for (name, address) in custom_framework_named_addresses() {
+            result.insert(name, address);
+        }
         result
     }
+}
+
+fn custom_framework_named_addresses() -> impl Iterator<Item = (String, NumericalAddress)> {
+    [
+        (
+            "EthToken".into(),
+            NumericalAddress::parse_str("0x1").unwrap(),
+        ),
+        ("Evm".into(), NumericalAddress::parse_str("0x1").unwrap()),
+        (
+            "evm_admin".into(),
+            NumericalAddress::parse_str("0x1").unwrap(),
+        ),
+        (
+            "L2CrossDomainMessenger".into(),
+            NumericalAddress::parse_str("0x4200000000000000000000000000000000000007").unwrap(),
+        ),
+    ]
+    .into_iter()
 }
 
 fn add_custom_framework_paths(files: &mut Vec<String>) {
