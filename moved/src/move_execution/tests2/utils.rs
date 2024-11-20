@@ -1,6 +1,4 @@
 use super::*;
-use crate::types::transactions::{DepositedTx, ExtendedTxEnvelope};
-use alloy::primitives::{keccak256, FixedBytes};
 
 pub enum TestBaseToken {
     Empty,
