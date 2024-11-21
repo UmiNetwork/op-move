@@ -1,10 +1,12 @@
+use alloy::eips::BlockNumberOrTag;
 pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
-
-use crate::block::HeaderForExecution;
 
 use {
     crate::{
-        block::{Block, BlockHash, BlockRepository, ExtendedBlock, GasFee, Header},
+        block::{
+            Block, BlockHash, BlockQueries, BlockRepository, ExtendedBlock, GasFee, Header,
+            HeaderForExecution,
+        },
         genesis::config::GenesisConfig,
         merkle_tree::MerkleRootExt,
         move_execution::{
@@ -15,8 +17,8 @@ use {
         storage::State,
         types::{
             state::{
-                ExecutionOutcome, Payload, PayloadId, PayloadResponse, StateMessage,
-                ToPayloadIdInput, WithExecutionOutcome, WithPayloadAttributes,
+                Command, ExecutionOutcome, Payload, PayloadId, PayloadResponse, Query,
+                StateMessage, ToPayloadIdInput, WithExecutionOutcome, WithPayloadAttributes,
             },
             transactions::{ExtendedTxEnvelope, NormalizedExtendedTxEnvelope},
         },
@@ -39,10 +41,12 @@ pub struct StateActor<
     S: State,
     P: NewPayloadId,
     H: BlockHash,
-    R: BlockRepository,
+    R: BlockRepository<M>,
     G: GasFee,
     L1G: CreateL1GasFee,
     B: BaseTokenAccounts,
+    Q: BlockQueries<M>,
+    M,
 > {
     genesis_config: GenesisConfig,
     rx: Receiver<StateMessage>,
@@ -56,24 +60,31 @@ pub struct StateActor<
     mem_pool: HashMap<B256, (ExtendedTxEnvelope, L1GasFeeInput)>,
     state: S,
     block_repository: R,
+    block_queries: Q,
     l1_fee: L1G,
     base_token: B,
+    block_memory: M,
 }
 
 impl<
         S: State<Err = PartialVMError> + Send + Sync + 'static,
         P: NewPayloadId + Send + Sync + 'static,
         H: BlockHash + Send + Sync + 'static,
-        R: BlockRepository + Send + Sync + 'static,
+        R: BlockRepository<M> + Send + Sync + 'static,
         G: GasFee + Send + Sync + 'static,
         L1G: CreateL1GasFee + Send + Sync + 'static,
         B: BaseTokenAccounts + Send + Sync + 'static,
-    > StateActor<S, P, H, R, G, L1G, B>
+        Q: BlockQueries<M> + Send + Sync + 'static,
+        M: Send + Sync + 'static,
+    > StateActor<S, P, H, R, G, L1G, B, Q, M>
 {
     pub fn spawn(mut self) -> JoinHandle<()> {
         tokio::spawn(async move {
             while let Some(msg) = self.rx.recv().await {
-                self.handle_msg(msg)
+                match msg {
+                    StateMessage::Command(msg) => self.handle_command(msg),
+                    StateMessage::Query(msg) => self.handle_query(msg),
+                };
             }
         })
     }
@@ -83,11 +94,13 @@ impl<
         S: State<Err = PartialVMError>,
         P: NewPayloadId,
         H: BlockHash,
-        R: BlockRepository,
+        R: BlockRepository<M>,
         G: GasFee,
         L1G: CreateL1GasFee,
         B: BaseTokenAccounts,
-    > StateActor<S, P, H, R, G, L1G, B>
+        Q: BlockQueries<M>,
+        M,
+    > StateActor<S, P, H, R, G, L1G, B, Q, M>
 {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -101,6 +114,8 @@ impl<
         base_fee_per_gas: G,
         l1_fee: L1G,
         base_token: B,
+        block_queries: Q,
+        block_memory: M,
     ) -> Self {
         Self {
             genesis_config,
@@ -117,15 +132,51 @@ impl<
             gas_fee: base_fee_per_gas,
             l1_fee,
             base_token,
+            block_queries,
+            block_memory,
         }
     }
 
-    pub fn handle_msg(&mut self, msg: StateMessage) {
+    pub fn handle_query(&self, msg: Query) {
         match msg {
-            StateMessage::UpdateHead { block_hash } => {
+            Query::ChainId { response_channel } => {
+                response_channel.send(self.genesis_config.chain_id).ok()
+            }
+            Query::GetBalance {
+                address,
+                response_channel,
+                ..
+            } => {
+                // TODO: Support balance from arbitrary blocks
+                let account = address.to_move_address();
+                let balance = quick_get_eth_balance(&account, self.state.resolver());
+                response_channel.send(balance).ok()
+            }
+            Query::BlockByHash {
+                hash,
+                response_channel,
+                .. // TODO: Support `include_transactions`
+            } => response_channel
+                .send(self.block_queries.by_hash(&self.block_memory, hash))
+                .ok(),
+            Query::BlockByHeight {
+                height,
+                response_channel,
+                .. // TODO: Support `include_transactions`
+            } => response_channel.send(match height {
+                BlockNumberOrTag::Number(height) => self.block_queries.by_height(&self.block_memory, height),
+                // TODO: Support block "tag"
+                _ => None,
+            }).ok(),
+        };
+    }
+
+    pub fn handle_command(&mut self, msg: Command) {
+        match msg {
+            Command::UpdateHead { block_hash } => {
                 self.head = block_hash;
             }
-            StateMessage::StartBlockBuild {
+            Command::StartBlockBuild {
                 payload_attributes,
                 response_channel,
             } => {
@@ -133,11 +184,12 @@ impl<
                 let id = self.payload_id.new_payload_id(input);
                 response_channel.send(id).ok();
                 let block = self.create_block(payload_attributes);
-                self.block_repository.add(block.clone());
+                self.block_repository
+                    .add(&mut self.block_memory, block.clone());
                 let payload = PayloadResponse::from(block);
                 self.pending_payload = Some((id, payload));
             }
-            StateMessage::GetPayload {
+            Command::GetPayload {
                 id: request_id,
                 response_channel,
             } => match self.pending_payload.take() {
@@ -156,33 +208,20 @@ impl<
                     response_channel.send(None).ok();
                 }
             },
-            StateMessage::GetPayloadByBlockHash {
+            Command::GetPayloadByBlockHash {
                 block_hash,
                 response_channel,
             } => {
                 let response = self.execution_payloads.get(&block_hash).cloned();
                 response_channel.send(response).ok();
             }
-            StateMessage::AddTransaction { tx } => {
+            Command::AddTransaction { tx } => {
                 let tx_hash = tx.tx_hash().0.into();
                 let mut encoded = Vec::new();
                 tx.encode(&mut encoded);
                 let encoded = encoded.as_slice().into();
                 self.mem_pool
                     .insert(tx_hash, (ExtendedTxEnvelope::Canonical(tx), encoded));
-            }
-            StateMessage::ChainId { response_channel } => {
-                response_channel.send(self.genesis_config.chain_id).ok();
-            }
-            StateMessage::GetBalance {
-                address,
-                response_channel,
-                ..
-            } => {
-                // TODO: Support balance from arbitrary blocks
-                let account = address.to_move_address();
-                let balance = quick_get_eth_balance(&account, self.state.resolver());
-                response_channel.send(balance).ok();
             }
         }
     }
@@ -207,7 +246,7 @@ impl<
             .collect::<Vec<_>>();
         let parent = self
             .block_repository
-            .by_hash(self.head)
+            .by_hash(&self.block_memory, self.head)
             .expect("Parent block should exist");
         let base_fee = self.gas_fee.base_fee_per_gas(
             parent.block.header.gas_limit,

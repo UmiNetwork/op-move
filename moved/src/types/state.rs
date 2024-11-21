@@ -76,6 +76,12 @@ pub struct BlobsBundle {
 
 #[derive(Debug)]
 pub enum StateMessage {
+    Command(Command),
+    Query(Query),
+}
+
+#[derive(Debug)]
+pub enum Command {
     UpdateHead {
         block_hash: B256,
     },
@@ -94,6 +100,16 @@ pub enum StateMessage {
     AddTransaction {
         tx: TxEnvelope,
     },
+}
+
+impl From<Command> for StateMessage {
+    fn from(value: Command) -> Self {
+        Self::Command(value)
+    }
+}
+
+#[derive(Debug)]
+pub enum Query {
     ChainId {
         response_channel: oneshot::Sender<u64>,
     },
@@ -102,6 +118,22 @@ pub enum StateMessage {
         block_number: BlockNumberOrTag,
         response_channel: oneshot::Sender<U256>,
     },
+    BlockByHash {
+        hash: B256,
+        include_transactions: bool,
+        response_channel: oneshot::Sender<Option<BlockResponse>>,
+    },
+    BlockByHeight {
+        height: BlockNumberOrTag,
+        include_transactions: bool,
+        response_channel: oneshot::Sender<Option<BlockResponse>>,
+    },
+}
+
+impl From<Query> for StateMessage {
+    fn from(value: Query) -> Self {
+        Self::Query(value)
+    }
 }
 
 pub type BlockResponse = alloy::rpc::types::Block<alloy::rpc::types::Transaction>;

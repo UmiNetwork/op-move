@@ -5,8 +5,8 @@ use {
     jsonwebtoken::{DecodingKey, Validation},
     moved::{
         block::{
-            Block, BlockHash, BlockRepository, Eip1559GasFee, ExtendedBlock, Header,
-            InMemoryBlockRepository, MovedBlockHash,
+            Block, BlockHash, BlockMemory, BlockRepository, Eip1559GasFee, ExtendedBlock, Header,
+            InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash,
         },
         genesis::{config::GenesisConfig, init_state},
         move_execution::{CreateEcotoneL1GasFee, MovedBaseTokenAccounts},
@@ -80,9 +80,10 @@ pub async fn run() {
     let block_hash = MovedBlockHash;
     let genesis_block = create_genesis_block(&block_hash, &genesis_config);
 
+    let mut block_memory = BlockMemory::new();
     let mut repository = InMemoryBlockRepository::new();
     let head = genesis_block.hash;
-    repository.add(genesis_block);
+    repository.add(&mut block_memory, genesis_block);
 
     let mut state = InMemoryState::new();
     init_state(&genesis_config, &mut state);
@@ -102,6 +103,8 @@ pub async fn run() {
         ),
         CreateEcotoneL1GasFee,
         base_token,
+        InMemoryBlockQueries,
+        block_memory,
     );
 
     let http_state_channel = state_channel.clone();

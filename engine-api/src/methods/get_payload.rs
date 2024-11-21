@@ -4,7 +4,7 @@ use {
         jsonrpc::JsonRpcError,
         schema::{GetPayloadResponseV3, PayloadId},
     },
-    moved::types::state::StateMessage,
+    moved::types::state::{Command, StateMessage},
     tokio::sync::{mpsc, oneshot},
 };
 
@@ -44,10 +44,11 @@ async fn inner_execute_v3(
     // Spec: https://github.com/ethereum/execution-apis/blob/main/src/engine/cancun.md#specification-2
 
     let (tx, rx) = oneshot::channel();
-    let msg = StateMessage::GetPayload {
+    let msg = Command::GetPayload {
         id: payload_id.clone().into(),
         response_channel: tx,
-    };
+    }
+    .into();
     state_channel.send(msg).await.map_err(access_state_error)?;
     let maybe_response = rx.await.map_err(access_state_error)?.map(Into::into);
 
@@ -65,10 +66,14 @@ mod tests {
         crate::methods::forkchoice_updated,
         alloy::primitives::hex,
         moved::{
-            block::{Block, BlockRepository, Eip1559GasFee, InMemoryBlockRepository},
+            block::{
+                Block, BlockMemory, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
+                InMemoryBlockRepository,
+            },
             genesis::{config::GenesisConfig, init_state},
             primitives::{B256, U256},
             storage::InMemoryState,
+            types::state::Command,
         },
     };
 
@@ -106,8 +111,9 @@ mod tests {
         ));
         let genesis_block = Block::default().with_hash(head_hash).with_value(U256::ZERO);
 
+        let mut block_memory = BlockMemory::new();
         let mut repository = InMemoryBlockRepository::new();
-        repository.add(genesis_block);
+        repository.add(&mut block_memory, genesis_block);
 
         let mut state = InMemoryState::new();
         init_state(&genesis_config, &mut state);
@@ -123,13 +129,16 @@ mod tests {
             Eip1559GasFee::default(),
             U256::ZERO,
             (),
+            InMemoryBlockQueries,
+            block_memory,
         );
         let state_handle = state.spawn();
 
         // Set head block hash
-        let msg = StateMessage::UpdateHead {
+        let msg = Command::UpdateHead {
             block_hash: head_hash,
-        };
+        }
+        .into();
         state_channel.send(msg).await.unwrap();
 
         // Update the state with an execution payload

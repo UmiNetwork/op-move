@@ -1,6 +1,6 @@
 use {
     crate::{json_utils::access_state_error, jsonrpc::JsonRpcError},
-    moved::types::state::StateMessage,
+    moved::types::state::{Query, StateMessage},
     tokio::sync::{mpsc, oneshot},
 };
 
@@ -14,9 +14,10 @@ pub async fn execute(
 
 async fn inner_execute(state_channel: mpsc::Sender<StateMessage>) -> Result<u64, JsonRpcError> {
     let (tx, rx) = oneshot::channel();
-    let msg = StateMessage::ChainId {
+    let msg = Query::ChainId {
         response_channel: tx,
-    };
+    }
+    .into();
     state_channel.send(msg).await.map_err(access_state_error)?;
     rx.await.map_err(access_state_error)
 }
@@ -26,7 +27,7 @@ mod tests {
     use {
         super::*,
         moved::{
-            block::{Eip1559GasFee, InMemoryBlockRepository},
+            block::{BlockMemory, Eip1559GasFee, InMemoryBlockQueries, InMemoryBlockRepository},
             primitives::{B256, U256},
             state_actor::StatePayloadId,
             storage::InMemoryState,
@@ -49,6 +50,8 @@ mod tests {
             Eip1559GasFee::default(),
             U256::ZERO,
             (),
+            InMemoryBlockQueries,
+            BlockMemory::new(),
         );
         let state_handle = state.spawn();
 
