@@ -74,6 +74,7 @@ mod tests {
     async fn test_execute() {
         let genesis_config = moved::genesis::config::GenesisConfig::default();
         let (state_channel, rx) = mpsc::channel(10);
+
         let state = moved::state_actor::StateActor::new(
             rx,
             InMemoryState::new(),
@@ -81,7 +82,7 @@ mod tests {
             genesis_config,
             StatePayloadId,
             B256::ZERO,
-            InMemoryBlockRepository::default(),
+            InMemoryBlockRepository::new(),
             Eip1559GasFee::default(),
             U256::ZERO,
             (),
