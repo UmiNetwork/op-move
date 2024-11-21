@@ -164,10 +164,6 @@ impl TestContext {
     }
 }
 
-pub fn encode_move_args<T: serde::Serialize>(args: &[T]) -> Vec<Vec<u8>> {
-    args.iter().map(|arg| bcs::to_bytes(arg).unwrap()).collect()
-}
-
 // Serialize module bytes to be used as a transaction payload
 fn module_bytes_to_tx_data(module_bytes: Vec<u8>) -> Vec<u8> {
     bcs::to_bytes(&ScriptOrModule::Module(Module::new(module_bytes))).unwrap()
