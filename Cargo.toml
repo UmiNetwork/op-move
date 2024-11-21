@@ -48,6 +48,7 @@ move-vm-types = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos
 moved = { path = "moved" }
 moved-engine-api = { path = "engine-api" }
 once_cell = "1.19"
+op-alloy = { version = "0.6", features = ["full", "std", "k256", "serde"] }
 openssl = "0.10"
 revm = { version = "17", features = ["optional_balance_check"] }
 serde = { version = "1", features = ["derive"] }

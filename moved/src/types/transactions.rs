@@ -7,7 +7,9 @@ use {
         rlp::{Buf, Decodable, Encodable, RlpDecodable, RlpEncodable},
     },
     aptos_types::transaction::{EntryFunction, Module, Script},
-    move_core_types::effects::ChangeSet,
+    move_core_types::{
+        account_address::AccountAddress, effects::ChangeSet, language_storage::ModuleId,
+    },
     serde::{Deserialize, Serialize},
 };
 
@@ -35,13 +37,13 @@ pub enum ExtendedTxEnvelope {
     DepositedTx(DepositedTx),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum NormalizedExtendedTxEnvelope {
     Canonical(NormalizedEthTransaction),
     DepositedTx(DepositedTx),
 }
 
-impl NormalizedExtendedTxEnvelope {
+impl ExtendedTxEnvelope {
     /// In case this transaction is a deposit, returns `Some` containing a reference to the
     /// underlying [`DepositedTx`]. Otherwise, returns `None`.
     pub fn as_deposited(&self) -> Option<&DepositedTx> {
@@ -134,6 +136,8 @@ pub struct TransactionExecutionOutcome {
     pub gas_used: u64,
     /// All emitted Move events converted to Ethereum logs.
     pub logs: Vec<Log<LogData>>,
+    /// AccountAddress + ModuleId of a deployed module (if any).
+    pub deployment: Option<(AccountAddress, ModuleId)>,
 }
 
 impl TransactionExecutionOutcome {
@@ -142,17 +146,19 @@ impl TransactionExecutionOutcome {
         changes: ChangeSet,
         gas_used: u64,
         logs: Vec<Log<LogData>>,
+        deployment: Option<(AccountAddress, ModuleId)>,
     ) -> Self {
         Self {
             vm_outcome,
             changes,
             gas_used,
             logs,
+            deployment,
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct NormalizedEthTransaction {
     pub signer: Address,
     pub to: TxKind,
@@ -185,7 +191,9 @@ impl TryFrom<TxEnvelope> for NormalizedEthTransaction {
             TxEnvelope::Eip1559(tx) => tx.try_into()?,
             TxEnvelope::Eip2930(tx) => tx.try_into()?,
             TxEnvelope::Legacy(tx) => tx.try_into()?,
-            TxEnvelope::Eip4844(_) => Err(InvalidTransactionCause::UnsupportedType)?,
+            TxEnvelope::Eip4844(_) | TxEnvelope::Eip7702(_) => {
+                Err(InvalidTransactionCause::UnsupportedType)?
+            }
             t => Err(InvalidTransactionCause::UnknownType(t.tx_type()))?,
         })
     }

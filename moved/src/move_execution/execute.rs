@@ -2,8 +2,11 @@ use {
     super::tag_validation::{validate_entry_type_tag, validate_entry_value},
     crate::{error::Error, InvalidTransactionCause, ScriptTransaction},
     aptos_types::transaction::{EntryFunction, Module, Script},
+    move_binary_format::CompiledModule,
     move_core_types::{
-        account_address::AccountAddress, language_storage::TypeTag, value::MoveValue,
+        account_address::AccountAddress,
+        language_storage::{ModuleId, TypeTag},
+        value::MoveValue,
     },
     move_vm_runtime::{module_traversal::TraversalContext, session::Session},
     move_vm_types::{gas::GasMeter, loaded_data::runtime_types::Type, values::Value},
@@ -135,8 +138,10 @@ pub(super) fn deploy_module<G: GasMeter>(
     address: AccountAddress,
     session: &mut Session,
     gas_meter: &mut G,
-) -> crate::Result<()> {
-    session.publish_module(code.into_inner(), address, gas_meter)?;
+) -> crate::Result<ModuleId> {
+    let code = code.into_inner();
+    let module = CompiledModule::deserialize(&code)?;
+    session.publish_module(code, address, gas_meter)?;
 
-    Ok(())
+    Ok(module.self_id())
 }

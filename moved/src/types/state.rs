@@ -8,6 +8,7 @@ use {
         block::{ExtendedBlock, Header},
         primitives::{Address, Bytes, ToSaturatedU64, ToU64, B2048, B256, U256, U64},
         state_actor::NewPayloadIdInput,
+        types::transactions::{ExtendedTxEnvelope, NormalizedExtendedTxEnvelope},
     },
     alloy::{
         consensus::transaction::TxEnvelope,
@@ -15,6 +16,7 @@ use {
         rpc::types::{BlockTransactions, FeeHistory, TransactionRequest},
     },
     alloy_rlp::Encodable,
+    op_alloy::{consensus::OpReceiptEnvelope, rpc_types::L1BlockInfo},
     tokio::sync::oneshot,
 };
 
@@ -154,6 +156,10 @@ pub enum Query {
         block_number: BlockNumberOrTag,
         response_channel: oneshot::Sender<Vec<u8>>,
     },
+    TransactionReceipt {
+        tx_hash: B256,
+        response_channel: oneshot::Sender<Option<TransactionReceipt>>,
+    },
 }
 
 impl From<Query> for StateMessage {
@@ -205,6 +211,8 @@ impl From<ExtendedBlock> for BlockResponse {
     }
 }
 
+pub type TransactionReceipt = op_alloy::rpc_types::OpTransactionReceipt;
+
 #[derive(Debug)]
 pub struct ExecutionOutcome {
     pub receipts_root: B256,
@@ -212,6 +220,31 @@ pub struct ExecutionOutcome {
     pub logs_bloom: B2048,
     pub gas_used: U64,
     pub total_tip: U256,
+}
+
+#[derive(Debug, Clone)]
+pub struct TransactionWithReceipt {
+    pub tx_hash: B256,
+    pub tx: ExtendedTxEnvelope,
+    pub tx_index: u64,
+    pub normalized_tx: NormalizedExtendedTxEnvelope,
+    pub receipt: OpReceiptEnvelope,
+    pub l1_block_info: Option<L1BlockInfo>,
+    pub gas_used: u64,
+    /// If the transaction deployed a new contract, gives the address.
+    ///
+    /// In Move contracts are identified by AccountAddress + ModuleID,
+    /// so this field cannot capture all the detail of a new deployment,
+    /// however we cannot extend the field because it is here for Ethereum
+    /// compatibility. As a compromise, we will put the AccountAddress here
+    /// and the user would need to look up the ModuleID by inspecting the
+    /// transaction object itself.
+    pub contract_address: Option<Address>,
+    /// Counts the number of logs that exist in transactions appearing earlier
+    /// in the same block.
+    ///
+    /// This allows computing the log index for each log in this transaction.
+    pub logs_offset: u64,
 }
 
 pub(crate) trait WithExecutionOutcome {
