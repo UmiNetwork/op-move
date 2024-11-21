@@ -129,6 +129,7 @@ mod tests {
             "gasUsed": "0x0",
             "timestamp": "0x0",
             "extraData": "0x",
+            "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
             "nonce": "0x0000000000000000",
             "baseFeePerGas": "0x0",
             "blobGasUsed": "0x0",
