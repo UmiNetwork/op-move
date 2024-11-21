@@ -1,7 +1,7 @@
 use super::*;
 
 #[test]
-fn test_execute_counter_contract2() {
+fn test_execute_counter_contract() {
     let mut ctx = TestContext::new();
     let module_id = ctx.deploy_contract("counter");
 

@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
 use super::*;
 
 pub enum TestBaseToken {
@@ -137,7 +140,7 @@ impl TestContext {
                 &tx.tx_hash,
                 self.state.resolver(),
                 &self.genesis_config,
-                tx.l1_cost,
+                0,
                 &(),
                 HeaderForExecution::default(),
             ),
