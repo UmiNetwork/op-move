@@ -10,8 +10,8 @@ use {
         genesis::config::GenesisConfig,
         merkle_tree::MerkleRootExt,
         move_execution::{
-            execute_transaction, quick_get_eth_balance, BaseTokenAccounts, CreateL1GasFee,
-            L1GasFee, L1GasFeeInput, LogsBloom,
+            execute_transaction, quick_get_eth_balance, quick_get_nonce, BaseTokenAccounts,
+            CreateL1GasFee, L1GasFee, L1GasFeeInput, LogsBloom,
         },
         primitives::{ToMoveAddress, ToSaturatedU64, B256, U256, U64},
         storage::State,
@@ -151,6 +151,16 @@ impl<
                 let account = address.to_move_address();
                 let balance = quick_get_eth_balance(&account, self.state.resolver());
                 response_channel.send(balance).ok()
+            }
+            Query::GetNonce {
+                address,
+                response_channel,
+                ..
+            } => {
+                // TODO: Support nonce from arbitrary blocks
+                let address = address.to_move_address();
+                let nonce = quick_get_nonce(&address, self.state.resolver());
+                response_channel.send(nonce).ok()
             }
             Query::BlockByHash {
                 hash,

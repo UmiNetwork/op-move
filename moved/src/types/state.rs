@@ -118,6 +118,11 @@ pub enum Query {
         block_number: BlockNumberOrTag,
         response_channel: oneshot::Sender<U256>,
     },
+    GetNonce {
+        address: Address,
+        block_number: BlockNumberOrTag,
+        response_channel: oneshot::Sender<u64>,
+    },
     BlockByHash {
         hash: B256,
         include_transactions: bool,

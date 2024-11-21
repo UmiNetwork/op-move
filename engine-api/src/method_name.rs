@@ -13,6 +13,7 @@ pub enum MethodName {
     GetBalance,
     GetBlockByHash,
     GetBlockByNumber,
+    GetNonce,
 }
 
 impl FromStr for MethodName {
@@ -28,6 +29,7 @@ impl FromStr for MethodName {
             "engine_newPayloadV3" => Self::NewPayloadV3,
             "eth_chainId" => Self::ChainId,
             "eth_getBalance" => Self::GetBalance,
+            "eth_getTransactionCount" => Self::GetNonce,
             "eth_getBlockByHash" => Self::GetBlockByHash,
             "eth_getBlockByNumber" => Self::GetBlockByNumber,
             "eth_sendRawTransaction" => Self::SendRawTransaction,
