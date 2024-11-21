@@ -4,7 +4,7 @@ use {
         eips::BlockNumberOrTag,
         primitives::{Address, U256},
     },
-    moved::types::state::StateMessage,
+    moved::types::state::{Query, StateMessage},
     tokio::sync::{mpsc, oneshot},
 };
 
@@ -47,11 +47,12 @@ async fn inner_execute(
     state_channel: mpsc::Sender<StateMessage>,
 ) -> Result<U256, JsonRpcError> {
     let (tx, rx) = oneshot::channel();
-    let msg = StateMessage::GetBalance {
+    let msg = Query::GetBalance {
         address,
         block_number,
         response_channel: tx,
-    };
+    }
+    .into();
     state_channel.send(msg).await.map_err(access_state_error)?;
     let response = rx.await.map_err(access_state_error)?;
     Ok(response)
@@ -62,7 +63,7 @@ mod tests {
     use {
         super::*,
         moved::{
-            block::{Eip1559GasFee, InMemoryBlockRepository},
+            block::{BlockMemory, Eip1559GasFee, InMemoryBlockQueries, InMemoryBlockRepository},
             genesis::init_state,
             primitives::{B256, U256, U64},
             state_actor::StatePayloadId,
@@ -123,6 +124,8 @@ mod tests {
             Eip1559GasFee::default(),
             U256::ZERO,
             (),
+            InMemoryBlockQueries,
+            BlockMemory::new(),
         );
 
         let state_handle = state_actor.spawn();

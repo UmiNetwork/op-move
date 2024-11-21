@@ -6,7 +6,7 @@ use {
     alloy::{consensus::transaction::TxEnvelope, rlp::Decodable},
     moved::{
         primitives::{Bytes, B256},
-        types::state::StateMessage,
+        types::state::{Command, StateMessage},
     },
     tokio::sync::mpsc,
 };
@@ -52,7 +52,7 @@ async fn inner_execute(
 ) -> Result<B256, JsonRpcError> {
     let tx_hash = tx.tx_hash().0.into();
 
-    let msg = StateMessage::AddTransaction { tx };
+    let msg = Command::AddTransaction { tx }.into();
     state_channel.send(msg).await.map_err(access_state_error)?;
 
     Ok(tx_hash)
@@ -63,7 +63,7 @@ mod tests {
     use {
         super::*,
         moved::{
-            block::{Eip1559GasFee, InMemoryBlockRepository},
+            block::{BlockMemory, Eip1559GasFee, InMemoryBlockQueries, InMemoryBlockRepository},
             primitives::U256,
             state_actor::StatePayloadId,
             storage::InMemoryState,
@@ -86,6 +86,8 @@ mod tests {
             Eip1559GasFee::default(),
             U256::ZERO,
             (),
+            InMemoryBlockQueries,
+            BlockMemory::new(),
         );
         let state_handle = state.spawn();
 

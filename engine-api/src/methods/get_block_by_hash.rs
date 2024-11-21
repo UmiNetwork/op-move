@@ -1,12 +1,14 @@
 use {
-    crate::{json_utils, jsonrpc::JsonRpcError, schema::GetBlockResponse},
-    alloy::hex,
-    moved::{
-        block::{Block, ExtendedBlock},
-        primitives::{B256, U256},
-        types::state::{BlockResponse, StateMessage},
+    crate::{
+        json_utils::{self, access_state_error},
+        jsonrpc::JsonRpcError,
+        schema::GetBlockResponse,
     },
-    tokio::sync::mpsc,
+    moved::{
+        primitives::B256,
+        types::state::{Query, StateMessage},
+    },
+    tokio::sync::{mpsc, oneshot},
 };
 
 pub async fn execute(
@@ -19,20 +21,21 @@ pub async fn execute(
 }
 
 async fn inner_execute(
-    _block_hash: B256,
-    _include_transactions: bool,
-    _state_channel: mpsc::Sender<StateMessage>,
+    hash: B256,
+    include_transactions: bool,
+    state_channel: mpsc::Sender<StateMessage>,
 ) -> Result<Option<GetBlockResponse>, JsonRpcError> {
-    // TODO: Replace dummy response
-    Ok(Some(GetBlockResponse::from(BlockResponse::from(
-        ExtendedBlock::new(
-            B256::new(hex!(
-                "e56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d"
-            )),
-            U256::ZERO,
-            Block::default(),
-        ),
-    ))))
+    let (response_channel, rx) = oneshot::channel();
+    let msg = Query::BlockByHash {
+        hash,
+        include_transactions,
+        response_channel,
+    }
+    .into();
+    state_channel.send(msg).await.map_err(access_state_error)?;
+    let maybe_response = rx.await.map_err(access_state_error)?;
+
+    Ok(maybe_response.map(GetBlockResponse::from))
 }
 
 fn parse_params(request: serde_json::Value) -> Result<(B256, bool), JsonRpcError> {
@@ -54,7 +57,10 @@ mod tests {
         super::*,
         alloy::hex,
         moved::{
-            block::{Block, BlockRepository, Eip1559GasFee, InMemoryBlockRepository},
+            block::{
+                Block, BlockMemory, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
+                InMemoryBlockRepository,
+            },
             genesis::{config::GenesisConfig, init_state},
             primitives::U256,
             storage::InMemoryState,
@@ -88,8 +94,9 @@ mod tests {
         ));
         let genesis_block = Block::default().with_hash(head_hash).with_value(U256::ZERO);
 
+        let mut block_memory = BlockMemory::new();
         let mut repository = InMemoryBlockRepository::new();
-        repository.add(genesis_block);
+        repository.add(&mut block_memory, genesis_block);
 
         let mut state = InMemoryState::new();
         init_state(&genesis_config, &mut state);
@@ -105,6 +112,8 @@ mod tests {
             Eip1559GasFee::default(),
             U256::ZERO,
             (),
+            InMemoryBlockQueries,
+            block_memory,
         );
         let state_handle = state.spawn();
         let request = example_request();

@@ -1,15 +1,20 @@
 use {
     crate::{
         primitives::{Address, Bytes, B2048, B256, U256},
-        types::transactions::ExtendedTxEnvelope,
+        types::{state::BlockResponse, transactions::ExtendedTxEnvelope},
     },
     alloy::{primitives::hex, rlp::RlpEncodable},
     std::fmt::Debug,
 };
 
-pub trait BlockRepository: Debug {
-    fn add(&mut self, block: ExtendedBlock);
-    fn by_hash(&self, hash: B256) -> Option<ExtendedBlock>;
+pub trait BlockQueries<Storage>: Debug {
+    fn by_hash(&self, storage: &Storage, hash: B256) -> Option<BlockResponse>;
+    fn by_height(&self, storage: &Storage, height: u64) -> Option<BlockResponse>;
+}
+
+pub trait BlockRepository<Storage>: Debug {
+    fn add(&mut self, storage: &mut Storage, block: ExtendedBlock);
+    fn by_hash(&self, storage: &Storage, hash: B256) -> Option<ExtendedBlock>;
 }
 
 #[derive(Debug, Clone)]

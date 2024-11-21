@@ -4,7 +4,10 @@ use {
         jsonrpc::JsonRpcError,
         schema::{ExecutionPayloadV3, GetPayloadResponseV3, PayloadStatusV1, Status},
     },
-    moved::{primitives::B256, types::state::StateMessage},
+    moved::{
+        primitives::B256,
+        types::state::{Command, StateMessage},
+    },
     tokio::sync::{mpsc, oneshot},
 };
 
@@ -61,10 +64,11 @@ async fn inner_execute_v3(
     // Spec: https://github.com/ethereum/execution-apis/blob/main/src/engine/cancun.md#specification
 
     let (tx, rx) = oneshot::channel();
-    let msg = StateMessage::GetPayloadByBlockHash {
+    let msg = Command::GetPayloadByBlockHash {
         block_hash: execution_payload.block_hash,
         response_channel: tx,
-    };
+    }
+    .into();
     state_channel.send(msg).await.map_err(access_state_error)?;
     let maybe_response = rx.await.map_err(access_state_error)?;
 
@@ -190,7 +194,10 @@ mod tests {
         crate::methods::{forkchoice_updated, get_payload},
         alloy::primitives::hex,
         moved::{
-            block::{Block, BlockRepository, Eip1559GasFee, InMemoryBlockRepository},
+            block::{
+                Block, BlockMemory, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
+                InMemoryBlockRepository,
+            },
             genesis::{config::GenesisConfig, init_state},
             primitives::{Address, Bytes, B2048, U256, U64},
             storage::InMemoryState,
@@ -276,8 +283,9 @@ mod tests {
         ));
         let genesis_block = Block::default().with_hash(head_hash).with_value(U256::ZERO);
 
+        let mut block_memory = BlockMemory::new();
         let mut repository = InMemoryBlockRepository::new();
-        repository.add(genesis_block);
+        repository.add(&mut block_memory, genesis_block);
 
         let mut state = InMemoryState::new();
         init_state(&genesis_config, &mut state);
@@ -295,6 +303,8 @@ mod tests {
             Eip1559GasFee::default(),
             U256::ZERO,
             (),
+            InMemoryBlockQueries,
+            block_memory,
         );
         let state_handle = state.spawn();
 

@@ -8,7 +8,7 @@ use {
             PayloadStatusV1, Status,
         },
     },
-    moved::types::state::StateMessage,
+    moved::types::state::{Command, StateMessage},
     tokio::sync::{mpsc, oneshot},
 };
 
@@ -58,9 +58,10 @@ async fn inner_execute_v3(
     // TODO: implement proper validation of Forkchoice state
 
     // Update the state with the new head
-    let msg = StateMessage::UpdateHead {
+    let msg = Command::UpdateHead {
         block_hash: forkchoice_state.head_block_hash,
-    };
+    }
+    .into();
     state_channel.send(msg).await.map_err(access_state_error)?;
 
     let payload_status = PayloadStatusV1 {
@@ -72,10 +73,11 @@ async fn inner_execute_v3(
     // If `payload_attributes` are present then tell state to start producing a new block
     let payload_id = if let Some(attrs) = payload_attributes {
         let (tx, rx) = oneshot::channel();
-        let msg = StateMessage::StartBlockBuild {
+        let msg = Command::StartBlockBuild {
             payload_attributes: attrs.into(),
             response_channel: tx,
-        };
+        }
+        .into();
         state_channel.send(msg).await.map_err(access_state_error)?;
         Some(PayloadId(rx.await.map_err(access_state_error)?))
     } else {
@@ -94,7 +96,10 @@ pub(super) mod tests {
         super::*,
         alloy::primitives::hex,
         moved::{
-            block::{Block, BlockRepository, Eip1559GasFee, InMemoryBlockRepository},
+            block::{
+                Block, BlockMemory, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
+                InMemoryBlockRepository,
+            },
             genesis::{config::GenesisConfig, init_state},
             primitives::{Address, Bytes, B256, U256, U64},
             storage::InMemoryState,
@@ -231,8 +236,9 @@ pub(super) mod tests {
         ));
         let genesis_block = Block::default().with_hash(head_hash).with_value(U256::ZERO);
 
+        let mut block_memory = BlockMemory::new();
         let mut repository = InMemoryBlockRepository::new();
-        repository.add(genesis_block);
+        repository.add(&mut block_memory, genesis_block);
 
         let mut state = InMemoryState::new();
         init_state(&genesis_config, &mut state);
@@ -248,6 +254,8 @@ pub(super) mod tests {
             Eip1559GasFee::default(),
             U256::ZERO,
             (),
+            InMemoryBlockQueries,
+            block_memory,
         );
         let state_handle = state.spawn();
         let request = example_request();
