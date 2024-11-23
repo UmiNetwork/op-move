@@ -135,6 +135,9 @@ pub enum Query {
         include_transactions: bool,
         response_channel: oneshot::Sender<Option<BlockResponse>>,
     },
+    BlockNumber {
+        response_channel: oneshot::Sender<u64>,
+    },
     FeeHistory {
         block_count: u64,
         block_number: BlockNumberOrTag,

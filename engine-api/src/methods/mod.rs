@@ -1,3 +1,4 @@
+pub mod block_number;
 pub mod call;
 pub mod chain_id;
 pub mod estimate_gas;
