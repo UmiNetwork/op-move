@@ -32,3 +32,19 @@ fn test_execute_counter_contract() {
     let resource: u64 = ctx.get_resource("counter", "Counter");
     assert_eq!(resource, 8);
 }
+
+#[test]
+fn test_execute_counter_script() {
+    let mut ctx = TestContext::new();
+    ctx.deploy_contract("counter");
+
+    // Change the signer because the script should work with any signer.
+    ctx.signer = Signer::new(&ALT_PRIVATE_KEY);
+    let counter_arg = TransactionArgument::U64(13);
+    ctx.run_script("counter_script", &["counter"], vec![counter_arg]);
+
+    // After the transaction there should be a Counter at the script signer's address
+    ctx.resource_address = ALT_EVM_ADDRESS.to_move_address();
+    let resource: u64 = ctx.get_resource("counter", "Counter");
+    assert_eq!(resource, 14);
+}
