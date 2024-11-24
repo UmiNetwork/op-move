@@ -1,4 +1,3 @@
-use alloy::eips::BlockNumberOrTag;
 pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
 
 use {
@@ -26,8 +25,10 @@ use {
     },
     alloy::{
         consensus::{Receipt, ReceiptWithBloom},
+        eips::BlockNumberOrTag,
         primitives::{keccak256, Bloom},
         rlp::{Decodable, Encodable},
+        rpc::types::FeeHistory,
     },
     move_binary_format::errors::PartialVMError,
     std::collections::HashMap,
@@ -178,6 +179,21 @@ impl<
                 // TODO: Support block "tag"
                 _ => None,
             }).ok(),
+            Query::FeeHistory {
+                response_channel,
+                ..
+                // TODO: Respond with a real fee history
+            } => response_channel.send(FeeHistory::default()).ok(),
+            Query::EstimateGas {
+                response_channel,
+                ..
+                // TODO: Respond with a real gas estimation
+            } => response_channel.send(0).ok(),
+            Query::Call {
+                response_channel,
+                ..
+                // TODO: Respond with a real transaction call result
+            } => response_channel.send(vec![]).ok(),
         };
     }
 

@@ -10,7 +10,9 @@ use {
         state_actor::NewPayloadIdInput,
     },
     alloy::{
-        consensus::transaction::TxEnvelope, eips::BlockNumberOrTag, rpc::types::BlockTransactions,
+        consensus::transaction::TxEnvelope,
+        eips::BlockNumberOrTag,
+        rpc::types::{BlockTransactions, FeeHistory, TransactionRequest},
     },
     alloy_rlp::Encodable,
     tokio::sync::oneshot,
@@ -132,6 +134,22 @@ pub enum Query {
         height: BlockNumberOrTag,
         include_transactions: bool,
         response_channel: oneshot::Sender<Option<BlockResponse>>,
+    },
+    FeeHistory {
+        block_count: u64,
+        block_number: BlockNumberOrTag,
+        reward_percentiles: Option<Vec<f64>>,
+        response_channel: oneshot::Sender<FeeHistory>,
+    },
+    EstimateGas {
+        transaction: TransactionRequest,
+        block_number: BlockNumberOrTag,
+        response_channel: oneshot::Sender<u64>,
+    },
+    Call {
+        transaction: TransactionRequest,
+        block_number: BlockNumberOrTag,
+        response_channel: oneshot::Sender<Vec<u8>>,
     },
 }
 

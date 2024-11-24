@@ -14,6 +14,9 @@ pub enum MethodName {
     GetBlockByHash,
     GetBlockByNumber,
     GetNonce,
+    FeeHistory,
+    EstimateGas,
+    Call,
 }
 
 impl FromStr for MethodName {
@@ -32,7 +35,10 @@ impl FromStr for MethodName {
             "eth_getTransactionCount" => Self::GetNonce,
             "eth_getBlockByHash" => Self::GetBlockByHash,
             "eth_getBlockByNumber" => Self::GetBlockByNumber,
+            "eth_feeHistory" => Self::FeeHistory,
             "eth_sendRawTransaction" => Self::SendRawTransaction,
+            "eth_estimateGas" => Self::EstimateGas,
+            "eth_call" => Self::Call,
             other => {
                 return Err(JsonRpcError::without_data(
                     -32601,
