@@ -130,8 +130,15 @@ impl TestContext {
     /// * `to` - Destination address for the transfer
     /// * `amount` - Amount of ETH to transfer
     /// * `l1_cost` - L1 cost associated with the transaction
-    /// * `expect_error` - Whether the transfer is expected to fail
-    pub fn transfer(&mut self, to: Address, amount: u64, l1_cost: u64, expect_error: bool) {
+    ///
+    /// # Returns
+    /// The execution outcome from the transfer
+    pub fn transfer(
+        &mut self,
+        to: Address,
+        amount: u64,
+        l1_cost: u64,
+    ) -> TransactionExecutionOutcome {
         let (tx_hash, tx) = create_transaction_with_value(
             &mut self.signer,
             TxKind::Call(to),
@@ -145,15 +152,11 @@ impl TestContext {
         let mut transaction = TestTransaction::new(tx, tx_hash);
         transaction.with_cost(l1_cost, base_token);
         let outcome = self.execute_tx(&transaction).unwrap();
-        if expect_error {
-            outcome.vm_outcome.unwrap_err();
-        } else {
-            outcome.vm_outcome.unwrap();
-        }
-        self.state.apply(outcome.changes).unwrap();
+        self.state.apply(outcome.changes.clone()).unwrap();
 
         let treasury_balance = self.get_balance(treasury_address.to_eth_address());
         assert_eq!(treasury_balance, l1_cost);
+        outcome
     }
 
     /// Executes a Move entry function with the given arguments
@@ -164,9 +167,17 @@ impl TestContext {
     /// # Arguments
     /// * `module_id` - The ModuleId containing the function to execute
     /// * `function` - Name of the function to call
-    /// * `args` - Vector of Move values to pass as arguments
-    pub fn execute(&mut self, module_id: &ModuleId, function: &str, args: Vec<&MoveValue>) {
-        let args = args.iter().map(|a| bcs::to_bytes(a).unwrap()).collect();
+    /// * `args` - List of Move values to pass as arguments
+    pub fn execute<'a>(
+        &mut self,
+        module_id: &ModuleId,
+        function: &str,
+        args: impl IntoIterator<Item = &'a MoveValue>,
+    ) {
+        let args = args
+            .into_iter()
+            .map(|arg| bcs::to_bytes(arg).unwrap())
+            .collect();
         let (tx_hash, tx) = create_test_tx(&mut self.signer, module_id, function, args);
         let transaction = TestTransaction::new(tx, tx_hash);
         let outcome = self.execute_tx(&transaction).unwrap();
@@ -184,13 +195,16 @@ impl TestContext {
     ///
     /// # Returns
     /// The error that occurred during execution
-    pub fn execute_err(
+    pub fn execute_err<'a>(
         &mut self,
         module_id: &ModuleId,
         function: &str,
-        args: Vec<&MoveValue>,
+        args: impl IntoIterator<Item = &'a MoveValue>,
     ) -> crate::Error {
-        let args = args.iter().map(|a| bcs::to_bytes(a).unwrap()).collect();
+        let args = args
+            .into_iter()
+            .map(|arg| bcs::to_bytes(arg).unwrap())
+            .collect();
         let (tx_hash, tx) = create_test_tx(&mut self.signer, module_id, function, args);
         let transaction = TestTransaction::new(tx, tx_hash);
         self.execute_tx(&transaction).unwrap_err()

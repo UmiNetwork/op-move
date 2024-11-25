@@ -13,7 +13,8 @@ fn test_treasury_charges_l1_cost_to_sender_account_on_success() {
     let l1_cost = 1;
     let receiver = ALT_EVM_ADDRESS;
     let transfer_amount = mint_amount.wrapping_shr(1);
-    ctx.transfer(receiver, transfer_amount, l1_cost, false);
+    let outcome = ctx.transfer(receiver, transfer_amount, l1_cost);
+    outcome.vm_outcome.unwrap();
 
     let sender_balance = ctx.get_balance(sender);
     let receiver_balance = ctx.get_balance(receiver);
@@ -34,7 +35,8 @@ fn test_treasury_charges_l1_cost_to_sender_account_on_user_error() {
     let l1_cost = 1;
     let receiver = ALT_EVM_ADDRESS;
     let transfer_amount = mint_amount.saturating_add(1);
-    ctx.transfer(receiver, transfer_amount, l1_cost, true);
+    let outcome = ctx.transfer(receiver, transfer_amount, l1_cost);
+    outcome.vm_outcome.unwrap_err();
 
     let sender_balance = ctx.get_balance(sender);
     let receiver_balance = ctx.get_balance(receiver);
