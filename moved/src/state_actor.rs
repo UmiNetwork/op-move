@@ -1,7 +1,4 @@
 pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
-use revm::primitives::TxKind;
-
-use crate::types::{state::TransactionReceipt, transactions::NormalizedExtendedTxEnvelope};
 
 use {
     crate::{
@@ -20,10 +17,10 @@ use {
         types::{
             state::{
                 Command, ExecutionOutcome, Payload, PayloadId, PayloadResponse, Query,
-                StateMessage, ToPayloadIdInput, TransactionWithReceipt, WithExecutionOutcome,
-                WithPayloadAttributes,
+                StateMessage, ToPayloadIdInput, TransactionReceipt, TransactionWithReceipt,
+                WithExecutionOutcome, WithPayloadAttributes,
             },
-            transactions::ExtendedTxEnvelope,
+            transactions::{ExtendedTxEnvelope, NormalizedExtendedTxEnvelope},
         },
         Error::{InvalidTransaction, InvariantViolation, User},
     },
@@ -36,11 +33,25 @@ use {
     },
     move_binary_format::errors::PartialVMError,
     op_alloy::consensus::{OpDepositReceipt, OpDepositReceiptWithBloom, OpReceiptEnvelope},
+    revm::primitives::TxKind,
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
 };
 
 mod payload;
+
+#[cfg(any(feature = "test-doubles", test))]
+pub type InMemStateActor = StateActor<
+    crate::storage::InMemoryState,
+    u64,
+    crate::block::MovedBlockHash,
+    crate::block::InMemoryBlockRepository,
+    crate::block::Eip1559GasFee,
+    alloy::primitives::U256,
+    crate::move_execution::MovedBaseTokenAccounts,
+    crate::block::InMemoryBlockQueries,
+    crate::block::BlockMemory,
+>;
 
 #[derive(Debug)]
 pub struct StateActor<

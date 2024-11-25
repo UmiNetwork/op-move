@@ -95,15 +95,18 @@ pub(super) mod tests {
     use {
         super::*,
         alloy::primitives::hex,
+        move_core_types::account_address::AccountAddress,
         moved::{
             block::{
                 Block, BlockMemory, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
-                InMemoryBlockRepository,
+                InMemoryBlockRepository, MovedBlockHash,
             },
             genesis::{config::GenesisConfig, init_state},
+            move_execution::MovedBaseTokenAccounts,
             primitives::{Address, Bytes, B256, U256, U64},
             storage::InMemoryState,
         },
+        mpsc::Sender,
     };
 
     pub fn example_request() -> serde_json::Value {
@@ -125,13 +128,47 @@ pub(super) mod tests {
                     "suggestedFeeRecipient": "0x4200000000000000000000000000000000000011",
                     "timestamp": "0x6660737b",
                     "transactions": [
-                        "0x7ef8f8a0de86bef815fc910df65a9459ccb2b9a35fa8596dfcfed1ff01bbf28891d86d5e94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000000558000c5fc50000000000000000000000006660735b00000000000001a9000000000000000000000000000000000000000000000000000000000000000700000000000000000000000000000000000000000000000000000000000000017ae3f74f0134521a7d62a387ac75a5153bcd1aab1c7e003e9b9e15a5d8846363000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425"
+                        "0x7ef8f8a0de86bef815fc910df65a9459ccb2b9a35fa8596dfcfed1ff01bbf28891d86d5e94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000000558000c5fc50000000000000000000000006660735b00000000000001a9000000000000000000000000000000000000000000000000000000000000000700000000000000000000000000000000000000000000000000000000000000017ae3f74f0134521a7d62a387ac75a5153bcd1aab1c7e003e9b9e15a5d8846363000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425",
+                        "0x7ef858a000000000000000000000000000000000000000000000000000000000000000009488f9b82462f6c4bf4a0fb15e5c3971559a316e7f9488f9b82462f6c4bf4a0fb15e5c3971559a316e7f807b88ffffffffffffffff8080"
                     ],
                     "withdrawals": []
                 }
                 ]
             }
         "#).unwrap()
+    }
+
+    pub fn create_state_actor() -> (moved::state_actor::InMemStateActor, Sender<StateMessage>) {
+        let genesis_config = GenesisConfig::default();
+        let (state_channel, rx) = mpsc::channel(10);
+
+        let head_hash = B256::new(hex!(
+            "e56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d"
+        ));
+        let genesis_block = Block::default().with_hash(head_hash).with_value(U256::ZERO);
+
+        let mut block_memory = BlockMemory::new();
+        let mut repository = InMemoryBlockRepository::new();
+        repository.add(&mut block_memory, genesis_block);
+
+        let mut state = InMemoryState::new();
+        init_state(&genesis_config, &mut state);
+
+        let state = moved::state_actor::StateActor::new(
+            rx,
+            state,
+            head_hash,
+            genesis_config,
+            0x03421ee50df45cacu64,
+            MovedBlockHash,
+            repository,
+            Eip1559GasFee::default(),
+            U256::ZERO,
+            MovedBaseTokenAccounts::new(AccountAddress::ONE),
+            InMemoryBlockQueries,
+            block_memory,
+        );
+        (state, state_channel)
     }
 
     #[test]
@@ -228,35 +265,7 @@ pub(super) mod tests {
 
     #[tokio::test]
     async fn test_execute_v3() {
-        let genesis_config = GenesisConfig::default();
-        let (state_channel, rx) = mpsc::channel(10);
-
-        let head_hash = B256::new(hex!(
-            "e56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d"
-        ));
-        let genesis_block = Block::default().with_hash(head_hash).with_value(U256::ZERO);
-
-        let mut block_memory = BlockMemory::new();
-        let mut repository = InMemoryBlockRepository::new();
-        repository.add(&mut block_memory, genesis_block);
-
-        let mut state = InMemoryState::new();
-        init_state(&genesis_config, &mut state);
-
-        let state = moved::state_actor::StateActor::new(
-            rx,
-            state,
-            head_hash,
-            genesis_config,
-            0x03421ee50df45cacu64,
-            B256::ZERO,
-            repository,
-            Eip1559GasFee::default(),
-            U256::ZERO,
-            (),
-            InMemoryBlockQueries,
-            block_memory,
-        );
+        let (state, state_channel) = create_state_actor();
         let state_handle = state.spawn();
         let request = example_request();
 

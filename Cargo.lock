@@ -6612,6 +6612,7 @@ name = "moved-engine-api"
 version = "0.1.0"
 dependencies = [
  "alloy",
+ "move-core-types 0.0.4 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
  "moved",
  "serde",
  "serde_json",
