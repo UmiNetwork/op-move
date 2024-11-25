@@ -184,16 +184,16 @@ impl<
             Query::BlockByHash {
                 hash,
                 response_channel,
-                .. // TODO: Support `include_transactions`
+                include_transactions,
             } => response_channel
-                .send(self.block_queries.by_hash(&self.block_memory, hash))
+                .send(self.block_queries.by_hash(&self.block_memory, hash, include_transactions))
                 .ok(),
             Query::BlockByHeight {
                 height,
                 response_channel,
-                .. // TODO: Support `include_transactions`
+                include_transactions,
             } => response_channel.send(match height {
-                BlockNumberOrTag::Number(height) => self.block_queries.by_height(&self.block_memory, height),
+                BlockNumberOrTag::Number(height) => self.block_queries.by_height(&self.block_memory, height, include_transactions),
                 // TODO: Support block "tag"
                 _ => None,
             }).ok(),
@@ -454,7 +454,7 @@ impl<
         let (rx, block_hash) = self.tx_receipts.get(&tx_hash)?;
         let block = self
             .block_queries
-            .by_hash(&self.block_memory, *block_hash)?;
+            .by_hash(&self.block_memory, *block_hash, false)?;
         let contract_address = rx.contract_address;
         let (to, from) = match &rx.normalized_tx {
             NormalizedExtendedTxEnvelope::Canonical(tx) => {
@@ -474,8 +474,8 @@ impl<
             .map(|(internal_index, log)| alloy::rpc::types::Log {
                 inner: log.clone(),
                 block_hash: Some(*block_hash),
-                block_number: Some(block.header.number),
-                block_timestamp: Some(block.header.timestamp),
+                block_number: Some(block.0.header.number),
+                block_timestamp: Some(block.0.header.timestamp),
                 transaction_hash: Some(tx_hash),
                 transaction_index: Some(rx.tx_index),
                 log_index: Some(rx.logs_offset + (internal_index as u64)),
@@ -489,7 +489,7 @@ impl<
                 transaction_hash: tx_hash,
                 transaction_index: Some(rx.tx_index),
                 block_hash: Some(*block_hash),
-                block_number: Some(block.header.number),
+                block_number: Some(block.0.header.number),
                 gas_used: rx.gas_used as u128,
                 // TODO: charge for gas
                 effective_gas_price: 0,

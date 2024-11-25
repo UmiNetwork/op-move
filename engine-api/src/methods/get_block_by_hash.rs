@@ -100,7 +100,8 @@ mod tests {
             "blobGasUsed": "0x0",
             "excessBlobGas": "0x0",
             "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "uncles": []
+            "uncles": [],
+            "transactions": []
         }"#).unwrap();
 
         let response = execute(request, state_channel).await.unwrap();

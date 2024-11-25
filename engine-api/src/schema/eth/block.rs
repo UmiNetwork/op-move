@@ -1,16 +1,15 @@
 pub use alloy::eips::BlockNumberOrTag;
 
 use {
-    alloy::rpc,
-    moved::types::state::BlockResponse,
+    moved::types::state::{BlockResponse, RpcBlock},
     serde::{Deserialize, Serialize},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct GetBlockResponse(pub rpc::types::Block<rpc::types::Transaction>);
+pub struct GetBlockResponse(pub RpcBlock);
 
 impl From<BlockResponse> for GetBlockResponse {
     fn from(value: BlockResponse) -> Self {
-        Self(value)
+        Self(value.0)
     }
 }
