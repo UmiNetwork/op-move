@@ -4,11 +4,10 @@ use {
     },
     crate::{
         block::HeaderForExecution,
-        genesis::config::GenesisConfig,
         move_execution::{create_move_vm, create_vm_session, execute_transaction, tests::*},
         primitives::{ToEthAddress, ToMoveAddress, ToMoveU256},
         storage::{InMemoryState, State},
-        tests::{signer::Signer, ALT_EVM_ADDRESS, EVM_ADDRESS, PRIVATE_KEY},
+        tests::{ALT_EVM_ADDRESS, EVM_ADDRESS},
         types::session_id::SessionId,
     },
     alloy::{
@@ -50,10 +49,8 @@ sol!(
 #[test]
 fn test_evm() {
     // -------- Initialize state
-    let genesis_config = GenesisConfig::default();
-    let mut signer = Signer::new(&PRIVATE_KEY);
-    let (erc20_move_interface, mut state) =
-        deploy_contract("erc20_interface", &mut signer, &genesis_config);
+    let mut ctx = TestContext::new();
+    let erc20_move_interface = ctx.deploy_contract("erc20_interface");
 
     // -------- Setup ERC-20 interface
     let mint_amount = parse_ether("1").unwrap();
@@ -70,7 +67,7 @@ fn test_evm() {
 
     // -------- Deploy ERC-20 token
     let (outcome, mut changes, extensions) =
-        evm_quick_create(deploy.calldata().to_vec(), state.resolver());
+        evm_quick_create(deploy.calldata().to_vec(), ctx.state.resolver());
 
     assert!(outcome.is_success, "Contract deploy must succeed");
 
@@ -84,13 +81,13 @@ fn test_evm() {
     changes.squash(evm_changes).unwrap();
     drop(extensions);
 
-    state.apply(changes).unwrap();
+    ctx.state.apply(changes).unwrap();
 
     // -------- Transfer ERC-20 tokens
     let transfer_amount = parse_ether("0.35").unwrap();
     let user_address = EVM_ADDRESS.to_move_address();
-    let signer_input_arg = MoveValue::Signer(user_address);
-    let to_input_arg = MoveValue::Address(contract_move_address);
+    let signer_arg = MoveValue::Signer(user_address);
+    let to_arg = MoveValue::Address(contract_move_address);
     let transfer_call = deployed_contract.transfer(ALT_EVM_ADDRESS, transfer_amount);
     let data_input_arg = Value::vector_u8(transfer_call.calldata().clone());
     let entry_fn = EntryFunction::new(
@@ -98,29 +95,21 @@ fn test_evm() {
         ident_str!("entry_evm_call").into(),
         Vec::new(),
         vec![
-            bcs::to_bytes(&signer_input_arg).unwrap(),
-            bcs::to_bytes(&to_input_arg).unwrap(),
+            bcs::to_bytes(&signer_arg).unwrap(),
+            bcs::to_bytes(&to_arg).unwrap(),
             data_input_arg.simple_serialize(&CODE_LAYOUT).unwrap(),
         ],
     );
     let (tx_hash, tx) = create_transaction(
-        &mut signer,
+        &mut ctx.signer,
         TxKind::Call(EVM_NATIVE_ADDRESS.to_eth_address()),
         bcs::to_bytes(&entry_fn).unwrap(),
     );
 
-    let outcome = execute_transaction(
-        &tx,
-        &tx_hash,
-        state.resolver(),
-        &genesis_config,
-        0,
-        &(),
-        HeaderForExecution::default(),
-    )
-    .unwrap();
+    let transaction = TestTransaction::new(tx, tx_hash);
+    let outcome = ctx.execute_tx(&transaction).unwrap();
     outcome.vm_outcome.unwrap();
-    state.apply(outcome.changes).unwrap();
+    ctx.state.apply(outcome.changes).unwrap();
 
     // -------- Validate ERC-20 balances
     let balance_of = |address, state: &InMemoryState| {
@@ -133,49 +122,25 @@ fn test_evm() {
         );
         U256::from_be_slice(&outcome.output)
     };
-    let sender_balance = balance_of(EVM_ADDRESS, &state);
-    let receiver_balance = balance_of(ALT_EVM_ADDRESS, &state);
+    let sender_balance = balance_of(EVM_ADDRESS, &ctx.state);
+    let receiver_balance = balance_of(ALT_EVM_ADDRESS, &ctx.state);
 
     assert_eq!(sender_balance, mint_amount - transfer_amount);
     assert_eq!(receiver_balance, transfer_amount);
 
     // -------- Transfer ERC-20 tokens (Move interface this time)
-    let token_address_input_arg = MoveValue::Address(contract_move_address);
-    let to_input_arg = MoveValue::Address(ALT_EVM_ADDRESS.to_move_address());
-    let amount_arg = transfer_amount.to_move_u256();
-    let entry_fn = EntryFunction::new(
-        erc20_move_interface,
-        ident_str!("erc20_transfer").into(),
-        Vec::new(),
-        vec![
-            bcs::to_bytes(&token_address_input_arg).unwrap(),
-            bcs::to_bytes(&signer_input_arg).unwrap(),
-            bcs::to_bytes(&to_input_arg).unwrap(),
-            bcs::to_bytes(&amount_arg).unwrap(),
-        ],
+    let token_address_arg = MoveValue::Address(contract_move_address);
+    let to_arg = MoveValue::Address(ALT_EVM_ADDRESS.to_move_address());
+    let amount_arg = MoveValue::U256(transfer_amount.to_move_u256());
+    ctx.execute(
+        &erc20_move_interface,
+        "erc20_transfer",
+        vec![&token_address_arg, &signer_arg, &to_arg, &amount_arg],
     );
-    let (tx_hash, tx) = create_transaction(
-        &mut signer,
-        TxKind::Call(EVM_ADDRESS),
-        bcs::to_bytes(&entry_fn).unwrap(),
-    );
-
-    let outcome = execute_transaction(
-        &tx,
-        &tx_hash,
-        state.resolver(),
-        &genesis_config,
-        0,
-        &(),
-        HeaderForExecution::default(),
-    )
-    .unwrap();
-    outcome.vm_outcome.unwrap();
-    state.apply(outcome.changes).unwrap();
 
     // -------- Validate ERC-20 balances (again)
-    let sender_balance = balance_of(EVM_ADDRESS, &state);
-    let receiver_balance = balance_of(ALT_EVM_ADDRESS, &state);
+    let sender_balance = balance_of(EVM_ADDRESS, &ctx.state);
+    let receiver_balance = balance_of(ALT_EVM_ADDRESS, &ctx.state);
 
     assert_eq!(
         sender_balance,
@@ -186,10 +151,8 @@ fn test_evm() {
 
 #[test]
 fn test_solidity_fixed_bytes() {
-    let genesis_config = GenesisConfig::default();
-    let mut signer = Signer::new(&PRIVATE_KEY);
-    let (contract, mut state) =
-        deploy_contract("solidity_fixed_bytes", &mut signer, &genesis_config);
+    let mut ctx = TestContext::new();
+    let contract = ctx.deploy_contract("solidity_fixed_bytes");
 
     let mut call_contract = |input: Vec<u8>, state: &InMemoryState| {
         let arg = MoveValue::vector_u8(input);
@@ -200,7 +163,7 @@ fn test_solidity_fixed_bytes() {
             vec![bcs::to_bytes(&arg).unwrap()],
         );
         let (tx_hash, tx) = create_transaction(
-            &mut signer,
+            &mut ctx.signer,
             TxKind::Call(EVM_ADDRESS),
             bcs::to_bytes(&entry_fn).unwrap(),
         );
@@ -208,7 +171,7 @@ fn test_solidity_fixed_bytes() {
             &tx,
             &tx_hash,
             state.resolver(),
-            &genesis_config,
+            &ctx.genesis_config,
             0,
             &(),
             HeaderForExecution::default(),
@@ -217,20 +180,20 @@ fn test_solidity_fixed_bytes() {
     };
 
     // Calling with empty bytes is an error
-    let outcome = call_contract(Vec::new(), &state);
+    let outcome = call_contract(Vec::new(), &ctx.state);
     outcome.vm_outcome.unwrap_err();
-    state.apply(outcome.changes).unwrap();
+    ctx.state.apply(outcome.changes).unwrap();
 
     // Calling with bytes longer than 32 is an error
-    let outcome = call_contract(vec![0x88; 33], &state);
+    let outcome = call_contract(vec![0x88; 33], &ctx.state);
     outcome.vm_outcome.unwrap_err();
-    state.apply(outcome.changes).unwrap();
+    ctx.state.apply(outcome.changes).unwrap();
 
     // Calling with any length between 1 and 32 (inclusive) works
     for n in 1..=32 {
-        let outcome = call_contract(vec![0x88; n], &state);
+        let outcome = call_contract(vec![0x88; n], &ctx.state);
         outcome.vm_outcome.unwrap();
-        state.apply(outcome.changes).unwrap();
+        ctx.state.apply(outcome.changes).unwrap();
     }
 }
 
