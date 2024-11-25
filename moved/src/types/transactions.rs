@@ -1,15 +1,19 @@
 use {
     crate::{primitives::ToMoveAddress, Error, InvalidTransactionCause, UserError},
     alloy::{
-        consensus::{Signed, Transaction, TxEip1559, TxEip2930, TxEnvelope, TxLegacy},
+        consensus::{
+            Receipt, ReceiptWithBloom, Signed, Transaction, TxEip1559, TxEip2930, TxEnvelope,
+            TxLegacy,
+        },
         eips::eip2930::AccessList,
-        primitives::{Address, Bytes, Log, LogData, TxKind, B256, U256, U64},
+        primitives::{Address, Bloom, Bytes, Log, LogData, TxKind, B256, U256, U64},
         rlp::{Buf, Decodable, Encodable, RlpDecodable, RlpEncodable},
     },
     aptos_types::transaction::{EntryFunction, Module, Script},
     move_core_types::{
         account_address::AccountAddress, effects::ChangeSet, language_storage::ModuleId,
     },
+    op_alloy::consensus::{OpDepositReceipt, OpDepositReceiptWithBloom, OpReceiptEnvelope},
     serde::{Deserialize, Serialize},
 };
 
@@ -51,6 +55,41 @@ impl ExtendedTxEnvelope {
             Some(deposited_tx)
         } else {
             None
+        }
+    }
+
+    pub fn wrap_receipt(&self, receipt: Receipt, bloom: Bloom) -> OpReceiptEnvelope {
+        match self {
+            ExtendedTxEnvelope::Canonical(TxEnvelope::Legacy(_)) => {
+                OpReceiptEnvelope::Legacy(ReceiptWithBloom {
+                    receipt,
+                    logs_bloom: bloom,
+                })
+            }
+            ExtendedTxEnvelope::Canonical(TxEnvelope::Eip1559(_)) => {
+                OpReceiptEnvelope::Eip1559(ReceiptWithBloom {
+                    receipt,
+                    logs_bloom: bloom,
+                })
+            }
+            ExtendedTxEnvelope::Canonical(TxEnvelope::Eip2930(_)) => {
+                OpReceiptEnvelope::Eip2930(ReceiptWithBloom {
+                    receipt,
+                    logs_bloom: bloom,
+                })
+            }
+            ExtendedTxEnvelope::DepositedTx(_) => {
+                OpReceiptEnvelope::Deposit(OpDepositReceiptWithBloom {
+                    receipt: OpDepositReceipt {
+                        inner: receipt,
+                        // TODO: what are these fields supposed to be?
+                        deposit_nonce: None,
+                        deposit_receipt_version: None,
+                    },
+                    logs_bloom: bloom,
+                })
+            }
+            ExtendedTxEnvelope::Canonical(_) => unreachable!("Not supported"),
         }
     }
 }

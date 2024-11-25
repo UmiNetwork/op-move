@@ -12,7 +12,7 @@ use {
             execute_transaction, quick_get_eth_balance, quick_get_nonce, BaseTokenAccounts,
             CreateL1GasFee, L1GasFee, L1GasFeeInput, LogsBloom,
         },
-        primitives::{ToEthAddress, ToMoveAddress, ToSaturatedU64, B256, U256, U64},
+        primitives::{self, ToEthAddress, ToMoveAddress, ToSaturatedU64, B256, U256, U64},
         storage::State,
         types::{
             state::{
@@ -25,14 +25,13 @@ use {
         Error::{InvalidTransaction, InvariantViolation, User},
     },
     alloy::{
-        consensus::{Receipt, ReceiptWithBloom, TxEnvelope},
+        consensus::Receipt,
         eips::BlockNumberOrTag,
         primitives::{keccak256, Bloom},
         rlp::{Decodable, Encodable},
         rpc::types::{FeeHistory, TransactionReceipt as AlloyTxReceipt},
     },
     move_binary_format::errors::PartialVMError,
-    op_alloy::consensus::{OpDepositReceipt, OpDepositReceiptWithBloom, OpReceiptEnvelope},
     revm::primitives::TxKind,
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
@@ -411,38 +410,7 @@ impl<
                 logs: outcome.logs,
             };
 
-            let receipt = match &tx {
-                ExtendedTxEnvelope::Canonical(TxEnvelope::Legacy(_)) => {
-                    OpReceiptEnvelope::Legacy(ReceiptWithBloom {
-                        receipt,
-                        logs_bloom: bloom,
-                    })
-                }
-                ExtendedTxEnvelope::Canonical(TxEnvelope::Eip1559(_)) => {
-                    OpReceiptEnvelope::Eip1559(ReceiptWithBloom {
-                        receipt,
-                        logs_bloom: bloom,
-                    })
-                }
-                ExtendedTxEnvelope::Canonical(TxEnvelope::Eip2930(_)) => {
-                    OpReceiptEnvelope::Eip2930(ReceiptWithBloom {
-                        receipt,
-                        logs_bloom: bloom,
-                    })
-                }
-                ExtendedTxEnvelope::DepositedTx(_) => {
-                    OpReceiptEnvelope::Deposit(OpDepositReceiptWithBloom {
-                        receipt: OpDepositReceipt {
-                            inner: receipt,
-                            // TODO: what are these fields supposed to be?
-                            deposit_nonce: None,
-                            deposit_receipt_version: None,
-                        },
-                        logs_bloom: bloom,
-                    })
-                }
-                ExtendedTxEnvelope::Canonical(_) => unreachable!("Not supported"),
-            };
+            let receipt = tx.wrap_receipt(receipt, bloom);
 
             total_tip = total_tip.saturating_add(
                 U256::from(outcome.gas_used).saturating_mul(normalized_tx.tip_per_gas(base_fee)),
@@ -514,68 +482,7 @@ impl<
                 removed: false,
             })
             .collect();
-        let receipt = match &rx.receipt {
-            OpReceiptEnvelope::Legacy(receipt_with_bloom) => {
-                OpReceiptEnvelope::Legacy(ReceiptWithBloom {
-                    receipt: Receipt {
-                        status: receipt_with_bloom.receipt.status,
-                        cumulative_gas_used: receipt_with_bloom.receipt.cumulative_gas_used,
-                        logs,
-                    },
-                    logs_bloom: receipt_with_bloom.logs_bloom,
-                })
-            }
-            OpReceiptEnvelope::Eip2930(receipt_with_bloom) => {
-                OpReceiptEnvelope::Eip2930(ReceiptWithBloom {
-                    receipt: Receipt {
-                        status: receipt_with_bloom.receipt.status,
-                        cumulative_gas_used: receipt_with_bloom.receipt.cumulative_gas_used,
-                        logs,
-                    },
-                    logs_bloom: receipt_with_bloom.logs_bloom,
-                })
-            }
-            OpReceiptEnvelope::Eip1559(receipt_with_bloom) => {
-                OpReceiptEnvelope::Eip1559(ReceiptWithBloom {
-                    receipt: Receipt {
-                        status: receipt_with_bloom.receipt.status,
-                        cumulative_gas_used: receipt_with_bloom.receipt.cumulative_gas_used,
-                        logs,
-                    },
-                    logs_bloom: receipt_with_bloom.logs_bloom,
-                })
-            }
-            OpReceiptEnvelope::Eip7702(receipt_with_bloom) => {
-                OpReceiptEnvelope::Eip7702(ReceiptWithBloom {
-                    receipt: Receipt {
-                        status: receipt_with_bloom.receipt.status,
-                        cumulative_gas_used: receipt_with_bloom.receipt.cumulative_gas_used,
-                        logs,
-                    },
-                    logs_bloom: receipt_with_bloom.logs_bloom,
-                })
-            }
-            OpReceiptEnvelope::Deposit(op_deposit_receipt_with_bloom) => {
-                OpReceiptEnvelope::Deposit(OpDepositReceiptWithBloom {
-                    receipt: OpDepositReceipt {
-                        inner: Receipt {
-                            status: op_deposit_receipt_with_bloom.receipt.inner.status,
-                            cumulative_gas_used: op_deposit_receipt_with_bloom
-                                .receipt
-                                .inner
-                                .cumulative_gas_used,
-                            logs,
-                        },
-                        deposit_nonce: op_deposit_receipt_with_bloom.receipt.deposit_nonce,
-                        deposit_receipt_version: op_deposit_receipt_with_bloom
-                            .receipt
-                            .deposit_receipt_version,
-                    },
-                    logs_bloom: op_deposit_receipt_with_bloom.logs_bloom,
-                })
-            }
-            _ => unreachable!(),
-        };
+        let receipt = primitives::with_rpc_logs(&rx.receipt, logs);
         let result = TransactionReceipt {
             inner: AlloyTxReceipt {
                 inner: receipt,
