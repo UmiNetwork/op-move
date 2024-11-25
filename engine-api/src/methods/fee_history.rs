@@ -20,23 +20,11 @@ fn parse_params(
 ) -> Result<(u64, BlockNumberOrTag, Option<Vec<f64>>), JsonRpcError> {
     let params = json_utils::get_params_list(&request);
     match params {
-        [] => Err(JsonRpcError {
+        [] | [_] | [_, _] => Err(JsonRpcError {
             code: -32602,
             data: request,
             message: "Not enough params".into(),
         }),
-        [a, b] => {
-            let block_count: String = json_utils::deserialize(a)?;
-            let block_count = block_count.trim_start_matches("0x");
-            let block_count: u64 =
-                u64::from_str_radix(block_count, 16).map_err(|_| JsonRpcError {
-                    code: -32602,
-                    data: 0.into(),
-                    message: "Block count parsing error".into(),
-                })?;
-            let block_number: BlockNumberOrTag = json_utils::deserialize(b)?;
-            Ok((block_count, block_number, None))
-        }
         [a, b, c] => {
             let block_count: String = json_utils::deserialize(a)?;
             let block_count = block_count.trim_start_matches("0x");
@@ -47,6 +35,16 @@ fn parse_params(
                     message: "Block count parsing error".into(),
                 })?;
             let reward_percentiles: Vec<f64> = json_utils::deserialize(b)?;
+            if reward_percentiles
+                .iter()
+                .any(|reward| *reward < 0.0 || *reward > 100.0)
+            {
+                return Err(JsonRpcError {
+                    code: -32602,
+                    data: 0.into(),
+                    message: "Incorrect reward percentile".into(),
+                });
+            }
             let block_number: BlockNumberOrTag = json_utils::deserialize(c)?;
             Ok((block_count, block_number, Some(reward_percentiles)))
         }
@@ -99,20 +97,14 @@ mod tests {
         let request = serde_json::json!({
             "jsonrpc": "2.0",
             "method": "eth_feeHistory",
-            "params": [
-                "0x2",
-                [
-                    20.0
-                ],
-                block,
-            ],
+            "params": ["0x1", [10.0], block],
             "id": 1
         });
 
         let (block_count, block_number, reward_percentiles) =
             parse_params(request.clone()).unwrap();
-        assert_eq!(block_count, 2);
-        assert_eq!(reward_percentiles, Some(vec![20f64]));
+        assert_eq!(block_count, 1);
+        assert_eq!(reward_percentiles, Some(vec![10f64]));
         match block {
             "latest" => assert_eq!(block_number, BlockNumberOrTag::Latest),
             "pending" => assert_eq!(block_number, BlockNumberOrTag::Pending),
@@ -121,6 +113,59 @@ mod tests {
                 BlockNumberOrTag::Number(U64::from_str(block).unwrap().into_limbs()[0])
             ),
         }
+    }
+
+    #[test]
+    fn test_parse_wrong_params() {
+        // No params
+        let request = serde_json::json!({
+            "jsonrpc": "2.0",
+            "method": "eth_feeHistory",
+            "params": [],
+            "id": 1
+        });
+        let err = parse_params(request).unwrap_err();
+        assert_eq!(err.message, "Not enough params");
+
+        // Single param
+        let request = serde_json::json!({
+            "jsonrpc": "2.0",
+            "method": "eth_feeHistory",
+            "params": ["0x1"],
+            "id": 1
+        });
+        let err = parse_params(request).unwrap_err();
+        assert_eq!(err.message, "Not enough params");
+
+        // Two params
+        let request = serde_json::json!({
+            "jsonrpc": "2.0",
+            "method": "eth_feeHistory",
+            "params": ["0x1", []],
+            "id": 1
+        });
+        let err = parse_params(request).unwrap_err();
+        assert_eq!(err.message, "Not enough params");
+
+        // Incorrect block count
+        let request = serde_json::json!({
+            "jsonrpc": "2.0",
+            "method": "eth_feeHistory",
+            "params": ["0xwrong", [], "latest"],
+            "id": 1
+        });
+        let err = parse_params(request).unwrap_err();
+        assert_eq!(err.message, "Block count parsing error");
+
+        // Incorrect reward percentile
+        let request = serde_json::json!({
+            "jsonrpc": "2.0",
+            "method": "eth_feeHistory",
+            "params": ["0x1", [-10], "latest"],
+            "id": 1
+        });
+        let err = parse_params(request).unwrap_err();
+        assert_eq!(err.message, "Incorrect reward percentile");
     }
 
     #[test_case("0x1")]
