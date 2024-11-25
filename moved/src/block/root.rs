@@ -7,14 +7,16 @@ use {
     std::fmt::Debug,
 };
 
-pub trait BlockQueries<Storage>: Debug {
-    fn by_hash(&self, storage: &Storage, hash: B256) -> Option<BlockResponse>;
-    fn by_height(&self, storage: &Storage, height: u64) -> Option<BlockResponse>;
+pub trait BlockQueries: Debug {
+    type Storage;
+    fn by_hash(&self, storage: &Self::Storage, hash: B256) -> Option<BlockResponse>;
+    fn by_height(&self, storage: &Self::Storage, height: u64) -> Option<BlockResponse>;
 }
 
-pub trait BlockRepository<Storage>: Debug {
-    fn add(&mut self, storage: &mut Storage, block: ExtendedBlock);
-    fn by_hash(&self, storage: &Storage, hash: B256) -> Option<ExtendedBlock>;
+pub trait BlockRepository: Debug {
+    type Storage;
+    fn add(&mut self, storage: &mut Self::Storage, block: ExtendedBlock);
+    fn by_hash(&self, storage: &Self::Storage, hash: B256) -> Option<ExtendedBlock>;
 }
 
 #[derive(Debug, Clone)]
