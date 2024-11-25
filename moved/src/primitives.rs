@@ -1,9 +1,9 @@
-use alloy::consensus::{Receipt, ReceiptWithBloom};
 pub use alloy::primitives::{aliases::B2048, Address, Bytes, B256, B64, U256, U64};
-use op_alloy::consensus::{OpDepositReceipt, OpDepositReceiptWithBloom, OpReceiptEnvelope};
 use {
+    alloy::consensus::{Receipt, ReceiptWithBloom},
     aptos_crypto::HashValue,
     move_core_types::{account_address::AccountAddress, u256::U256 as MoveU256},
+    op_alloy::consensus::{OpDepositReceipt, OpDepositReceiptWithBloom, OpReceiptEnvelope},
 };
 
 pub(crate) trait ToEthAddress {
