@@ -52,6 +52,7 @@ async fn inner_handle_request(
         GetNonce => get_nonce::execute(request, state_channel).await,
         GetBlockByHash => get_block_by_hash::execute(request, state_channel).await,
         GetBlockByNumber => get_block_by_number::execute(request, state_channel).await,
+        BlockNumber => block_number::execute(request, state_channel).await,
         FeeHistory => fee_history::execute(request, state_channel).await,
         EstimateGas => estimate_gas::execute(request, state_channel).await,
         Call => call::execute(request, state_channel).await,

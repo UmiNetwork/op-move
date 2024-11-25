@@ -179,6 +179,11 @@ impl<
                 // TODO: Support block "tag"
                 _ => None,
             }).ok(),
+            Query::BlockNumber {
+                response_channel,
+            } => response_channel
+                .send(self.height)
+                .ok(),
             Query::FeeHistory {
                 response_channel,
                 ..
