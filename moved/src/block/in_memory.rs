@@ -75,7 +75,9 @@ impl InMemoryBlockRepository {
     }
 }
 
-impl BlockRepository<BlockMemory> for InMemoryBlockRepository {
+impl BlockRepository for InMemoryBlockRepository {
+    type Storage = BlockMemory;
+
     fn add(&mut self, mem: &mut BlockMemory, block: ExtendedBlock) {
         mem.add(block)
     }
@@ -89,7 +91,9 @@ impl BlockRepository<BlockMemory> for InMemoryBlockRepository {
 #[derive(Debug)]
 pub struct InMemoryBlockQueries;
 
-impl BlockQueries<BlockMemory> for InMemoryBlockQueries {
+impl BlockQueries for InMemoryBlockQueries {
+    type Storage = BlockMemory;
+
     fn by_hash(&self, mem: &BlockMemory, hash: B256) -> Option<BlockResponse> {
         mem.by_hash(hash).map(Into::into)
     }

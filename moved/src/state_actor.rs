@@ -42,11 +42,11 @@ pub struct StateActor<
     S: State,
     P: NewPayloadId,
     H: BlockHash,
-    R: BlockRepository<M>,
+    R: BlockRepository<Storage = M>,
     G: GasFee,
     L1G: CreateL1GasFee,
     B: BaseTokenAccounts,
-    Q: BlockQueries<M>,
+    Q: BlockQueries<Storage = M>,
     M,
 > {
     genesis_config: GenesisConfig,
@@ -71,11 +71,11 @@ impl<
         S: State<Err = PartialVMError> + Send + Sync + 'static,
         P: NewPayloadId + Send + Sync + 'static,
         H: BlockHash + Send + Sync + 'static,
-        R: BlockRepository<M> + Send + Sync + 'static,
+        R: BlockRepository<Storage = M> + Send + Sync + 'static,
         G: GasFee + Send + Sync + 'static,
         L1G: CreateL1GasFee + Send + Sync + 'static,
         B: BaseTokenAccounts + Send + Sync + 'static,
-        Q: BlockQueries<M> + Send + Sync + 'static,
+        Q: BlockQueries<Storage = M> + Send + Sync + 'static,
         M: Send + Sync + 'static,
     > StateActor<S, P, H, R, G, L1G, B, Q, M>
 {
@@ -95,11 +95,11 @@ impl<
         S: State<Err = PartialVMError>,
         P: NewPayloadId,
         H: BlockHash,
-        R: BlockRepository<M>,
+        R: BlockRepository<Storage = M>,
         G: GasFee,
         L1G: CreateL1GasFee,
         B: BaseTokenAccounts,
-        Q: BlockQueries<M>,
+        Q: BlockQueries<Storage = M>,
         M,
     > StateActor<S, P, H, R, G, L1G, B, Q, M>
 {
