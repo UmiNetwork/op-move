@@ -59,8 +59,6 @@ pub struct TestContext {
     pub signer: Signer,
     /// Move address for contract deployment
     pub move_address: AccountAddress,
-    /// Address for resource storage
-    pub resource_address: AccountAddress,
 }
 
 impl TestContext {
@@ -75,7 +73,6 @@ impl TestContext {
             genesis_config,
             signer: Signer::new(&PRIVATE_KEY),
             move_address: EVM_ADDRESS.to_move_address(),
-            resource_address: EVM_ADDRESS.to_move_address(),
         }
     }
 
@@ -273,10 +270,16 @@ impl TestContext {
     /// # Arguments
     /// * `module_name` - Name of the module containing the resource
     /// * `struct_name` - Name of the struct representing the resource
+    /// * `address` - Address to retrieve the resource for
     ///
     /// # Returns
     /// The deserialized resource of type T
-    pub fn get_resource<T: DeserializeOwned>(&self, module_name: &str, struct_name: &str) -> T {
+    pub fn get_resource<T: DeserializeOwned>(
+        &self,
+        module_name: &str,
+        struct_name: &str,
+        address: AccountAddress,
+    ) -> T {
         // Resource was created on a module struct for a resource address
         let struct_tag = StructTag {
             address: self.move_address,
@@ -287,7 +290,7 @@ impl TestContext {
         let data = self
             .state
             .resolver()
-            .get_resource(&self.resource_address, &struct_tag)
+            .get_resource(&address, &struct_tag)
             .unwrap()
             .unwrap();
         bcs::from_bytes(data.as_ref()).unwrap()

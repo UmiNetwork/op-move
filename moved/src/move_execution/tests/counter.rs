@@ -21,7 +21,7 @@ fn test_execute_counter_contract() {
     ctx.signer.nonce -= 1;
 
     // Resource was created for a struct for the module in the context
-    let resource: u64 = ctx.get_resource("counter", "Counter");
+    let resource: u64 = ctx.get_resource("counter", "Counter", ctx.move_address);
     assert_eq!(resource, 7);
 
     // Call entry function to increment the counter
@@ -29,7 +29,7 @@ fn test_execute_counter_contract() {
     ctx.execute(&module_id, "increment", vec![&address_arg]);
 
     // Resource was modified
-    let resource: u64 = ctx.get_resource("counter", "Counter");
+    let resource: u64 = ctx.get_resource("counter", "Counter", ctx.move_address);
     assert_eq!(resource, 8);
 }
 
@@ -44,7 +44,6 @@ fn test_execute_counter_script() {
     ctx.run_script("counter_script", &["counter"], vec![counter_arg]);
 
     // After the transaction there should be a Counter at the script signer's address
-    ctx.resource_address = ALT_EVM_ADDRESS.to_move_address();
-    let resource: u64 = ctx.get_resource("counter", "Counter");
+    let resource: u64 = ctx.get_resource("counter", "Counter", ALT_EVM_ADDRESS.to_move_address());
     assert_eq!(resource, 14);
 }
