@@ -53,19 +53,7 @@ fn parse_params(request: serde_json::Value) -> Result<(B256, bool), JsonRpcError
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::*,
-        alloy::hex,
-        moved::{
-            block::{
-                Block, BlockMemory, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
-                InMemoryBlockRepository,
-            },
-            genesis::{config::GenesisConfig, init_state},
-            primitives::U256,
-            storage::InMemoryState,
-        },
-    };
+    use {super::*, crate::methods::tests::create_state_actor};
 
     pub fn example_request() -> serde_json::Value {
         serde_json::from_str(
@@ -86,35 +74,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_execute_reads_genesis_block_successfully() {
-        let genesis_config = GenesisConfig::default();
-        let (state_channel, rx) = mpsc::channel(10);
-
-        let head_hash = B256::new(hex!(
-            "e56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d"
-        ));
-        let genesis_block = Block::default().with_hash(head_hash).with_value(U256::ZERO);
-
-        let mut block_memory = BlockMemory::new();
-        let mut repository = InMemoryBlockRepository::new();
-        repository.add(&mut block_memory, genesis_block);
-
-        let mut state = InMemoryState::new();
-        init_state(&genesis_config, &mut state);
-
-        let state = moved::state_actor::StateActor::new(
-            rx,
-            state,
-            head_hash,
-            genesis_config,
-            0x03421ee50df45cacu64,
-            B256::ZERO,
-            repository,
-            Eip1559GasFee::default(),
-            U256::ZERO,
-            (),
-            InMemoryBlockQueries,
-            block_memory,
-        );
+        let (state, state_channel) = create_state_actor();
         let state_handle = state.spawn();
         let request = example_request();
 

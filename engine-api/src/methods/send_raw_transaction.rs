@@ -59,53 +59,33 @@ async fn inner_execute(
 }
 
 #[cfg(test)]
-mod tests {
-    use {
-        super::*,
-        moved::{
-            block::{BlockMemory, Eip1559GasFee, InMemoryBlockQueries, InMemoryBlockRepository},
-            primitives::U256,
-            state_actor::StatePayloadId,
-            storage::InMemoryState,
-        },
-    };
+pub mod tests {
+    use {super::*, crate::methods::tests::create_state_actor};
 
-    #[tokio::test]
-    async fn test_execute() {
-        let genesis_config = moved::genesis::config::GenesisConfig::default();
-        let (state_channel, rx) = mpsc::channel(10);
-
-        let state = moved::state_actor::StateActor::new(
-            rx,
-            InMemoryState::new(),
-            B256::ZERO,
-            genesis_config,
-            StatePayloadId,
-            B256::ZERO,
-            InMemoryBlockRepository::new(),
-            Eip1559GasFee::default(),
-            U256::ZERO,
-            (),
-            InMemoryBlockQueries,
-            BlockMemory::new(),
-        );
-        let state_handle = state.spawn();
-
-        let request: serde_json::Value = serde_json::from_str(
+    pub fn example_request() -> serde_json::Value {
+        serde_json::from_str(
             r#"
                 {
                     "method": "eth_sendRawTransaction",
                     "params": [
-                    "0x02f86f82a45580808346a8928252089465d08a056c17ae13370565b04cf77d2afa1cb9fa8806f05b59d3b2000080c080a0dd50efde9a4d2f01f5248e1a983165c8cfa5f193b07b4b094f4078ad4717c1e4a017db1be1e8751b09e033bcffca982d0fe4919ff6b8594654e06647dee9292750"
+                    "0xb86d02f86a82019480808088ffffffffffffffff948fd379246834eac74b8419ffda202cf8051f7a033d80c080a078c716fef14bfcb7c2c9ff4abeb741529874fe7046ac042871f9d8490db55f5ca001fd5186e08990692d54912b476496f12c48bd7cc540a92d211dde232133ed17"
                     ],
                     "id": 4,
                     "jsonrpc": "2.0"
                 }
         "#,
-        ).unwrap();
+        ).unwrap()
+    }
+
+    #[tokio::test]
+    async fn test_execute() {
+        let (state, state_channel) = create_state_actor();
+        let state_handle = state.spawn();
+
+        let request = example_request();
 
         let expected_response: serde_json::Value = serde_json::from_str(
-            r#""0x7185c49a6b650a42cae042cde2228bf11a3f7e32c9a62dd59b4b52ebd5d3e090""#,
+            r#""0x3545efb3ce7a22353c346c98771640131b81baa64eb03113b20ad2bef5c0ec53""#,
         )
         .unwrap();
 

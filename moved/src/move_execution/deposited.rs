@@ -61,5 +61,6 @@ pub(super) fn execute_deposited_transaction(
         changes,
         gas_used,
         logs,
+        None,
     ))
 }

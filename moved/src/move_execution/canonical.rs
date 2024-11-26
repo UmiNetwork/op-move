@@ -61,6 +61,7 @@ pub(super) fn execute_canonical_transaction(
     let traversal_storage = TraversalStorage::new();
     let mut traversal_context = TraversalContext::new(&traversal_storage);
     let mut gas_meter = new_gas_meter(genesis_config, tx.gas_limit());
+    let mut deployment = None;
 
     // Charge gas for the transaction itself.
     // Immediately exit if there is not enough.
@@ -106,7 +107,11 @@ pub(super) fn execute_canonical_transaction(
             &mut gas_meter,
         ),
         TransactionData::ScriptOrModule(ScriptOrModule::Module(module)) => {
-            deploy_module(module, sender_move_address, &mut session, &mut gas_meter)
+            let module_id =
+                deploy_module(module, sender_move_address, &mut session, &mut gas_meter);
+            module_id.map(|id| {
+                deployment = Some((sender_move_address, id));
+            })
         }
         TransactionData::EoaBaseTokenTransfer(to) => {
             let to = to.to_move_address();
@@ -135,6 +140,7 @@ pub(super) fn execute_canonical_transaction(
             changes,
             gas_used,
             logs,
+            deployment,
         )),
         // User error still generates a receipt and consumes gas
         Err(User(e)) => Ok(TransactionExecutionOutcome::new(
@@ -142,6 +148,7 @@ pub(super) fn execute_canonical_transaction(
             changes,
             gas_used,
             logs,
+            None,
         )),
         Err(e) => Err(e),
     }

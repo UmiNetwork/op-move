@@ -56,6 +56,7 @@ async fn inner_handle_request(
         FeeHistory => fee_history::execute(request, state_channel).await,
         EstimateGas => estimate_gas::execute(request, state_channel).await,
         Call => call::execute(request, state_channel).await,
+        TransactionReceipt => get_transaction_receipt::execute(request, state_channel).await,
         ForkChoiceUpdatedV2 => todo!(),
         GetPayloadV2 => todo!(),
         NewPayloadV2 => todo!(),

@@ -4,6 +4,7 @@ use {
         types::transactions::NormalizedEthTransaction,
     },
     aptos_gas_meter::{AptosGasMeter, GasAlgebra, StandardGasAlgebra, StandardGasMeter},
+    op_alloy::rpc_types::L1BlockInfo,
 };
 
 pub fn new_gas_meter(
@@ -53,6 +54,7 @@ impl NormalizedEthTransaction {
 
 pub trait L1GasFee {
     fn l1_fee(&self, input: L1GasFeeInput) -> U256;
+    fn l1_block_info(&self, input: L1GasFeeInput) -> Option<L1BlockInfo>;
 }
 
 #[derive(Debug, Clone, Default)]
@@ -119,6 +121,18 @@ impl L1GasFee for EcotoneL1GasFee {
 
         tx_compressed_size * weighted_gas_price
     }
+
+    fn l1_block_info(&self, input: L1GasFeeInput) -> Option<L1BlockInfo> {
+        Some(L1BlockInfo {
+            l1_gas_price: Some(self.base_fee.saturating_to()),
+            l1_gas_used: None,
+            l1_fee: Some(self.l1_fee(input).saturating_to()),
+            l1_fee_scalar: None,
+            l1_base_fee_scalar: Some(self.base_fee_scalar.saturating_to()),
+            l1_blob_base_fee: Some(self.blob_base_fee.saturating_to()),
+            l1_blob_base_fee_scalar: Some(self.blob_base_fee_scalar.saturating_to()),
+        })
+    }
 }
 
 /// Creates algorithm for calculating cost of publishing a transaction to layer-1 blockchain.
@@ -155,6 +169,10 @@ mod tests {
     impl L1GasFee for U256 {
         fn l1_fee(&self, _input: L1GasFeeInput) -> U256 {
             *self
+        }
+
+        fn l1_block_info(&self, _input: L1GasFeeInput) -> Option<L1BlockInfo> {
+            None
         }
     }
 

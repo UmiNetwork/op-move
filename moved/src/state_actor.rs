@@ -12,30 +12,45 @@ use {
             execute_transaction, quick_get_eth_balance, quick_get_nonce, BaseTokenAccounts,
             CreateL1GasFee, L1GasFee, L1GasFeeInput, LogsBloom,
         },
-        primitives::{ToMoveAddress, ToSaturatedU64, B256, U256, U64},
+        primitives::{self, ToEthAddress, ToMoveAddress, ToSaturatedU64, B256, U256, U64},
         storage::State,
         types::{
             state::{
                 Command, ExecutionOutcome, Payload, PayloadId, PayloadResponse, Query,
-                StateMessage, ToPayloadIdInput, WithExecutionOutcome, WithPayloadAttributes,
+                StateMessage, ToPayloadIdInput, TransactionReceipt, TransactionWithReceipt,
+                WithExecutionOutcome, WithPayloadAttributes,
             },
             transactions::{ExtendedTxEnvelope, NormalizedExtendedTxEnvelope},
         },
         Error::{InvalidTransaction, InvariantViolation, User},
     },
     alloy::{
-        consensus::{Receipt, ReceiptWithBloom},
+        consensus::Receipt,
         eips::BlockNumberOrTag,
         primitives::{keccak256, Bloom},
         rlp::{Decodable, Encodable},
-        rpc::types::FeeHistory,
+        rpc::types::{FeeHistory, TransactionReceipt as AlloyTxReceipt},
     },
     move_binary_format::errors::PartialVMError,
+    revm::primitives::TxKind,
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
 };
 
 mod payload;
+
+#[cfg(any(feature = "test-doubles", test))]
+pub type InMemStateActor = StateActor<
+    crate::storage::InMemoryState,
+    u64,
+    crate::block::MovedBlockHash,
+    crate::block::InMemoryBlockRepository,
+    crate::block::Eip1559GasFee,
+    alloy::primitives::U256,
+    crate::move_execution::MovedBaseTokenAccounts,
+    crate::block::InMemoryBlockQueries,
+    crate::block::BlockMemory,
+>;
 
 #[derive(Debug)]
 pub struct StateActor<
@@ -65,6 +80,8 @@ pub struct StateActor<
     l1_fee: L1G,
     base_token: B,
     block_memory: M,
+    // tx_hash -> (tx_with_receipt, block_hash)
+    tx_receipts: HashMap<B256, (TransactionWithReceipt, B256)>,
 }
 
 impl<
@@ -135,6 +152,7 @@ impl<
             base_token,
             block_queries,
             block_memory,
+            tx_receipts: HashMap::new(),
         }
     }
 
@@ -199,6 +217,9 @@ impl<
                 ..
                 // TODO: Respond with a real transaction call result
             } => response_channel.send(vec![]).ok(),
+            Query::TransactionReceipt { tx_hash, response_channel } => {
+                response_channel.send(self.query_transaction_receipt(tx_hash)).ok()
+            }
         };
     }
 
@@ -290,21 +311,17 @@ impl<
             timestamp: payload_attributes.timestamp.as_limbs()[0],
             prev_randao: payload_attributes.prev_randao,
         };
-        let execution_outcome = self.execute_transactions(
+        let (execution_outcome, receipts) = self.execute_transactions(
             transactions
-                .iter()
-                .cloned()
-                .filter_map(|(tx_hash, (tx, bytes))| {
-                    tx.try_into().ok().map(|tx| (tx_hash, tx, bytes))
-                }),
+                .into_iter()
+                .map(|(tx_hash, (tx, bytes))| (tx_hash, tx, bytes)),
             base_fee,
             &header_for_execution,
         );
 
-        let transactions: Vec<_> = transactions.into_iter().map(|(_, (tx, _))| tx).collect();
-        let transactions_root = transactions
+        let transactions_root = receipts
             .iter()
-            .map(alloy::rlp::encode)
+            .map(|v| alloy::rlp::encode(&v.tx))
             .map(keccak256)
             .merkle_root();
         let total_tip = execution_outcome.total_tip;
@@ -317,6 +334,15 @@ impl<
 
         let hash = self.block_hash.block_hash(&header);
 
+        let transactions: Vec<_> = receipts
+            .into_iter()
+            .map(|v| {
+                let tx = v.tx.clone();
+                self.tx_receipts.insert(v.tx_hash, (v, hash));
+                tx
+            })
+            .collect();
+
         Block::new(header, transactions)
             .with_hash(hash)
             .with_value(total_tip)
@@ -324,13 +350,17 @@ impl<
 
     fn execute_transactions(
         &mut self,
-        transactions: impl Iterator<Item = (B256, NormalizedExtendedTxEnvelope, L1GasFeeInput)>,
+        transactions: impl Iterator<Item = (B256, ExtendedTxEnvelope, L1GasFeeInput)>,
         base_fee: U256,
         block_header: &HeaderForExecution,
-    ) -> ExecutionOutcome {
+    ) -> (ExecutionOutcome, Vec<TransactionWithReceipt>) {
         let mut total_tip = U256::ZERO;
-        let mut outcomes = Vec::new();
+        let mut receipts = Vec::new();
         let mut transactions = transactions.peekable();
+        let mut cumulative_gas_used = 0u128;
+        let mut logs_bloom = Bloom::ZERO;
+        let mut tx_index = 0;
+        let mut log_offset = 0;
 
         // https://github.com/ethereum-optimism/specs/blob/9dbc6b0/specs/protocol/deposits.md#kinds-of-deposited-transactions
         let l1_fee = transactions
@@ -340,14 +370,17 @@ impl<
 
         // TODO: parallel transaction processing?
         for (tx_hash, tx, l1_cost_input) in transactions {
+            let Ok(normalized_tx) = tx.clone().try_into() else {
+                continue;
+            };
             let outcome = match execute_transaction(
-                &tx,
+                &normalized_tx,
                 &tx_hash,
                 self.state.resolver(),
                 &self.genesis_config,
                 l1_fee
                     .as_ref()
-                    .map(|v| v.l1_fee(l1_cost_input).to_saturated_u64())
+                    .map(|v| v.l1_fee(l1_cost_input.clone()).to_saturated_u64())
                     .unwrap_or(0),
                 &self.base_token,
                 block_header.clone(),
@@ -358,45 +391,119 @@ impl<
                 Err(InvariantViolation(e)) => panic!("ERROR: execution error {e:?}"),
             };
 
+            let l1_block_info = l1_fee.as_ref().and_then(|x| x.l1_block_info(l1_cost_input));
+
             self.state
                 .apply(outcome.changes)
                 .unwrap_or_else(|_| panic!("ERROR: state update failed for transaction {tx:?}"));
 
-            outcomes.push((outcome.vm_outcome.is_ok(), outcome.gas_used, outcome.logs));
+            cumulative_gas_used = cumulative_gas_used.saturating_add(outcome.gas_used as u128);
 
-            total_tip = total_tip.saturating_add(
-                U256::from(outcome.gas_used).saturating_mul(tx.tip_per_gas(base_fee)),
-            );
-        }
-
-        let mut cumulative_gas_used = 0u64;
-        let mut logs_bloom = Bloom::ZERO;
-        let receipts = outcomes.into_iter().map(|(status, gas_used, logs)| {
-            cumulative_gas_used = cumulative_gas_used.saturating_add(gas_used);
-
-            let bloom = logs.iter().logs_bloom();
+            let bloom = outcome.logs.iter().logs_bloom();
             logs_bloom.accrue_bloom(&bloom);
 
+            let tx_log_offset = log_offset;
+            log_offset += outcome.logs.len() as u64;
             let receipt = Receipt {
-                status: status.into(),
-                cumulative_gas_used: cumulative_gas_used as u128,
-                logs,
+                status: outcome.vm_outcome.is_ok().into(),
+                cumulative_gas_used,
+                logs: outcome.logs,
             };
-            ReceiptWithBloom::new(receipt, bloom)
-        });
+
+            let receipt = tx.wrap_receipt(receipt, bloom);
+
+            total_tip = total_tip.saturating_add(
+                U256::from(outcome.gas_used).saturating_mul(normalized_tx.tip_per_gas(base_fee)),
+            );
+
+            receipts.push(TransactionWithReceipt {
+                tx_hash,
+                tx,
+                normalized_tx,
+                receipt,
+                l1_block_info,
+                gas_used: outcome.gas_used,
+                tx_index,
+                contract_address: outcome
+                    .deployment
+                    .map(|(address, _)| address.to_eth_address()),
+                logs_offset: tx_log_offset,
+            });
+
+            tx_index += 1;
+        }
 
         let receipts_root = receipts
-            .map(alloy::rlp::encode)
+            .iter()
+            .map(|v| alloy::rlp::encode(&v.receipt))
             .map(keccak256)
             .merkle_root();
         let logs_bloom = logs_bloom.into();
 
-        ExecutionOutcome {
+        let outcome = ExecutionOutcome {
             state_root: self.state.state_root(),
             gas_used: U64::from(cumulative_gas_used),
             receipts_root,
             logs_bloom,
             total_tip,
-        }
+        };
+        (outcome, receipts)
+    }
+
+    fn query_transaction_receipt(&self, tx_hash: B256) -> Option<TransactionReceipt> {
+        let (rx, block_hash) = self.tx_receipts.get(&tx_hash)?;
+        let block = self
+            .block_queries
+            .by_hash(&self.block_memory, *block_hash)?;
+        let contract_address = rx.contract_address;
+        let (to, from) = match &rx.normalized_tx {
+            NormalizedExtendedTxEnvelope::Canonical(tx) => {
+                let to = match tx.to {
+                    TxKind::Call(to) => Some(to),
+                    TxKind::Create => None,
+                };
+                (to, tx.signer)
+            }
+            NormalizedExtendedTxEnvelope::DepositedTx(tx) => (Some(tx.to), tx.from),
+        };
+        let logs = rx
+            .receipt
+            .logs()
+            .iter()
+            .enumerate()
+            .map(|(internal_index, log)| alloy::rpc::types::Log {
+                inner: log.clone(),
+                block_hash: Some(*block_hash),
+                block_number: Some(block.header.number),
+                block_timestamp: Some(block.header.timestamp),
+                transaction_hash: Some(tx_hash),
+                transaction_index: Some(rx.tx_index),
+                log_index: Some(rx.logs_offset + (internal_index as u64)),
+                removed: false,
+            })
+            .collect();
+        let receipt = primitives::with_rpc_logs(&rx.receipt, logs);
+        let result = TransactionReceipt {
+            inner: AlloyTxReceipt {
+                inner: receipt,
+                transaction_hash: tx_hash,
+                transaction_index: Some(rx.tx_index),
+                block_hash: Some(*block_hash),
+                block_number: Some(block.header.number),
+                gas_used: rx.gas_used as u128,
+                // TODO: charge for gas
+                effective_gas_price: 0,
+                // Always None because we do not support eip-4844 transactions
+                blob_gas_used: None,
+                blob_gas_price: None,
+                from,
+                to,
+                contract_address,
+                // EIP-7702 not yet supported
+                authorization_list: None,
+            },
+            l1_block_info: rx.l1_block_info.unwrap_or_default(),
+        };
+        Some(result)
     }
 }

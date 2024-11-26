@@ -41,39 +41,11 @@ async fn inner_execute(state_channel: mpsc::Sender<StateMessage>) -> Result<u64,
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::*,
-        moved::{
-            block::{BlockMemory, Eip1559GasFee, InMemoryBlockQueries, InMemoryBlockRepository},
-            genesis::init_state,
-            primitives::{B256, U256},
-            state_actor::StatePayloadId,
-            storage::InMemoryState,
-        },
-    };
+    use {super::*, crate::methods::tests::create_state_actor};
 
     #[tokio::test]
     async fn test_execute() {
-        let genesis_config = moved::genesis::config::GenesisConfig::default();
-        let mut state = InMemoryState::new();
-        init_state(&genesis_config, &mut state);
-
-        let (state_channel, rx) = mpsc::channel(10);
-
-        let state_actor = moved::state_actor::StateActor::new(
-            rx,
-            state,
-            B256::ZERO,
-            genesis_config,
-            StatePayloadId,
-            B256::ZERO,
-            InMemoryBlockRepository::new(),
-            Eip1559GasFee::default(),
-            U256::ZERO,
-            (),
-            InMemoryBlockQueries,
-            BlockMemory::new(),
-        );
+        let (state_actor, state_channel) = create_state_actor();
 
         let state_handle = state_actor.spawn();
         let request: serde_json::Value = serde_json::json!({
