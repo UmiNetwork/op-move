@@ -60,15 +60,7 @@ async fn inner_execute(
 
 #[cfg(test)]
 pub mod tests {
-    use {
-        super::*,
-        moved::{
-            block::{BlockMemory, Eip1559GasFee, InMemoryBlockQueries, InMemoryBlockRepository},
-            primitives::U256,
-            state_actor::StatePayloadId,
-            storage::InMemoryState,
-        },
-    };
+    use {super::*, crate::methods::tests::create_state_actor};
 
     pub fn example_request() -> serde_json::Value {
         serde_json::from_str(
@@ -87,23 +79,7 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_execute() {
-        let genesis_config = moved::genesis::config::GenesisConfig::default();
-        let (state_channel, rx) = mpsc::channel(10);
-
-        let state = moved::state_actor::StateActor::new(
-            rx,
-            InMemoryState::new(),
-            B256::ZERO,
-            genesis_config,
-            StatePayloadId,
-            B256::ZERO,
-            InMemoryBlockRepository::new(),
-            Eip1559GasFee::default(),
-            U256::ZERO,
-            (),
-            InMemoryBlockQueries,
-            BlockMemory::new(),
-        );
+        let (state, state_channel) = create_state_actor();
         let state_handle = state.spawn();
 
         let request = example_request();

@@ -52,7 +52,9 @@ mod tests {
     use {
         super::*,
         crate::{
-            methods::{forkchoice_updated, get_payload, send_raw_transaction},
+            methods::{
+                forkchoice_updated, get_payload, send_raw_transaction, tests::create_state_actor,
+            },
             schema::{ForkchoiceUpdatedResponseV1, GetPayloadResponseV3},
         },
         std::iter,
@@ -60,7 +62,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_execute() {
-        let (state, state_channel) = forkchoice_updated::tests::create_state_actor();
+        let (state, state_channel) = create_state_actor();
         let state_handle = state.spawn();
 
         // 1. Send transaction
