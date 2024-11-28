@@ -168,45 +168,98 @@ impl From<Query> for StateMessage {
     }
 }
 
-pub type BlockResponse = alloy::rpc::types::Block<alloy::rpc::types::Transaction>;
+pub type RpcBlock = alloy::rpc::types::Block<alloy::rpc::types::Transaction<ExtendedTxEnvelope>>;
 
-impl From<ExtendedBlock> for BlockResponse {
-    fn from(value: ExtendedBlock) -> Self {
-        Self {
+#[derive(Debug)]
+pub struct BlockResponse(pub RpcBlock);
+
+impl BlockResponse {
+    fn new(value: RpcBlock) -> Self {
+        Self(value)
+    }
+
+    pub fn from_block_with_transaction_hashes(value: ExtendedBlock) -> Self {
+        Self::new(RpcBlock {
+            transactions: BlockTransactions::Hashes(
+                value
+                    .block
+                    .transactions
+                    .iter()
+                    .map(ExtendedTxEnvelope::compute_hash)
+                    .collect(),
+            ),
             header: alloy::rpc::types::Header {
                 hash: value.hash,
-                inner: alloy::consensus::Header {
-                    number: value.block.header.number,
-                    parent_hash: value.block.header.parent_hash,
-                    ommers_hash: value.block.header.ommers_hash,
-                    nonce: value.block.header.nonce.into(),
-                    base_fee_per_gas: Some(value.block.header.base_fee_per_gas.to_saturated_u64()),
-                    blob_gas_used: Some(value.block.header.blob_gas_used),
-                    excess_blob_gas: Some(value.block.header.excess_blob_gas),
-                    parent_beacon_block_root: Some(value.block.header.parent_beacon_block_root),
-                    logs_bloom: value.block.header.logs_bloom.into(),
-                    transactions_root: value.block.header.transactions_root,
-                    state_root: value.block.header.state_root,
-                    receipts_root: value.block.header.receipts_root,
-                    difficulty: value.block.header.difficulty,
-                    extra_data: value.block.header.extra_data,
-                    gas_limit: value.block.header.gas_limit,
-                    gas_used: value.block.header.gas_used,
-                    timestamp: value.block.header.timestamp,
-                    beneficiary: value.block.header.beneficiary,
-                    // TODO: review fields below
-                    mix_hash: Default::default(),
-                    requests_hash: None,
-                    withdrawals_root: None,
-                },
+                inner: value.block.header.into(),
                 // TODO: review fields below
                 total_difficulty: None,
                 size: None,
             },
-            transactions: BlockTransactions::Uncle,
             // TODO: review fields below
             uncles: Vec::new(),
             withdrawals: None,
+        })
+    }
+
+    pub fn from_block_with_transactions(value: ExtendedBlock) -> Self {
+        Self::new(RpcBlock {
+            transactions: BlockTransactions::Full(
+                value
+                    .block
+                    .transactions
+                    .into_iter()
+                    .enumerate()
+                    .map(|(i, inner)| alloy::rpc::types::Transaction {
+                        block_hash: Some(value.hash),
+                        block_number: Some(value.block.header.number),
+                        transaction_index: Some(i as u64),
+                        effective_gas_price: None, // TODO: Gas it up #160
+                        from: inner
+                            .sender()
+                            .expect("Block transactions should contain valid signature"),
+                        inner,
+                    })
+                    .collect(),
+            ),
+            header: alloy::rpc::types::Header {
+                hash: value.hash,
+                inner: value.block.header.into(),
+                // TODO: review fields below
+                total_difficulty: None,
+                size: None,
+            },
+            // TODO: review fields below
+            uncles: Vec::new(),
+            withdrawals: None,
+        })
+    }
+}
+
+impl From<Header> for alloy::consensus::Header {
+    fn from(value: Header) -> Self {
+        Self {
+            number: value.number,
+            parent_hash: value.parent_hash,
+            ommers_hash: value.ommers_hash,
+            nonce: value.nonce.into(),
+            base_fee_per_gas: Some(value.base_fee_per_gas.to_saturated_u64()),
+            blob_gas_used: Some(value.blob_gas_used),
+            excess_blob_gas: Some(value.excess_blob_gas),
+            parent_beacon_block_root: Some(value.parent_beacon_block_root),
+            logs_bloom: value.logs_bloom.into(),
+            transactions_root: value.transactions_root,
+            state_root: value.state_root,
+            receipts_root: value.receipts_root,
+            difficulty: value.difficulty,
+            extra_data: value.extra_data,
+            gas_limit: value.gas_limit,
+            gas_used: value.gas_used,
+            timestamp: value.timestamp,
+            beneficiary: value.beneficiary,
+            // TODO: review fields below
+            mix_hash: Default::default(),
+            requests_hash: None,
+            withdrawals_root: None,
         }
     }
 }

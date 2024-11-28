@@ -9,8 +9,20 @@ use {
 
 pub trait BlockQueries: Debug {
     type Storage;
-    fn by_hash(&self, storage: &Self::Storage, hash: B256) -> Option<BlockResponse>;
-    fn by_height(&self, storage: &Self::Storage, height: u64) -> Option<BlockResponse>;
+
+    fn by_hash(
+        &self,
+        storage: &Self::Storage,
+        hash: B256,
+        include_transactions: bool,
+    ) -> Option<BlockResponse>;
+
+    fn by_height(
+        &self,
+        storage: &Self::Storage,
+        height: u64,
+        include_transactions: bool,
+    ) -> Option<BlockResponse>;
 }
 
 pub trait BlockRepository: Debug {

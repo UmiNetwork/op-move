@@ -94,11 +94,33 @@ pub struct InMemoryBlockQueries;
 impl BlockQueries for InMemoryBlockQueries {
     type Storage = BlockMemory;
 
-    fn by_hash(&self, mem: &BlockMemory, hash: B256) -> Option<BlockResponse> {
-        mem.by_hash(hash).map(Into::into)
+    fn by_hash(
+        &self,
+        mem: &BlockMemory,
+        hash: B256,
+        include_transactions: bool,
+    ) -> Option<BlockResponse> {
+        if include_transactions {
+            mem.by_hash(hash)
+                .map(BlockResponse::from_block_with_transactions)
+        } else {
+            mem.by_hash(hash)
+                .map(BlockResponse::from_block_with_transaction_hashes)
+        }
     }
 
-    fn by_height(&self, mem: &BlockMemory, height: u64) -> Option<BlockResponse> {
-        mem.by_height(height).map(Into::into)
+    fn by_height(
+        &self,
+        mem: &BlockMemory,
+        height: u64,
+        include_transactions: bool,
+    ) -> Option<BlockResponse> {
+        if include_transactions {
+            mem.by_height(height)
+                .map(BlockResponse::from_block_with_transactions)
+        } else {
+            mem.by_height(height)
+                .map(BlockResponse::from_block_with_transaction_hashes)
+        }
     }
 }
