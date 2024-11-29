@@ -50,30 +50,36 @@ fn parse_params(request: serde_json::Value) -> Result<(BlockNumberOrTag, bool), 
 
 #[cfg(test)]
 mod tests {
-    use {super::*, crate::methods::tests::create_state_actor};
+    use {
+        super::*, crate::methods::tests::create_state_actor, alloy::eips::BlockNumberOrTag::*,
+        moved::types::state::Command, test_case::test_case,
+    };
 
-    pub fn example_request() -> serde_json::Value {
-        serde_json::from_str(
-            r#"
-            {
-                "id": 1,
-                "jsonrpc": "2.0",
-                "method": "eth_getBlockByHash",
-                "params": [
-                    "0x0",
-                    false
-                ]
-            }
-        "#,
-        )
-        .unwrap()
+    pub fn example_request(tag: BlockNumberOrTag) -> serde_json::Value {
+        serde_json::json!({
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "eth_getBlockByNumber",
+            "params": [tag, false]
+        })
+    }
+
+    pub fn get_block_number_from_response(response: serde_json::Value) -> String {
+        response
+            .as_object()
+            .unwrap()
+            .get("number") // Block number
+            .unwrap()
+            .as_str()
+            .unwrap()
+            .to_string()
     }
 
     #[tokio::test]
     async fn test_execute_reads_genesis_block_successfully() {
         let (state, state_channel) = create_state_actor();
         let state_handle = state.spawn();
-        let request = example_request();
+        let request = example_request(Number(0));
 
         let expected_response: serde_json::Value = serde_json::from_str(r#"
         {
@@ -104,6 +110,52 @@ mod tests {
         let response = execute(request, state_channel).await.unwrap();
 
         assert_eq!(response, expected_response);
+        state_handle.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_latest_block_height_is_updated_with_newly_built_block() {
+        let (state, state_channel) = create_state_actor();
+        let state_handle = state.spawn();
+
+        let request = example_request(Latest);
+        let response = execute(request, state_channel.clone()).await.unwrap();
+        assert_eq!(get_block_number_from_response(response), "0x0");
+
+        // Create a block, so the block height becomes 1
+        let (tx, _) = oneshot::channel();
+        let msg = Command::StartBlockBuild {
+            payload_attributes: Default::default(),
+            response_channel: tx,
+        }
+        .into();
+        state_channel.send(msg).await.unwrap();
+
+        let request = example_request(Latest);
+        let response = execute(request, state_channel).await.unwrap();
+        assert_eq!(get_block_number_from_response(response), "0x1");
+        state_handle.await.unwrap();
+    }
+
+    #[test_case(Safe; "safe")]
+    #[test_case(Pending; "pending")]
+    #[test_case(Finalized; "finalized")]
+    #[tokio::test]
+    async fn test_latest_block_height_is_same_as_tag(tag: BlockNumberOrTag) {
+        let (state, state_channel) = create_state_actor();
+        let state_handle = state.spawn();
+
+        let (tx, _) = oneshot::channel();
+        let msg = Command::StartBlockBuild {
+            payload_attributes: Default::default(),
+            response_channel: tx,
+        }
+        .into();
+        state_channel.send(msg).await.unwrap();
+
+        let request = example_request(tag);
+        let response = execute(request, state_channel).await.unwrap();
+        assert_eq!(get_block_number_from_response(response), "0x1");
         state_handle.await.unwrap();
     }
 }

@@ -26,7 +26,7 @@ use {
     },
     alloy::{
         consensus::Receipt,
-        eips::BlockNumberOrTag,
+        eips::BlockNumberOrTag::*,
         primitives::{keccak256, Bloom},
         rlp::{Decodable, Encodable},
         rpc::types::{FeeHistory, TransactionReceipt as AlloyTxReceipt},
@@ -46,7 +46,7 @@ pub type InMemStateActor = StateActor<
     crate::block::MovedBlockHash,
     crate::block::InMemoryBlockRepository,
     crate::block::Eip1559GasFee,
-    alloy::primitives::U256,
+    U256,
     crate::move_execution::MovedBaseTokenAccounts,
     crate::block::InMemoryBlockQueries,
     crate::block::BlockMemory,
@@ -193,9 +193,9 @@ impl<
                 response_channel,
                 include_transactions,
             } => response_channel.send(match height {
-                BlockNumberOrTag::Number(height) => self.block_queries.by_height(&self.block_memory, height, include_transactions),
-                // TODO: Support block "tag"
-                _ => None,
+                Number(height) => self.block_queries.by_height(&self.block_memory, height, include_transactions),
+                Finalized | Pending | Latest | Safe => self.block_queries.by_height(&self.block_memory, self.height, include_transactions),
+                Earliest => self.block_queries.by_height(&self.block_memory, 0, include_transactions),
             }).ok(),
             Query::BlockNumber {
                 response_channel,
@@ -238,8 +238,8 @@ impl<
                 let block = self.create_block(payload_attributes);
                 self.block_repository
                     .add(&mut self.block_memory, block.clone());
-                let payload = PayloadResponse::from(block);
-                self.pending_payload = Some((id, payload));
+                self.height += 1;
+                self.pending_payload.replace((id, block.into()));
             }
             Command::GetPayload {
                 id: request_id,
