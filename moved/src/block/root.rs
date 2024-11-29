@@ -31,7 +31,7 @@ pub trait BlockRepository: Debug {
     fn by_hash(&self, storage: &Self::Storage, hash: B256) -> Option<ExtendedBlock>;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct ExtendedBlock {
     /// The block hash is the output of keccak-256 algorithm with RLP encoded block header as input.
     pub hash: B256,
@@ -94,7 +94,7 @@ pub struct Header {
     pub parent_hash: B256,
     /// A 256-bit hash field that is now deprecated due to the replacement of proof of work
     /// consensus. It is now to a constant, `KEC(RLP(()))`; formally `H_o`.
-    pub(crate) ommers_hash: B256,
+    pub ommers_hash: B256,
     /// The 160-bit address to which priority fees from this block are transferred; formally `H_c`.
     pub beneficiary: Address,
     /// The Keccak 256-bit hash of the root node of the state trie, after all transactions and
@@ -102,7 +102,7 @@ pub struct Header {
     pub state_root: B256,
     /// The Keccak 256-bit hash of the root node of the trie structure populated with each
     /// transaction in the transactions list portion of the block; formally `H_t`.
-    pub(crate) transactions_root: B256,
+    pub transactions_root: B256,
     /// The Keccak 256-bit hash of the root node of the trie structure populated with the receipts
     /// of each transaction in the transactions list portion of the block; formally `H_e`.
     pub receipts_root: B256,
@@ -112,7 +112,7 @@ pub struct Header {
     pub logs_bloom: B2048,
     /// A scalar field that is now deprecated due to the replacement of proof of work consensus. It
     /// is set to 0; formally `H_d`.
-    pub(crate) difficulty: U256,
+    pub difficulty: U256,
     /// A scalar value equal to the number of ancestor blocks. The genesis block has a number of
     /// zero; formally `H_i`.
     pub number: u64,
@@ -134,13 +134,13 @@ pub struct Header {
     pub prev_randao: B256,
     /// A 64-bit value that is now deprecated due to the replacement of proof of work consensus. It
     /// is set to 0; formally `H_n`.
-    pub(crate) nonce: u64,
+    pub nonce: u64,
     /// A scalar value equal to the amount of wei that is burned for each unit of gas consumed;
     /// formally `H_f`
     pub base_fee_per_gas: U256,
     /// The Keccak 256-bit hash of the root node of the trie structure populated with each
     /// withdrawal operations pushed by the consensus layer for this block; formally `H_w`.
-    pub(crate) withdrawals_root: B256,
+    pub withdrawals_root: B256,
     /// The total amount of blob gas consumed by the transactions within the block, added in
     /// EIP-4844.
     pub blob_gas_used: u64,

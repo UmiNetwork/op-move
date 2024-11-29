@@ -291,6 +291,9 @@ impl<
                 self.mem_pool
                     .insert(tx_hash, (ExtendedTxEnvelope::Canonical(tx), encoded));
             }
+            Command::GenesisUpdate { block } => {
+                self.block_repository.add(&mut self.block_memory, block);
+            }
         }
     }
 

@@ -104,6 +104,9 @@ pub enum Command {
     AddTransaction {
         tx: TxEnvelope,
     },
+    GenesisUpdate {
+        block: ExtendedBlock,
+    },
 }
 
 impl From<Command> for StateMessage {

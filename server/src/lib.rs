@@ -13,7 +13,7 @@ use {
         primitives::{B256, U256},
         state_actor::StatePayloadId,
         storage::InMemoryState,
-        types::state::StateMessage,
+        types::state::{Command, RpcBlock, StateMessage},
     },
     once_cell::sync::Lazy,
     std::{
@@ -70,6 +70,7 @@ pub async fn run() {
 
     // TODO: genesis should come from a file (path specified by CLI)
     let genesis_config = GenesisConfig {
+        chain_id: 42069,
         l2_contract_genesis: Path::new(
             "src/tests/optimism/packages/contracts-bedrock/deployments/genesis.json",
         )
@@ -224,7 +225,8 @@ async fn mirror(
         };
 
     let request = request.expect("geth responded, so body must have been JSON");
-    let op_move_response = moved_engine_api::request::handle(request.clone(), state_channel).await;
+    let op_move_response =
+        moved_engine_api::request::handle(request.clone(), state_channel.clone()).await;
     let log = MirrorLog {
         request: &request,
         geth_response: &parsed_geth_response,
@@ -232,9 +234,65 @@ async fn mirror(
         port,
     };
     println!("{}", serde_json::to_string_pretty(&log).unwrap());
-    // TODO: use op_move_response
-    let body = hyper::Body::from(geth_response_bytes);
-    Ok(warp::reply::Response::from_parts(geth_response_parts, body))
+
+    // TODO: this is a hack because we currently can't compute the genesis
+    // hash expected by op-node.
+    if is_genesis_block_request(&request).unwrap_or(false) {
+        let block =
+            extract_genesis_block(&parsed_geth_response).expect("Must get genesis from geth");
+        state_channel
+            .send(Command::GenesisUpdate { block }.into())
+            .await
+            .ok();
+        let body = hyper::Body::from(geth_response_bytes);
+        return Ok(warp::reply::Response::from_parts(geth_response_parts, body));
+    }
+
+    let body = hyper::Body::from(serde_json::to_vec(&op_move_response).unwrap());
+    Ok(warp::reply::Response::new(body))
+}
+
+fn is_genesis_block_request(request: &serde_json::Value) -> Option<bool> {
+    let obj = request.as_object()?;
+    let method = obj.get("method")?.as_str()?;
+    if method != "eth_getBlockByNumber" {
+        return Some(false);
+    }
+    let first_param = obj.get("params")?.as_array()?.first()?.as_str()?;
+    Some(first_param == "0x0")
+}
+
+fn extract_genesis_block(geth_response: &serde_json::Value) -> Option<ExtendedBlock> {
+    let geth_block: RpcBlock =
+        serde_json::from_value(geth_response.as_object()?.get("result")?.clone()).ok()?;
+    let header = Header {
+        parent_hash: geth_block.header.parent_hash,
+        ommers_hash: geth_block.header.ommers_hash,
+        beneficiary: geth_block.header.beneficiary,
+        state_root: geth_block.header.state_root,
+        transactions_root: geth_block.header.transactions_root,
+        receipts_root: geth_block.header.receipts_root,
+        logs_bloom: geth_block.header.logs_bloom.into(),
+        difficulty: geth_block.header.difficulty,
+        number: geth_block.header.number,
+        gas_limit: geth_block.header.gas_limit,
+        gas_used: geth_block.header.gas_used,
+        timestamp: geth_block.header.timestamp,
+        extra_data: geth_block.header.extra_data.clone(),
+        prev_randao: B256::default(),
+        nonce: geth_block.header.nonce.into(),
+        base_fee_per_gas: U256::from(geth_block.header.base_fee_per_gas.unwrap_or_default()),
+        withdrawals_root: geth_block.header.withdrawals_root.unwrap_or_default(),
+        blob_gas_used: geth_block.header.blob_gas_used.unwrap_or_default(),
+        excess_blob_gas: geth_block.header.excess_blob_gas.unwrap_or_default(),
+        parent_beacon_block_root: geth_block
+            .header
+            .parent_beacon_block_root
+            .unwrap_or_default(),
+    };
+    let block = Block::new(header, Vec::new());
+    let ext_block = ExtendedBlock::new(geth_block.header.hash, Default::default(), block);
+    Some(ext_block)
 }
 
 async fn proxy(
