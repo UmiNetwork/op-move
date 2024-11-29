@@ -507,6 +507,3 @@ impl<
         Some(result)
     }
 }
-
-#[cfg(test)]
-mod tests;
