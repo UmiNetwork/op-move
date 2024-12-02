@@ -11,7 +11,7 @@ use {
         eips::{eip2930::AccessList, eip7702::SignedAuthorization},
         primitives::{Address, Bloom, Bytes, ChainId, Log, LogData, TxKind, B256, U256, U64},
         rlp::{Buf, Decodable, Encodable, RlpDecodable, RlpEncodable},
-        rpc::types::TransactionTrait,
+        rpc::types::{TransactionRequest, TransactionTrait},
     },
     aptos_types::transaction::{EntryFunction, Module, Script},
     move_core_types::{
@@ -479,6 +479,25 @@ impl TransactionData {
             Some(hash)
         } else {
             None
+        }
+    }
+}
+
+impl From<TransactionRequest> for NormalizedEthTransaction {
+    fn from(value: TransactionRequest) -> Self {
+        Self {
+            signer: value.from.unwrap_or_default(),
+            to: value.to.unwrap_or_default(),
+            nonce: value.nonce.unwrap_or_default(),
+            value: value.value.unwrap_or_default(),
+            chain_id: value.chain_id,
+            gas_limit: U256::from(value.gas.unwrap_or(u64::MAX)),
+            max_priority_fee_per_gas: U256::from(
+                value.max_priority_fee_per_gas.unwrap_or_default(),
+            ),
+            max_fee_per_gas: U256::from(value.max_fee_per_gas.unwrap_or_default()),
+            data: value.input.input.unwrap_or_default(),
+            access_list: value.access_list.unwrap_or_default(),
         }
     }
 }

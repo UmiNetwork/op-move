@@ -110,16 +110,15 @@ mod tests {
             "method": "eth_estimateGas",
             "params": [
                 {
-                    "from": "0x0000000000000000000000000000000000000001",
-                    "to": null,
-                    "input": "0xa11ce0"
+                    "from": "0x8fd379246834eac74b8419ffda202cf8051f7a03",
+                    "input": "0x01fd01a11ceb0b0600000009010002020204030614051a0e07283d0865200a8501050c8a01490dd3010200000001080000020001000003000200000400030000050403000105010101030002060c0301070307636f756e74657207436f756e7465720e636f756e7465725f657869737473096765745f636f756e7409696e6372656d656e74077075626c69736801690000000000000000000000008fd379246834eac74b8419ffda202cf8051f7a0300020106030001000003030b00290002010100010003050b002b00100014020201040100050b0b002a000f000c010a0114060100000000000000160b0115020301040003050b000b0112002d0002000000"
                 },
                 block,
             ],
             "id": 1
         });
 
-        let expected_response: serde_json::Value = serde_json::from_str(r#""0x0""#).unwrap();
+        let expected_response: serde_json::Value = serde_json::from_str(r#""0x3""#).unwrap();
         let response = execute(request, state_channel).await.unwrap();
 
         assert_eq!(response, expected_response);
