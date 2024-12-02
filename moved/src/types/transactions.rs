@@ -1,17 +1,14 @@
 use {
-    crate::{
-        primitives::{ToMoveAddress, ToU64},
-        Error, InvalidTransactionCause, UserError,
-    },
+    crate::{primitives::ToMoveAddress, Error, InvalidTransactionCause, UserError},
     alloy::{
         consensus::{
             Receipt, ReceiptWithBloom, Signed, Transaction, TxEip1559, TxEip2930, TxEnvelope,
             TxLegacy,
         },
-        eips::{eip2930::AccessList, eip7702::SignedAuthorization},
-        primitives::{Address, Bloom, Bytes, ChainId, Log, LogData, TxKind, B256, U256, U64},
+        eips::eip2930::AccessList,
+        primitives::{Address, Bloom, Bytes, Log, LogData, TxKind, B256, U256, U64},
         rlp::{Buf, Decodable, Encodable, RlpDecodable, RlpEncodable},
-        rpc::types::{TransactionRequest, TransactionTrait},
+        rpc::types::TransactionRequest,
     },
     aptos_types::transaction::{EntryFunction, Module, Script},
     move_core_types::{
@@ -59,107 +56,6 @@ impl ExtendedTxEnvelope {
             Self::Canonical(tx) => tx.recover_signer().ok(),
             Self::DepositedTx(tx) => Some(tx.from),
         }
-    }
-}
-
-macro_rules! impl_fn {
-    ($name:tt, $rt:ty$(,$arg:ident: $ttt:ty)*) => {
-        fn $name(&self, $($arg: $ttt)*) -> $rt {
-            match self {
-                Self::Canonical(tx) => tx.$name($($arg)*),
-                Self::DepositedTx(tx) => tx.$name($($arg)*),
-            }
-        }
-    };
-}
-
-impl TransactionTrait for ExtendedTxEnvelope {
-    impl_fn!(chain_id, Option<ChainId>);
-    impl_fn!(nonce, u64);
-    impl_fn!(gas_limit, u64);
-    impl_fn!(gas_price, Option<u128>);
-    impl_fn!(max_fee_per_gas, u128);
-    impl_fn!(max_priority_fee_per_gas, Option<u128>);
-    impl_fn!(max_fee_per_blob_gas, Option<u128>);
-    impl_fn!(priority_fee_or_price, u128);
-    impl_fn!(effective_gas_price, u128, base_fee: Option<u64>);
-    impl_fn!(is_dynamic_fee, bool);
-    impl_fn!(kind, TxKind);
-    impl_fn!(value, U256);
-    impl_fn!(input, &'_ Bytes);
-    impl_fn!(ty, u8);
-    impl_fn!(access_list, Option<&'_ AccessList>);
-    impl_fn!(blob_versioned_hashes, Option<&'_ [B256]>);
-    impl_fn!(authorization_list, Option<&'_ [SignedAuthorization]>);
-}
-
-impl TransactionTrait for DepositedTx {
-    fn chain_id(&self) -> Option<ChainId> {
-        None
-    }
-
-    fn nonce(&self) -> u64 {
-        0
-    }
-
-    fn gas_limit(&self) -> u64 {
-        self.gas.to_u64()
-    }
-
-    fn gas_price(&self) -> Option<u128> {
-        None
-    }
-
-    fn max_fee_per_gas(&self) -> u128 {
-        0
-    }
-
-    fn max_priority_fee_per_gas(&self) -> Option<u128> {
-        None
-    }
-
-    fn max_fee_per_blob_gas(&self) -> Option<u128> {
-        None
-    }
-
-    fn priority_fee_or_price(&self) -> u128 {
-        0
-    }
-
-    fn effective_gas_price(&self, _base_fee: Option<u64>) -> u128 {
-        0
-    }
-
-    fn is_dynamic_fee(&self) -> bool {
-        false
-    }
-
-    fn kind(&self) -> TxKind {
-        TxKind::Call(self.to)
-    }
-
-    fn value(&self) -> U256 {
-        self.value
-    }
-
-    fn input(&self) -> &Bytes {
-        &self.data
-    }
-
-    fn ty(&self) -> u8 {
-        0x7e
-    }
-
-    fn access_list(&self) -> Option<&AccessList> {
-        None
-    }
-
-    fn blob_versioned_hashes(&self) -> Option<&[B256]> {
-        None
-    }
-
-    fn authorization_list(&self) -> Option<&[SignedAuthorization]> {
-        None
     }
 }
 

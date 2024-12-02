@@ -171,7 +171,7 @@ impl From<Query> for StateMessage {
     }
 }
 
-pub type RpcBlock = alloy::rpc::types::Block<alloy::rpc::types::Transaction<ExtendedTxEnvelope>>;
+pub type RpcBlock = alloy::rpc::types::Block<op_alloy::rpc_types::Transaction>;
 
 #[derive(Debug)]
 pub struct BlockResponse(pub RpcBlock);
@@ -212,15 +212,23 @@ impl BlockResponse {
                     .transactions
                     .into_iter()
                     .enumerate()
-                    .map(|(i, inner)| alloy::rpc::types::Transaction {
-                        block_hash: Some(value.hash),
-                        block_number: Some(value.block.header.number),
-                        transaction_index: Some(i as u64),
-                        effective_gas_price: None, // TODO: Gas it up #160
-                        from: inner
-                            .sender()
-                            .expect("Block transactions should contain valid signature"),
-                        inner,
+                    .map(|(i, inner)| {
+                        let tx = alloy::rpc::types::Transaction {
+                            block_hash: Some(value.hash),
+                            block_number: Some(value.block.header.number),
+                            transaction_index: Some(i as u64),
+                            effective_gas_price: None, // TODO: Gas it up #160
+                            from: inner
+                                .sender()
+                                .expect("Block transactions should contain valid signature"),
+                            inner: to_op_type(inner),
+                        };
+                        op_alloy::rpc_types::Transaction {
+                            inner: tx,
+                            // TODO: what are these fields?
+                            deposit_nonce: None,
+                            deposit_receipt_version: None,
+                        }
                     })
                     .collect(),
             ),
@@ -235,6 +243,30 @@ impl BlockResponse {
             uncles: Vec::new(),
             withdrawals: None,
         })
+    }
+}
+
+fn to_op_type(tx: ExtendedTxEnvelope) -> op_alloy::consensus::OpTxEnvelope {
+    match tx {
+        ExtendedTxEnvelope::Canonical(TxEnvelope::Legacy(x)) => x.into(),
+        ExtendedTxEnvelope::Canonical(TxEnvelope::Eip1559(x)) => x.into(),
+        ExtendedTxEnvelope::Canonical(TxEnvelope::Eip2930(x)) => x.into(),
+        ExtendedTxEnvelope::Canonical(TxEnvelope::Eip7702(x)) => x.into(),
+        ExtendedTxEnvelope::DepositedTx(deposit) => {
+            let op = op_alloy::consensus::TxDeposit {
+                source_hash: deposit.source_hash,
+                from: deposit.from,
+                to: alloy::primitives::TxKind::Call(deposit.to),
+                mint: Some(deposit.mint.saturating_to()),
+                value: deposit.value,
+                gas_limit: deposit.gas.to_u64(),
+                is_system_transaction: deposit.is_system_tx,
+                input: deposit.data,
+            };
+            let sealed_op = alloy::primitives::Sealed::new(op);
+            sealed_op.into()
+        }
+        ExtendedTxEnvelope::Canonical(_) => unreachable!(),
     }
 }
 
