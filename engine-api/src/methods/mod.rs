@@ -33,9 +33,9 @@ pub mod tests {
             },
             genesis::{
                 config::{GenesisConfig, CHAIN_ID},
-                init_state,
+                self,
             },
-            move_execution::MovedBaseTokenAccounts,
+            move_execution::{InMemoryStateQueries, MovedBaseTokenAccounts, StateMemory},
             primitives::{Address, B256, U256, U64},
             storage::InMemoryState,
             types::{
@@ -66,7 +66,9 @@ pub mod tests {
         repository.add(&mut block_memory, genesis_block);
 
         let mut state = InMemoryState::new();
-        init_state(&genesis_config, &mut state);
+        let (changes, table_changes) = genesis::init(&genesis_config, &state);
+        let state_memory = StateMemory::from_genesis(changes.clone());
+        genesis::apply(changes, table_changes, &genesis_config, &mut state);
 
         let state = moved::state_actor::StateActor::new(
             rx,
@@ -81,6 +83,7 @@ pub mod tests {
             MovedBaseTokenAccounts::new(AccountAddress::ONE),
             InMemoryBlockQueries,
             block_memory,
+            InMemoryStateQueries::new(state_memory),
         );
         (state, state_channel)
     }
