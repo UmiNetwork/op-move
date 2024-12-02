@@ -49,6 +49,7 @@ mod nonces;
 pub(crate) mod simulate;
 mod tag_validation;
 
+mod state;
 #[cfg(test)]
 mod tests;
 
