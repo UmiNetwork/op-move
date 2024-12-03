@@ -32,5 +32,5 @@ pub fn access_state_error<E: fmt::Debug>(e: E) -> JsonRpcError {
 }
 
 pub fn transaction_error<E: fmt::Debug>(e: E) -> JsonRpcError {
-    JsonRpcError::without_data(32603, format!("Invalid transaction: {e:?}"))
+    JsonRpcError::without_data(3, format!("Execution reverted: {e:?}"))
 }
