@@ -1,5 +1,9 @@
 use {
-    crate::{json_utils, json_utils::access_state_error, jsonrpc::JsonRpcError},
+    crate::{
+        json_utils,
+        json_utils::{access_state_error, transaction_error},
+        jsonrpc::JsonRpcError,
+    },
     alloy::{eips::BlockNumberOrTag, rpc::types::TransactionRequest},
     moved::types::state::{Query, StateMessage},
     tokio::sync::{mpsc, oneshot},
@@ -54,14 +58,18 @@ async fn inner_execute(
     .into();
     state_channel.send(msg).await.map_err(access_state_error)?;
     let response = rx.await.map_err(access_state_error)?;
-    Ok(response)
+    response.map_err(transaction_error)
 }
 
 #[cfg(test)]
 mod tests {
     use {
-        super::*, crate::methods::tests::create_state_actor, alloy::primitives::Address,
-        moved::primitives::U64, std::str::FromStr, test_case::test_case,
+        super::*,
+        crate::methods::tests::{create_state_actor, deposit_eth},
+        alloy::primitives::Address,
+        moved::primitives::U64,
+        std::str::FromStr,
+        test_case::test_case,
     };
 
     #[test_case("0x1")]
@@ -103,8 +111,10 @@ mod tests {
     #[tokio::test]
     async fn test_execute(block: &str) {
         let (state_actor, state_channel) = create_state_actor();
-
         let state_handle = state_actor.spawn();
+
+        deposit_eth("0x8fd379246834eac74b8419ffda202cf8051f7a03", &state_channel).await;
+
         let request: serde_json::Value = serde_json::json!({
             "jsonrpc": "2.0",
             "method": "eth_estimateGas",
@@ -118,7 +128,7 @@ mod tests {
             "id": 1
         });
 
-        let expected_response: serde_json::Value = serde_json::from_str(r#""0x3""#).unwrap();
+        let expected_response: serde_json::Value = serde_json::from_str(r#""0xa""#).unwrap();
         let response = execute(request, state_channel).await.unwrap();
 
         assert_eq!(response, expected_response);

@@ -149,7 +149,7 @@ pub enum Query {
     EstimateGas {
         transaction: TransactionRequest,
         block_number: BlockNumberOrTag,
-        response_channel: oneshot::Sender<u64>,
+        response_channel: oneshot::Sender<crate::Result<u64>>,
     },
     Call {
         transaction: TransactionRequest,

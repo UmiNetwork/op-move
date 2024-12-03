@@ -223,7 +223,10 @@ impl<
             } => {
                 // TODO: Support gas estimation from arbitrary blocks
                 let outcome = self.simulate_transaction(transaction);
-                response_channel.send(outcome.gas_used).ok()
+                match outcome {
+                    Ok(outcome) => response_channel.send(Ok(outcome.gas_used)).ok(),
+                    Err(e) => response_channel.send(Err(e)).ok(),
+                }
             }
             Query::Call {
                 response_channel,
@@ -463,10 +466,13 @@ impl<
         (outcome, receipts)
     }
 
-    fn simulate_transaction(&self, request: TransactionRequest) -> TransactionExecutionOutcome {
+    fn simulate_transaction(
+        &self,
+        request: TransactionRequest,
+    ) -> crate::Result<TransactionExecutionOutcome> {
         let mut tx = NormalizedEthTransaction::from(request.clone());
-        if let Some(from) = request.from {
-            tx.nonce = quick_get_nonce(&from.to_move_address(), self.state.resolver());
+        if request.from.is_some() && request.nonce.is_none() {
+            tx.nonce = quick_get_nonce(&tx.signer.to_move_address(), self.state.resolver());
         }
         let tx = NormalizedExtendedTxEnvelope::Canonical(tx);
 
@@ -479,18 +485,15 @@ impl<
             prev_randao: B256::random(),
         };
 
-        match execute_transaction(
+        execute_transaction(
             &tx,
             &B256::random(),
             self.state.resolver(),
             &self.genesis_config,
             0,
-            &(),
+            &self.base_token,
             block_header,
-        ) {
-            Ok(outcome) => outcome,
-            Err(_) => unreachable!("User errors are handled in execution"),
-        }
+        )
     }
 
     fn query_transaction_receipt(&self, tx_hash: B256) -> Option<TransactionReceipt> {
