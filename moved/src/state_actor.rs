@@ -192,11 +192,14 @@ impl<
                 height,
                 response_channel,
                 include_transactions,
-            } => response_channel.send(match height {
-                Number(height) => self.block_queries.by_height(&self.block_memory, height, include_transactions),
-                Finalized | Pending | Latest | Safe => self.block_queries.by_height(&self.block_memory, self.height, include_transactions),
-                Earliest => self.block_queries.by_height(&self.block_memory, 0, include_transactions),
-            }).ok(),
+            } => {
+                let block_height = match height {
+                    Number(height) => height,
+                    Finalized | Pending | Latest | Safe => self.height,
+                    Earliest => 0,
+                };
+                response_channel.send(self.block_queries.by_height(&self.block_memory, block_height, include_transactions)).ok()
+            }
             Query::BlockNumber {
                 response_channel,
             } => response_channel
