@@ -3,7 +3,7 @@ pub use {
     evm_native::genesis_state_changes,
     gas::{CreateEcotoneL1GasFee, CreateL1GasFee, EcotoneL1GasFee, L1GasFee, L1GasFeeInput},
     nonces::quick_get_nonce,
-    state::{InMemoryStateQueries, StateMemory, StateQueries},
+    state::{Balance, BlockHeight, InMemoryStateQueries, Nonce, StateMemory, StateQueries},
 };
 
 use {
@@ -48,9 +48,9 @@ mod execute;
 mod gas;
 mod nonces;
 pub(crate) mod simulate;
+mod state;
 mod tag_validation;
 
-mod state;
 #[cfg(test)]
 mod tests;
 

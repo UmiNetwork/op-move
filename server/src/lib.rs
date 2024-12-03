@@ -101,6 +101,7 @@ pub async fn run() {
         rx,
         state,
         head,
+        0,
         genesis_config,
         StatePayloadId,
         block_hash,
