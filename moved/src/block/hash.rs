@@ -1,10 +1,4 @@
-use {
-    crate::block::Header,
-    alloy::{
-        primitives::{Keccak256, B256},
-        rlp::Encodable,
-    },
-};
+use {crate::block::Header, alloy::primitives::B256};
 
 /// Represents an algorithm that computes the block hash.
 pub trait BlockHash {
@@ -17,11 +11,7 @@ pub struct MovedBlockHash;
 
 impl BlockHash for MovedBlockHash {
     fn block_hash(&self, header: &Header) -> B256 {
-        let mut hasher = Keccak256::new();
-        let mut buf = Vec::with_capacity(header.length());
-        header.encode(&mut buf);
-        hasher.update(buf);
-        hasher.finalize()
+        header.hash_slow()
     }
 }
 

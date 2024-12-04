@@ -251,11 +251,13 @@ impl<
                 let input = payload_attributes.to_payload_id_input(&self.head);
                 let id = self.payload_id.new_payload_id(input);
                 response_channel.send(id).ok();
+                let prev_randao = payload_attributes.prev_randao;
                 let block = self.create_block(payload_attributes);
                 self.block_repository
                     .add(&mut self.block_memory, block.clone());
                 self.height += 1;
-                self.pending_payload.replace((id, block.into()));
+                self.pending_payload
+                    .replace((id, PayloadResponse::from_block(block, prev_randao)));
             }
             Command::GetPayload {
                 id: request_id,
@@ -292,6 +294,7 @@ impl<
                     .insert(tx_hash, (ExtendedTxEnvelope::Canonical(tx), encoded));
             }
             Command::GenesisUpdate { block } => {
+                self.head = block.hash;
                 self.block_repository.add(&mut self.block_memory, block);
             }
         }
@@ -322,7 +325,7 @@ impl<
         let base_fee = self.gas_fee.base_fee_per_gas(
             parent.block.header.gas_limit,
             parent.block.header.gas_used,
-            parent.block.header.base_fee_per_gas,
+            U256::from(parent.block.header.base_fee_per_gas.unwrap_or_default()),
         );
 
         let header_for_execution = HeaderForExecution {
@@ -345,11 +348,15 @@ impl<
             .merkle_root();
         let total_tip = execution_outcome.total_tip;
         // TODO: Compute `withdrawals_root`
-        let header = Header::new(self.head, header_for_execution.number)
-            .with_payload_attributes(payload_attributes)
-            .with_execution_outcome(execution_outcome)
-            .with_transactions_root(transactions_root)
-            .with_base_fee_per_gas(base_fee);
+        let header = Header {
+            parent_hash: self.head,
+            number: header_for_execution.number,
+            transactions_root,
+            base_fee_per_gas: Some(base_fee.saturating_to()),
+            ..Default::default()
+        }
+        .with_payload_attributes(payload_attributes)
+        .with_execution_outcome(execution_outcome);
 
         let hash = self.block_hash.block_hash(&header);
 
