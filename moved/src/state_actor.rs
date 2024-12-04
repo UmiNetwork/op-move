@@ -250,13 +250,12 @@ impl<
                 let input = payload_attributes.to_payload_id_input(&self.head);
                 let id = self.payload_id.new_payload_id(input);
                 response_channel.send(id).ok();
-                let prev_randao = payload_attributes.prev_randao;
                 let block = self.create_block(payload_attributes);
                 self.block_repository
                     .add(&mut self.block_memory, block.clone());
                 self.height += 1;
                 self.pending_payload
-                    .replace((id, PayloadResponse::from_block(block, prev_randao)));
+                    .replace((id, PayloadResponse::from_block(block)));
             }
             Command::GetPayload {
                 id: request_id,

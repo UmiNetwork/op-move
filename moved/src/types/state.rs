@@ -54,7 +54,7 @@ pub struct PayloadResponse {
 }
 
 impl PayloadResponse {
-    pub fn from_block(value: ExtendedBlock, prev_randao: B256) -> Self {
+    pub fn from_block(value: ExtendedBlock) -> Self {
         Self {
             parent_beacon_block_root: value
                 .block
@@ -62,7 +62,7 @@ impl PayloadResponse {
                 .parent_beacon_block_root
                 .unwrap_or_default(),
             block_value: value.value,
-            execution_payload: ExecutionPayload::from_block(value, prev_randao),
+            execution_payload: ExecutionPayload::from_block(value),
             blobs_bundle: Default::default(),
             should_override_builder: false,
         }
@@ -91,7 +91,7 @@ pub struct ExecutionPayload {
 }
 
 impl ExecutionPayload {
-    pub fn from_block(value: ExtendedBlock, prev_randao: B256) -> Self {
+    pub fn from_block(value: ExtendedBlock) -> Self {
         let transactions = value
             .block
             .transactions
@@ -111,7 +111,7 @@ impl ExecutionPayload {
             state_root: value.block.header.state_root,
             receipts_root: value.block.header.receipts_root,
             logs_bloom: value.block.header.logs_bloom.0,
-            prev_randao,
+            prev_randao: value.block.header.mix_hash,
             block_number: U64::from(value.block.header.number),
             gas_limit: U64::from(value.block.header.gas_limit),
             gas_used: U64::from(value.block.header.gas_used),
@@ -418,6 +418,7 @@ impl WithPayloadAttributes for Header {
             gas_limit: payload.gas_limit.to_u64(),
             timestamp: payload.timestamp.to_u64(),
             parent_beacon_block_root: Some(payload.parent_beacon_block_root),
+            mix_hash: payload.prev_randao,
             ..self
         }
     }
