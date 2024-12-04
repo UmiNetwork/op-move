@@ -8,16 +8,18 @@ use {
         block::{ExtendedBlock, Header},
         primitives::{Address, Bytes, ToU64, B2048, B256, U256, U64},
         state_actor::NewPayloadIdInput,
-        types::transactions::{ExtendedTxEnvelope, NormalizedExtendedTxEnvelope},
+        types::transactions::NormalizedExtendedTxEnvelope,
     },
     alloy::{
         consensus::transaction::TxEnvelope,
-        eips::BlockNumberOrTag,
+        eips::{eip2718::Encodable2718, BlockNumberOrTag},
         primitives::Bloom,
         rpc::types::{BlockTransactions, FeeHistory, TransactionRequest},
     },
-    alloy_rlp::Encodable,
-    op_alloy::{consensus::OpReceiptEnvelope, rpc_types::L1BlockInfo},
+    op_alloy::{
+        consensus::{OpReceiptEnvelope, OpTxEnvelope},
+        rpc_types::L1BlockInfo,
+    },
     tokio::sync::oneshot,
 };
 
@@ -95,9 +97,9 @@ impl ExecutionPayload {
             .transactions
             .into_iter()
             .map(|tx| {
-                let capacity = tx.length();
+                let capacity = tx.eip2718_encoded_length();
                 let mut bytes = Vec::with_capacity(capacity);
-                tx.encode(&mut bytes);
+                tx.encode_2718(&mut bytes);
                 bytes.into()
             })
             .collect();
@@ -241,7 +243,14 @@ impl BlockResponse {
                     .block
                     .transactions
                     .iter()
-                    .map(ExtendedTxEnvelope::compute_hash)
+                    .map(|tx| match tx {
+                        OpTxEnvelope::Legacy(tx) => *tx.hash(),
+                        OpTxEnvelope::Eip1559(tx) => *tx.hash(),
+                        OpTxEnvelope::Eip2930(tx) => *tx.hash(),
+                        OpTxEnvelope::Eip7702(tx) => *tx.hash(),
+                        OpTxEnvelope::Deposit(tx) => tx.hash(),
+                        _ => unreachable!("Tx type not supported"),
+                    })
                     .collect(),
             ),
             header: alloy::rpc::types::Header {
@@ -271,10 +280,9 @@ impl BlockResponse {
                             block_number: Some(value.block.header.number),
                             transaction_index: Some(i as u64),
                             effective_gas_price: None, // TODO: Gas it up #160
-                            from: inner
-                                .sender()
+                            from: compute_from(&inner)
                                 .expect("Block transactions should contain valid signature"),
-                            inner: to_op_type(inner),
+                            inner,
                         };
                         op_alloy::rpc_types::Transaction {
                             inner: tx,
@@ -299,27 +307,14 @@ impl BlockResponse {
     }
 }
 
-fn to_op_type(tx: ExtendedTxEnvelope) -> op_alloy::consensus::OpTxEnvelope {
+fn compute_from(tx: &OpTxEnvelope) -> Result<Address, alloy::primitives::SignatureError> {
     match tx {
-        ExtendedTxEnvelope::Canonical(TxEnvelope::Legacy(x)) => x.into(),
-        ExtendedTxEnvelope::Canonical(TxEnvelope::Eip1559(x)) => x.into(),
-        ExtendedTxEnvelope::Canonical(TxEnvelope::Eip2930(x)) => x.into(),
-        ExtendedTxEnvelope::Canonical(TxEnvelope::Eip7702(x)) => x.into(),
-        ExtendedTxEnvelope::DepositedTx(deposit) => {
-            let op = op_alloy::consensus::TxDeposit {
-                source_hash: deposit.source_hash,
-                from: deposit.from,
-                to: alloy::primitives::TxKind::Call(deposit.to),
-                mint: Some(deposit.mint.saturating_to()),
-                value: deposit.value,
-                gas_limit: deposit.gas.to_u64(),
-                is_system_transaction: deposit.is_system_tx,
-                input: deposit.data,
-            };
-            let sealed_op = alloy::primitives::Sealed::new(op);
-            sealed_op.into()
-        }
-        ExtendedTxEnvelope::Canonical(_) => unreachable!(),
+        OpTxEnvelope::Legacy(tx) => tx.recover_signer(),
+        OpTxEnvelope::Eip1559(tx) => tx.recover_signer(),
+        OpTxEnvelope::Eip2930(tx) => tx.recover_signer(),
+        OpTxEnvelope::Eip7702(tx) => tx.recover_signer(),
+        OpTxEnvelope::Deposit(tx) => Ok(tx.from),
+        _ => unreachable!("Tx type not supported"),
     }
 }
 
@@ -337,7 +332,7 @@ pub struct ExecutionOutcome {
 #[derive(Debug, Clone)]
 pub struct TransactionWithReceipt {
     pub tx_hash: B256,
-    pub tx: ExtendedTxEnvelope,
+    pub tx: OpTxEnvelope,
     pub tx_index: u64,
     pub normalized_tx: NormalizedExtendedTxEnvelope,
     pub receipt: OpReceiptEnvelope,

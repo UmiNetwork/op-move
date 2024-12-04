@@ -14,7 +14,9 @@ use {
     move_core_types::{
         account_address::AccountAddress, effects::ChangeSet, language_storage::ModuleId,
     },
-    op_alloy::consensus::{OpDepositReceipt, OpDepositReceiptWithBloom, OpReceiptEnvelope},
+    op_alloy::consensus::{
+        OpDepositReceipt, OpDepositReceiptWithBloom, OpReceiptEnvelope, OpTxEnvelope,
+    },
     revm::primitives::keccak256,
     serde::{Deserialize, Serialize},
 };
@@ -106,6 +108,36 @@ impl ExtendedTxEnvelope {
                     },
                     logs_bloom: bloom,
                 })
+            }
+            ExtendedTxEnvelope::Canonical(_) => unreachable!("Not supported"),
+        }
+    }
+}
+
+impl From<ExtendedTxEnvelope> for OpTxEnvelope {
+    fn from(value: ExtendedTxEnvelope) -> Self {
+        match value {
+            ExtendedTxEnvelope::Canonical(TxEnvelope::Legacy(tx)) => OpTxEnvelope::Legacy(tx),
+            ExtendedTxEnvelope::Canonical(TxEnvelope::Eip1559(tx)) => OpTxEnvelope::Eip1559(tx),
+            ExtendedTxEnvelope::Canonical(TxEnvelope::Eip2930(tx)) => OpTxEnvelope::Eip2930(tx),
+            ExtendedTxEnvelope::Canonical(TxEnvelope::Eip7702(tx)) => OpTxEnvelope::Eip7702(tx),
+            ExtendedTxEnvelope::DepositedTx(tx) => {
+                let mint = if tx.mint.is_zero() {
+                    None
+                } else {
+                    Some(tx.mint.saturating_to())
+                };
+                let deposit_tx = op_alloy::consensus::TxDeposit {
+                    source_hash: tx.source_hash,
+                    from: tx.from,
+                    to: TxKind::Call(tx.to),
+                    mint,
+                    value: tx.value,
+                    gas_limit: tx.gas.saturating_to(),
+                    is_system_transaction: tx.is_system_tx,
+                    input: tx.data,
+                };
+                deposit_tx.into()
             }
             ExtendedTxEnvelope::Canonical(_) => unreachable!("Not supported"),
         }

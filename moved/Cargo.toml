@@ -7,6 +7,7 @@ edition = "2021"
 [dependencies]
 alloy.workspace = true
 alloy-rlp.workspace = true
+alloy-trie.workspace = true
 aptos-crypto.workspace = true
 aptos-framework.workspace = true
 aptos-gas-algebra.workspace = true

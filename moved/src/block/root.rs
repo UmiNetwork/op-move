@@ -1,8 +1,9 @@
 use {
     crate::{
         primitives::{B256, U256},
-        types::{state::BlockResponse, transactions::ExtendedTxEnvelope},
+        types::state::BlockResponse,
     },
+    op_alloy::consensus::OpTxEnvelope,
     std::fmt::Debug,
 };
 
@@ -62,11 +63,11 @@ impl ExtendedBlock {
 #[derive(Debug, Clone, Default)]
 pub struct Block {
     pub header: Header,
-    pub transactions: Vec<ExtendedTxEnvelope>,
+    pub transactions: Vec<OpTxEnvelope>,
 }
 
 impl Block {
-    pub fn new(header: Header, transactions: Vec<ExtendedTxEnvelope>) -> Self {
+    pub fn new(header: Header, transactions: Vec<OpTxEnvelope>) -> Self {
         Self {
             header,
             transactions,

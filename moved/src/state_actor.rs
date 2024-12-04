@@ -7,7 +7,6 @@ use {
             HeaderForExecution,
         },
         genesis::config::GenesisConfig,
-        merkle_tree::MerkleRootExt,
         move_execution::{
             execute_transaction, quick_get_eth_balance, quick_get_nonce, BaseTokenAccounts,
             CreateL1GasFee, L1GasFee, L1GasFeeInput, LogsBloom,
@@ -29,7 +28,7 @@ use {
     },
     alloy::{
         consensus::Receipt,
-        eips::BlockNumberOrTag::*,
+        eips::{eip2718::Encodable2718, BlockNumberOrTag::*},
         primitives::{keccak256, Bloom},
         rlp::{Decodable, Encodable},
         rpc::types::{FeeHistory, TransactionReceipt as AlloyTxReceipt, TransactionRequest},
@@ -341,11 +340,10 @@ impl<
             &header_for_execution,
         );
 
-        let transactions_root = receipts
-            .iter()
-            .map(|v| alloy::rlp::encode(&v.tx))
-            .map(keccak256)
-            .merkle_root();
+        let transactions_root =
+            alloy_trie::root::ordered_trie_root_with_encoder(&receipts, |rx, buf| {
+                rx.tx.encode_2718(buf)
+            });
         let total_tip = execution_outcome.total_tip;
         // TODO: Compute `withdrawals_root`
         let header = Header {
@@ -444,7 +442,7 @@ impl<
 
             receipts.push(TransactionWithReceipt {
                 tx_hash,
-                tx,
+                tx: tx.into(),
                 normalized_tx,
                 receipt,
                 l1_block_info,
@@ -459,11 +457,10 @@ impl<
             tx_index += 1;
         }
 
-        let receipts_root = receipts
-            .iter()
-            .map(|v| alloy::rlp::encode(&v.receipt))
-            .map(keccak256)
-            .merkle_root();
+        let receipts_root =
+            alloy_trie::root::ordered_trie_root_with_encoder(&receipts, |rx, buf| {
+                rx.receipt.encode(buf)
+            });
         let logs_bloom = logs_bloom.into();
 
         let outcome = ExecutionOutcome {
