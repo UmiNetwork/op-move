@@ -74,7 +74,7 @@ pub mod tests {
         let state_memory = StateMemory::from_genesis(changes.clone());
         genesis::apply(changes, table_changes, &genesis_config, &mut state);
 
-        let state = moved::state_actor::StateActor::new(
+        let state = StateActor::new(
             rx,
             state,
             head_hash,
@@ -89,6 +89,7 @@ pub mod tests {
             InMemoryBlockQueries,
             block_memory,
             InMemoryStateQueries::new(state_memory),
+            Box::new(|| Box::new(|_, _| {})),
         );
         (state, state_channel)
     }
@@ -190,6 +191,7 @@ pub mod tests {
             (),
             (),
             MockStateQueries(height, address),
+            Box::new(|| Box::new(|_, _| {})),
         );
         (state, state_channel)
     }
