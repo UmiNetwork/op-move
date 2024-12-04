@@ -20,7 +20,10 @@ use {
                 StateMessage, ToPayloadIdInput, TransactionReceipt, TransactionWithReceipt,
                 WithExecutionOutcome, WithPayloadAttributes,
             },
-            transactions::{ExtendedTxEnvelope, NormalizedExtendedTxEnvelope},
+            transactions::{
+                ExtendedTxEnvelope, NormalizedEthTransaction, NormalizedExtendedTxEnvelope,
+                TransactionExecutionOutcome,
+            },
         },
         Error::{InvalidTransaction, InvariantViolation, User},
     },
@@ -29,11 +32,14 @@ use {
         eips::BlockNumberOrTag::*,
         primitives::{keccak256, Bloom},
         rlp::{Decodable, Encodable},
-        rpc::types::{FeeHistory, TransactionReceipt as AlloyTxReceipt},
+        rpc::types::{FeeHistory, TransactionReceipt as AlloyTxReceipt, TransactionRequest},
     },
     move_binary_format::errors::PartialVMError,
     revm::primitives::TxKind,
-    std::collections::HashMap,
+    std::{
+        collections::HashMap,
+        time::{SystemTime, UNIX_EPOCH},
+    },
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
 };
 
@@ -211,10 +217,17 @@ impl<
                 // TODO: Respond with a real fee history
             } => response_channel.send(FeeHistory::default()).ok(),
             Query::EstimateGas {
+                transaction,
                 response_channel,
                 ..
-                // TODO: Respond with a real gas estimation
-            } => response_channel.send(0).ok(),
+            } => {
+                // TODO: Support gas estimation from arbitrary blocks
+                let outcome = self.simulate_transaction(transaction);
+                match outcome {
+                    Ok(outcome) => response_channel.send(Ok(outcome.gas_used)).ok(),
+                    Err(e) => response_channel.send(Err(e)).ok(),
+                }
+            }
             Query::Call {
                 response_channel,
                 ..
@@ -451,6 +464,36 @@ impl<
             total_tip,
         };
         (outcome, receipts)
+    }
+
+    fn simulate_transaction(
+        &self,
+        request: TransactionRequest,
+    ) -> crate::Result<TransactionExecutionOutcome> {
+        let mut tx = NormalizedEthTransaction::from(request.clone());
+        if request.from.is_some() && request.nonce.is_none() {
+            tx.nonce = quick_get_nonce(&tx.signer.to_move_address(), self.state.resolver());
+        }
+        let tx = NormalizedExtendedTxEnvelope::Canonical(tx);
+
+        let block_header = HeaderForExecution {
+            number: self.height + 1,
+            timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("Should get current time")
+                .as_secs(),
+            prev_randao: B256::random(),
+        };
+
+        execute_transaction(
+            &tx,
+            &B256::random(),
+            self.state.resolver(),
+            &self.genesis_config,
+            0,
+            &self.base_token,
+            block_header,
+        )
     }
 
     fn query_transaction_receipt(&self, tx_hash: B256) -> Option<TransactionReceipt> {

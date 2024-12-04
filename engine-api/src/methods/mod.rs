@@ -16,7 +16,12 @@ pub mod send_raw_transaction;
 #[cfg(test)]
 pub mod tests {
     use {
-        alloy::primitives::hex,
+        crate::json_utils::access_state_error,
+        alloy::{
+            hex::FromHex,
+            primitives::{hex, utils::parse_ether, FixedBytes},
+            rlp::Encodable,
+        },
         move_core_types::account_address::AccountAddress,
         moved::{
             block::{
@@ -25,11 +30,17 @@ pub mod tests {
             },
             genesis::{config::GenesisConfig, init_state},
             move_execution::MovedBaseTokenAccounts,
-            primitives::{B256, U256},
+            primitives::{Address, B256, U256, U64},
             storage::InMemoryState,
-            types::state::StateMessage,
+            types::{
+                state::{Command, Payload, StateMessage},
+                transactions::{DepositedTx, ExtendedTxEnvelope},
+            },
         },
-        tokio::sync::mpsc::{self, Sender},
+        tokio::sync::{
+            mpsc::{self, Sender},
+            oneshot,
+        },
     };
 
     pub fn create_state_actor() -> (moved::state_actor::InMemStateActor, Sender<StateMessage>) {
@@ -63,5 +74,33 @@ pub mod tests {
             block_memory,
         );
         (state, state_channel)
+    }
+
+    pub async fn deposit_eth(to: &str, channel: &Sender<StateMessage>) {
+        let (sender, receiver) = oneshot::channel();
+        let to = Address::from_hex(to).unwrap();
+        let tx = ExtendedTxEnvelope::DepositedTx(DepositedTx {
+            to,
+            value: parse_ether("1").unwrap(),
+            source_hash: FixedBytes::default(),
+            from: to,
+            mint: U256::ZERO,
+            gas: U64::from(u64::MAX),
+            is_system_tx: false,
+            data: Vec::new().into(),
+        });
+
+        let mut encoded = Vec::new();
+        tx.encode(&mut encoded);
+        let mut payload_attributes = Payload::default();
+        payload_attributes.transactions.push(encoded.into());
+
+        let msg = Command::StartBlockBuild {
+            payload_attributes,
+            response_channel: sender,
+        }
+        .into();
+        channel.send(msg).await.map_err(access_state_error).unwrap();
+        receiver.await.map_err(access_state_error).unwrap();
     }
 }

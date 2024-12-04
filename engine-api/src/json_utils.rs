@@ -30,3 +30,7 @@ pub fn deserialize<T: DeserializeOwned>(x: &serde_json::Value) -> Result<T, Json
 pub fn access_state_error<E: fmt::Debug>(e: E) -> JsonRpcError {
     JsonRpcError::access_state_error(e)
 }
+
+pub fn transaction_error<E: fmt::Debug>(e: E) -> JsonRpcError {
+    JsonRpcError::without_data(3, format!("Execution reverted: {e:?}"))
+}

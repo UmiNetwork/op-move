@@ -13,7 +13,7 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace.dependencies]
-alloy = { version = "0.6", features = ["full", "genesis", "rlp", "serde", "signer-keystore"] }
+alloy = { version = "0.6", features = ["full", "genesis", "getrandom", "rlp", "serde", "signer-keystore"] }
 alloy-rlp = { version = "0.3", features = ["derive"] }
 anyhow = "1"
 aptos-framework = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }

@@ -44,7 +44,7 @@ mod deposited;
 mod eth_token;
 mod evm_native;
 mod execute;
-mod gas;
+pub(crate) mod gas;
 mod nonces;
 mod tag_validation;
 
