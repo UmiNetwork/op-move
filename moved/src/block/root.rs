@@ -31,6 +31,8 @@ pub trait BlockRepository: Debug {
     fn by_hash(&self, storage: &Self::Storage, hash: B256) -> Option<ExtendedBlock>;
 }
 
+pub type Header = alloy::consensus::Header;
+
 #[derive(Debug, Clone, Default)]
 pub struct ExtendedBlock {
     /// The block hash is the output of keccak-256 algorithm with RLP encoded block header as input.
@@ -87,5 +89,3 @@ pub struct HeaderForExecution {
     pub timestamp: u64,
     pub prev_randao: B256,
 }
-
-pub type Header = alloy::consensus::Header;
