@@ -6,17 +6,20 @@
 use {
     crate::{
         block::{ExtendedBlock, Header},
-        primitives::{Address, Bytes, ToSaturatedU64, ToU64, B2048, B256, U256, U64},
+        primitives::{Address, Bytes, ToU64, B2048, B256, U256, U64},
         state_actor::NewPayloadIdInput,
-        types::transactions::{ExtendedTxEnvelope, NormalizedExtendedTxEnvelope},
+        types::transactions::NormalizedExtendedTxEnvelope,
     },
     alloy::{
         consensus::transaction::TxEnvelope,
-        eips::BlockNumberOrTag,
+        eips::{eip2718::Encodable2718, BlockNumberOrTag},
+        primitives::Bloom,
         rpc::types::{BlockTransactions, FeeHistory, TransactionRequest},
     },
-    alloy_rlp::Encodable,
-    op_alloy::{consensus::OpReceiptEnvelope, rpc_types::L1BlockInfo},
+    op_alloy::{
+        consensus::{OpReceiptEnvelope, OpTxEnvelope},
+        rpc_types::L1BlockInfo,
+    },
     tokio::sync::oneshot,
 };
 
@@ -50,6 +53,22 @@ pub struct PayloadResponse {
     pub parent_beacon_block_root: B256,
 }
 
+impl PayloadResponse {
+    pub fn from_block(value: ExtendedBlock) -> Self {
+        Self {
+            parent_beacon_block_root: value
+                .block
+                .header
+                .parent_beacon_block_root
+                .unwrap_or_default(),
+            block_value: value.value,
+            execution_payload: ExecutionPayload::from_block(value),
+            blobs_bundle: Default::default(),
+            should_override_builder: false,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct ExecutionPayload {
     pub parent_hash: B256,
@@ -69,6 +88,42 @@ pub struct ExecutionPayload {
     pub withdrawals: Vec<Withdrawal>,
     pub blob_gas_used: U64,
     pub excess_blob_gas: U64,
+}
+
+impl ExecutionPayload {
+    pub fn from_block(value: ExtendedBlock) -> Self {
+        let transactions = value
+            .block
+            .transactions
+            .into_iter()
+            .map(|tx| {
+                let capacity = tx.eip2718_encoded_length();
+                let mut bytes = Vec::with_capacity(capacity);
+                tx.encode_2718(&mut bytes);
+                bytes.into()
+            })
+            .collect();
+
+        Self {
+            block_hash: value.hash,
+            parent_hash: value.block.header.parent_hash,
+            fee_recipient: value.block.header.beneficiary,
+            state_root: value.block.header.state_root,
+            receipts_root: value.block.header.receipts_root,
+            logs_bloom: value.block.header.logs_bloom.0,
+            prev_randao: value.block.header.mix_hash,
+            block_number: U64::from(value.block.header.number),
+            gas_limit: U64::from(value.block.header.gas_limit),
+            gas_used: U64::from(value.block.header.gas_used),
+            timestamp: U64::from(value.block.header.timestamp),
+            extra_data: value.block.header.extra_data,
+            base_fee_per_gas: U256::from(value.block.header.base_fee_per_gas.unwrap_or_default()),
+            transactions,
+            withdrawals: Vec::new(), // TODO: withdrawals
+            blob_gas_used: U64::from(value.block.header.blob_gas_used.unwrap_or_default()),
+            excess_blob_gas: U64::from(value.block.header.excess_blob_gas.unwrap_or_default()),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -103,6 +158,9 @@ pub enum Command {
     },
     AddTransaction {
         tx: TxEnvelope,
+    },
+    GenesisUpdate {
+        block: ExtendedBlock,
     },
 }
 
@@ -168,7 +226,7 @@ impl From<Query> for StateMessage {
     }
 }
 
-pub type RpcBlock = alloy::rpc::types::Block<alloy::rpc::types::Transaction<ExtendedTxEnvelope>>;
+pub type RpcBlock = alloy::rpc::types::Block<op_alloy::rpc_types::Transaction>;
 
 #[derive(Debug)]
 pub struct BlockResponse(pub RpcBlock);
@@ -185,12 +243,19 @@ impl BlockResponse {
                     .block
                     .transactions
                     .iter()
-                    .map(ExtendedTxEnvelope::compute_hash)
+                    .map(|tx| match tx {
+                        OpTxEnvelope::Legacy(tx) => *tx.hash(),
+                        OpTxEnvelope::Eip1559(tx) => *tx.hash(),
+                        OpTxEnvelope::Eip2930(tx) => *tx.hash(),
+                        OpTxEnvelope::Eip7702(tx) => *tx.hash(),
+                        OpTxEnvelope::Deposit(tx) => tx.hash(),
+                        _ => unreachable!("Tx type not supported"),
+                    })
                     .collect(),
             ),
             header: alloy::rpc::types::Header {
                 hash: value.hash,
-                inner: value.block.header.into(),
+                inner: value.block.header,
                 // TODO: review fields below
                 total_difficulty: None,
                 size: None,
@@ -209,21 +274,28 @@ impl BlockResponse {
                     .transactions
                     .into_iter()
                     .enumerate()
-                    .map(|(i, inner)| alloy::rpc::types::Transaction {
-                        block_hash: Some(value.hash),
-                        block_number: Some(value.block.header.number),
-                        transaction_index: Some(i as u64),
-                        effective_gas_price: None, // TODO: Gas it up #160
-                        from: inner
-                            .sender()
-                            .expect("Block transactions should contain valid signature"),
-                        inner,
+                    .map(|(i, inner)| {
+                        let tx = alloy::rpc::types::Transaction {
+                            block_hash: Some(value.hash),
+                            block_number: Some(value.block.header.number),
+                            transaction_index: Some(i as u64),
+                            effective_gas_price: None, // TODO: Gas it up #160
+                            from: compute_from(&inner)
+                                .expect("Block transactions should contain valid signature"),
+                            inner,
+                        };
+                        op_alloy::rpc_types::Transaction {
+                            inner: tx,
+                            // TODO: what are these fields?
+                            deposit_nonce: None,
+                            deposit_receipt_version: None,
+                        }
                     })
                     .collect(),
             ),
             header: alloy::rpc::types::Header {
                 hash: value.hash,
-                inner: value.block.header.into(),
+                inner: value.block.header,
                 // TODO: review fields below
                 total_difficulty: None,
                 size: None,
@@ -235,32 +307,14 @@ impl BlockResponse {
     }
 }
 
-impl From<Header> for alloy::consensus::Header {
-    fn from(value: Header) -> Self {
-        Self {
-            number: value.number,
-            parent_hash: value.parent_hash,
-            ommers_hash: value.ommers_hash,
-            nonce: value.nonce.into(),
-            base_fee_per_gas: Some(value.base_fee_per_gas.to_saturated_u64()),
-            blob_gas_used: Some(value.blob_gas_used),
-            excess_blob_gas: Some(value.excess_blob_gas),
-            parent_beacon_block_root: Some(value.parent_beacon_block_root),
-            logs_bloom: value.logs_bloom.into(),
-            transactions_root: value.transactions_root,
-            state_root: value.state_root,
-            receipts_root: value.receipts_root,
-            difficulty: value.difficulty,
-            extra_data: value.extra_data,
-            gas_limit: value.gas_limit,
-            gas_used: value.gas_used,
-            timestamp: value.timestamp,
-            beneficiary: value.beneficiary,
-            // TODO: review fields below
-            mix_hash: Default::default(),
-            requests_hash: None,
-            withdrawals_root: None,
-        }
+fn compute_from(tx: &OpTxEnvelope) -> Result<Address, alloy::primitives::SignatureError> {
+    match tx {
+        OpTxEnvelope::Legacy(tx) => tx.recover_signer(),
+        OpTxEnvelope::Eip1559(tx) => tx.recover_signer(),
+        OpTxEnvelope::Eip2930(tx) => tx.recover_signer(),
+        OpTxEnvelope::Eip7702(tx) => tx.recover_signer(),
+        OpTxEnvelope::Deposit(tx) => Ok(tx.from),
+        _ => unreachable!("Tx type not supported"),
     }
 }
 
@@ -278,7 +332,7 @@ pub struct ExecutionOutcome {
 #[derive(Debug, Clone)]
 pub struct TransactionWithReceipt {
     pub tx_hash: B256,
-    pub tx: ExtendedTxEnvelope,
+    pub tx: OpTxEnvelope,
     pub tx_index: u64,
     pub normalized_tx: NormalizedExtendedTxEnvelope,
     pub receipt: OpReceiptEnvelope,
@@ -309,7 +363,7 @@ impl WithExecutionOutcome for Header {
         Self {
             state_root: outcome.state_root,
             receipts_root: outcome.receipts_root,
-            logs_bloom: outcome.logs_bloom,
+            logs_bloom: Bloom::new(outcome.logs_bloom.0),
             gas_used: outcome.gas_used.to_u64(),
             ..self
         }
@@ -353,54 +407,6 @@ impl ToWithdrawal for Withdrawal {
     }
 }
 
-impl From<ExtendedBlock> for PayloadResponse {
-    fn from(value: ExtendedBlock) -> Self {
-        PayloadResponse {
-            parent_beacon_block_root: value.block.header.parent_beacon_block_root,
-            block_value: value.value,
-            execution_payload: ExecutionPayload::from(value),
-            blobs_bundle: Default::default(),
-            should_override_builder: false,
-        }
-    }
-}
-
-impl From<ExtendedBlock> for ExecutionPayload {
-    fn from(value: ExtendedBlock) -> Self {
-        let transactions = value
-            .block
-            .transactions
-            .into_iter()
-            .map(|tx| {
-                let capacity = tx.length();
-                let mut bytes = Vec::with_capacity(capacity);
-                tx.encode(&mut bytes);
-                bytes.into()
-            })
-            .collect();
-
-        Self {
-            block_hash: value.hash,
-            parent_hash: value.block.header.parent_hash,
-            fee_recipient: value.block.header.beneficiary,
-            state_root: value.block.header.state_root,
-            receipts_root: value.block.header.receipts_root,
-            logs_bloom: value.block.header.logs_bloom,
-            prev_randao: value.block.header.prev_randao,
-            block_number: U64::from(value.block.header.number),
-            gas_limit: U64::from(value.block.header.gas_limit),
-            gas_used: U64::from(value.block.header.gas_used),
-            timestamp: U64::from(value.block.header.timestamp),
-            extra_data: value.block.header.extra_data,
-            base_fee_per_gas: value.block.header.base_fee_per_gas,
-            transactions,
-            withdrawals: Vec::new(), // TODO: withdrawals
-            blob_gas_used: U64::from(value.block.header.blob_gas_used),
-            excess_blob_gas: U64::from(value.block.header.excess_blob_gas),
-        }
-    }
-}
-
 pub(crate) trait WithPayloadAttributes {
     fn with_payload_attributes(self, payload: Payload) -> Self;
 }
@@ -411,8 +417,8 @@ impl WithPayloadAttributes for Header {
             beneficiary: payload.suggested_fee_recipient,
             gas_limit: payload.gas_limit.to_u64(),
             timestamp: payload.timestamp.to_u64(),
-            prev_randao: payload.prev_randao,
-            parent_beacon_block_root: payload.parent_beacon_block_root,
+            parent_beacon_block_root: Some(payload.parent_beacon_block_root),
+            mix_hash: payload.prev_randao,
             ..self
         }
     }

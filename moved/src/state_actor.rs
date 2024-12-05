@@ -7,7 +7,6 @@ use {
             HeaderForExecution,
         },
         genesis::config::GenesisConfig,
-        merkle_tree::MerkleRootExt,
         move_execution::{
             execute_transaction, quick_get_eth_balance, quick_get_nonce, BaseTokenAccounts,
             CreateL1GasFee, L1GasFee, L1GasFeeInput, LogsBloom,
@@ -29,7 +28,7 @@ use {
     },
     alloy::{
         consensus::Receipt,
-        eips::BlockNumberOrTag::*,
+        eips::{eip2718::Encodable2718, BlockNumberOrTag::*},
         primitives::{keccak256, Bloom},
         rlp::{Decodable, Encodable},
         rpc::types::{FeeHistory, TransactionReceipt as AlloyTxReceipt, TransactionRequest},
@@ -255,7 +254,8 @@ impl<
                 self.block_repository
                     .add(&mut self.block_memory, block.clone());
                 self.height += 1;
-                self.pending_payload.replace((id, block.into()));
+                self.pending_payload
+                    .replace((id, PayloadResponse::from_block(block)));
             }
             Command::GetPayload {
                 id: request_id,
@@ -291,6 +291,10 @@ impl<
                 self.mem_pool
                     .insert(tx_hash, (ExtendedTxEnvelope::Canonical(tx), encoded));
             }
+            Command::GenesisUpdate { block } => {
+                self.head = block.hash;
+                self.block_repository.add(&mut self.block_memory, block);
+            }
         }
     }
 
@@ -319,7 +323,7 @@ impl<
         let base_fee = self.gas_fee.base_fee_per_gas(
             parent.block.header.gas_limit,
             parent.block.header.gas_used,
-            parent.block.header.base_fee_per_gas,
+            U256::from(parent.block.header.base_fee_per_gas.unwrap_or_default()),
         );
 
         let header_for_execution = HeaderForExecution {
@@ -335,18 +339,21 @@ impl<
             &header_for_execution,
         );
 
-        let transactions_root = receipts
-            .iter()
-            .map(|v| alloy::rlp::encode(&v.tx))
-            .map(keccak256)
-            .merkle_root();
+        let transactions_root =
+            alloy_trie::root::ordered_trie_root_with_encoder(&receipts, |rx, buf| {
+                rx.tx.encode_2718(buf)
+            });
         let total_tip = execution_outcome.total_tip;
         // TODO: Compute `withdrawals_root`
-        let header = Header::new(self.head, header_for_execution.number)
-            .with_payload_attributes(payload_attributes)
-            .with_execution_outcome(execution_outcome)
-            .with_transactions_root(transactions_root)
-            .with_base_fee_per_gas(base_fee);
+        let header = Header {
+            parent_hash: self.head,
+            number: header_for_execution.number,
+            transactions_root,
+            base_fee_per_gas: Some(base_fee.saturating_to()),
+            ..Default::default()
+        }
+        .with_payload_attributes(payload_attributes)
+        .with_execution_outcome(execution_outcome);
 
         let hash = self.block_hash.block_hash(&header);
 
@@ -434,7 +441,7 @@ impl<
 
             receipts.push(TransactionWithReceipt {
                 tx_hash,
-                tx,
+                tx: tx.into(),
                 normalized_tx,
                 receipt,
                 l1_block_info,
@@ -449,11 +456,12 @@ impl<
             tx_index += 1;
         }
 
-        let receipts_root = receipts
-            .iter()
-            .map(|v| alloy::rlp::encode(&v.receipt))
-            .map(keccak256)
-            .merkle_root();
+        // Compute the receipts root by RLP-encoding each receipt to be a leaf of
+        // a merkle trie.
+        let receipts_root =
+            alloy_trie::root::ordered_trie_root_with_encoder(&receipts, |rx, buf| {
+                rx.receipt.encode(buf)
+            });
         let logs_bloom = logs_bloom.into();
 
         let outcome = ExecutionOutcome {

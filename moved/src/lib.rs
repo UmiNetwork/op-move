@@ -7,7 +7,6 @@ pub mod types;
 pub mod block;
 pub mod error;
 pub mod genesis;
-pub mod merkle_tree;
 pub mod move_execution;
 pub mod primitives;
 pub mod state_actor;

@@ -15,6 +15,7 @@ edition = "2021"
 [workspace.dependencies]
 alloy = { version = "0.6", features = ["full", "genesis", "getrandom", "rlp", "serde", "signer-keystore"] }
 alloy-rlp = { version = "0.3", features = ["derive"] }
+alloy-trie = "0.7"
 anyhow = "1"
 aptos-framework = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 aptos-gas-algebra = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }

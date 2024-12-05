@@ -10,10 +10,10 @@ use {
         },
         genesis::{config::GenesisConfig, init_state},
         move_execution::{CreateEcotoneL1GasFee, MovedBaseTokenAccounts},
-        primitives::{B256, U256},
+        primitives::U256,
         state_actor::StatePayloadId,
         storage::InMemoryState,
-        types::state::StateMessage,
+        types::state::{Command, StateMessage},
     },
     once_cell::sync::Lazy,
     std::{
@@ -35,6 +35,7 @@ use {
     },
 };
 
+mod geth_genesis;
 mod mirror;
 
 #[cfg(test)]
@@ -70,6 +71,7 @@ pub async fn run() {
 
     // TODO: genesis should come from a file (path specified by CLI)
     let genesis_config = GenesisConfig {
+        chain_id: 42069,
         l2_contract_genesis: Path::new(
             "src/tests/optimism/packages/contracts-bedrock/deployments/genesis.json",
         )
@@ -139,8 +141,10 @@ fn create_genesis_block(
     block_hash: &impl BlockHash,
     genesis_config: &GenesisConfig,
 ) -> ExtendedBlock {
-    let genesis_header =
-        Header::new(B256::ZERO, 0).with_state_root(genesis_config.initial_state_root);
+    let genesis_header = Header {
+        state_root: genesis_config.initial_state_root,
+        ..Default::default()
+    };
     let hash = block_hash.block_hash(&genesis_header);
     let genesis_block = Block::new(genesis_header, Vec::new());
 
@@ -224,7 +228,8 @@ async fn mirror(
         };
 
     let request = request.expect("geth responded, so body must have been JSON");
-    let op_move_response = moved_engine_api::request::handle(request.clone(), state_channel).await;
+    let op_move_response =
+        moved_engine_api::request::handle(request.clone(), state_channel.clone()).await;
     let log = MirrorLog {
         request: &request,
         geth_response: &parsed_geth_response,
@@ -232,9 +237,22 @@ async fn mirror(
         port,
     };
     println!("{}", serde_json::to_string_pretty(&log).unwrap());
-    // TODO: use op_move_response
-    let body = hyper::Body::from(geth_response_bytes);
-    Ok(warp::reply::Response::from_parts(geth_response_parts, body))
+
+    // TODO: this is a hack because we currently can't compute the genesis
+    // hash expected by op-node.
+    if geth_genesis::is_genesis_block_request(&request).unwrap_or(false) {
+        let block = geth_genesis::extract_genesis_block(&parsed_geth_response)
+            .expect("Must get genesis from geth");
+        state_channel
+            .send(Command::GenesisUpdate { block }.into())
+            .await
+            .ok();
+        let body = hyper::Body::from(geth_response_bytes);
+        return Ok(warp::reply::Response::from_parts(geth_response_parts, body));
+    }
+
+    let body = hyper::Body::from(serde_json::to_vec(&op_move_response).unwrap());
+    Ok(warp::reply::Response::new(body))
 }
 
 async fn proxy(

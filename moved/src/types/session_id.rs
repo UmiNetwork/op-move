@@ -100,11 +100,6 @@ fn u8_chain_id(genesis_config: &GenesisConfig) -> u8 {
     if genesis_config.chain_id == CHAIN_ID {
         1
     } else {
-        // TODO: Should have some generic fallback algorithm here
-        // (e.g. just take the least significant byte) and a feature
-        // flag to enable it. This would allow people to set their own
-        // custom chain ids. This is not launch-critical since for now
-        // we are only picking chain ids internally.
-        panic!("Unknown chain id: {}", genesis_config.chain_id);
+        genesis_config.chain_id.to_le_bytes()[0]
     }
 }
