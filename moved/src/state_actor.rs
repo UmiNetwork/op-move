@@ -602,10 +602,6 @@ mod test_doubles {
     impl StateQueries for MockStateQueries {
         type Storage = ();
 
-        fn balance(&self, _account: AccountAddress) -> crate::move_execution::Balance {
-            unimplemented!()
-        }
-
         fn balance_at(
             &self,
             account: AccountAddress,
@@ -615,10 +611,6 @@ mod test_doubles {
             assert_eq!(account, self.1);
 
             U256::from(5)
-        }
-
-        fn nonce(&self, _account: AccountAddress) -> crate::move_execution::Nonce {
-            unimplemented!()
         }
 
         fn nonce_at(
