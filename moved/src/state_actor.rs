@@ -456,6 +456,8 @@ impl<
             tx_index += 1;
         }
 
+        // Compute the receipts root by RLP-encoding each receipt to be a leaf of
+        // a merkle trie.
         let receipts_root =
             alloy_trie::root::ordered_trie_root_with_encoder(&receipts, |rx, buf| {
                 rx.receipt.encode(buf)
