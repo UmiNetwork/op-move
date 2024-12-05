@@ -350,6 +350,8 @@ impl<
             number: header_for_execution.number,
             transactions_root,
             base_fee_per_gas: Some(base_fee.saturating_to()),
+            blob_gas_used: Some(0),
+            excess_blob_gas: Some(0),
             ..Default::default()
         }
         .with_payload_attributes(payload_attributes)
@@ -560,4 +562,31 @@ impl<
         };
         Some(result)
     }
+}
+
+#[test]
+fn test_compute_transactions_root() {
+    use alloy::{hex, primitives::address};
+
+    let tx = op_alloy::consensus::TxDeposit {
+        source_hash: B256::new(hex!("d019f0c65ad46edd487015d96b177006cf35364a870d32fb3f517165f61d9d46")),
+        from: address!("deaddeaddeaddeaddeaddeaddeaddeaddead0001"),
+        to: address!("4200000000000000000000000000000000000015").into(),
+        mint: None,
+        value: U256::ZERO,
+        gas_limit: 0xf4240,
+        is_system_transaction: false,
+        input: hex!("440a5e2000022950000c5f4f000000000000000000000000674de72100000000000000210000000000000000000000000000000000000000000000000000000000bd330300000000000000000000000000000000000000000000000000000000000000013f93a2bd37b737d88517db273b0797a0ef98a5c145aed05cd5d227321fc156580000000000000000000000008c67a7b8624044f8f672e9ec374dfa596f01afb9").into(),
+    };
+
+    let txs: [op_alloy::consensus::OpTxEnvelope; 1] = [tx.into()];
+    let transactions_root =
+        alloy_trie::root::ordered_trie_root_with_encoder(&txs, |tx, buf| tx.encode_2718(buf));
+
+    assert_eq!(
+        transactions_root,
+        B256::new(hex!(
+            "90e7a8d12f001569a72bfae8ec3b108c72342f9e8aa824658b974b4f4c0cc640"
+        ))
+    );
 }
