@@ -212,11 +212,16 @@ impl<
             } => response_channel.send(FeeHistory::default()).ok(),
             Query::EstimateGas {
                 transaction,
+                block_number,
                 response_channel,
-                ..
             } => {
                 // TODO: Support gas estimation from arbitrary blocks
-                let outcome = simulate_transaction(transaction, self.state.resolver(), &self.genesis_config, &self.base_token);
+                let block_height = match block_number {
+                    Number(height) => height,
+                    Finalized | Pending | Latest | Safe => self.height,
+                    Earliest => 0,
+                };
+                let outcome = simulate_transaction(transaction, self.state.resolver(), &self.genesis_config, &self.base_token, block_height);
                 match outcome {
                     Ok(outcome) => response_channel.send(Ok(outcome.gas_used)).ok(),
                     Err(e) => response_channel.send(Err(e)).ok(),
@@ -226,8 +231,8 @@ impl<
                 transaction,
                 response_channel,
                 ..
-                // TODO: Respond with a real transaction call result
             } => {
+                // TODO: Support transaction call from arbitrary blocks
                 let outcome = call_transaction(transaction, self.state.resolver());
                 response_channel.send(outcome).ok()
             }

@@ -27,19 +27,20 @@ use {
 };
 
 pub fn simulate_transaction(
-    request: TransactionRequest,
+    mut request: TransactionRequest,
     state: &(impl MoveResolver<PartialVMError> + TableResolver),
     genesis_config: &GenesisConfig,
     base_token: &impl BaseTokenAccounts,
+    block_height: u64,
 ) -> crate::Result<TransactionExecutionOutcome> {
-    let mut tx = NormalizedEthTransaction::from(request.clone());
     if request.from.is_some() && request.nonce.is_none() {
-        tx.nonce = quick_get_nonce(&tx.signer.to_move_address(), state);
+        let from = request.from.unwrap();
+        request.nonce = Some(quick_get_nonce(&from.to_move_address(), state));
     }
-    let tx = NormalizedExtendedTxEnvelope::Canonical(tx);
+    let tx = NormalizedExtendedTxEnvelope::Canonical(NormalizedEthTransaction::from(request));
 
     let block_header = HeaderForExecution {
-        number: 0,
+        number: block_height,
         timestamp: SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("Should get current time")

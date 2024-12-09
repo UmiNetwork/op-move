@@ -115,7 +115,6 @@ impl TestContext {
         args: Vec<TransactionArgument>,
     ) -> Vec<Log<LogData>> {
         let script_bytes = self.compile_script(script_name, local_deps, args);
-        println!("SCRIPT_BYTES: {:?}", hex::encode(&script_bytes));
         let (tx_hash, tx) = create_transaction(&mut self.signer, TxKind::Create, script_bytes);
         let transaction = TestTransaction::new(tx, tx_hash);
         let outcome = self.execute_tx(&transaction).unwrap();
