@@ -3,8 +3,8 @@ use {
         block::HeaderForExecution,
         genesis::config::GenesisConfig,
         move_execution::{
-            create_move_vm, create_vm_session, execute_transaction, quick_get_nonce,
-            BaseTokenAccounts,
+            canonical::verify_transaction, create_move_vm, create_vm_session, execute_transaction,
+            gas::new_gas_meter, quick_get_nonce, BaseTokenAccounts,
         },
         primitives::{ToMoveAddress, B256},
         types::{
@@ -22,22 +22,21 @@ use {
     move_core_types::resolver::MoveResolver,
     move_table_extension::TableResolver,
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
-    move_vm_types::gas::UnmeteredGasMeter,
     std::time::{SystemTime, UNIX_EPOCH},
 };
 
 pub fn simulate_transaction(
-    mut request: TransactionRequest,
+    request: TransactionRequest,
     state: &(impl MoveResolver<PartialVMError> + TableResolver),
     genesis_config: &GenesisConfig,
     base_token: &impl BaseTokenAccounts,
     block_height: u64,
 ) -> crate::Result<TransactionExecutionOutcome> {
+    let mut tx = NormalizedEthTransaction::from(request.clone());
     if request.from.is_some() && request.nonce.is_none() {
-        let from = request.from.unwrap();
-        request.nonce = Some(quick_get_nonce(&from.to_move_address(), state));
+        tx.nonce = quick_get_nonce(&tx.signer.to_move_address(), state);
     }
-    let tx = NormalizedExtendedTxEnvelope::Canonical(NormalizedEthTransaction::from(request));
+    let tx = NormalizedExtendedTxEnvelope::Canonical(tx);
 
     let block_header = HeaderForExecution {
         number: block_height,
@@ -62,8 +61,13 @@ pub fn simulate_transaction(
 pub fn call_transaction(
     request: TransactionRequest,
     state: &(impl MoveResolver<PartialVMError> + TableResolver),
+    genesis_config: &GenesisConfig,
+    base_token: &impl BaseTokenAccounts,
 ) -> crate::Result<Vec<u8>> {
-    let tx = NormalizedEthTransaction::from(request.clone());
+    let mut tx = NormalizedEthTransaction::from(request.clone());
+    if request.from.is_some() && request.nonce.is_none() {
+        tx.nonce = quick_get_nonce(&tx.signer.to_move_address(), state);
+    }
     let tx_data = TransactionData::parse_from(&tx)?;
 
     let move_vm = create_move_vm()?;
@@ -71,7 +75,17 @@ pub fn call_transaction(
     let mut session = create_vm_session(&move_vm, state, session_id);
     let traversal_storage = TraversalStorage::new();
     let mut traversal_context = TraversalContext::new(&traversal_storage);
-    let mut gas_meter = UnmeteredGasMeter;
+    let mut gas_meter = new_gas_meter(genesis_config, tx.gas_limit());
+
+    verify_transaction(
+        &tx,
+        &mut session,
+        &mut traversal_context,
+        &mut gas_meter,
+        genesis_config,
+        0,
+        base_token,
+    )?;
 
     match tx_data {
         TransactionData::EntryFunction(entry_fn) => {

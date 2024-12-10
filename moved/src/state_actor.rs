@@ -233,7 +233,7 @@ impl<
                 ..
             } => {
                 // TODO: Support transaction call from arbitrary blocks
-                let outcome = call_transaction(transaction, self.state.resolver());
+                let outcome = call_transaction(transaction, self.state.resolver(), &self.genesis_config, &self.base_token);
                 response_channel.send(outcome).ok()
             }
             Query::TransactionReceipt { tx_hash, response_channel } => {
