@@ -34,13 +34,7 @@ pub struct Payload {
     pub gas_limit: U64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Withdrawal {
-    pub index: U64,
-    pub validator_index: U64,
-    pub address: Address,
-    pub amount: U64,
-}
+pub type Withdrawal = alloy::rpc::types::Withdrawal;
 
 pub type PayloadId = U64;
 
@@ -399,10 +393,10 @@ trait ToWithdrawal {
 impl ToWithdrawal for Withdrawal {
     fn to_withdrawal(&self) -> alloy::eips::eip4895::Withdrawal {
         alloy::eips::eip4895::Withdrawal {
-            index: self.index.into_limbs()[0],
-            validator_index: self.validator_index.into_limbs()[0],
+            index: self.index,
+            validator_index: self.validator_index,
             address: self.address,
-            amount: self.amount.into_limbs()[0],
+            amount: self.amount,
         }
     }
 }

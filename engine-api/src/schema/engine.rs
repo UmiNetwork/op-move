@@ -286,10 +286,10 @@ impl From<ExecutionPayload> for ExecutionPayloadV3 {
 impl From<WithdrawalV1> for Withdrawal {
     fn from(value: WithdrawalV1) -> Self {
         Self {
-            index: value.index,
-            validator_index: value.validator_index,
+            index: value.index.saturating_to(),
+            validator_index: value.validator_index.saturating_to(),
             address: value.address,
-            amount: value.amount,
+            amount: value.amount.saturating_to(),
         }
     }
 }
@@ -297,10 +297,10 @@ impl From<WithdrawalV1> for Withdrawal {
 impl From<Withdrawal> for WithdrawalV1 {
     fn from(value: Withdrawal) -> Self {
         Self {
-            index: value.index,
-            validator_index: value.validator_index,
+            index: U64::from(value.index),
+            validator_index: U64::from(value.validator_index),
             address: value.address,
-            amount: value.amount,
+            amount: U64::from(value.amount),
         }
     }
 }
