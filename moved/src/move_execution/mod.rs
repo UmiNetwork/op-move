@@ -2,8 +2,7 @@ pub use {
     eth_token::{mint_eth, quick_get_eth_balance, BaseTokenAccounts, MovedBaseTokenAccounts},
     evm_native::genesis_state_changes,
     gas::{CreateEcotoneL1GasFee, CreateL1GasFee, EcotoneL1GasFee, L1GasFee, L1GasFeeInput},
-    nonces::quick_get_nonce,
-    state::{Balance, BlockHeight, InMemoryStateQueries, Nonce, StateMemory, StateQueries},
+    nonces::{check_nonce, quick_get_nonce},
 };
 
 use {
@@ -48,7 +47,6 @@ mod execute;
 mod gas;
 mod nonces;
 pub(crate) mod simulate;
-mod state;
 mod tag_validation;
 
 #[cfg(test)]
