@@ -347,12 +347,15 @@ impl<
             alloy_trie::root::ordered_trie_root_with_encoder(&receipts, |rx, buf| {
                 rx.tx.encode_2718(buf)
             });
+        // TODO: is this the correct withdrawals root calculation?
+        let withdrawals_root = alloy_trie::root::ordered_trie_root(&payload_attributes.withdrawals);
         let total_tip = execution_outcome.total_tip;
-        // TODO: Compute `withdrawals_root`
+
         let header = Header {
             parent_hash: self.head,
             number: header_for_execution.number,
             transactions_root,
+            withdrawals_root: Some(withdrawals_root),
             base_fee_per_gas: Some(base_fee.saturating_to()),
             blob_gas_used: Some(0),
             excess_blob_gas: Some(0),
@@ -561,6 +564,62 @@ fn test_compute_transactions_root() {
         transactions_root,
         B256::new(hex!(
             "90e7a8d12f001569a72bfae8ec3b108c72342f9e8aa824658b974b4f4c0cc640"
+        ))
+    );
+}
+
+#[test]
+fn test_build_block_hash() {
+    use alloy::{hex, primitives::address};
+
+    let payload_attributes = Payload {
+        timestamp: U64::from(0x6759e370_u64),
+        prev_randao: B256::new(hex!(
+            "ade920edae8d7bb10146e7baae162b5d5d8902c5a2a4e9309d0bf197e7fdf9b6"
+        )),
+        suggested_fee_recipient: address!("4200000000000000000000000000000000000011"),
+        withdrawals: Vec::new(),
+        parent_beacon_block_root: Default::default(),
+        transactions: Vec::new(),
+        gas_limit: U64::from(0x1c9c380),
+    };
+
+    let execution_outcome = ExecutionOutcome {
+        receipts_root: B256::new(hex!(
+            "3c55e3bccc48ee3ee637d8fc6936e4825d1489cbebf6057ce8025d63755ebf54"
+        )),
+        state_root: B256::new(hex!(
+            "5affa0c563587bc4668feaea28e997d29961e864be20b0082d123bcb2fbbaf55"
+        )),
+        logs_bloom: Default::default(),
+        gas_used: U64::from(0x272a2),
+        total_tip: Default::default(),
+    };
+
+    let header = Header {
+        parent_hash: B256::new(hex!(
+            "966c80cc0cbf7dbf7a2b2579002b95c8756f388c3fbf4a77c4d94d3719880c6e"
+        )),
+        number: 1,
+        transactions_root: B256::new(hex!(
+            "c355179c91ebb544d6662d6ad580c45eb3f155e1626b693b3afa4fdca677c450"
+        )),
+        base_fee_per_gas: Some(0x3b5dc100),
+        blob_gas_used: Some(0),
+        excess_blob_gas: Some(0),
+        withdrawals_root: Some(B256::new(hex!(
+            "56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
+        ))),
+        ..Default::default()
+    }
+    .with_payload_attributes(payload_attributes)
+    .with_execution_outcome(execution_outcome);
+
+    let hash = crate::block::MovedBlockHash.block_hash(&header);
+    assert_eq!(
+        hash,
+        B256::new(hex!(
+            "c9f7a6ef5311bf49b8322a92f3d75bd5c505ee613323fb58c7166c3511a62bcf"
         ))
     );
 }
