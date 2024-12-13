@@ -642,6 +642,13 @@ mod tests {
         let expected_nonce = 1u64;
 
         assert_eq!(actual_nonce, expected_nonce);
+
+        let actual_nonce = query
+            .nonce_at(state.db(), addr, 2)
+            .expect("Block height should exist");
+        let expected_nonce = 3u64;
+
+        assert_eq!(actual_nonce, expected_nonce);
     }
 
     #[test]
