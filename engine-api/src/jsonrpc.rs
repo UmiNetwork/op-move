@@ -33,7 +33,7 @@ impl JsonRpcError {
     }
 
     pub fn block_not_found(block_number: BlockNumberOrTag) -> Self {
-        JsonRpcError::without_data(-32001, format!("block not found: {block_number}"))
+        JsonRpcError::without_data(-32001, format!("Block not found: {block_number}"))
     }
 }
 

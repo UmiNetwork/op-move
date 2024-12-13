@@ -76,7 +76,7 @@ impl StateMemory {
     /// Creates state memory with `genesis_changes` on `version` 0 tagged as block `height` 0.
     pub fn from_genesis(genesis_changes: ChangeSet) -> Self {
         Self {
-            mem: InMemoryVersionedState::from_iter(genesis_changes.into_versioned_kv(0)),
+            mem: InMemoryVersionedState::from_iter(genesis_changes.into_versioned_map(0)),
             tags: vec![0],
             version: 0,
         }
@@ -84,7 +84,7 @@ impl StateMemory {
 
     fn add(&mut self, changes: ChangeSet) {
         let version = self.next_version();
-        for (k, v) in changes.into_versioned_kv(version) {
+        for (k, v) in changes.into_versioned_map(version) {
             self.mem.historic_state.insert(k, v);
         }
     }
@@ -111,9 +111,9 @@ impl StateMemory {
     }
 }
 
-/// The `IntoVersionedKv` trait is defined by a single operation [`Self::into_versioned_kv`]. See
+/// The `IntoVersionedMap` trait is defined by a single operation [`Self::into_versioned_map`]. See
 /// its documentation for details.
-trait IntoVersionedKv {
+trait IntoVersionedMap {
     /// Converts a set of changes into an iterator of key-value pairs where:
     ///
     /// * *Key* is a pair of [`StateKey`] and [`Version`]. It is a fully qualified name of a module
@@ -127,14 +127,14 @@ trait IntoVersionedKv {
     /// associated with a list of operations on its modules and resources.
     ///
     /// The term "operation" is a ternary value of either addition, modification or deletion.
-    fn into_versioned_kv(
+    fn into_versioned_map(
         self,
         version: Version,
     ) -> impl Iterator<Item = ((StateKey, Version), Option<StateValue>)>;
 }
 
-impl IntoVersionedKv for ChangeSet {
-    fn into_versioned_kv(
+impl IntoVersionedMap for ChangeSet {
+    fn into_versioned_map(
         self,
         version: Version,
     ) -> impl Iterator<Item = ((StateKey, Version), Option<StateValue>)> {
