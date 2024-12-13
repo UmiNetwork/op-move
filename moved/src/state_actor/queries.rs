@@ -309,11 +309,11 @@ impl<'a, R: TreeReader<StateKey> + Sync, H: VersionedState> ResourceResolver
         let tree = JellyfishMerkleTree::new(self.db);
         let state_key = StateKey::resource(address, struct_tag)
             .inspect_err(|e| print!("{e:?}"))
-            .map_err(|e| PartialVMError::new(StatusCode::DATA_FORMAT_ERROR))?;
+            .map_err(|_| PartialVMError::new(StatusCode::DATA_FORMAT_ERROR))?;
         let (maybe_leaf, _) = tree
             .get_with_proof(state_key.hash(), self.version)
             .inspect_err(|e| print!("{e:?}"))
-            .map_err(|e| PartialVMError::new(StatusCode::MISSING_DATA))?;
+            .map_err(|_| PartialVMError::new(StatusCode::MISSING_DATA))?;
         let Some((_, history_key)) = maybe_leaf else {
             return Ok((None, 0));
         };
@@ -469,6 +469,43 @@ mod tests {
     }
 
     #[test]
+    fn test_query_fetches_latest_and_previous_balance() {
+        let state = InMemoryState::new();
+        let mut state = StateSpy(state, ChangeSet::new());
+
+        let genesis_config = GenesisConfig::default();
+        init_and_apply(&genesis_config, &mut state);
+
+        let (mut state, genesis_changes) = (state.0, state.1);
+
+        let addr = AccountAddress::TWO;
+
+        let mut storage = StateMemory::from_genesis(genesis_changes);
+
+        storage.add(mint_one_eth(&mut state, addr));
+        storage.tag();
+        storage.add(mint_one_eth(&mut state, addr));
+        storage.add(mint_one_eth(&mut state, addr));
+        storage.tag();
+
+        let query = InMemoryStateQueries::new(storage);
+
+        let actual_balance = query
+            .balance_at(state.db(), addr, 1)
+            .expect("Block height should exist");
+        let expected_balance = U256::from(1u64);
+
+        assert_eq!(actual_balance, expected_balance);
+
+        let actual_balance = query
+            .balance_at(state.db(), addr, 2)
+            .expect("Block height should exist");
+        let expected_balance = U256::from(3u64);
+
+        assert_eq!(actual_balance, expected_balance);
+    }
+
+    #[test]
     fn test_query_fetches_zero_balance_for_non_existent_account() {
         let state = InMemoryState::new();
         let mut state = StateSpy(state, ChangeSet::new());
@@ -549,6 +586,36 @@ mod tests {
 
     #[test]
     fn test_query_fetches_older_nonce() {
+        let state = InMemoryState::new();
+        let mut state = StateSpy(state, ChangeSet::new());
+
+        let genesis_config = GenesisConfig::default();
+        init_and_apply(&genesis_config, &mut state);
+
+        let (mut state, genesis_changes) = (state.0, state.1);
+
+        let addr = AccountAddress::TWO;
+
+        let mut storage = StateMemory::from_genesis(genesis_changes);
+
+        storage.add(inc_one_nonce(0, &mut state, addr));
+        storage.tag();
+        storage.add(inc_one_nonce(1, &mut state, addr));
+        storage.add(inc_one_nonce(2, &mut state, addr));
+        storage.tag();
+
+        let query = InMemoryStateQueries::new(storage);
+
+        let actual_nonce = query
+            .nonce_at(state.db(), addr, 1)
+            .expect("Block height should exist");
+        let expected_nonce = 1u64;
+
+        assert_eq!(actual_nonce, expected_nonce);
+    }
+
+    #[test]
+    fn test_query_fetches_latest_and_previous_nonce() {
         let state = InMemoryState::new();
         let mut state = StateSpy(state, ChangeSet::new());
 
