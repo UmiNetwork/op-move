@@ -60,7 +60,7 @@ pub trait State {
 pub struct InMemoryState {
     resolver: InMemoryStorage,
     db: MockTreeStore<StateKey>,
-    version: Option<Version>,
+    version: Version,
 }
 
 impl Default for InMemoryState {
@@ -76,7 +76,7 @@ impl InMemoryState {
         Self {
             resolver: InMemoryStorage::new(),
             db: MockTreeStore::new(Self::ALLOW_OVERWRITE),
-            version: None,
+            version: 0,
         }
     }
 
@@ -113,18 +113,22 @@ impl State for InMemoryState {
     }
 
     fn state_root(&self) -> B256 {
-        self.tree()
-            .get_root_hash(self.version.unwrap())
-            .map(ToB256::to_h256)
-            .unwrap()
+        self.version()
+            .map(|version| self.tree().get_root_hash(version).unwrap().to_h256())
+            .unwrap_or_default()
     }
 }
 
 impl InMemoryState {
+    /// This method return none only in case it is called before genesis i.e. state is completely
+    /// blank, there are no nodes in the trie.
+    fn version(&self) -> Option<Version> {
+        self.version.checked_sub(1)
+    }
+
     fn next_version(&mut self) -> Version {
-        let version = self.version.map(|v| v + 1).unwrap_or_default();
-        self.version = Some(version);
-        version
+        self.version += 1;
+        self.version - 1
     }
 
     fn insert_change_set_into_merkle_trie(&mut self, change_set: &ChangeSet) -> B256 {
@@ -284,9 +288,11 @@ mod tests {
     };
 
     #[test]
-    #[should_panic]
-    fn test_state_root_from_empty_tree_fails() {
-        InMemoryState::new().state_root();
+    fn test_state_root_from_empty_tree_is_zero() {
+        let actual_root = InMemoryState::new().state_root();
+        let expected_root = B256::ZERO;
+
+        assert_eq!(actual_root, expected_root);
     }
 
     #[test]

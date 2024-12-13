@@ -32,8 +32,8 @@ pub mod tests {
                 GasFee, InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash,
             },
             genesis::{
-                config::{GenesisConfig, CHAIN_ID},
                 self,
+                config::{GenesisConfig, CHAIN_ID},
             },
             move_execution::{BaseTokenAccounts, CreateL1GasFee, MovedBaseTokenAccounts},
             primitives::{Address, B256, U256, U64},

@@ -13,10 +13,9 @@ use {
         },
         genesis::config::GenesisConfig,
         move_execution::{
-            execute_transaction, quick_get_nonce,
+            execute_transaction,
             simulate::{call_transaction, simulate_transaction},
-            BaseTokenAccounts, CreateL1GasFee, L1GasFee,
-            L1GasFeeInput, LogsBloom,
+            BaseTokenAccounts, CreateL1GasFee, L1GasFee, L1GasFeeInput, LogsBloom,
         },
         primitives::{self, ToEthAddress, ToMoveAddress, ToSaturatedU64, B256, U256, U64},
         storage::State,
@@ -32,7 +31,10 @@ use {
     },
     alloy::{
         consensus::Receipt,
-        eips::{eip2718::Encodable2718, BlockNumberOrTag, BlockNumberOrTag::*},
+        eips::{
+            eip2718::Encodable2718,
+            BlockNumberOrTag::{self, *},
+        },
         primitives::{keccak256, Bloom},
         rlp::{Decodable, Encodable},
         rpc::types::{FeeHistory, TransactionReceipt as AlloyTxReceipt},
