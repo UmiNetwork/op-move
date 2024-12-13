@@ -44,13 +44,13 @@ fn parse_params(request: serde_json::Value) -> Result<(Address, BlockNumberOrTag
 
 async fn inner_execute(
     address: Address,
-    block_number: BlockNumberOrTag,
+    height: BlockNumberOrTag,
     state_channel: mpsc::Sender<StateMessage>,
 ) -> Result<Option<U256>, JsonRpcError> {
     let (tx, rx) = oneshot::channel();
     let msg = Query::BalanceByHeight {
         address,
-        height: block_number,
+        height,
         response_channel: tx,
     }
     .into();
@@ -101,12 +101,8 @@ mod tests {
     #[test_case("pending")]
     #[tokio::test]
     async fn test_execute(block: &str) {
-        let (state_actor, state_channel) = create_state_actor_with_mock_state_queries(
-            1,
-            AccountAddress::new(hex!(
-                "0000000000000000000000000000000000000000000000000000000000000001"
-            )),
-        );
+        let (state_actor, state_channel) =
+            create_state_actor_with_mock_state_queries(AccountAddress::ONE, 1);
 
         let state_handle = state_actor.spawn();
         let request: serde_json::Value = serde_json::json!({
@@ -131,10 +127,10 @@ mod tests {
         let expected_balance = 5;
         let height = 3;
         let (state_actor, state_channel) = create_state_actor_with_mock_state_queries(
-            height,
             AccountAddress::new(hex!(
                 "0000000000000000000000002222222222222223333333333333333333111100"
             )),
+            height,
         );
         let address = "2222222222222223333333333333333333111100";
 

@@ -155,8 +155,8 @@ pub mod tests {
     }
 
     pub fn create_state_actor_with_mock_state_queries(
-        height: u64,
         address: AccountAddress,
+        height: u64,
     ) -> (
         StateActor<
             InMemoryState,
@@ -189,7 +189,7 @@ pub mod tests {
             MovedBaseTokenAccounts::new(AccountAddress::ONE),
             (),
             (),
-            MockStateQueries(height, address),
+            MockStateQueries(address, height),
             StateActor::on_tx_noop(),
             StateActor::on_tx_batch_noop(),
         );

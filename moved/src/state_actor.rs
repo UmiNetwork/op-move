@@ -613,7 +613,7 @@ mod test_doubles {
         move_core_types::account_address::AccountAddress,
     };
 
-    pub struct MockStateQueries(pub BlockHeight, pub AccountAddress);
+    pub struct MockStateQueries(pub AccountAddress, pub BlockHeight);
 
     impl StateQueries for MockStateQueries {
         type Storage = ();
@@ -624,8 +624,8 @@ mod test_doubles {
             account: AccountAddress,
             height: BlockHeight,
         ) -> Option<Balance> {
-            assert_eq!(height, self.0);
-            assert_eq!(account, self.1);
+            assert_eq!(account, self.0);
+            assert_eq!(height, self.1);
 
             Some(U256::from(5))
         }
@@ -636,8 +636,8 @@ mod test_doubles {
             account: AccountAddress,
             height: BlockHeight,
         ) -> Option<Nonce> {
-            assert_eq!(height, self.0);
-            assert_eq!(account, self.1);
+            assert_eq!(account, self.0);
+            assert_eq!(height, self.1);
 
             Some(3)
         }
@@ -911,7 +911,7 @@ mod tests {
         let address = primitives::Address::new(hex!("11223344556677889900ffeeaabbccddee111111"));
         let (state_actor, _) = create_state_actor_with_given_queries(
             head_height,
-            MockStateQueries(expected_height, address.to_move_address()),
+            MockStateQueries(address.to_move_address(), expected_height),
         );
         let (tx, rx) = oneshot::channel();
 
@@ -941,7 +941,7 @@ mod tests {
         let address = primitives::Address::new(hex!("44223344556677889900ffeeaabbccddee111111"));
         let (state_actor, _) = create_state_actor_with_given_queries(
             head_height,
-            MockStateQueries(expected_height, address.to_move_address()),
+            MockStateQueries(address.to_move_address(), expected_height),
         );
         let (tx, rx) = oneshot::channel();
 
