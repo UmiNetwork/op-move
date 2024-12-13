@@ -1,6 +1,7 @@
 use {
     super::{
-        state_changes::extract_evm_changes, CODE_LAYOUT, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
+        state_changes::extract_evm_changes, type_utils::extract_evm_result, EvmNativeOutcome,
+        CODE_LAYOUT, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
     },
     crate::{
         block::HeaderForExecution,
@@ -29,13 +30,12 @@ use {
     move_vm_runtime::{
         module_traversal::{TraversalContext, TraversalStorage},
         native_extensions::NativeContextExtensions,
-        session::SerializedReturnValues,
     },
     move_vm_types::{
         gas::UnmeteredGasMeter,
-        values::{Struct, Value, Vector},
+        values::{Struct, Value},
     },
-    revm::primitives::{Log, TxKind, U256},
+    revm::primitives::{TxKind, U256},
 };
 
 sol!(
@@ -197,13 +197,6 @@ fn test_solidity_fixed_bytes() {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct EvmNativeOutcome {
-    is_success: bool,
-    output: Vec<u8>,
-    logs: Vec<Log>,
-}
-
 /// Create MoveVM instance and invoke EVM create native.
 /// For tests only since it does not use an existing session or charge gas.
 fn evm_quick_create(
@@ -294,73 +287,6 @@ fn evm_quick_call(
     let outcome = extract_evm_result(outcome);
     let (changes, extensions) = session.finish_with_extensions().unwrap();
     (outcome, changes, extensions)
-}
-
-fn extract_evm_result(outcome: SerializedReturnValues) -> EvmNativeOutcome {
-    let mut return_values = outcome
-        .return_values
-        .into_iter()
-        .map(|(bytes, layout)| Value::simple_deserialize(&bytes, &layout).unwrap());
-
-    let mut evm_result_fields = return_values
-        .next()
-        .unwrap()
-        .value_as::<Struct>()
-        .unwrap()
-        .unpack()
-        .unwrap();
-
-    assert!(
-        return_values.next().is_none(),
-        "There is only one return value."
-    );
-
-    let is_success: bool = evm_result_fields.next().unwrap().value_as().unwrap();
-    let output: Vec<u8> = evm_result_fields.next().unwrap().value_as().unwrap();
-    let logs: Vec<Value> = evm_result_fields.next().unwrap().value_as().unwrap();
-    let logs = logs
-        .into_iter()
-        .map(|value| {
-            let mut fields = value.value_as::<Struct>().unwrap().unpack().unwrap();
-
-            let address = fields.next().unwrap().value_as::<AccountAddress>().unwrap();
-            let topics = fields
-                .next()
-                .unwrap()
-                .value_as::<Vector>()
-                .unwrap()
-                .unpack_unchecked()
-                .unwrap();
-            let data = fields.next().unwrap().value_as::<Vec<u8>>().unwrap();
-
-            Log::new(
-                address.to_eth_address(),
-                topics
-                    .into_iter()
-                    .map(|value| {
-                        value
-                            .value_as::<move_core_types::u256::U256>()
-                            .unwrap()
-                            .to_le_bytes()
-                            .into()
-                    })
-                    .collect(),
-                data.into(),
-            )
-            .unwrap()
-        })
-        .collect();
-
-    assert!(
-        evm_result_fields.next().is_none(),
-        "There are only 3 field in EVM return value."
-    );
-
-    EvmNativeOutcome {
-        is_success,
-        output,
-        logs,
-    }
 }
 
 /// Serialize a number as a Move fungible asset type.
