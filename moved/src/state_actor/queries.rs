@@ -15,6 +15,7 @@ use {
         metadata::Metadata,
         resolver::{ModuleResolver, MoveResolver, ResourceResolver},
         value::MoveTypeLayout,
+        vm_status::StatusCode,
     },
     move_table_extension::{TableHandle, TableResolver},
     std::{collections::HashMap, fmt::Debug},
@@ -280,7 +281,10 @@ impl<'a, R: TreeReader<StateKey> + Sync, H: VersionedState> ModuleResolver
     fn get_module(&self, id: &ModuleId) -> Result<Option<Bytes>, Self::Error> {
         let tree = JellyfishMerkleTree::new(self.db);
         let state_key = StateKey::module(id.address(), id.name());
-        let (maybe_leaf, _) = tree.get_with_proof(state_key.hash(), self.version).unwrap();
+        let (maybe_leaf, _) = tree
+            .get_with_proof(state_key.hash(), self.version)
+            .inspect_err(|e| print!("{e:?}"))
+            .map_err(|_| PartialVMError::new(StatusCode::MISSING_DATA))?;
         let Some((_, history_key)) = maybe_leaf else {
             return Ok(None);
         };
@@ -303,8 +307,13 @@ impl<'a, R: TreeReader<StateKey> + Sync, H: VersionedState> ResourceResolver
         _layout: Option<&MoveTypeLayout>,
     ) -> Result<(Option<Bytes>, usize), Self::Error> {
         let tree = JellyfishMerkleTree::new(self.db);
-        let state_key = StateKey::resource(address, struct_tag).unwrap();
-        let (maybe_leaf, _) = tree.get_with_proof(state_key.hash(), self.version).unwrap();
+        let state_key = StateKey::resource(address, struct_tag)
+            .inspect_err(|e| print!("{e:?}"))
+            .map_err(|e| PartialVMError::new(StatusCode::DATA_FORMAT_ERROR))?;
+        let (maybe_leaf, _) = tree
+            .get_with_proof(state_key.hash(), self.version)
+            .inspect_err(|e| print!("{e:?}"))
+            .map_err(|e| PartialVMError::new(StatusCode::MISSING_DATA))?;
         let Some((_, history_key)) = maybe_leaf else {
             return Ok((None, 0));
         };
