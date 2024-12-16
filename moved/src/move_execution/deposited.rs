@@ -96,7 +96,14 @@ pub(super) fn execute_deposited_transaction(
             .iter()
             .find(|l| l.topics()[0] == ETH_BRIDGE_FINALIZED)
             .ok_or(UserError::DepositFailure(evm_outcome.output))?;
+        // For the ETHBridgeFinalized log the topics are:
+        // topics[0]: 0x31b2166ff604fc5672ea5df08a78081d2bc6d746cadce880747f3643d819e83d (fixed identifier)
+        // topics[1]: from address (sender)
+        // topics[2]: to address (destination)
         let dest_address = AccountAddress::new(bridge_log.topics()[2].0);
+        // For the ETHBridgeFinalized log the data is Solidity ABI encoded a tuple consisting of
+        // 1. amount deposited (32 bytes since it is U256)
+        // 2. extra data (optional; ignored by us)
         let amount = U256::from_be_slice(&bridge_log.data.data[..32]);
         Ok((dest_address, amount, evm_outcome.logs))
     });
