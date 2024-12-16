@@ -17,15 +17,15 @@ fn test_marketplace() {
 
     // List an item for sale
     let seller_address = EVM_ADDRESS;
-    let item_price = 123;
+    let item_price = U256::from(123);
     let market = MoveValue::Address(market_address);
-    let price = MoveValue::U256(U256::from(item_price).to_move_u256());
+    let price = MoveValue::U256(item_price.to_move_u256());
     let thing = MoveValue::vector_u8(b"Something valuable".to_vec());
     ctx.execute(&module_id, "list", vec![&market, &price, &thing, &signer]);
 
     // Mint tokens for the buyer to spend
     let buyer_address = ALT_EVM_ADDRESS;
-    let mint_amount = 567;
+    let mint_amount = U256::from(567);
     ctx.deposit_eth(buyer_address, mint_amount);
 
     // Buy the item from the marketplace using the script

@@ -10,7 +10,7 @@ use {
     },
     aptos_types::vm_status::StatusCode,
     move_binary_format::errors::PartialVMError,
-    move_core_types::{account_address::AccountAddress, ident_str},
+    move_core_types::{account_address::AccountAddress, ident_str, identifier::IdentStr},
     move_vm_runtime::native_functions::NativeFunctionTable,
     move_vm_types::{loaded_data::runtime_types::Type, values::Value},
     revm::{
@@ -21,6 +21,8 @@ use {
     smallvec::SmallVec,
     std::collections::VecDeque,
 };
+
+pub const EVM_CALL_FN_NAME: &IdentStr = ident_str!("system_evm_call");
 
 pub fn append_evm_natives(natives: &mut NativeFunctionTable, builder: &SafeNativeBuilder) {
     type NativeFn = fn(

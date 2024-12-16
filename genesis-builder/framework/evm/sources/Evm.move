@@ -117,6 +117,12 @@ module Evm::evm {
         amount
     }
 
+    // A private function used by the system to call the EVM native.
+    // (For some reason we cannot call the native function directly)
+    fun system_evm_call(caller: address, to: address, value: u256, data: vector<u8>): EvmResult {
+        native_evm_call(caller, to, value, data)
+    }
+
     native fun native_evm_call(caller: address, to: address, value: u256, data: vector<u8>): EvmResult;
     native fun native_evm_create(caller: address, value: u256, data: vector<u8>): EvmResult;
 }

@@ -1,10 +1,13 @@
 use {
-    super::{EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE},
-    crate::primitives::{ToMoveAddress, ToMoveU256, ToU256},
+    super::{EvmNativeOutcome, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE},
+    crate::primitives::{ToEthAddress, ToMoveAddress, ToMoveU256, ToU256},
     alloy::hex::ToHexExt,
     move_binary_format::errors::PartialVMError,
-    move_core_types::{identifier::Identifier, language_storage::StructTag},
-    move_vm_types::values::{Struct, VMValueCast, Value},
+    move_core_types::{
+        account_address::AccountAddress, identifier::Identifier, language_storage::StructTag,
+    },
+    move_vm_runtime::session::SerializedReturnValues,
+    move_vm_types::values::{Struct, VMValueCast, Value, Vector},
     revm::primitives::{
         utilities::KECCAK_EMPTY, AccountInfo, Address, ExecutionResult, Log, B256, U256,
     },
@@ -100,6 +103,75 @@ pub fn evm_result_to_move_value(result: ExecutionResult) -> Value {
         Value::vector_for_testing_only(result.into_logs().into_iter().map(evm_log_to_move_value)),
     ];
     Value::struct_(Struct::pack(fields))
+}
+
+// Safety: This function has a TON of unwraps in it. It should only be called on
+// results that actually came from calling the EVM native.
+pub fn extract_evm_result(outcome: SerializedReturnValues) -> EvmNativeOutcome {
+    let mut return_values = outcome
+        .return_values
+        .into_iter()
+        .map(|(bytes, layout)| Value::simple_deserialize(&bytes, &layout).unwrap());
+
+    let mut evm_result_fields = return_values
+        .next()
+        .unwrap()
+        .value_as::<Struct>()
+        .unwrap()
+        .unpack()
+        .unwrap();
+
+    assert!(
+        return_values.next().is_none(),
+        "EVM native has only one return value."
+    );
+
+    let is_success: bool = evm_result_fields.next().unwrap().value_as().unwrap();
+    let output: Vec<u8> = evm_result_fields.next().unwrap().value_as().unwrap();
+    let logs: Vec<Value> = evm_result_fields.next().unwrap().value_as().unwrap();
+    let logs = logs
+        .into_iter()
+        .map(|value| {
+            let mut fields = value.value_as::<Struct>().unwrap().unpack().unwrap();
+
+            let address = fields.next().unwrap().value_as::<AccountAddress>().unwrap();
+            let topics = fields
+                .next()
+                .unwrap()
+                .value_as::<Vector>()
+                .unwrap()
+                .unpack_unchecked()
+                .unwrap();
+            let data = fields.next().unwrap().value_as::<Vec<u8>>().unwrap();
+
+            Log::new(
+                address.to_eth_address(),
+                topics
+                    .into_iter()
+                    .map(|value| {
+                        value
+                            .value_as::<move_core_types::u256::U256>()
+                            .unwrap()
+                            .to_le_bytes()
+                            .into()
+                    })
+                    .collect(),
+                data.into(),
+            )
+            .unwrap()
+        })
+        .collect();
+
+    assert!(
+        evm_result_fields.next().is_none(),
+        "There are only 3 field in EVM return value."
+    );
+
+    EvmNativeOutcome {
+        is_success,
+        output,
+        logs,
+    }
 }
 
 #[test]

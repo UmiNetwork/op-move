@@ -13,13 +13,13 @@ pub enum TestBaseToken {
 #[derive(Debug)]
 pub struct TestTransaction {
     /// The normalized transaction envelope
-    tx: NormalizedExtendedTxEnvelope,
+    pub tx: NormalizedExtendedTxEnvelope,
     /// Transaction hash
-    tx_hash: B256,
+    pub tx_hash: B256,
     /// L1 cost associated with the transaction
-    l1_cost: u64,
+    pub l1_cost: u64,
     /// Base token state for the transaction
-    base_token: TestBaseToken,
+    pub base_token: TestBaseToken,
 }
 
 impl TestTransaction {
@@ -136,7 +136,7 @@ impl TestContext {
     pub fn transfer(
         &mut self,
         to: Address,
-        amount: u64,
+        amount: U256,
         l1_cost: u64,
     ) -> TransactionExecutionOutcome {
         let (tx_hash, tx) = create_transaction_with_value(
@@ -155,7 +155,7 @@ impl TestContext {
         self.state.apply(outcome.changes.clone()).unwrap();
 
         let treasury_balance = self.get_balance(treasury_address.to_eth_address());
-        assert_eq!(treasury_balance, l1_cost);
+        assert_eq!(treasury_balance, U256::from(l1_cost));
         outcome
     }
 
@@ -251,7 +251,7 @@ impl TestContext {
     /// # Arguments
     /// * `to` - Address to receive the deposit
     /// * `amount` - Amount of ETH to deposit
-    pub fn deposit_eth(&mut self, to: Address, amount: u64) {
+    pub fn deposit_eth(&mut self, to: Address, amount: U256) {
         let balance_before = self.get_balance(to);
         let tx = ExtendedTxEnvelope::DepositedTx(DepositedTx {
             to,
@@ -317,9 +317,8 @@ impl TestContext {
     ///
     /// # Returns
     /// The balance as a u64
-    pub fn get_balance(&self, address: Address) -> u64 {
-        let balance = quick_get_eth_balance(&address.to_move_address(), self.state.resolver());
-        balance.into_limbs()[0]
+    pub fn get_balance(&self, address: Address) -> U256 {
+        quick_get_eth_balance(&address.to_move_address(), self.state.resolver())
     }
 
     /// Compiles a Move module

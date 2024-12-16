@@ -70,6 +70,8 @@ pub enum UserError {
     PartialVm(#[from] PartialVMError),
     #[error("{0}")]
     InvalidSignature(#[from] alloy::primitives::SignatureError),
+    #[error("Error during EVM execution for L2 bridge {0:?}")]
+    DepositFailure(Vec<u8>),
 }
 
 /// The error caused by invalid transaction input parameter.
