@@ -1,4 +1,9 @@
-pub use payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId};
+pub use {
+    payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId},
+    queries::{
+        Balance, BlockHeight, InMemoryStateQueries, Nonce, StateMemory, StateQueries, Version,
+    },
+};
 
 use {
     crate::{
@@ -8,7 +13,7 @@ use {
         },
         genesis::config::GenesisConfig,
         move_execution::{
-            execute_transaction, quick_get_eth_balance, quick_get_nonce,
+            execute_transaction,
             simulate::{call_transaction, simulate_transaction},
             BaseTokenAccounts, CreateL1GasFee, L1GasFee, L1GasFeeInput, LogsBloom,
         },
@@ -26,18 +31,23 @@ use {
     },
     alloy::{
         consensus::Receipt,
-        eips::{eip2718::Encodable2718, BlockNumberOrTag::*},
+        eips::{
+            eip2718::Encodable2718,
+            BlockNumberOrTag::{self, *},
+        },
         primitives::{keccak256, Bloom},
         rlp::{Decodable, Encodable},
         rpc::types::{FeeHistory, TransactionReceipt as AlloyTxReceipt},
     },
     move_binary_format::errors::PartialVMError,
+    move_core_types::effects::ChangeSet,
     revm::primitives::TxKind,
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
 };
 
 mod payload;
+mod queries;
 
 #[cfg(any(feature = "test-doubles", test))]
 pub type InMemStateActor = StateActor<
@@ -50,9 +60,17 @@ pub type InMemStateActor = StateActor<
     crate::move_execution::MovedBaseTokenAccounts,
     crate::block::InMemoryBlockQueries,
     crate::block::BlockMemory,
+    InMemoryStateQueries,
 >;
 
-#[derive(Debug)]
+/// A function invoked on a completion of new transaction execution batch.
+type OnTxBatch<S> =
+    Box<dyn Fn() -> Box<dyn Fn(&mut S) + Send + Sync + 'static> + Send + Sync + 'static>;
+
+/// A function invoked on an execution of a new transaction.
+type OnTx<S> =
+    Box<dyn Fn() -> Box<dyn Fn(&mut S, ChangeSet) + Send + Sync + 'static> + Send + Sync + 'static>;
+
 pub struct StateActor<
     S: State,
     P: NewPayloadId,
@@ -63,6 +81,7 @@ pub struct StateActor<
     B: BaseTokenAccounts,
     Q: BlockQueries<Storage = M>,
     M,
+    SQ,
 > {
     genesis_config: GenesisConfig,
     rx: Receiver<StateMessage>,
@@ -80,8 +99,11 @@ pub struct StateActor<
     l1_fee: L1G,
     base_token: B,
     block_memory: M,
+    state_queries: SQ,
     // tx_hash -> (tx_with_receipt, block_hash)
     tx_receipts: HashMap<B256, (TransactionWithReceipt, B256)>,
+    on_tx_batch: OnTxBatch<Self>,
+    on_tx: OnTx<Self>,
 }
 
 impl<
@@ -94,7 +116,8 @@ impl<
         B: BaseTokenAccounts + Send + Sync + 'static,
         Q: BlockQueries<Storage = M> + Send + Sync + 'static,
         M: Send + Sync + 'static,
-    > StateActor<S, P, H, R, G, L1G, B, Q, M>
+        SQ: StateQueries + Send + Sync + 'static,
+    > StateActor<S, P, H, R, G, L1G, B, Q, M, SQ>
 {
     pub fn spawn(mut self) -> JoinHandle<()> {
         tokio::spawn(async move {
@@ -118,13 +141,15 @@ impl<
         B: BaseTokenAccounts,
         Q: BlockQueries<Storage = M>,
         M,
-    > StateActor<S, P, H, R, G, L1G, B, Q, M>
+        SQ: StateQueries,
+    > StateActor<S, P, H, R, G, L1G, B, Q, M, SQ>
 {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         rx: Receiver<StateMessage>,
         state: S,
         head: B256,
+        height: u64,
         genesis_config: GenesisConfig,
         payload_id: P,
         block_hash: H,
@@ -134,12 +159,15 @@ impl<
         base_token: B,
         block_queries: Q,
         block_memory: M,
+        state_queries: SQ,
+        on_tx: OnTx<Self>,
+        on_tx_batch: OnTxBatch<Self>,
     ) -> Self {
         Self {
             genesis_config,
             rx,
             head,
-            height: 0,
+            height,
             payload_id,
             execution_payloads: HashMap::new(),
             pending_payload: None,
@@ -152,35 +180,38 @@ impl<
             base_token,
             block_queries,
             block_memory,
+            state_queries,
             tx_receipts: HashMap::new(),
+            on_tx,
+            on_tx_batch,
+        }
+    }
+
+    pub fn resolve_height(&self, height: BlockNumberOrTag) -> u64 {
+        match height {
+            Number(height) => height,
+            Finalized | Pending | Latest | Safe => self.height,
+            Earliest => 0,
         }
     }
 
     pub fn handle_query(&self, msg: Query) {
         match msg {
-            Query::ChainId { response_channel } => {
-                response_channel.send(self.genesis_config.chain_id).ok()
-            }
-            Query::GetBalance {
+            Query::ChainId { response_channel } => response_channel.send(self.genesis_config.chain_id).ok(),
+            Query::BalanceByHeight {
                 address,
                 response_channel,
-                ..
-            } => {
-                // TODO: Support balance from arbitrary blocks
-                let account = address.to_move_address();
-                let balance = quick_get_eth_balance(&account, self.state.resolver());
-                response_channel.send(balance).ok()
-            }
-            Query::GetNonce {
+                height,
+            } => response_channel
+                .send(self.state_queries.balance_at(self.state.db(), address.to_move_address(), self.resolve_height(height)))
+                .ok(),
+            Query::NonceByHeight {
                 address,
                 response_channel,
-                ..
-            } => {
-                // TODO: Support nonce from arbitrary blocks
-                let address = address.to_move_address();
-                let nonce = quick_get_nonce(&address, self.state.resolver());
-                response_channel.send(nonce).ok()
-            }
+                height,
+            } => response_channel
+                .send(self.state_queries.nonce_at(self.state.db(), address.to_move_address(), self.resolve_height(height)))
+                .ok(),
             Query::BlockByHash {
                 hash,
                 response_channel,
@@ -192,14 +223,9 @@ impl<
                 height,
                 response_channel,
                 include_transactions,
-            } => {
-                let block_height = match height {
-                    Number(height) => height,
-                    Finalized | Pending | Latest | Safe => self.height,
-                    Earliest => 0,
-                };
-                response_channel.send(self.block_queries.by_height(&self.block_memory, block_height, include_transactions)).ok()
-            }
+            } => response_channel
+                .send(self.block_queries.by_height(&self.block_memory, self.resolve_height(height), include_transactions))
+                .ok(),
             Query::BlockNumber {
                 response_channel,
             } => response_channel
@@ -386,6 +412,7 @@ impl<
         base_fee: U256,
         block_header: &HeaderForExecution,
     ) -> (ExecutionOutcome, Vec<TransactionWithReceipt>) {
+        let on_tx = (self.on_tx)();
         let mut total_tip = U256::ZERO;
         let mut receipts = Vec::new();
         let mut transactions = transactions.peekable();
@@ -398,7 +425,7 @@ impl<
         let l1_fee = transactions
             .peek()
             .and_then(|(_, v, _)| v.as_deposited())
-            .map(|v| self.l1_fee.for_deposit(v.data.as_ref()));
+            .map(|tx| self.l1_fee.for_deposit(tx.data.as_ref()));
 
         // TODO: parallel transaction processing?
         for (tx_hash, tx, l1_cost_input) in transactions {
@@ -418,12 +445,14 @@ impl<
                 block_header.clone(),
             ) {
                 Ok(outcome) => outcome,
-                Err(User(_)) => unreachable!("User errors are handled in execution"),
+                Err(User(e)) => unreachable!("User errors are handled in execution {e:?}"),
                 Err(InvalidTransaction(_)) => continue,
                 Err(InvariantViolation(e)) => panic!("ERROR: execution error {e:?}"),
             };
 
             let l1_block_info = l1_fee.as_ref().and_then(|x| x.l1_block_info(l1_cost_input));
+
+            on_tx(self, outcome.changes.clone());
 
             self.state
                 .apply(outcome.changes)
@@ -464,6 +493,9 @@ impl<
 
             tx_index += 1;
         }
+
+        let on_tx_batch = (self.on_tx_batch)();
+        on_tx_batch(self);
 
         // Compute the receipts root by RLP-encoding each receipt to be a leaf of
         // a merkle trie.
@@ -538,6 +570,77 @@ impl<
             l1_block_info: rx.l1_block_info.unwrap_or_default(),
         };
         Some(result)
+    }
+
+    pub fn on_tx_batch_noop() -> OnTxBatch<Self> {
+        Box::new(|| Box::new(|_| {}))
+    }
+
+    pub fn on_tx_noop() -> OnTx<Self> {
+        Box::new(|| Box::new(|_, _| {}))
+    }
+}
+
+impl<
+        S: State<Err = PartialVMError>,
+        P: NewPayloadId,
+        H: BlockHash,
+        R: BlockRepository<Storage = M>,
+        G: GasFee,
+        L1G: CreateL1GasFee,
+        B: BaseTokenAccounts,
+        Q: BlockQueries<Storage = M>,
+        M,
+    > StateActor<S, P, H, R, G, L1G, B, Q, M, InMemoryStateQueries>
+{
+    pub fn on_tx_in_memory() -> OnTx<Self> {
+        Box::new(|| Box::new(|state, changes| state.state_queries.add(changes)))
+    }
+
+    pub fn on_tx_batch_in_memory() -> OnTxBatch<Self> {
+        Box::new(|| Box::new(|state| state.state_queries.tag()))
+    }
+}
+
+#[cfg(any(feature = "test-doubles", test))]
+pub use test_doubles::*;
+
+#[cfg(any(feature = "test-doubles", test))]
+mod test_doubles {
+    use {
+        super::*, crate::primitives::U256, aptos_jellyfish_merkle::TreeReader,
+        aptos_types::state_store::state_key::StateKey,
+        move_core_types::account_address::AccountAddress,
+    };
+
+    pub struct MockStateQueries(pub AccountAddress, pub BlockHeight);
+
+    impl StateQueries for MockStateQueries {
+        type Storage = ();
+
+        fn balance_at(
+            &self,
+            _db: &(impl TreeReader<StateKey> + Sync),
+            account: AccountAddress,
+            height: BlockHeight,
+        ) -> Option<Balance> {
+            assert_eq!(account, self.0);
+            assert_eq!(height, self.1);
+
+            Some(U256::from(5))
+        }
+
+        fn nonce_at(
+            &self,
+            _db: &(impl TreeReader<StateKey> + Sync),
+            account: AccountAddress,
+            height: BlockHeight,
+        ) -> Option<Nonce> {
+            assert_eq!(account, self.0);
+            assert_eq!(height, self.1);
+
+            Some(3)
+        }
     }
 }
 
@@ -622,4 +725,350 @@ fn test_build_block_hash() {
             "c9f7a6ef5311bf49b8322a92f3d75bd5c505ee613323fb58c7166c3511a62bcf"
         ))
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use {
+        super::*,
+        crate::{
+            block::{
+                BlockMemory, Eip1559GasFee, InMemoryBlockQueries, InMemoryBlockRepository,
+                MovedBlockHash,
+            },
+            genesis::{self, config::CHAIN_ID},
+            move_execution::{create_move_vm, create_vm_session, MovedBaseTokenAccounts},
+            storage::InMemoryState,
+            tests::{signer::Signer, EVM_ADDRESS, PRIVATE_KEY},
+            types::session_id::SessionId,
+        },
+        alloy::{
+            consensus::{SignableTransaction, TxEip1559, TxEnvelope},
+            hex,
+            network::TxSignerSync,
+        },
+        move_core_types::{account_address::AccountAddress, effects::ChangeSet},
+        move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
+        move_vm_types::gas::UnmeteredGasMeter,
+        test_case::test_case,
+        tokio::sync::{
+            mpsc::{self, Sender},
+            oneshot,
+        },
+    };
+
+    fn create_state_actor_with_given_queries<SQ: StateQueries>(
+        height: u64,
+        state_queries: SQ,
+    ) -> (
+        StateActor<
+            impl State<Err = PartialVMError>,
+            impl NewPayloadId,
+            impl BlockHash,
+            impl BlockRepository<Storage = BlockMemory>,
+            impl GasFee,
+            impl CreateL1GasFee,
+            impl BaseTokenAccounts,
+            impl BlockQueries<Storage = BlockMemory>,
+            BlockMemory,
+            SQ,
+        >,
+        Sender<StateMessage>,
+    ) {
+        let genesis_config = GenesisConfig::default();
+        let (state_channel, rx) = mpsc::channel(10);
+
+        let head_hash = B256::new(hex!(
+            "e56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d"
+        ));
+        let genesis_block = Block::default().with_hash(head_hash).with_value(U256::ZERO);
+
+        let mut block_memory = BlockMemory::new();
+        let mut repository = InMemoryBlockRepository::new();
+        repository.add(&mut block_memory, genesis_block);
+
+        let mut state = InMemoryState::new();
+        genesis::init_and_apply(&genesis_config, &mut state);
+
+        let state = StateActor::new(
+            rx,
+            state,
+            head_hash,
+            height,
+            genesis_config,
+            0x03421ee50df45cacu64,
+            MovedBlockHash,
+            repository,
+            Eip1559GasFee::default(),
+            U256::ZERO,
+            MovedBaseTokenAccounts::new(AccountAddress::ONE),
+            InMemoryBlockQueries,
+            block_memory,
+            state_queries,
+            StateActor::on_tx_noop(),
+            StateActor::on_tx_batch_noop(),
+        );
+        (state, state_channel)
+    }
+
+    fn mint_eth(
+        state: &impl State<Err = PartialVMError>,
+        addr: AccountAddress,
+        amount: U256,
+    ) -> ChangeSet {
+        let move_vm = create_move_vm().unwrap();
+        let mut session = create_vm_session(&move_vm, state.resolver(), SessionId::default());
+        let traversal_storage = TraversalStorage::new();
+        let mut traversal_context = TraversalContext::new(&traversal_storage);
+        let mut gas_meter = UnmeteredGasMeter;
+
+        crate::move_execution::mint_eth(
+            &addr,
+            amount,
+            &mut session,
+            &mut traversal_context,
+            &mut gas_meter,
+        )
+        .unwrap();
+
+        session.finish().unwrap()
+    }
+
+    fn create_state_actor_with_fake_queries(
+        addr: AccountAddress,
+        initial_balance: U256,
+    ) -> (
+        StateActor<
+            impl State<Err = PartialVMError>,
+            impl NewPayloadId,
+            impl BlockHash,
+            impl BlockRepository<Storage = BlockMemory>,
+            impl GasFee,
+            impl CreateL1GasFee,
+            impl BaseTokenAccounts,
+            impl BlockQueries<Storage = BlockMemory>,
+            BlockMemory,
+            impl StateQueries,
+        >,
+        Sender<StateMessage>,
+    ) {
+        let genesis_config = GenesisConfig::default();
+        let (state_channel, rx) = mpsc::channel(10);
+
+        let head_hash = B256::new(hex!(
+            "e56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d"
+        ));
+        let height = 0;
+        let genesis_block = Block::default().with_hash(head_hash).with_value(U256::ZERO);
+
+        let mut block_memory = BlockMemory::new();
+        let mut repository = InMemoryBlockRepository::new();
+        repository.add(&mut block_memory, genesis_block);
+
+        let mut state = InMemoryState::new();
+        let (genesis_changes, table_changes) = genesis::init(&genesis_config, &state);
+        state
+            .apply_with_tables(genesis_changes.clone(), table_changes)
+            .unwrap();
+        let changes_addition = mint_eth(&state, addr, initial_balance);
+        state.apply(changes_addition.clone()).unwrap();
+
+        let mut state_queries = InMemoryStateQueries::from_genesis(genesis_changes);
+        state_queries.add(changes_addition);
+
+        let state = StateActor::new(
+            rx,
+            state,
+            head_hash,
+            height,
+            genesis_config,
+            0x03421ee50df45cacu64,
+            MovedBlockHash,
+            repository,
+            Eip1559GasFee::default(),
+            U256::ZERO,
+            MovedBaseTokenAccounts::new(AccountAddress::ONE),
+            InMemoryBlockQueries,
+            block_memory,
+            state_queries,
+            StateActor::on_tx_in_memory(),
+            StateActor::on_tx_batch_in_memory(),
+        );
+        (state, state_channel)
+    }
+
+    #[test_case(Latest, 4, 4; "Latest")]
+    #[test_case(Finalized, 4, 4; "Finalized")]
+    #[test_case(Safe, 4, 4; "Safe")]
+    #[test_case(Earliest, 4, 0; "Earliest")]
+    #[test_case(Pending, 4, 4; "Pending")]
+    #[test_case(Number(2), 4, 2; "Number")]
+    fn test_nonce_is_fetched_by_height_successfully(
+        height: BlockNumberOrTag,
+        head_height: BlockHeight,
+        expected_height: BlockHeight,
+    ) {
+        let address = primitives::Address::new(hex!("11223344556677889900ffeeaabbccddee111111"));
+        let (state_actor, _) = create_state_actor_with_given_queries(
+            head_height,
+            MockStateQueries(address.to_move_address(), expected_height),
+        );
+        let (tx, rx) = oneshot::channel();
+
+        state_actor.handle_query(Query::NonceByHeight {
+            height,
+            address,
+            response_channel: tx,
+        });
+
+        let actual_nonce = rx.blocking_recv().unwrap().expect("Block should be found");
+        let expected_nonce = 3;
+
+        assert_eq!(actual_nonce, expected_nonce);
+    }
+
+    #[test_case(Latest, 2, 2; "Latest")]
+    #[test_case(Finalized, 2, 2; "Finalized")]
+    #[test_case(Safe, 2, 2; "Safe")]
+    #[test_case(Earliest, 2, 0; "Earliest")]
+    #[test_case(Pending, 2, 2; "Pending")]
+    #[test_case(Number(1), 2, 1; "Number")]
+    fn test_balance_is_fetched_by_height_successfully(
+        height: BlockNumberOrTag,
+        head_height: BlockHeight,
+        expected_height: BlockHeight,
+    ) {
+        let address = primitives::Address::new(hex!("44223344556677889900ffeeaabbccddee111111"));
+        let (state_actor, _) = create_state_actor_with_given_queries(
+            head_height,
+            MockStateQueries(address.to_move_address(), expected_height),
+        );
+        let (tx, rx) = oneshot::channel();
+
+        state_actor.handle_query(Query::BalanceByHeight {
+            height,
+            address,
+            response_channel: tx,
+        });
+
+        let actual_balance = rx.blocking_recv().unwrap().expect("Block should be found");
+        let expected_balance = U256::from(5);
+
+        assert_eq!(actual_balance, expected_balance);
+    }
+
+    #[test]
+    fn test_fetched_balances_are_updated_after_transfer_of_funds() {
+        let to = primitives::Address::new(hex!("44223344556677889900ffeeaabbccddee111111"));
+        let initial_balance = U256::from(5);
+        let amount = U256::from(4);
+        let (mut state_actor, _) =
+            create_state_actor_with_fake_queries(EVM_ADDRESS.to_move_address(), initial_balance);
+
+        let signer = Signer::new(&PRIVATE_KEY);
+        let mut tx = TxEip1559 {
+            chain_id: CHAIN_ID,
+            nonce: signer.nonce,
+            gas_limit: u64::MAX,
+            max_fee_per_gas: 0,
+            max_priority_fee_per_gas: 0,
+            to: TxKind::Call(to),
+            value: amount,
+            access_list: Default::default(),
+            input: Default::default(),
+        };
+        let signature = signer.inner.sign_transaction_sync(&mut tx).unwrap();
+        let tx = TxEnvelope::Eip1559(tx.into_signed(signature));
+
+        state_actor.handle_command(Command::AddTransaction { tx: tx.clone() });
+        state_actor.handle_command(Command::StartBlockBuild {
+            payload_attributes: Default::default(),
+            response_channel: oneshot::channel().0,
+        });
+
+        let (tx, rx) = oneshot::channel();
+
+        state_actor.handle_query(Query::BalanceByHeight {
+            height: Latest,
+            address: to,
+            response_channel: tx,
+        });
+
+        let actual_recipient_balance = rx.blocking_recv().unwrap().expect("Block should be found");
+        let expected_recipient_balance = amount;
+
+        assert_eq!(actual_recipient_balance, expected_recipient_balance);
+
+        let (tx, rx) = oneshot::channel();
+
+        state_actor.handle_query(Query::BalanceByHeight {
+            height: Latest,
+            address: EVM_ADDRESS,
+            response_channel: tx,
+        });
+
+        let actual_sender_balance = rx.blocking_recv().unwrap().expect("Block should be found");
+        let expected_sender_balance = initial_balance - amount;
+
+        assert_eq!(actual_sender_balance, expected_sender_balance);
+    }
+
+    #[test]
+    fn test_fetched_nonces_are_updated_after_executing_transaction() {
+        let to = primitives::Address::new(hex!("44223344556677889900ffeeaabbccddee111111"));
+        let initial_balance = U256::from(5);
+        let amount = U256::from(4);
+        let (mut state_actor, _) =
+            create_state_actor_with_fake_queries(EVM_ADDRESS.to_move_address(), initial_balance);
+
+        let signer = Signer::new(&PRIVATE_KEY);
+        let mut tx = TxEip1559 {
+            chain_id: CHAIN_ID,
+            nonce: signer.nonce,
+            gas_limit: u64::MAX,
+            max_fee_per_gas: 0,
+            max_priority_fee_per_gas: 0,
+            to: TxKind::Call(to),
+            value: amount,
+            access_list: Default::default(),
+            input: Default::default(),
+        };
+        let signature = signer.inner.sign_transaction_sync(&mut tx).unwrap();
+        let tx = TxEnvelope::Eip1559(tx.into_signed(signature));
+
+        state_actor.handle_command(Command::AddTransaction { tx });
+
+        let (tx, _rx) = oneshot::channel();
+
+        state_actor.handle_command(Command::StartBlockBuild {
+            payload_attributes: Default::default(),
+            response_channel: tx,
+        });
+
+        let (tx, rx) = oneshot::channel();
+
+        state_actor.handle_query(Query::NonceByHeight {
+            height: Latest,
+            address: to,
+            response_channel: tx,
+        });
+
+        let actual_recipient_balance = rx.blocking_recv().unwrap().expect("Block should be found");
+        let expected_recipient_balance = 0;
+
+        assert_eq!(actual_recipient_balance, expected_recipient_balance);
+
+        let (tx, rx) = oneshot::channel();
+
+        state_actor.handle_query(Query::NonceByHeight {
+            height: Latest,
+            address: EVM_ADDRESS,
+            response_channel: tx,
+        });
+
+        let actual_sender_balance = rx.blocking_recv().unwrap().expect("Block should be found");
+        let expected_sender_balance = 1;
+
+        assert_eq!(actual_sender_balance, expected_sender_balance);
+    }
 }

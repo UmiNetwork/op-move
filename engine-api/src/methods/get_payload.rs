@@ -70,8 +70,9 @@ mod tests {
                 Block, BlockMemory, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
                 InMemoryBlockRepository,
             },
-            genesis::{config::GenesisConfig, init_state},
+            genesis::{self, config::GenesisConfig},
             primitives::{B256, U256},
+            state_actor::InMemoryStateQueries,
             storage::InMemoryState,
             types::state::Command,
         },
@@ -116,12 +117,14 @@ mod tests {
         repository.add(&mut block_memory, genesis_block);
 
         let mut state = InMemoryState::new();
-        init_state(&genesis_config, &mut state);
+        let (changes, table_changes) = genesis::init(&genesis_config, &state);
+        genesis::apply(changes.clone(), table_changes, &genesis_config, &mut state);
 
         let state = moved::state_actor::StateActor::new(
             rx,
             state,
             head_hash,
+            0,
             genesis_config,
             0x03421ee50df45cacu64,
             head_hash,
@@ -131,6 +134,9 @@ mod tests {
             (),
             InMemoryBlockQueries,
             block_memory,
+            InMemoryStateQueries::from_genesis(changes),
+            moved::state_actor::StateActor::on_tx_noop(),
+            moved::state_actor::StateActor::on_tx_batch_noop(),
         );
         let state_handle = state.spawn();
 
@@ -168,7 +174,7 @@ mod tests {
                 "executionPayload": {
                     "parentHash": "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d",
                     "feeRecipient": "0x4200000000000000000000000000000000000011",
-                    "stateRoot": "0xc69848607093504f7acf479f516dcfaee088091e88e1f465ea74244307e8d676",
+                    "stateRoot": "0xf2c849eacf34ce3985cdc176ce9d0adb2bbcef8fd1e4952d9ceb7d55486469e9",
                     "receiptsRoot": "0x05fddc251b06be4b6305c662f0ffa27284ed876b673b02cbc2f6cab452bd8bb6",
                     "logsBloom": "0x00000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000400",
                     "prevRandao": "0xbde07f5d381bb84700433fe6c0ae077aa40eaad3a5de7abd298f0e3e27e6e4c9",

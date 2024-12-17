@@ -8,10 +8,10 @@ use {
             Block, BlockHash, BlockMemory, BlockRepository, Eip1559GasFee, ExtendedBlock, Header,
             InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash,
         },
-        genesis::{config::GenesisConfig, init_state},
+        genesis::{self, config::GenesisConfig},
         move_execution::{CreateEcotoneL1GasFee, MovedBaseTokenAccounts},
         primitives::U256,
-        state_actor::StatePayloadId,
+        state_actor::{InMemoryStateQueries, StatePayloadId},
         storage::InMemoryState,
         types::state::{Command, StateMessage},
     },
@@ -88,13 +88,16 @@ pub async fn run() {
     repository.add(&mut block_memory, genesis_block);
 
     let mut state = InMemoryState::new();
-    init_state(&genesis_config, &mut state);
+    let (genesis_changes, table_changes) = genesis::init(&genesis_config, &state);
+    let state_query = InMemoryStateQueries::from_genesis(genesis_changes.clone());
+    genesis::apply(genesis_changes, table_changes, &genesis_config, &mut state);
 
     let base_token = MovedBaseTokenAccounts::new(genesis_config.treasury);
     let state = moved::state_actor::StateActor::new(
         rx,
         state,
         head,
+        0,
         genesis_config,
         StatePayloadId,
         block_hash,
@@ -107,6 +110,9 @@ pub async fn run() {
         base_token,
         InMemoryBlockQueries,
         block_memory,
+        state_query,
+        moved::state_actor::StateActor::on_tx_in_memory(),
+        moved::state_actor::StateActor::on_tx_batch_in_memory(),
     );
 
     let http_state_channel = state_channel.clone();

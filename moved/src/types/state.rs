@@ -169,15 +169,15 @@ pub enum Query {
     ChainId {
         response_channel: oneshot::Sender<u64>,
     },
-    GetBalance {
+    BalanceByHeight {
         address: Address,
-        block_number: BlockNumberOrTag,
-        response_channel: oneshot::Sender<U256>,
+        height: BlockNumberOrTag,
+        response_channel: oneshot::Sender<Option<U256>>,
     },
-    GetNonce {
+    NonceByHeight {
         address: Address,
-        block_number: BlockNumberOrTag,
-        response_channel: oneshot::Sender<u64>,
+        height: BlockNumberOrTag,
+        response_channel: oneshot::Sender<Option<u64>>,
     },
     BlockByHash {
         hash: B256,

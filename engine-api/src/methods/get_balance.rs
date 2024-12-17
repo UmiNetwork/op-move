@@ -13,11 +13,12 @@ pub async fn execute(
     state_channel: mpsc::Sender<StateMessage>,
 ) -> Result<serde_json::Value, JsonRpcError> {
     let (address, block_number) = parse_params(request)?;
-    let response = inner_execute(address, block_number, state_channel).await?;
+    let response = inner_execute(address, block_number, state_channel)
+        .await?
+        .ok_or(JsonRpcError::block_not_found(block_number))?;
 
     // Format the balance as a hex string
-    Ok(serde_json::to_value(format!("0x{:x}", response))
-        .expect("Must be able to JSON-serialize response"))
+    Ok(serde_json::Value::String(format!("0x{:x}", response)))
 }
 
 fn parse_params(request: serde_json::Value) -> Result<(Address, BlockNumberOrTag), JsonRpcError> {
@@ -43,13 +44,13 @@ fn parse_params(request: serde_json::Value) -> Result<(Address, BlockNumberOrTag
 
 async fn inner_execute(
     address: Address,
-    block_number: BlockNumberOrTag,
+    height: BlockNumberOrTag,
     state_channel: mpsc::Sender<StateMessage>,
-) -> Result<U256, JsonRpcError> {
+) -> Result<Option<U256>, JsonRpcError> {
     let (tx, rx) = oneshot::channel();
-    let msg = Query::GetBalance {
+    let msg = Query::BalanceByHeight {
         address,
-        block_number,
+        height,
         response_channel: tx,
     }
     .into();
@@ -61,7 +62,8 @@ async fn inner_execute(
 #[cfg(test)]
 mod tests {
     use {
-        super::*, crate::methods::tests::create_state_actor, moved::primitives::U64,
+        super::*, crate::methods::tests::create_state_actor_with_mock_state_queries, alloy::hex,
+        move_core_types::account_address::AccountAddress, moved::primitives::U64,
         std::str::FromStr, test_case::test_case,
     };
 
@@ -99,7 +101,8 @@ mod tests {
     #[test_case("pending")]
     #[tokio::test]
     async fn test_execute(block: &str) {
-        let (state_actor, state_channel) = create_state_actor();
+        let (state_actor, state_channel) =
+            create_state_actor_with_mock_state_queries(AccountAddress::ONE, 1);
 
         let state_handle = state_actor.spawn();
         let request: serde_json::Value = serde_json::json!({
@@ -112,7 +115,37 @@ mod tests {
             "id": 1
         });
 
-        let expected_response: serde_json::Value = serde_json::from_str(r#""0x0""#).unwrap();
+        let expected_response: serde_json::Value = serde_json::from_str(r#""0x5""#).unwrap();
+        let response = execute(request, state_channel).await.unwrap();
+
+        assert_eq!(response, expected_response);
+        state_handle.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_endpoint_returns_json_encoded_balance_query_result_successfully() {
+        let expected_balance = 5;
+        let height = 3;
+        let (state_actor, state_channel) = create_state_actor_with_mock_state_queries(
+            AccountAddress::new(hex!(
+                "0000000000000000000000002222222222222223333333333333333333111100"
+            )),
+            height,
+        );
+        let address = "2222222222222223333333333333333333111100";
+
+        let state_handle = state_actor.spawn();
+        let request: serde_json::Value = serde_json::json!({
+            "jsonrpc": "2.0",
+            "method": "eth_getBalance",
+            "params": [
+                format!("0x{address}"),
+                format!("0x{height}"),
+            ],
+            "id": 1
+        });
+
+        let expected_response = serde_json::Value::String(format!("0x{expected_balance}"));
         let response = execute(request, state_channel).await.unwrap();
 
         assert_eq!(response, expected_response);

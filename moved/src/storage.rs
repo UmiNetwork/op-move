@@ -48,6 +48,8 @@ pub trait State {
         table_changes: TableChangeSet,
     ) -> Result<(), Self::Err>;
 
+    fn db(&self) -> &(impl TreeReader<StateKey> + Sync);
+
     /// Returns a reference to a [`MoveResolver`] that can resolve both resources and modules.
     fn resolver(&self) -> &(impl MoveResolver<Self::Err> + TableResolver);
 
@@ -102,22 +104,31 @@ impl State for InMemoryState {
         Ok(())
     }
 
+    fn db(&self) -> &(impl TreeReader<StateKey> + Sync) {
+        &self.db
+    }
+
     fn resolver(&self) -> &(impl MoveResolver<Self::Err> + TableResolver) {
         &self.resolver
     }
 
     fn state_root(&self) -> B256 {
-        self.tree()
-            .get_root_hash(self.version)
-            .map(ToB256::to_h256)
-            .unwrap()
+        self.version()
+            .map(|version| self.tree().get_root_hash(version).unwrap().to_h256())
+            .unwrap_or_default()
     }
 }
 
 impl InMemoryState {
+    /// This method return none only in case it is called before genesis i.e. state is completely
+    /// blank, there are no nodes in the trie.
+    fn version(&self) -> Option<Version> {
+        self.version.checked_sub(1)
+    }
+
     fn next_version(&mut self) -> Version {
         self.version += 1;
-        self.version
+        self.version - 1
     }
 
     fn insert_change_set_into_merkle_trie(&mut self, change_set: &ChangeSet) -> B256 {
@@ -236,20 +247,20 @@ where
 {
     fn create_update_batch(
         &self,
-        values_per_shard: HashMap<u8, Vec<(TreeKey, TreeValueRef)>>,
+        mut values_per_shard: HashMap<u8, Vec<(TreeKey, TreeValueRef)>>,
         version: Version,
     ) -> Result<(HashValue, TreeUpdateBatch<StateKey>), AptosDbError> {
         let mut tree_update_batch = TreeUpdateBatch::new();
         const NIL: Node<StateKey> = Node::Null;
         let mut shard_root_nodes = [NIL; 16];
-        let persisted_versions = self.get_shard_persisted_versions(None)?;
 
-        for (shard_id, values) in values_per_shard {
+        for shard_id in 0..16 {
+            let values = values_per_shard.remove(&shard_id).unwrap_or_default();
             let (shard_root_node, batch) = self.batch_put_value_set_for_shard(
                 shard_id,
                 values,
                 None,
-                persisted_versions[shard_id as usize],
+                version.checked_sub(1),
                 version,
             )?;
 
@@ -257,7 +268,10 @@ where
             shard_root_nodes[shard_id as usize] = shard_root_node;
         }
 
-        self.put_top_levels_nodes(shard_root_nodes.to_vec(), version.checked_sub(1), version)
+        let (root_hash, root_batch) =
+            self.put_top_levels_nodes(shard_root_nodes.to_vec(), version.checked_sub(1), version)?;
+        tree_update_batch.combine(root_batch);
+        Ok((root_hash, tree_update_batch))
     }
 }
 
@@ -274,9 +288,11 @@ mod tests {
     };
 
     #[test]
-    #[should_panic]
-    fn test_state_root_from_empty_tree_fails() {
-        InMemoryState::new().state_root();
+    fn test_state_root_from_empty_tree_is_zero() {
+        let actual_root = InMemoryState::new().state_root();
+        let expected_root = B256::ZERO;
+
+        assert_eq!(actual_root, expected_root);
     }
 
     #[test]

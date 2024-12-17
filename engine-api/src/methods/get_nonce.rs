@@ -44,25 +44,27 @@ fn parse_params(request: serde_json::Value) -> Result<(Address, BlockNumberOrTag
 
 async fn inner_execute(
     address: Address,
-    block_number: BlockNumberOrTag,
+    height: BlockNumberOrTag,
     state_channel: mpsc::Sender<StateMessage>,
 ) -> Result<u64, JsonRpcError> {
     let (tx, rx) = oneshot::channel();
-    let msg = Query::GetNonce {
+    let msg = Query::NonceByHeight {
         address,
-        block_number,
+        height,
         response_channel: tx,
     }
     .into();
     state_channel.send(msg).await.map_err(access_state_error)?;
-    let response = rx.await.map_err(access_state_error)?;
+    let response = rx.await?.ok_or(JsonRpcError::block_not_found(height))?;
+
     Ok(response)
 }
 
 #[cfg(test)]
 mod tests {
     use {
-        super::*, crate::methods::tests::create_state_actor, moved::primitives::U64,
+        super::*, crate::methods::tests::create_state_actor_with_mock_state_queries, alloy::hex,
+        move_core_types::account_address::AccountAddress, moved::primitives::U64,
         std::str::FromStr, test_case::test_case,
     };
 
@@ -100,7 +102,8 @@ mod tests {
     #[test_case("pending")]
     #[tokio::test]
     async fn test_execute(block: &str) {
-        let (state_actor, state_channel) = create_state_actor();
+        let (state_actor, state_channel) =
+            create_state_actor_with_mock_state_queries(AccountAddress::ONE, 1);
 
         let state_handle = state_actor.spawn();
         let request: serde_json::Value = serde_json::json!({
@@ -113,7 +116,37 @@ mod tests {
             "id": 1
         });
 
-        let expected_response: serde_json::Value = serde_json::from_str(r#""0x0""#).unwrap();
+        let expected_response: serde_json::Value = serde_json::from_str(r#""0x3""#).unwrap();
+        let response = execute(request, state_channel).await.unwrap();
+
+        assert_eq!(response, expected_response);
+        state_handle.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_endpoint_returns_json_encoded_nonce_query_result_successfully() {
+        let expected_nonce = 3;
+        let height = 2;
+        let (state_actor, state_channel) = create_state_actor_with_mock_state_queries(
+            AccountAddress::new(hex!(
+                "0000000000000000000000002222222222222223333333333333333333111100"
+            )),
+            height,
+        );
+        let address = "2222222222222223333333333333333333111100";
+
+        let state_handle = state_actor.spawn();
+        let request: serde_json::Value = serde_json::json!({
+            "jsonrpc": "2.0",
+            "method": "eth_getNonce",
+            "params": [
+                format!("0x{address}"),
+                format!("0x{height}"),
+            ],
+            "id": 1
+        });
+
+        let expected_response = serde_json::Value::String(format!("0x{expected_nonce}"));
         let response = execute(request, state_channel).await.unwrap();
 
         assert_eq!(response, expected_response);
