@@ -1,4 +1,5 @@
 use {
+    alloy::json_abi::{JsonAbi, StateMutability},
     aptos_framework::{BuildOptions, BuiltPackage, ReleaseBundle, ReleasePackage},
     move_package::{
         package_hooks::register_package_hooks, BuildConfig as MoveBuildConfig, LintFlag,
@@ -6,7 +7,7 @@ use {
     once_cell::sync::Lazy,
     std::{
         collections::BTreeMap,
-        fs::{copy, read_to_string, remove_dir_all, write, OpenOptions},
+        fs::{copy, read_dir, read_to_string, remove_dir_all, write, DirEntry, OpenOptions},
         io::{BufRead, BufReader},
         path::PathBuf,
         process::Command,
@@ -52,6 +53,7 @@ static APTOS_PACKAGE_PATHS: Lazy<Vec<PathBuf>> = Lazy::new(|| {
         MOVED_FRAMEWORK_DIR.join("eth-token"),
         MOVED_FRAMEWORK_DIR.join("evm"),
         MOVED_FRAMEWORK_DIR.join("l2-cross-domain-messenger"),
+        MOVED_FRAMEWORK_DIR.join("l2"),
     ]
 });
 static APTOS_ADDRESS_MAPPING: Lazy<BTreeMap<&str, &str>> = Lazy::new(|| {
@@ -89,10 +91,103 @@ fn main() -> anyhow::Result<()> {
     clone_repos()?;
 
     fix_aptos_packages()?;
+    l2_abi_to_move()?;
     build_aptos_packages()?;
 
     fix_sui_packages()?;
     build_sui_packages()?;
+    Ok(())
+}
+
+#[derive(Debug, Default)]
+struct L2Module {
+    name: String,
+    functions: Vec<L2Function>,
+}
+
+#[derive(Debug, Default)]
+struct L2Function {
+    name: String,
+    selector: [u8; 4],
+    inputs: Vec<(String, String)>,
+    has_value: bool,
+}
+
+fn l2_abi_to_move() -> anyhow::Result<()> {
+    println!("Converting L2 Solidity ABIs to Move modules");
+    let directory_path = "server/src/tests/optimism/packages/contracts-bedrock/snapshots/abi/";
+    let directory = read_dir(directory_path)?;
+    for file in directory {
+        let file_path = file?.path();
+        let name = String::from(
+            file_path
+                .file_stem()
+                .expect("ABI file should exist")
+                .to_string_lossy(),
+        );
+
+        let json = read_to_string(file_path)?;
+        let abi: JsonAbi = serde_json::from_str(&json)?;
+
+        let functions = abi
+            .functions
+            .into_iter()
+            .map(|(name, funs)| {
+                // TODO: Handle function overloading
+                // Though rarely used, Solidity supports function overloading
+                funs.iter()
+                    .map(|fun| {
+                        let mut function = L2Function {
+                            name: name.clone(),
+                            selector: fun.selector().0,
+                            ..Default::default()
+                        };
+
+                        match fun.state_mutability {
+                            StateMutability::Payable => function.has_value = true,
+                            _ => {}
+                        }
+
+                        function.inputs = fun
+                            .inputs
+                            .iter()
+                            .map(|input| {
+                                let input_name = input.name.trim_start_matches("_").to_string();
+                                let input_type = match input.ty.as_str() {
+                                    "address" => "address",
+                                    "address[]" => "vector<address>",
+                                    "bytes" => "vector<u8>",
+                                    "bytes[]" => "vector<vector<u8>>",
+                                    // TODO: Use fixed byte array for bytesN
+                                    "bytes32" => "vector<u8>",
+                                    "bytes32[]" => "vector<vector<u8>>",
+                                    "bytes4" => "vector<u8>",
+                                    "string" => "vector<u8>",
+                                    "uint256" => "u256",
+                                    "uint128" => "u128",
+                                    "uint64" => "u64",
+                                    "uint32" => "u32",
+                                    "uint8" => "u8",
+                                    "bool" => "bool",
+                                    // TODO: Complex struct input type given as tuple
+                                    "tuple" => "unknown",
+                                    "tuple[]" => "unknown",
+                                    ty @ _ => panic!("Unknown function input type: {}", ty),
+                                };
+                                (input_name, input_type.to_string())
+                            })
+                            .collect();
+                        function
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .flatten()
+            .collect();
+
+        // TODO: Use the L2 module object to generate the Move file
+        L2Module { name, functions };
+    }
+
     Ok(())
 }
 
