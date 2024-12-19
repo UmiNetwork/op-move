@@ -9,9 +9,12 @@ alloy.workspace = true
 anyhow.workspace = true
 aptos-framework.workspace = true
 bcs.workspace = true
+handlebars = "6.2"
 move-package.workspace = true
 once_cell.workspace = true
 serde_json.workspace = true
 sui-framework.workspace = true
 sui-move-build.workspace = true
 sui-types.workspace = true
+serde = { version = "1.0.215", features = ["derive"] }
+regex = "1.11.1"
