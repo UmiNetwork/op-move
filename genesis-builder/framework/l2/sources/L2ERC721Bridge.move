@@ -6,13 +6,13 @@ module L2ERC721Bridge::l2_erc721_bridge {
 
     const ENOT_SUCCESS: u64 = 1;
 
-    struct MESSENGERArgs {}
+    struct MessengerArgs {}
 
-    public fun MESSENGER(
+    public fun messenger(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = MESSENGERArgs {};
+        let arg_struct = MessengerArgs {};
 
         let data = abi_encode_params(
             vector[146, 126, 222, 45],
@@ -24,13 +24,13 @@ module L2ERC721Bridge::l2_erc721_bridge {
         result
     }
 
-    struct OTHER_BRIDGEArgs {}
+    struct OtherBridgeArgs {}
 
-    public fun OTHER_BRIDGE(
+    public fun other_bridge(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = OTHER_BRIDGEArgs {};
+        let arg_struct = OtherBridgeArgs {};
 
         let data = abi_encode_params(
             vector[127, 70, 221, 178],
@@ -42,7 +42,7 @@ module L2ERC721Bridge::l2_erc721_bridge {
         result
     }
 
-    struct BridgeERC721Args {
+    struct BridgeErc721Args {
         local_token: address,
         remote_token: address,
         token_id: u256,
@@ -59,7 +59,7 @@ module L2ERC721Bridge::l2_erc721_bridge {
         extra_data: vector<u8>,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = BridgeERC721Args {
+        let arg_struct = BridgeErc721Args {
             local_token,
             remote_token,
             token_id,
@@ -77,7 +77,7 @@ module L2ERC721Bridge::l2_erc721_bridge {
         result
     }
 
-    struct BridgeERC721ToArgs {
+    struct BridgeErc721ToArgs {
         local_token: address,
         remote_token: address,
         to: address,
@@ -96,7 +96,7 @@ module L2ERC721Bridge::l2_erc721_bridge {
         extra_data: vector<u8>,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = BridgeERC721ToArgs {
+        let arg_struct = BridgeErc721ToArgs {
             local_token,
             remote_token,
             to,
@@ -115,7 +115,7 @@ module L2ERC721Bridge::l2_erc721_bridge {
         result
     }
 
-    struct FinalizeBridgeERC721Args {
+    struct FinalizeBridgeErc721Args {
         local_token: address,
         remote_token: address,
         from: address,
@@ -134,7 +134,7 @@ module L2ERC721Bridge::l2_erc721_bridge {
         extra_data: vector<u8>,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = FinalizeBridgeERC721Args {
+        let arg_struct = FinalizeBridgeErc721Args {
             local_token,
             remote_token,
             from,
@@ -168,42 +168,6 @@ module L2ERC721Bridge::l2_erc721_bridge {
 
         let data = abi_encode_params(
             vector[196, 214, 109, 232],
-            arg_struct,
-        );
-        let result = evm_call(caller, @L2ERC721Bridge, _value, data);
-        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
-        emit_evm_logs(&result);
-        result
-    }
-
-    struct MessengerArgs {}
-
-    public fun messenger(
-        caller: &signer,
-    ): EvmResult {
-        let _value = zero(get_metadata());
-        let arg_struct = MessengerArgs {};
-
-        let data = abi_encode_params(
-            vector[60, 183, 71, 191],
-            arg_struct,
-        );
-        let result = evm_call(caller, @L2ERC721Bridge, _value, data);
-        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
-        emit_evm_logs(&result);
-        result
-    }
-
-    struct OtherBridgeArgs {}
-
-    public fun other_bridge(
-        caller: &signer,
-    ): EvmResult {
-        let _value = zero(get_metadata());
-        let arg_struct = OtherBridgeArgs {};
-
-        let data = abi_encode_params(
-            vector[200, 151, 1, 162],
             arg_struct,
         );
         let result = evm_call(caller, @L2ERC721Bridge, _value, data);

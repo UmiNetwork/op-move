@@ -6,13 +6,13 @@ module BaseFeeVault::base_fee_vault {
 
     const ENOT_SUCCESS: u64 = 1;
 
-    struct MIN_WITHDRAWAL_AMOUNTArgs {}
+    struct MinWithdrawalAmountArgs {}
 
-    public fun MIN_WITHDRAWAL_AMOUNT(
+    public fun min_withdrawal_amount(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = MIN_WITHDRAWAL_AMOUNTArgs {};
+        let arg_struct = MinWithdrawalAmountArgs {};
 
         let data = abi_encode_params(
             vector[211, 229, 121, 43],
@@ -24,13 +24,13 @@ module BaseFeeVault::base_fee_vault {
         result
     }
 
-    struct RECIPIENTArgs {}
+    struct RecipientArgs {}
 
-    public fun RECIPIENT(
+    public fun recipient(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = RECIPIENTArgs {};
+        let arg_struct = RecipientArgs {};
 
         let data = abi_encode_params(
             vector[13, 144, 25, 225],
@@ -42,13 +42,13 @@ module BaseFeeVault::base_fee_vault {
         result
     }
 
-    struct WITHDRAWAL_NETWORKArgs {}
+    struct WithdrawalNetworkArgs {}
 
-    public fun WITHDRAWAL_NETWORK(
+    public fun withdrawal_network(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = WITHDRAWAL_NETWORKArgs {};
+        let arg_struct = WithdrawalNetworkArgs {};
 
         let data = abi_encode_params(
             vector[208, 225, 47, 144],

@@ -6,13 +6,13 @@ module L2ToL1MessagePasser::l2_to_l1_message_passer {
 
     const ENOT_SUCCESS: u64 = 1;
 
-    struct MESSAGE_VERSIONArgs {}
+    struct MessageVersionArgs {}
 
-    public fun MESSAGE_VERSION(
+    public fun message_version(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = MESSAGE_VERSIONArgs {};
+        let arg_struct = MessageVersionArgs {};
 
         let data = abi_encode_params(
             vector[63, 130, 122, 90],

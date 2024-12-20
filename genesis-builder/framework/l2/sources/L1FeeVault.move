@@ -1,4 +1,4 @@
-module SequencerFeeVault::sequencer_fee_vault {
+module L1FeeVault::l1_fee_vault {
     use aptos_framework::fungible_asset_u256::zero;
     use EthToken::eth_token::get_metadata;
     use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, is_result_success, EvmResult};
@@ -18,7 +18,7 @@ module SequencerFeeVault::sequencer_fee_vault {
             vector[211, 229, 121, 43],
             arg_struct,
         );
-        let result = evm_call(caller, @SequencerFeeVault, _value, data);
+        let result = evm_call(caller, @L1FeeVault, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -36,7 +36,7 @@ module SequencerFeeVault::sequencer_fee_vault {
             vector[13, 144, 25, 225],
             arg_struct,
         );
-        let result = evm_call(caller, @SequencerFeeVault, _value, data);
+        let result = evm_call(caller, @L1FeeVault, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -54,25 +54,7 @@ module SequencerFeeVault::sequencer_fee_vault {
             vector[208, 225, 47, 144],
             arg_struct,
         );
-        let result = evm_call(caller, @SequencerFeeVault, _value, data);
-        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
-        emit_evm_logs(&result);
-        result
-    }
-
-    struct L1FeeWalletArgs {}
-
-    public fun l1_fee_wallet(
-        caller: &signer,
-    ): EvmResult {
-        let _value = zero(get_metadata());
-        let arg_struct = L1FeeWalletArgs {};
-
-        let data = abi_encode_params(
-            vector[212, 255, 146, 24],
-            arg_struct,
-        );
-        let result = evm_call(caller, @SequencerFeeVault, _value, data);
+        let result = evm_call(caller, @L1FeeVault, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -90,7 +72,7 @@ module SequencerFeeVault::sequencer_fee_vault {
             vector[132, 65, 29, 101],
             arg_struct,
         );
-        let result = evm_call(caller, @SequencerFeeVault, _value, data);
+        let result = evm_call(caller, @L1FeeVault, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -108,7 +90,7 @@ module SequencerFeeVault::sequencer_fee_vault {
             vector[84, 253, 77, 80],
             arg_struct,
         );
-        let result = evm_call(caller, @SequencerFeeVault, _value, data);
+        let result = evm_call(caller, @L1FeeVault, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -126,7 +108,7 @@ module SequencerFeeVault::sequencer_fee_vault {
             vector[60, 207, 214, 11],
             arg_struct,
         );
-        let result = evm_call(caller, @SequencerFeeVault, _value, data);
+        let result = evm_call(caller, @L1FeeVault, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result

@@ -6,13 +6,13 @@ module OptimismMintableERC20Factory::optimism_mintable_erc20_factory {
 
     const ENOT_SUCCESS: u64 = 1;
 
-    struct BRIDGEArgs {}
+    struct BridgeArgs {}
 
-    public fun BRIDGE(
+    public fun bridge(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = BRIDGEArgs {};
+        let arg_struct = BridgeArgs {};
 
         let data = abi_encode_params(
             vector[238, 154, 49, 162],
@@ -24,25 +24,7 @@ module OptimismMintableERC20Factory::optimism_mintable_erc20_factory {
         result
     }
 
-    struct BridgeArgs {}
-
-    public fun bridge(
-        caller: &signer,
-    ): EvmResult {
-        let _value = zero(get_metadata());
-        let arg_struct = BridgeArgs {};
-
-        let data = abi_encode_params(
-            vector[231, 140, 234, 146],
-            arg_struct,
-        );
-        let result = evm_call(caller, @OptimismMintableERC20Factory, _value, data);
-        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
-        emit_evm_logs(&result);
-        result
-    }
-
-    struct CreateOptimismMintableERC20Args {
+    struct CreateOptimismMintableErc20Args {
         remote_token: address,
         name: vector<u8>,
         symbol: vector<u8>,
@@ -55,7 +37,7 @@ module OptimismMintableERC20Factory::optimism_mintable_erc20_factory {
         symbol: vector<u8>,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = CreateOptimismMintableERC20Args {
+        let arg_struct = CreateOptimismMintableErc20Args {
             remote_token,
             name,
             symbol,
@@ -71,7 +53,7 @@ module OptimismMintableERC20Factory::optimism_mintable_erc20_factory {
         result
     }
 
-    struct CreateOptimismMintableERC20WithDecimalsArgs {
+    struct CreateOptimismMintableErc20WithDecimalsArgs {
         remote_token: address,
         name: vector<u8>,
         symbol: vector<u8>,
@@ -86,7 +68,7 @@ module OptimismMintableERC20Factory::optimism_mintable_erc20_factory {
         decimals: u8,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = CreateOptimismMintableERC20WithDecimalsArgs {
+        let arg_struct = CreateOptimismMintableErc20WithDecimalsArgs {
             remote_token,
             name,
             symbol,

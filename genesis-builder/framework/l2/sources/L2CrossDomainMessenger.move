@@ -6,13 +6,13 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
 
     const ENOT_SUCCESS: u64 = 1;
 
-    struct MESSAGE_VERSIONArgs {}
+    struct MessageVersionArgs {}
 
-    public fun MESSAGE_VERSION(
+    public fun message_version(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = MESSAGE_VERSIONArgs {};
+        let arg_struct = MessageVersionArgs {};
 
         let data = abi_encode_params(
             vector[63, 130, 122, 90],
@@ -24,13 +24,13 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
         result
     }
 
-    struct MIN_GAS_CALLDATA_OVERHEADArgs {}
+    struct MinGasCalldataOverheadArgs {}
 
-    public fun MIN_GAS_CALLDATA_OVERHEAD(
+    public fun min_gas_calldata_overhead(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = MIN_GAS_CALLDATA_OVERHEADArgs {};
+        let arg_struct = MinGasCalldataOverheadArgs {};
 
         let data = abi_encode_params(
             vector[2, 143, 133, 247],
@@ -42,13 +42,13 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
         result
     }
 
-    struct MIN_GAS_DYNAMIC_OVERHEAD_DENOMINATORArgs {}
+    struct MinGasDynamicOverheadDenominatorArgs {}
 
-    public fun MIN_GAS_DYNAMIC_OVERHEAD_DENOMINATOR(
+    public fun min_gas_dynamic_overhead_denominator(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = MIN_GAS_DYNAMIC_OVERHEAD_DENOMINATORArgs {};
+        let arg_struct = MinGasDynamicOverheadDenominatorArgs {};
 
         let data = abi_encode_params(
             vector[12, 86, 132, 152],
@@ -60,13 +60,13 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
         result
     }
 
-    struct MIN_GAS_DYNAMIC_OVERHEAD_NUMERATORArgs {}
+    struct MinGasDynamicOverheadNumeratorArgs {}
 
-    public fun MIN_GAS_DYNAMIC_OVERHEAD_NUMERATOR(
+    public fun min_gas_dynamic_overhead_numerator(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = MIN_GAS_DYNAMIC_OVERHEAD_NUMERATORArgs {};
+        let arg_struct = MinGasDynamicOverheadNumeratorArgs {};
 
         let data = abi_encode_params(
             vector[40, 40, 215, 232],
@@ -78,13 +78,13 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
         result
     }
 
-    struct OTHER_MESSENGERArgs {}
+    struct OtherMessengerArgs {}
 
-    public fun OTHER_MESSENGER(
+    public fun other_messenger(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = OTHER_MESSENGERArgs {};
+        let arg_struct = OtherMessengerArgs {};
 
         let data = abi_encode_params(
             vector[159, 206, 129, 44],
@@ -96,13 +96,13 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
         result
     }
 
-    struct RELAY_CALL_OVERHEADArgs {}
+    struct RelayCallOverheadArgs {}
 
-    public fun RELAY_CALL_OVERHEAD(
+    public fun relay_call_overhead(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = RELAY_CALL_OVERHEADArgs {};
+        let arg_struct = RelayCallOverheadArgs {};
 
         let data = abi_encode_params(
             vector[76, 29, 106, 105],
@@ -114,13 +114,13 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
         result
     }
 
-    struct RELAY_CONSTANT_OVERHEADArgs {}
+    struct RelayConstantOverheadArgs {}
 
-    public fun RELAY_CONSTANT_OVERHEAD(
+    public fun relay_constant_overhead(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = RELAY_CONSTANT_OVERHEADArgs {};
+        let arg_struct = RelayConstantOverheadArgs {};
 
         let data = abi_encode_params(
             vector[131, 167, 64, 116],
@@ -132,13 +132,13 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
         result
     }
 
-    struct RELAY_GAS_CHECK_BUFFERArgs {}
+    struct RelayGasCheckBufferArgs {}
 
-    public fun RELAY_GAS_CHECK_BUFFER(
+    public fun relay_gas_check_buffer(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = RELAY_GAS_CHECK_BUFFERArgs {};
+        let arg_struct = RelayGasCheckBufferArgs {};
 
         let data = abi_encode_params(
             vector[86, 68, 207, 223],
@@ -150,13 +150,13 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
         result
     }
 
-    struct RELAY_RESERVED_GASArgs {}
+    struct RelayReservedGasArgs {}
 
-    public fun RELAY_RESERVED_GAS(
+    public fun relay_reserved_gas(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = RELAY_RESERVED_GASArgs {};
+        let arg_struct = RelayReservedGasArgs {};
 
         let data = abi_encode_params(
             vector[140, 190, 238, 242],
@@ -268,24 +268,6 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
 
         let data = abi_encode_params(
             vector[236, 199, 4, 40],
-            arg_struct,
-        );
-        let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
-        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
-        emit_evm_logs(&result);
-        result
-    }
-
-    struct OtherMessengerArgs {}
-
-    public fun other_messenger(
-        caller: &signer,
-    ): EvmResult {
-        let _value = zero(get_metadata());
-        let arg_struct = OtherMessengerArgs {};
-
-        let data = abi_encode_params(
-            vector[219, 80, 93, 128],
             arg_struct,
         );
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);

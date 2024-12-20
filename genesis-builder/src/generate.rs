@@ -1,5 +1,6 @@
 use {
     alloy::json_abi::{InternalType, JsonAbi, StateMutability},
+    convert_case::{Case, Casing},
     handlebars::{handlebars_helper, Handlebars},
     regex::Regex,
     serde::Serialize,
@@ -32,33 +33,9 @@ struct L2Input {
     ty: String,
 }
 
-handlebars_helper!(capitalize: |s: String| {
-    let mut c = s.chars();
-    match c.next() {
-        None => String::new(),
-        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
-    }
-});
+handlebars_helper!(pascal: |s: String| s.to_case(Case::Pascal));
 
-handlebars_helper!(slug: |s: String| {
-    // ALL_CAPS variables are used as is
-    if s.to_uppercase() == s {
-        s
-    } else {
-        let mut result = String::new();
-        for (i, c) in s.chars().enumerate() {
-            if i > 0 && c.is_uppercase()  {
-                result.push('_');
-            }
-            result.push(c.to_ascii_lowercase());
-        }
-        // Reverse back abbreviations, like e_r_c_20 to ERC20
-        result = result.replace("e_t_h", "eth");
-        result = result.replace("e_r_c20", "erc20");
-        result = result.replace("e_r_c721", "erc721");
-        result
-    }
-});
+handlebars_helper!(snake: |s: String| to_snake_case(s));
 
 pub fn l2_abi_to_move() -> anyhow::Result<()> {
     println!("Converting L2 Solidity ABIs to Move modules");
@@ -67,8 +44,8 @@ pub fn l2_abi_to_move() -> anyhow::Result<()> {
     let l2_contract_names = get_l2_contract_names()?;
 
     let mut handlebars = Handlebars::new();
-    handlebars.register_helper("capitalize", Box::new(capitalize));
-    handlebars.register_helper("slug", Box::new(slug));
+    handlebars.register_helper("pascal", Box::new(pascal));
+    handlebars.register_helper("snake", Box::new(snake));
 
     for file in directory {
         let file_path = file?.path();
@@ -86,73 +63,75 @@ pub fn l2_abi_to_move() -> anyhow::Result<()> {
         // If `FungibleAsset` should be imported in the Move file
         let mut has_fungible_asset = false;
 
-        let functions = abi
-            .functions
-            .into_iter()
-            .flat_map(|(name, funs)| {
-                // Solidity supports function overloading, but it doesn't exist in L2 contracts.
-                funs.iter()
-                    .map(|fun| {
-                        let mut function = L2Function {
-                            name: name.clone(),
-                            selector: fun.selector().0,
-                            ..Default::default()
-                        };
+        let mut functions = Vec::new();
+        let mut unique_function_names = Vec::new();
+        for (name, funs) in abi.functions {
+            // Solidity supports function overloading, but it doesn't exist in L2 contracts.
+            for fun in funs {
+                let snake_name = to_snake_case(name.clone());
+                if unique_function_names.contains(&snake_name) {
+                    continue;
+                }
+                unique_function_names.push(snake_name);
 
-                        if fun.state_mutability == StateMutability::Payable {
-                            function.has_value = true;
-                            has_fungible_asset = true;
+                let mut function = L2Function {
+                    name: name.clone(),
+                    selector: fun.selector().0,
+                    ..Default::default()
+                };
+
+                if fun.state_mutability == StateMutability::Payable {
+                    function.has_value = true;
+                    has_fungible_asset = true;
+                }
+
+                function.inputs = Vec::new();
+                fun.inputs.iter().for_each(|input| {
+                    let mut name = input.name.trim_start_matches("_").to_string();
+                    // Solidity `mapping` leaves out the input name. Fill in a custom name `key`.
+                    if name.is_empty() {
+                        // Double-mapping (map of a map) has 2 keys
+                        if fun.inputs.len() > 1 && !function.inputs.is_empty() {
+                            name = "key2".to_string();
+                        } else {
+                            name = "key".to_string();
                         }
+                    }
 
-                        function.inputs = Vec::new();
-                        fun.inputs.iter().for_each(|input| {
-                            let mut name = input.name.trim_start_matches("_").to_string();
-                            // Solidity `mapping` leaves out the input name. Fill in a custom name `key`.
-                            if name.is_empty() {
-                                // Double-mapping (map of a map) has 2 keys
-                                if fun.inputs.len() > 1 && !function.inputs.is_empty() {
-                                    name = "key2".to_string();
-                                } else {
-                                    name = "key".to_string();
+                    let ty = if input.ty.eq("tuple") {
+                        // Complex struct input type given as tuple
+                        let Some(tuple) = input.clone().internal_type else {
+                            unreachable!("Internal type should exist for tuples");
+                        };
+                        match tuple {
+                            InternalType::Struct { ty, .. } => {
+                                if !structs.contains_key(&ty) {
+                                    // Struct components will be handled in `solidity_abi`
+                                    let components = input
+                                        .components
+                                        .iter()
+                                        .map(|c| {
+                                            let name = c.name.clone();
+                                            let ty = get_input_match(c.ty.clone());
+                                            L2Input { name, ty }
+                                        })
+                                        .collect::<Vec<_>>();
+                                    structs.insert(ty.clone(), components);
                                 }
+                                ty
                             }
+                            _ => panic!("Unsupported internal type: {}", tuple),
+                        }
+                    } else {
+                        get_input_match(input.ty.to_owned())
+                    };
 
-                            let ty = if input.ty.eq("tuple") {
-                                // Complex struct input type given as tuple
-                                let Some(tuple) = input.clone().internal_type else {
-                                    unreachable!("Internal type should exist for tuples");
-                                };
-                                match tuple {
-                                    InternalType::Struct { ty, .. } => {
-                                        if !structs.contains_key(&ty) {
-                                            // Struct components will be handled in `solidity_abi`
-                                            let components = input
-                                                .components
-                                                .iter()
-                                                .map(|c| {
-                                                    let name = c.name.clone();
-                                                    let ty = get_input_match(c.ty.clone());
-                                                    L2Input { name, ty }
-                                                })
-                                                .collect::<Vec<_>>();
-                                            structs.insert(ty.clone(), components);
-                                        }
-                                        ty
-                                    }
-                                    _ => panic!("Unsupported internal type: {}", tuple),
-                                }
-                            } else {
-                                get_input_match(input.ty.to_owned())
-                            };
+                    function.inputs.push(L2Input { name, ty });
+                });
 
-                            function.inputs.push(L2Input { name, ty });
-                        });
-
-                        function
-                    })
-                    .collect::<Vec<_>>()
-            })
-            .collect();
+                functions.push(function);
+            }
+        }
 
         let mut path = Path::new("genesis-builder/framework/l2/sources").join(&name);
         path.set_extension("move");
@@ -171,11 +150,20 @@ pub fn l2_abi_to_move() -> anyhow::Result<()> {
     Ok(())
 }
 
+fn to_snake_case(s: String) -> String {
+    let s = s.to_case(Case::Snake);
+    // Final touch to fix split common terms
+    let s = s.replace("l_1", "l1");
+    let s = s.replace("l_2", "l2");
+    let s = s.replace("erc_20", "erc20");
+    s.replace("erc_721", "erc721")
+}
+
 fn get_l2_contract_names() -> anyhow::Result<Vec<String>> {
     let move_toml = read_to_string("genesis-builder/framework/l2/Move.toml")?;
     // Capture the contract name where the address starts with 0x42
     let mut names = Vec::new();
-    let re = Regex::new("^(?<name>.*) = \"0x42\\d+\"$")?;
+    let re = Regex::new("^(?<name>.*) = \"0x42.*\"$")?;
     for line in move_toml.lines() {
         if re.is_match(line) {
             names.push(re.replace(line, "$name").to_string());

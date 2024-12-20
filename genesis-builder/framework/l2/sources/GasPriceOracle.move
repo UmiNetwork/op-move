@@ -1,4 +1,4 @@
-module L1Block::l1_block {
+module GasPriceOracle::gas_price_oracle {
     use aptos_framework::fungible_asset_u256::zero;
     use EthToken::eth_token::get_metadata;
     use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, is_result_success, EvmResult};
@@ -6,19 +6,37 @@ module L1Block::l1_block {
 
     const ENOT_SUCCESS: u64 = 1;
 
-    struct DepositorAccountArgs {}
+    struct DecimalsArgs {}
 
-    public fun depositor_account(
+    public fun decimals(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = DepositorAccountArgs {};
+        let arg_struct = DecimalsArgs {};
 
         let data = abi_encode_params(
-            vector[229, 145, 178, 130],
+            vector[46, 15, 38, 37],
             arg_struct,
         );
-        let result = evm_call(caller, @L1Block, _value, data);
+        let result = evm_call(caller, @GasPriceOracle, _value, data);
+        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
+        emit_evm_logs(&result);
+        result
+    }
+
+    struct BaseFeeArgs {}
+
+    public fun base_fee(
+        caller: &signer,
+    ): EvmResult {
+        let _value = zero(get_metadata());
+        let arg_struct = BaseFeeArgs {};
+
+        let data = abi_encode_params(
+            vector[110, 242, 92, 58],
+            arg_struct,
+        );
+        let result = evm_call(caller, @GasPriceOracle, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -36,43 +54,7 @@ module L1Block::l1_block {
             vector[197, 152, 89, 24],
             arg_struct,
         );
-        let result = evm_call(caller, @L1Block, _value, data);
-        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
-        emit_evm_logs(&result);
-        result
-    }
-
-    struct BasefeeArgs {}
-
-    public fun basefee(
-        caller: &signer,
-    ): EvmResult {
-        let _value = zero(get_metadata());
-        let arg_struct = BasefeeArgs {};
-
-        let data = abi_encode_params(
-            vector[92, 242, 73, 105],
-            arg_struct,
-        );
-        let result = evm_call(caller, @L1Block, _value, data);
-        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
-        emit_evm_logs(&result);
-        result
-    }
-
-    struct BatcherHashArgs {}
-
-    public fun batcher_hash(
-        caller: &signer,
-    ): EvmResult {
-        let _value = zero(get_metadata());
-        let arg_struct = BatcherHashArgs {};
-
-        let data = abi_encode_params(
-            vector[232, 27, 44, 109],
-            arg_struct,
-        );
-        let result = evm_call(caller, @L1Block, _value, data);
+        let result = evm_call(caller, @GasPriceOracle, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -90,7 +72,7 @@ module L1Block::l1_block {
             vector[248, 32, 97, 64],
             arg_struct,
         );
-        let result = evm_call(caller, @L1Block, _value, data);
+        let result = evm_call(caller, @GasPriceOracle, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -108,281 +90,220 @@ module L1Block::l1_block {
             vector[104, 213, 220, 166],
             arg_struct,
         );
-        let result = evm_call(caller, @L1Block, _value, data);
+        let result = evm_call(caller, @GasPriceOracle, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct GasPayingTokenArgs {}
+    struct GasPriceArgs {}
 
-    public fun gas_paying_token(
+    public fun gas_price(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = GasPayingTokenArgs {};
+        let arg_struct = GasPriceArgs {};
 
         let data = abi_encode_params(
-            vector[67, 151, 223, 239],
+            vector[254, 23, 59, 151],
             arg_struct,
         );
-        let result = evm_call(caller, @L1Block, _value, data);
+        let result = evm_call(caller, @GasPriceOracle, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct GasPayingTokenNameArgs {}
-
-    public fun gas_paying_token_name(
-        caller: &signer,
-    ): EvmResult {
-        let _value = zero(get_metadata());
-        let arg_struct = GasPayingTokenNameArgs {};
-
-        let data = abi_encode_params(
-            vector[216, 68, 71, 21],
-            arg_struct,
-        );
-        let result = evm_call(caller, @L1Block, _value, data);
-        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
-        emit_evm_logs(&result);
-        result
+    struct GetL1FeeArgs {
+        data: vector<u8>,
     }
 
-    struct GasPayingTokenSymbolArgs {}
-
-    public fun gas_paying_token_symbol(
+    public fun get_l1_fee(
         caller: &signer,
+        data: vector<u8>,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = GasPayingTokenSymbolArgs {};
-
-        let data = abi_encode_params(
-            vector[85, 15, 205, 201],
-            arg_struct,
-        );
-        let result = evm_call(caller, @L1Block, _value, data);
-        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
-        emit_evm_logs(&result);
-        result
-    }
-
-    struct HashArgs {}
-
-    public fun hash(
-        caller: &signer,
-    ): EvmResult {
-        let _value = zero(get_metadata());
-        let arg_struct = HashArgs {};
-
-        let data = abi_encode_params(
-            vector[9, 189, 90, 96],
-            arg_struct,
-        );
-        let result = evm_call(caller, @L1Block, _value, data);
-        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
-        emit_evm_logs(&result);
-        result
-    }
-
-    struct IsCustomGasTokenArgs {}
-
-    public fun is_custom_gas_token(
-        caller: &signer,
-    ): EvmResult {
-        let _value = zero(get_metadata());
-        let arg_struct = IsCustomGasTokenArgs {};
-
-        let data = abi_encode_params(
-            vector[33, 50, 104, 73],
-            arg_struct,
-        );
-        let result = evm_call(caller, @L1Block, _value, data);
-        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
-        emit_evm_logs(&result);
-        result
-    }
-
-    struct L1FeeOverheadArgs {}
-
-    public fun l1_fee_overhead(
-        caller: &signer,
-    ): EvmResult {
-        let _value = zero(get_metadata());
-        let arg_struct = L1FeeOverheadArgs {};
-
-        let data = abi_encode_params(
-            vector[139, 35, 159, 115],
-            arg_struct,
-        );
-        let result = evm_call(caller, @L1Block, _value, data);
-        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
-        emit_evm_logs(&result);
-        result
-    }
-
-    struct L1FeeScalarArgs {}
-
-    public fun l1_fee_scalar(
-        caller: &signer,
-    ): EvmResult {
-        let _value = zero(get_metadata());
-        let arg_struct = L1FeeScalarArgs {};
-
-        let data = abi_encode_params(
-            vector[158, 140, 73, 102],
-            arg_struct,
-        );
-        let result = evm_call(caller, @L1Block, _value, data);
-        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
-        emit_evm_logs(&result);
-        result
-    }
-
-    struct NumberArgs {}
-
-    public fun number(
-        caller: &signer,
-    ): EvmResult {
-        let _value = zero(get_metadata());
-        let arg_struct = NumberArgs {};
-
-        let data = abi_encode_params(
-            vector[131, 129, 245, 138],
-            arg_struct,
-        );
-        let result = evm_call(caller, @L1Block, _value, data);
-        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
-        emit_evm_logs(&result);
-        result
-    }
-
-    struct SequenceNumberArgs {}
-
-    public fun sequence_number(
-        caller: &signer,
-    ): EvmResult {
-        let _value = zero(get_metadata());
-        let arg_struct = SequenceNumberArgs {};
-
-        let data = abi_encode_params(
-            vector[100, 202, 35, 239],
-            arg_struct,
-        );
-        let result = evm_call(caller, @L1Block, _value, data);
-        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
-        emit_evm_logs(&result);
-        result
-    }
-
-    struct SetGasPayingTokenArgs {
-        token: address,
-        decimals: u8,
-        name: vector<u8>,
-        symbol: vector<u8>,
-    }
-
-    public fun set_gas_paying_token(
-        caller: &signer,
-        token: address,
-        decimals: u8,
-        name: vector<u8>,
-        symbol: vector<u8>,
-    ): EvmResult {
-        let _value = zero(get_metadata());
-        let arg_struct = SetGasPayingTokenArgs {
-            token,
-            decimals,
-            name,
-            symbol,
+        let arg_struct = GetL1FeeArgs {
+            data,
         };
 
         let data = abi_encode_params(
-            vector[113, 207, 170, 63],
+            vector[73, 148, 142, 14],
             arg_struct,
         );
-        let result = evm_call(caller, @L1Block, _value, data);
+        let result = evm_call(caller, @GasPriceOracle, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct SetL1BlockValuesArgs {
-        number: u64,
-        timestamp: u64,
-        basefee: u256,
-        hash: vector<u8>,
-        sequence_number: u64,
-        batcher_hash: vector<u8>,
-        l1_fee_overhead: u256,
-        l1_fee_scalar: u256,
+    struct GetL1FeeUpperBoundArgs {
+        unsigned_tx_size: u256,
     }
 
-    public fun set_l1_block_values(
+    public fun get_l1_fee_upper_bound(
         caller: &signer,
-        number: u64,
-        timestamp: u64,
-        basefee: u256,
-        hash: vector<u8>,
-        sequence_number: u64,
-        batcher_hash: vector<u8>,
-        l1_fee_overhead: u256,
-        l1_fee_scalar: u256,
+        unsigned_tx_size: u256,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = SetL1BlockValuesArgs {
-            number,
-            timestamp,
-            basefee,
-            hash,
-            sequence_number,
-            batcher_hash,
-            l1_fee_overhead,
-            l1_fee_scalar,
+        let arg_struct = GetL1FeeUpperBoundArgs {
+            unsigned_tx_size,
         };
 
         let data = abi_encode_params(
-            vector[1, 93, 142, 185],
+            vector[241, 199, 165, 139],
             arg_struct,
         );
-        let result = evm_call(caller, @L1Block, _value, data);
+        let result = evm_call(caller, @GasPriceOracle, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct SetL1BlockValuesEcotoneArgs {}
+    struct GetL1GasUsedArgs {
+        data: vector<u8>,
+    }
 
-    public fun set_l1_block_values_ecotone(
+    public fun get_l1_gas_used(
         caller: &signer,
+        data: vector<u8>,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = SetL1BlockValuesEcotoneArgs {};
+        let arg_struct = GetL1GasUsedArgs {
+            data,
+        };
 
         let data = abi_encode_params(
-            vector[68, 10, 94, 32],
+            vector[222, 38, 196, 161],
             arg_struct,
         );
-        let result = evm_call(caller, @L1Block, _value, data);
+        let result = evm_call(caller, @GasPriceOracle, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct TimestampArgs {}
+    struct IsEcotoneArgs {}
 
-    public fun timestamp(
+    public fun is_ecotone(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = TimestampArgs {};
+        let arg_struct = IsEcotoneArgs {};
 
         let data = abi_encode_params(
-            vector[184, 7, 119, 234],
+            vector[78, 246, 226, 36],
             arg_struct,
         );
-        let result = evm_call(caller, @L1Block, _value, data);
+        let result = evm_call(caller, @GasPriceOracle, _value, data);
+        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
+        emit_evm_logs(&result);
+        result
+    }
+
+    struct IsFjordArgs {}
+
+    public fun is_fjord(
+        caller: &signer,
+    ): EvmResult {
+        let _value = zero(get_metadata());
+        let arg_struct = IsFjordArgs {};
+
+        let data = abi_encode_params(
+            vector[150, 14, 58, 35],
+            arg_struct,
+        );
+        let result = evm_call(caller, @GasPriceOracle, _value, data);
+        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
+        emit_evm_logs(&result);
+        result
+    }
+
+    struct L1BaseFeeArgs {}
+
+    public fun l1_base_fee(
+        caller: &signer,
+    ): EvmResult {
+        let _value = zero(get_metadata());
+        let arg_struct = L1BaseFeeArgs {};
+
+        let data = abi_encode_params(
+            vector[81, 155, 75, 211],
+            arg_struct,
+        );
+        let result = evm_call(caller, @GasPriceOracle, _value, data);
+        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
+        emit_evm_logs(&result);
+        result
+    }
+
+    struct OverheadArgs {}
+
+    public fun overhead(
+        caller: &signer,
+    ): EvmResult {
+        let _value = zero(get_metadata());
+        let arg_struct = OverheadArgs {};
+
+        let data = abi_encode_params(
+            vector[12, 24, 193, 98],
+            arg_struct,
+        );
+        let result = evm_call(caller, @GasPriceOracle, _value, data);
+        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
+        emit_evm_logs(&result);
+        result
+    }
+
+    struct ScalarArgs {}
+
+    public fun scalar(
+        caller: &signer,
+    ): EvmResult {
+        let _value = zero(get_metadata());
+        let arg_struct = ScalarArgs {};
+
+        let data = abi_encode_params(
+            vector[244, 94, 101, 216],
+            arg_struct,
+        );
+        let result = evm_call(caller, @GasPriceOracle, _value, data);
+        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
+        emit_evm_logs(&result);
+        result
+    }
+
+    struct SetEcotoneArgs {}
+
+    public fun set_ecotone(
+        caller: &signer,
+    ): EvmResult {
+        let _value = zero(get_metadata());
+        let arg_struct = SetEcotoneArgs {};
+
+        let data = abi_encode_params(
+            vector[34, 185, 10, 179],
+            arg_struct,
+        );
+        let result = evm_call(caller, @GasPriceOracle, _value, data);
+        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
+        emit_evm_logs(&result);
+        result
+    }
+
+    struct SetFjordArgs {}
+
+    public fun set_fjord(
+        caller: &signer,
+    ): EvmResult {
+        let _value = zero(get_metadata());
+        let arg_struct = SetFjordArgs {};
+
+        let data = abi_encode_params(
+            vector[142, 152, 177, 6],
+            arg_struct,
+        );
+        let result = evm_call(caller, @GasPriceOracle, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -400,7 +321,7 @@ module L1Block::l1_block {
             vector[84, 253, 77, 80],
             arg_struct,
         );
-        let result = evm_call(caller, @L1Block, _value, data);
+        let result = evm_call(caller, @GasPriceOracle, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result

@@ -6,13 +6,13 @@ module OptimismMintableERC721Factory::optimism_mintable_erc721_factory {
 
     const ENOT_SUCCESS: u64 = 1;
 
-    struct BRIDGEArgs {}
+    struct BridgeArgs {}
 
-    public fun BRIDGE(
+    public fun bridge(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = BRIDGEArgs {};
+        let arg_struct = BridgeArgs {};
 
         let data = abi_encode_params(
             vector[238, 154, 49, 162],
@@ -24,13 +24,13 @@ module OptimismMintableERC721Factory::optimism_mintable_erc721_factory {
         result
     }
 
-    struct REMOTE_CHAIN_IDArgs {}
+    struct RemoteChainIdArgs {}
 
-    public fun REMOTE_CHAIN_ID(
+    public fun remote_chain_id(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = REMOTE_CHAIN_IDArgs {};
+        let arg_struct = RemoteChainIdArgs {};
 
         let data = abi_encode_params(
             vector[125, 29, 12, 91],
@@ -42,7 +42,7 @@ module OptimismMintableERC721Factory::optimism_mintable_erc721_factory {
         result
     }
 
-    struct CreateOptimismMintableERC721Args {
+    struct CreateOptimismMintableErc721Args {
         remote_token: address,
         name: vector<u8>,
         symbol: vector<u8>,
@@ -55,7 +55,7 @@ module OptimismMintableERC721Factory::optimism_mintable_erc721_factory {
         symbol: vector<u8>,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = CreateOptimismMintableERC721Args {
+        let arg_struct = CreateOptimismMintableErc721Args {
             remote_token,
             name,
             symbol,
@@ -71,7 +71,7 @@ module OptimismMintableERC721Factory::optimism_mintable_erc721_factory {
         result
     }
 
-    struct IsOptimismMintableERC721Args {
+    struct IsOptimismMintableErc721Args {
         key: address,
     }
 
@@ -80,7 +80,7 @@ module OptimismMintableERC721Factory::optimism_mintable_erc721_factory {
         key: address,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = IsOptimismMintableERC721Args {
+        let arg_struct = IsOptimismMintableErc721Args {
             key,
         };
 

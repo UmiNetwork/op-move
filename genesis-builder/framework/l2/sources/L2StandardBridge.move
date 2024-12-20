@@ -6,13 +6,13 @@ module L2StandardBridge::l2_standard_bridge {
 
     const ENOT_SUCCESS: u64 = 1;
 
-    struct MESSENGERArgs {}
+    struct MessengerArgs {}
 
-    public fun MESSENGER(
+    public fun messenger(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = MESSENGERArgs {};
+        let arg_struct = MessengerArgs {};
 
         let data = abi_encode_params(
             vector[146, 126, 222, 45],
@@ -24,13 +24,13 @@ module L2StandardBridge::l2_standard_bridge {
         result
     }
 
-    struct OTHER_BRIDGEArgs {}
+    struct OtherBridgeArgs {}
 
-    public fun OTHER_BRIDGE(
+    public fun other_bridge(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = OTHER_BRIDGEArgs {};
+        let arg_struct = OtherBridgeArgs {};
 
         let data = abi_encode_params(
             vector[127, 70, 221, 178],
@@ -42,7 +42,7 @@ module L2StandardBridge::l2_standard_bridge {
         result
     }
 
-    struct BridgeERC20Args {
+    struct BridgeErc20Args {
         local_token: address,
         remote_token: address,
         amount: u256,
@@ -59,7 +59,7 @@ module L2StandardBridge::l2_standard_bridge {
         extra_data: vector<u8>,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = BridgeERC20Args {
+        let arg_struct = BridgeErc20Args {
             local_token,
             remote_token,
             amount,
@@ -77,7 +77,7 @@ module L2StandardBridge::l2_standard_bridge {
         result
     }
 
-    struct BridgeERC20ToArgs {
+    struct BridgeErc20ToArgs {
         local_token: address,
         remote_token: address,
         to: address,
@@ -96,7 +96,7 @@ module L2StandardBridge::l2_standard_bridge {
         extra_data: vector<u8>,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = BridgeERC20ToArgs {
+        let arg_struct = BridgeErc20ToArgs {
             local_token,
             remote_token,
             to,
@@ -115,7 +115,7 @@ module L2StandardBridge::l2_standard_bridge {
         result
     }
 
-    struct BridgeETHArgs {
+    struct BridgeEthArgs {
         min_gas_limit: u32,
         extra_data: vector<u8>,
     }
@@ -126,7 +126,7 @@ module L2StandardBridge::l2_standard_bridge {
         extra_data: vector<u8>,
         _value: FungibleAsset,
     ): EvmResult {
-        let arg_struct = BridgeETHArgs {
+        let arg_struct = BridgeEthArgs {
             min_gas_limit,
             extra_data,
         };
@@ -141,7 +141,7 @@ module L2StandardBridge::l2_standard_bridge {
         result
     }
 
-    struct BridgeETHToArgs {
+    struct BridgeEthToArgs {
         to: address,
         min_gas_limit: u32,
         extra_data: vector<u8>,
@@ -154,7 +154,7 @@ module L2StandardBridge::l2_standard_bridge {
         extra_data: vector<u8>,
         _value: FungibleAsset,
     ): EvmResult {
-        let arg_struct = BridgeETHToArgs {
+        let arg_struct = BridgeEthToArgs {
             to,
             min_gas_limit,
             extra_data,
@@ -172,18 +172,18 @@ module L2StandardBridge::l2_standard_bridge {
 
     struct DepositsArgs {
         key: address,
-        key2: address,
+        key_2: address,
     }
 
     public fun deposits(
         caller: &signer,
         key: address,
-        key2: address,
+        key_2: address,
     ): EvmResult {
         let _value = zero(get_metadata());
         let arg_struct = DepositsArgs {
             key,
-            key2,
+            key_2,
         };
 
         let data = abi_encode_params(
@@ -196,7 +196,7 @@ module L2StandardBridge::l2_standard_bridge {
         result
     }
 
-    struct FinalizeBridgeERC20Args {
+    struct FinalizeBridgeErc20Args {
         local_token: address,
         remote_token: address,
         from: address,
@@ -215,7 +215,7 @@ module L2StandardBridge::l2_standard_bridge {
         extra_data: vector<u8>,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = FinalizeBridgeERC20Args {
+        let arg_struct = FinalizeBridgeErc20Args {
             local_token,
             remote_token,
             from,
@@ -234,7 +234,7 @@ module L2StandardBridge::l2_standard_bridge {
         result
     }
 
-    struct FinalizeBridgeETHArgs {
+    struct FinalizeBridgeEthArgs {
         from: address,
         to: address,
         amount: u256,
@@ -249,7 +249,7 @@ module L2StandardBridge::l2_standard_bridge {
         extra_data: vector<u8>,
         _value: FungibleAsset,
     ): EvmResult {
-        let arg_struct = FinalizeBridgeETHArgs {
+        let arg_struct = FinalizeBridgeEthArgs {
             from,
             to,
             amount,
@@ -299,42 +299,6 @@ module L2StandardBridge::l2_standard_bridge {
 
         let data = abi_encode_params(
             vector[54, 199, 23, 193],
-            arg_struct,
-        );
-        let result = evm_call(caller, @L2StandardBridge, _value, data);
-        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
-        emit_evm_logs(&result);
-        result
-    }
-
-    struct MessengerArgs {}
-
-    public fun messenger(
-        caller: &signer,
-    ): EvmResult {
-        let _value = zero(get_metadata());
-        let arg_struct = MessengerArgs {};
-
-        let data = abi_encode_params(
-            vector[60, 183, 71, 191],
-            arg_struct,
-        );
-        let result = evm_call(caller, @L2StandardBridge, _value, data);
-        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
-        emit_evm_logs(&result);
-        result
-    }
-
-    struct OtherBridgeArgs {}
-
-    public fun other_bridge(
-        caller: &signer,
-    ): EvmResult {
-        let _value = zero(get_metadata());
-        let arg_struct = OtherBridgeArgs {};
-
-        let data = abi_encode_params(
-            vector[200, 151, 1, 162],
             arg_struct,
         );
         let result = evm_call(caller, @L2StandardBridge, _value, data);

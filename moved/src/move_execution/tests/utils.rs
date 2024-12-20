@@ -609,8 +609,68 @@ fn custom_framework_named_addresses() -> impl Iterator<Item = (String, Numerical
             NumericalAddress::parse_str("0x1").unwrap(),
         ),
         (
+            "BaseFeeVault".into(),
+            NumericalAddress::parse_str("0x4200000000000000000000000000000000000019").unwrap(),
+        ),
+        (
+            "CrossL2Inbox".into(),
+            NumericalAddress::parse_str("0x4200000000000000000000000000000000000022").unwrap(),
+        ),
+        (
+            "GasPriceOracle".into(),
+            NumericalAddress::parse_str("0x420000000000000000000000000000000000000F").unwrap(),
+        ),
+        (
+            "GovernanceToken".into(),
+            NumericalAddress::parse_str("0x4200000000000000000000000000000000000042").unwrap(),
+        ),
+        (
+            "L1Block".into(),
+            NumericalAddress::parse_str("0x4200000000000000000000000000000000000015").unwrap(),
+        ),
+        (
+            "L1BlockNumber".into(),
+            NumericalAddress::parse_str("0x4200000000000000000000000000000000000013").unwrap(),
+        ),
+        (
+            "L1FeeVault".into(),
+            NumericalAddress::parse_str("0x420000000000000000000000000000000000001a").unwrap(),
+        ),
+        (
             "L2CrossDomainMessenger".into(),
             NumericalAddress::parse_str("0x4200000000000000000000000000000000000007").unwrap(),
+        ),
+        (
+            "L2ERC721Bridge".into(),
+            NumericalAddress::parse_str("0x4200000000000000000000000000000000000014").unwrap(),
+        ),
+        (
+            "L2StandardBridge".into(),
+            NumericalAddress::parse_str("0x4200000000000000000000000000000000000010").unwrap(),
+        ),
+        (
+            "L2ToL1MessagePasser".into(),
+            NumericalAddress::parse_str("0x4200000000000000000000000000000000000016").unwrap(),
+        ),
+        (
+            "L2ToL2CrossDomainMessenger".into(),
+            NumericalAddress::parse_str("0x4200000000000000000000000000000000000023").unwrap(),
+        ),
+        (
+            "OptimismMintableERC20Factory".into(),
+            NumericalAddress::parse_str("0x4200000000000000000000000000000000000012").unwrap(),
+        ),
+        (
+            "OptimismMintableERC721Factory".into(),
+            NumericalAddress::parse_str("0x4200000000000000000000000000000000000017").unwrap(),
+        ),
+        (
+            "ProxyAdmin".into(),
+            NumericalAddress::parse_str("0x4200000000000000000000000000000000000018").unwrap(),
+        ),
+        (
+            "SequencerFeeVault".into(),
+            NumericalAddress::parse_str("0x4200000000000000000000000000000000000011").unwrap(),
         ),
     ]
     .into_iter()
@@ -623,7 +683,22 @@ fn custom_framework_named_addresses() -> impl Iterator<Item = (String, Numerical
 fn add_custom_framework_paths(files: &mut Vec<String>) {
     add_framework_path("eth-token", "EthToken", files);
     add_framework_path("evm", "Evm", files);
-    add_framework_path("l2-cross-domain-messenger", "L2CrossDomainMessenger", files);
+    add_framework_path("l2", "BaseFeeVault", files);
+    add_framework_path("l2", "CrossL2Inbox", files);
+    add_framework_path("l2", "GasPriceOracle", files);
+    add_framework_path("l2", "GovernanceToken", files);
+    add_framework_path("l2", "L1Block", files);
+    add_framework_path("l2", "L1BlockNumber", files);
+    add_framework_path("l2", "L1FeeVault", files);
+    add_framework_path("l2", "L2CrossDomainMessenger", files);
+    add_framework_path("l2", "L2ERC721Bridge", files);
+    add_framework_path("l2", "L2StandardBridge", files);
+    add_framework_path("l2", "L2ToL1MessagePasser", files);
+    add_framework_path("l2", "L2ToL2CrossDomainMessenger", files);
+    add_framework_path("l2", "OptimismMintableERC20Factory", files);
+    add_framework_path("l2", "OptimismMintableERC721Factory", files);
+    add_framework_path("l2", "ProxyAdmin", files);
+    add_framework_path("l2", "SequencerFeeVault", files);
 }
 
 /// Adds an individual framework path in genesis builder to the dependency list

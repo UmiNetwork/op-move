@@ -54,7 +54,6 @@ static APTOS_PACKAGE_PATHS: Lazy<Vec<PathBuf>> = Lazy::new(|| {
         APTOS_FRAMEWORK_DIR.join("aptos-token-objects"),
         MOVED_FRAMEWORK_DIR.join("eth-token"),
         MOVED_FRAMEWORK_DIR.join("evm"),
-        MOVED_FRAMEWORK_DIR.join("l2-cross-domain-messenger"),
         MOVED_FRAMEWORK_DIR.join("l2"),
     ]
 });

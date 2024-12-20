@@ -6,13 +6,13 @@ module GovernanceToken::governance_token {
 
     const ENOT_SUCCESS: u64 = 1;
 
-    struct DOMAIN_SEPARATORArgs {}
+    struct DomainSeparatorArgs {}
 
-    public fun DOMAIN_SEPARATOR(
+    public fun domain_separator(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = DOMAIN_SEPARATORArgs {};
+        let arg_struct = DomainSeparatorArgs {};
 
         let data = abi_encode_params(
             vector[54, 68, 229, 21],
