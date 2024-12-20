@@ -68,11 +68,11 @@ pub fn l2_abi_to_move() -> anyhow::Result<()> {
         for (name, funs) in abi.functions {
             // Solidity supports function overloading, but it doesn't exist in L2 contracts.
             for fun in funs {
-                let snake_name = to_snake_case(name.clone());
-                if unique_function_names.contains(&snake_name) {
+                let function_name = to_snake_case(name.clone());
+                if unique_function_names.contains(&function_name) {
                     continue;
                 }
-                unique_function_names.push(snake_name);
+                unique_function_names.push(function_name);
 
                 let mut function = L2Function {
                     name: name.clone(),

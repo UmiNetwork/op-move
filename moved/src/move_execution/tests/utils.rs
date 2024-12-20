@@ -598,82 +598,24 @@ impl CompileJob for ScriptCompileJob {
 /// # Returns
 /// Iterator of framework name and address pairs
 fn custom_framework_named_addresses() -> impl Iterator<Item = (String, NumericalAddress)> {
-    [
+    let mut named_addresses = vec![
         (
-            "EthToken".into(),
+            "EthToken".to_string(),
             NumericalAddress::parse_str("0x1").unwrap(),
         ),
         ("Evm".into(), NumericalAddress::parse_str("0x1").unwrap()),
         (
-            "evm_admin".into(),
+            "evm_admin".to_string(),
             NumericalAddress::parse_str("0x1").unwrap(),
         ),
-        (
-            "BaseFeeVault".into(),
-            NumericalAddress::parse_str("0x4200000000000000000000000000000000000019").unwrap(),
-        ),
-        (
-            "CrossL2Inbox".into(),
-            NumericalAddress::parse_str("0x4200000000000000000000000000000000000022").unwrap(),
-        ),
-        (
-            "GasPriceOracle".into(),
-            NumericalAddress::parse_str("0x420000000000000000000000000000000000000F").unwrap(),
-        ),
-        (
-            "GovernanceToken".into(),
-            NumericalAddress::parse_str("0x4200000000000000000000000000000000000042").unwrap(),
-        ),
-        (
-            "L1Block".into(),
-            NumericalAddress::parse_str("0x4200000000000000000000000000000000000015").unwrap(),
-        ),
-        (
-            "L1BlockNumber".into(),
-            NumericalAddress::parse_str("0x4200000000000000000000000000000000000013").unwrap(),
-        ),
-        (
-            "L1FeeVault".into(),
-            NumericalAddress::parse_str("0x420000000000000000000000000000000000001a").unwrap(),
-        ),
-        (
-            "L2CrossDomainMessenger".into(),
-            NumericalAddress::parse_str("0x4200000000000000000000000000000000000007").unwrap(),
-        ),
-        (
-            "L2ERC721Bridge".into(),
-            NumericalAddress::parse_str("0x4200000000000000000000000000000000000014").unwrap(),
-        ),
-        (
-            "L2StandardBridge".into(),
-            NumericalAddress::parse_str("0x4200000000000000000000000000000000000010").unwrap(),
-        ),
-        (
-            "L2ToL1MessagePasser".into(),
-            NumericalAddress::parse_str("0x4200000000000000000000000000000000000016").unwrap(),
-        ),
-        (
-            "L2ToL2CrossDomainMessenger".into(),
-            NumericalAddress::parse_str("0x4200000000000000000000000000000000000023").unwrap(),
-        ),
-        (
-            "OptimismMintableERC20Factory".into(),
-            NumericalAddress::parse_str("0x4200000000000000000000000000000000000012").unwrap(),
-        ),
-        (
-            "OptimismMintableERC721Factory".into(),
-            NumericalAddress::parse_str("0x4200000000000000000000000000000000000017").unwrap(),
-        ),
-        (
-            "ProxyAdmin".into(),
-            NumericalAddress::parse_str("0x4200000000000000000000000000000000000018").unwrap(),
-        ),
-        (
-            "SequencerFeeVault".into(),
-            NumericalAddress::parse_str("0x4200000000000000000000000000000000000011").unwrap(),
-        ),
-    ]
-    .into_iter()
+    ];
+    named_addresses.append(
+        &mut get_l2_contracts()
+            .into_iter()
+            .map(|(name, address)| (name, NumericalAddress::parse_str(&address).unwrap()))
+            .collect::<Vec<_>>(),
+    );
+    named_addresses.into_iter()
 }
 
 /// Adds custom framework paths to dependencies
@@ -683,22 +625,9 @@ fn custom_framework_named_addresses() -> impl Iterator<Item = (String, Numerical
 fn add_custom_framework_paths(files: &mut Vec<String>) {
     add_framework_path("eth-token", "EthToken", files);
     add_framework_path("evm", "Evm", files);
-    add_framework_path("l2", "BaseFeeVault", files);
-    add_framework_path("l2", "CrossL2Inbox", files);
-    add_framework_path("l2", "GasPriceOracle", files);
-    add_framework_path("l2", "GovernanceToken", files);
-    add_framework_path("l2", "L1Block", files);
-    add_framework_path("l2", "L1BlockNumber", files);
-    add_framework_path("l2", "L1FeeVault", files);
-    add_framework_path("l2", "L2CrossDomainMessenger", files);
-    add_framework_path("l2", "L2ERC721Bridge", files);
-    add_framework_path("l2", "L2StandardBridge", files);
-    add_framework_path("l2", "L2ToL1MessagePasser", files);
-    add_framework_path("l2", "L2ToL2CrossDomainMessenger", files);
-    add_framework_path("l2", "OptimismMintableERC20Factory", files);
-    add_framework_path("l2", "OptimismMintableERC721Factory", files);
-    add_framework_path("l2", "ProxyAdmin", files);
-    add_framework_path("l2", "SequencerFeeVault", files);
+    get_l2_contracts().iter().for_each(|(name, _)| {
+        add_framework_path("l2", name, files);
+    });
 }
 
 /// Adds an individual framework path in genesis builder to the dependency list
@@ -716,4 +645,20 @@ fn add_framework_path(folder_name: &str, source_name: &str, files: &mut Vec<Stri
         .canonicalize()
         .unwrap();
     files.push(eth_token_path.to_string_lossy().into());
+}
+
+fn get_l2_contracts() -> Vec<(String, String)> {
+    let move_toml = read_to_string("../genesis-builder/framework/l2/Move.toml").unwrap();
+    // Capture the contract name where the address starts with 0x42
+    let mut names_and_addresses = Vec::new();
+    let re = Regex::new("^(?<name>.*) = \"(?<address>0x42.*)\"$").unwrap();
+    for line in move_toml.lines() {
+        if re.is_match(line) {
+            names_and_addresses.push((
+                re.replace(line, "$name").to_string(),
+                re.replace(line, "$address").to_string(),
+            ));
+        }
+    }
+    names_and_addresses
 }

@@ -6776,6 +6776,7 @@ dependencies = [
  "move-vm-types 0.1.0 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
  "once_cell",
  "op-alloy",
+ "regex",
  "revm",
  "serde",
  "serde_json",

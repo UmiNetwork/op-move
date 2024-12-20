@@ -43,9 +43,11 @@ use {
     },
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
     move_vm_types::gas::UnmeteredGasMeter,
+    regex::Regex,
     serde::de::DeserializeOwned,
     std::{
         collections::{BTreeMap, BTreeSet},
+        fs::read_to_string,
         path::Path,
     },
 };
