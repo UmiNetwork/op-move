@@ -1,8 +1,6 @@
 use {
     super::{EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE},
-    crate::{
-        primitives::{ToEthAddress, ToMoveAddress, ToMoveU256, ToSaturatedU64, ToU256},
-    },
+    crate::primitives::{ToEthAddress, ToMoveAddress, ToMoveU256, ToSaturatedU64, ToU256},
     alloy::dyn_abi::{DynSolType, DynSolValue},
     aptos_native_interface::{
         safely_pop_arg, safely_pop_type_arg, SafeNativeContext, SafeNativeResult,
