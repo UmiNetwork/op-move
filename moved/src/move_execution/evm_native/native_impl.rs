@@ -1,7 +1,9 @@
 use {
     super::{
-        native_evm_context::NativeEVMContext, solidity_abi::abi_encode_params,
-        type_utils::evm_result_to_move_value, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
+        native_evm_context::NativeEVMContext,
+        solidity_abi::{abi_decode_params, abi_encode_params},
+        type_utils::evm_result_to_move_value,
+        EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
     },
     crate::primitives::{ToEthAddress, ToU256},
     aptos_gas_algebra::{GasExpression, GasQuantity, InternalGasUnit},
@@ -38,6 +40,7 @@ pub fn append_evm_natives(natives: &mut NativeFunctionTable, builder: &SafeNativ
     push_native(ident_str!("native_evm_call").into(), evm_call);
     push_native(ident_str!("native_evm_create").into(), evm_create);
     push_native(ident_str!("abi_encode_params").into(), abi_encode_params);
+    push_native(ident_str!("abi_decode_params").into(), abi_decode_params);
 }
 
 fn evm_call(

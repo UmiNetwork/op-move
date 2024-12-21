@@ -178,7 +178,7 @@ fn get_input_match(solidity_type: String) -> String {
         "address[]" => "vector<address>",
         "bytes" => "vector<u8>",
         "bytes[]" => "vector<vector<u8>>",
-        // TODO: Use fixed byte array for bytesN
+        // TODO: Use SolidityFixedBytes for bytesN, ie `Evm::evm::as_fixed_bytes`
         "bytes32" => "vector<u8>",
         "bytes32[]" => "vector<vector<u8>>",
         "bytes4" => "vector<u8>",
