@@ -178,13 +178,9 @@ fn move_value_to_sol_value(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> 
                     "Solidity only supports length between 1 and 32 (inclusive). This condition is enforced by the constructor in the Evm.move module"
                 );
 
-                // Fill the fixed-sized buffer with the given bytes
+                // Fill the fixed-sized buffer from the beginning with the given bytes
                 let mut buf = [0u8; 32];
-                for (b, x) in buf
-                    .iter_mut()
-                    .skip(32 - size)
-                    .zip(data.into_iter().map(force_to_u8))
-                {
+                for (b, x) in buf.iter_mut().zip(data.into_iter().map(force_to_u8)) {
                     *b = x;
                 }
                 return DynSolValue::FixedBytes(buf.into(), size);
@@ -246,7 +242,7 @@ fn layout_to_sol_type(layout: &MoveTypeLayout) -> DynSolType {
 
             // Special case data marked as being fixed bytes
             if FIXED_BYTES_TAG.eq(struct_tag) {
-                // TODO: Support any `bytesN` fixed bytes. Possibly need a struct for each one in Evm
+                // TODO: Support any `bytesN` fixed bytes. Possibly needs a struct or enum type for each one in Evm.
                 // Currently only `bytes32` is supported as an output for `SolidityFixedBytes`.
                 // L2 contracts don't return any other `bytes` type.
                 return DynSolType::FixedBytes(32);
@@ -274,7 +270,7 @@ fn layout_to_sol_type(layout: &MoveTypeLayout) -> DynSolType {
                     .collect(),
             )
         }
-        MoveTypeLayout::Native(_, _) => unreachable!("Native move layout is not supported"),
+        MoveTypeLayout::Native(_, native_layout) => layout_to_sol_type(&native_layout),
     }
 }
 
@@ -290,17 +286,15 @@ fn sol_to_value(sv: DynSolValue) -> Value {
             256 => Value::u256(u.to_move_u256()),
             _ => unreachable!("Only 8, 16, 32, 64, 128 and 256 bit uints are supported by move"),
         },
-        DynSolValue::FixedBytes(w, size) => match size {
-            32 => Value::vector_u8(w.to_vec()),
-            _ => unreachable!("Only 32 byte words are supported"),
-        },
+        // Move doesn't have fixed-length arrays, the output will be the same regardless of the length
+        DynSolValue::FixedBytes(w, _size) => Value::vector_u8(w.to_vec()),
         DynSolValue::Address(a) => Value::address(a.to_move_address()),
         DynSolValue::Bytes(b) => Value::vector_u8(b),
         DynSolValue::String(s) => {
             Value::struct_(Struct::pack(vec![Value::vector_u8(s.into_bytes())]))
         }
         DynSolValue::Array(a) => Value::vector_for_testing_only(
-            // TODO: Make sure all the vector elements are the same type
+            // TODO: Make sure all the vector elements are of the same type
             a.into_iter().map(sol_to_value).collect::<Vec<_>>(),
         ),
         DynSolValue::Tuple(t) => Value::struct_(Struct::pack(

@@ -169,7 +169,7 @@ fn deploy_aptos_framework(session: &mut Session) -> crate::Result<()> {
     // Iterate over the bundled packages in the Aptos framework
     for package in &framework.packages {
         let modules = package.sorted_code_and_modules();
-        if package.name().eq(L2_PACKAGE_NAME) {
+        if package.name() == L2_PACKAGE_NAME {
             // L2 package have self-contained independent modules
             for module in modules {
                 let code = module.0.to_vec();
