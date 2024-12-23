@@ -1,16 +1,22 @@
 use {
     super::{EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE},
-    crate::primitives::{ToEthAddress, ToMoveAddress, ToMoveU256, ToSaturatedU64, ToU256},
-    alloy::dyn_abi::{DynSolType, DynSolValue},
+    crate::{
+        genesis::FRAMEWORK_ADDRESS,
+        primitives::{ToEthAddress, ToMoveAddress, ToMoveU256, ToU256},
+    },
+    alloy::dyn_abi::{DynSolType, DynSolValue, Error},
     aptos_native_interface::{
-        safely_pop_arg, safely_pop_type_arg, SafeNativeContext, SafeNativeResult,
+        safely_pop_arg, safely_pop_type_arg, SafeNativeContext, SafeNativeError, SafeNativeResult,
     },
     move_core_types::{
         ident_str,
         language_storage::StructTag,
         value::{MoveStructLayout, MoveTypeLayout, MoveValue},
     },
-    move_vm_types::{loaded_data::runtime_types::Type, values::Value},
+    move_vm_types::{
+        loaded_data::runtime_types::Type,
+        values::{Struct, Value},
+    },
     revm::primitives::U256,
     smallvec::{smallvec, SmallVec},
     std::{collections::VecDeque, sync::LazyLock},
@@ -29,6 +35,14 @@ static FIXED_ARRAY_TAG: LazyLock<StructTag> = LazyLock::new(|| StructTag {
     address: EVM_NATIVE_ADDRESS,
     module: EVM_NATIVE_MODULE.into(),
     name: ident_str!("SolidityFixedArray").into(),
+    type_args: Vec::new(),
+});
+
+/// Marker struct defined in move framework for the standard string.
+static STRING_TAG: LazyLock<StructTag> = LazyLock::new(|| StructTag {
+    address: FRAMEWORK_ADDRESS,
+    module: ident_str!("string").into(),
+    name: ident_str!("String").into(),
     type_args: Vec::new(),
 });
 
@@ -85,8 +99,8 @@ pub fn abi_decode_params(
     // TODO: need to figure out how much gas to charge for these operations.
 
     let annotated_layout = context.type_to_fully_annotated_layout(&ty_arg)?;
-
-    let result = sol_value_to_move_value(value, &annotated_layout);
+    let result = inner_abi_decode_params(&value, &annotated_layout)
+        .map_err(|_| SafeNativeError::Abort { abort_code: 0 })?;
     Ok(smallvec![result])
 }
 
@@ -103,6 +117,13 @@ fn inner_abi_encode_params(
     // Solidity value.
     let mv = value.as_move_value(undecorated_layout);
     move_value_to_sol_value(mv, annotated_layout).abi_encode_params()
+}
+
+/// Decode the Solidity ABI bytes to native value
+fn inner_abi_decode_params(value: &[u8], layout: &MoveTypeLayout) -> Result<Value, Error> {
+    let sol_type = layout_to_sol_type(layout);
+    let sol_value = sol_type.abi_decode_params(value)?;
+    Ok(sol_to_value(sol_value))
 }
 
 fn move_value_to_sol_value(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> DynSolValue {
@@ -200,77 +221,92 @@ fn move_value_to_sol_value(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> 
     }
 }
 
-fn sol_value_to_move_value(sv: Vec<u8>, layout: &MoveTypeLayout) -> Value {
+fn layout_to_sol_type(layout: &MoveTypeLayout) -> DynSolType {
     match layout {
-        MoveTypeLayout::Bool => {
-            let Ok(DynSolValue::Bool(b)) = DynSolType::Bool.abi_decode(&sv) else {
-                unreachable!("Solidity value should be  string");
-            };
-            Value::bool(b)
-        }
-        MoveTypeLayout::U8 => {
-            let Ok(DynSolValue::Uint(u, 8)) = DynSolType::Uint(8).abi_decode(&sv) else {
-                unreachable!("Solidity value should be a u8 number");
-            };
-            Value::u8(u.to_le_bytes_vec()[0])
-        }
-        MoveTypeLayout::U16 => {
-            let Ok(DynSolValue::Uint(u, 16)) = DynSolType::Uint(16).abi_decode(&sv) else {
-                unreachable!("Solidity value should be a u16 number");
-            };
-            let mut v = [0u8; 2];
-            for (i, num) in u.to_le_bytes_vec()[0..2].iter().enumerate() {
-                v[i] = *num;
+        MoveTypeLayout::Bool => DynSolType::Bool,
+        MoveTypeLayout::U8 => DynSolType::Uint(8),
+        MoveTypeLayout::U16 => DynSolType::Uint(16),
+        MoveTypeLayout::U32 => DynSolType::Uint(32),
+        MoveTypeLayout::U64 => DynSolType::Uint(64),
+        MoveTypeLayout::U128 => DynSolType::Uint(128),
+        MoveTypeLayout::U256 => DynSolType::Uint(256),
+        MoveTypeLayout::Signer | MoveTypeLayout::Address => DynSolType::Address,
+        MoveTypeLayout::Vector(vector_layout) => {
+            // Special case for byte arrays
+            if **vector_layout == MoveTypeLayout::U8 {
+                return DynSolType::Bytes;
             }
-            Value::u16(u16::from_le_bytes(v))
+            DynSolType::Array(Box::new(layout_to_sol_type(vector_layout)))
         }
-        MoveTypeLayout::U32 => {
-            let Ok(DynSolValue::Uint(u, 32)) = DynSolType::Uint(32).abi_decode(&sv) else {
-                unreachable!("Solidity value should be a u32 number");
+        MoveTypeLayout::Struct(struct_layout) => {
+            let (struct_tag, field_layouts) = match struct_layout {
+                MoveStructLayout::WithTypes { type_, fields } => (type_, fields),
+                _ => unreachable!("Must have type because layout is constructed with `type_to_fully_annotated_layout`"),
             };
-            let mut v = [0u8; 4];
-            for (i, num) in u.to_le_bytes_vec()[0..4].iter().enumerate() {
-                v[i] = *num;
+
+            // Special case data marked as being fixed bytes
+            if FIXED_BYTES_TAG.eq(struct_tag) {
+                // TODO: Support any `bytesN` fixed bytes. Possibly need a struct for each one in Evm
+                // Currently only `bytes32` is supported as an output for `SolidityFixedBytes`.
+                // L2 contracts don't return any other `bytes` type.
+                return DynSolType::FixedBytes(32);
             }
-            Value::u32(u32::from_le_bytes(v))
-        }
-        MoveTypeLayout::U64 => {
-            let Ok(DynSolValue::Uint(u, 64)) = DynSolType::Uint(64).abi_decode(&sv) else {
-                unreachable!("Solidity value should be a u64 number");
-            };
-            Value::u64(u.to_saturated_u64())
-        }
-        MoveTypeLayout::U128 => {
-            let Ok(DynSolValue::Uint(u, 128)) = DynSolType::Uint(128).abi_decode(&sv) else {
-                unreachable!("Solidity value should be a u128 number");
-            };
-            let mut v = [0u8; 16];
-            for (i, num) in u.to_le_bytes_vec()[0..16].iter().enumerate() {
-                v[i] = *num;
+
+            // Equality check like fixed bytes will not work because the type tags will not match.
+            // Instead of equality, check specifically for module id and name to match.
+            if FIXED_ARRAY_TAG.module_id() == struct_tag.module_id()
+                && FIXED_ARRAY_TAG.name == struct_tag.name
+            {
+                // Fixed size vs dynamic array are defined e.g. as `uint[3]` vs `uint[]` in Solidity.
+                // Move doesn't support fixed size vectors, hence we don't know the actual size beforehand.
+                unimplemented!("Fixed size arrays are not supported in move");
             }
-            Value::u128(u128::from_le_bytes(v))
+
+            if STRING_TAG.eq(struct_tag) {
+                return DynSolType::String;
+            }
+
+            // All other struct types are tuples in Solidity
+            DynSolType::Tuple(
+                field_layouts
+                    .iter()
+                    .map(|field_layout| layout_to_sol_type(&field_layout.layout))
+                    .collect(),
+            )
         }
-        MoveTypeLayout::U256 => {
-            let Ok(DynSolValue::Uint(u, 256)) = DynSolType::Uint(256).abi_decode(&sv) else {
-                unreachable!("Solidity value should be a u256 number");
-            };
-            Value::u256(u.to_move_u256())
+        MoveTypeLayout::Native(_, _) => unreachable!("Native move layout is not supported"),
+    }
+}
+
+fn sol_to_value(sv: DynSolValue) -> Value {
+    match sv {
+        DynSolValue::Bool(b) => Value::bool(b),
+        DynSolValue::Uint(u, size) => match size {
+            8 => Value::u8(u.to_move_u256().unchecked_as_u8()),
+            16 => Value::u16(u.to_move_u256().unchecked_as_u16()),
+            32 => Value::u32(u.to_move_u256().unchecked_as_u32()),
+            64 => Value::u64(u.to_move_u256().unchecked_as_u64()),
+            128 => Value::u128(u.to_move_u256().unchecked_as_u128()),
+            256 => Value::u256(u.to_move_u256()),
+            _ => unreachable!("Only 8, 16, 32, 64, 128 and 256 bit uints are supported by move"),
+        },
+        DynSolValue::FixedBytes(w, size) => match size {
+            32 => Value::vector_u8(w.to_vec()),
+            _ => unreachable!("Only 32 byte words are supported"),
+        },
+        DynSolValue::Address(a) => Value::address(a.to_move_address()),
+        DynSolValue::Bytes(b) => Value::vector_u8(b),
+        DynSolValue::String(s) => {
+            Value::struct_(Struct::pack(vec![Value::vector_u8(s.into_bytes())]))
         }
-        MoveTypeLayout::Signer | MoveTypeLayout::Address => {
-            let Ok(DynSolValue::Address(evm_address)) = DynSolType::Address.abi_decode(&sv) else {
-                unreachable!("Solidity value should be an address");
-            };
-            Value::address(evm_address.to_move_address())
-        }
-        MoveTypeLayout::Vector(_vector_layout) => {
-            unimplemented!()
-        }
-        MoveTypeLayout::Struct(_struct_layout) => {
-            unimplemented!()
-        }
-        MoveTypeLayout::Native(_, _) => {
-            unreachable!("Native move layout is not supported")
-        }
+        DynSolValue::Array(a) => Value::vector_for_testing_only(
+            // TODO: Make sure all the vector elements are the same type
+            a.into_iter().map(sol_to_value).collect::<Vec<_>>(),
+        ),
+        DynSolValue::Tuple(t) => Value::struct_(Struct::pack(
+            t.into_iter().map(sol_to_value).collect::<Vec<_>>(),
+        )),
+        _ => unreachable!("Int, FixedArray, Function and CustomStruct are not supported"),
     }
 }
 
