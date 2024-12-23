@@ -270,7 +270,7 @@ fn layout_to_sol_type(layout: &MoveTypeLayout) -> DynSolType {
                     .collect(),
             )
         }
-        MoveTypeLayout::Native(_, native_layout) => layout_to_sol_type(&native_layout),
+        MoveTypeLayout::Native(_, native_layout) => layout_to_sol_type(native_layout),
     }
 }
 
