@@ -95,9 +95,18 @@ module Evm::evm {
     /// selector if needed.
     public native fun abi_encode_params<T>(prefix: vector<u8>, value: T): vector<u8>;
 
+    /// Decode the Solidity ABI bytes into move value
+    /// such that it would be suitable for using Solidity contract's return value.
+    public native fun abi_decode_params<T>(value: vector<u8>): T;
+
     /// View function for checking if EVM execution was successful.
     public fun is_result_success(result: &EvmResult): bool {
         result.is_success
+    }
+
+    /// View function to retrieve EVM execution output.
+    public fun evm_output(result: &EvmResult): vector<u8> {
+        result.output
     }
 
     /// Emit the EVM logs to MoveVM logging system

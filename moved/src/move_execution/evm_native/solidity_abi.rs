@@ -1,14 +1,22 @@
 use {
     super::{EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE},
-    crate::primitives::{ToEthAddress, ToU256},
-    alloy::dyn_abi::DynSolValue,
-    aptos_native_interface::{safely_pop_type_arg, SafeNativeContext, SafeNativeResult},
+    crate::{
+        genesis::FRAMEWORK_ADDRESS,
+        primitives::{ToEthAddress, ToMoveAddress, ToMoveU256, ToU256},
+    },
+    alloy::dyn_abi::{DynSolType, DynSolValue, Error},
+    aptos_native_interface::{
+        safely_pop_arg, safely_pop_type_arg, SafeNativeContext, SafeNativeError, SafeNativeResult,
+    },
     move_core_types::{
         ident_str,
         language_storage::StructTag,
         value::{MoveStructLayout, MoveTypeLayout, MoveValue},
     },
-    move_vm_types::{loaded_data::runtime_types::Type, values::Value},
+    move_vm_types::{
+        loaded_data::runtime_types::Type,
+        values::{Struct, Value},
+    },
     revm::primitives::U256,
     smallvec::{smallvec, SmallVec},
     std::{collections::VecDeque, sync::LazyLock},
@@ -30,7 +38,15 @@ static FIXED_ARRAY_TAG: LazyLock<StructTag> = LazyLock::new(|| StructTag {
     type_args: Vec::new(),
 });
 
-/// Implementation for `native fun abi_encode_params<T>(value: &T): vector<u8>;`
+/// Marker struct defined in move framework for the standard string.
+static STRING_TAG: LazyLock<StructTag> = LazyLock::new(|| StructTag {
+    address: FRAMEWORK_ADDRESS,
+    module: ident_str!("string").into(),
+    name: ident_str!("String").into(),
+    type_args: Vec::new(),
+});
+
+/// Implementation for `native fun abi_encode_params<T>(prefix: vector<u8>, value: T): vector<u8>;`
 ///
 /// Encode the move value into bytes using the Solidity ABI
 /// such that it would be suitable for passing to a Solidity contract's function.
@@ -65,6 +81,29 @@ pub fn abi_encode_params(
     Ok(smallvec![result])
 }
 
+/// Implementation for `native fun abi_decode_params<T>(value: vector<u8>): T;`
+///
+/// Decode the Solidity ABI bytes into move value
+/// such that it would be suitable for using Solidity contract's return value.
+pub fn abi_decode_params(
+    context: &mut SafeNativeContext,
+    mut ty_args: Vec<Type>,
+    mut args: VecDeque<Value>,
+) -> SafeNativeResult<SmallVec<[Value; 1]>> {
+    debug_assert_eq!(ty_args.len(), 1, "abi_decode arg type to decode into");
+    debug_assert_eq!(args.len(), 1, "abi_decode arg to decode");
+
+    let value = safely_pop_arg!(args, Vec<u8>);
+    let ty_arg = safely_pop_type_arg!(ty_args);
+
+    // TODO: need to figure out how much gas to charge for these operations.
+
+    let annotated_layout = context.type_to_fully_annotated_layout(&ty_arg)?;
+    let result = inner_abi_decode_params(&value, &annotated_layout)
+        .map_err(|_| SafeNativeError::Abort { abort_code: 0 })?;
+    Ok(smallvec![result])
+}
+
 /// Encode the move value into bytes using the Solidity ABI
 /// such that it would be suitable for passing to a Solidity contract's function.
 fn inner_abi_encode_params(
@@ -78,6 +117,13 @@ fn inner_abi_encode_params(
     // Solidity value.
     let mv = value.as_move_value(undecorated_layout);
     move_value_to_sol_value(mv, annotated_layout).abi_encode_params()
+}
+
+/// Decode the Solidity ABI bytes to native value
+fn inner_abi_decode_params(value: &[u8], layout: &MoveTypeLayout) -> Result<Value, Error> {
+    let sol_type = layout_to_sol_type(layout);
+    let sol_value = sol_type.abi_decode_params(value)?;
+    Ok(sol_to_value(sol_value))
 }
 
 fn move_value_to_sol_value(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> DynSolValue {
@@ -132,13 +178,9 @@ fn move_value_to_sol_value(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> 
                     "Solidity only supports length between 1 and 32 (inclusive). This condition is enforced by the constructor in the Evm.move module"
                 );
 
-                // Fill the fixed-sized buffer with the given bytes
+                // Fill the fixed-sized buffer from the beginning with the given bytes
                 let mut buf = [0u8; 32];
-                for (b, x) in buf
-                    .iter_mut()
-                    .skip(32 - size)
-                    .zip(data.into_iter().map(force_to_u8))
-                {
+                for (b, x) in buf.iter_mut().zip(data.into_iter().map(force_to_u8)) {
                     *b = x;
                 }
                 return DynSolValue::FixedBytes(buf.into(), size);
@@ -172,6 +214,93 @@ fn move_value_to_sol_value(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> 
                     .collect(),
             )
         }
+    }
+}
+
+fn layout_to_sol_type(layout: &MoveTypeLayout) -> DynSolType {
+    match layout {
+        MoveTypeLayout::Bool => DynSolType::Bool,
+        MoveTypeLayout::U8 => DynSolType::Uint(8),
+        MoveTypeLayout::U16 => DynSolType::Uint(16),
+        MoveTypeLayout::U32 => DynSolType::Uint(32),
+        MoveTypeLayout::U64 => DynSolType::Uint(64),
+        MoveTypeLayout::U128 => DynSolType::Uint(128),
+        MoveTypeLayout::U256 => DynSolType::Uint(256),
+        MoveTypeLayout::Signer | MoveTypeLayout::Address => DynSolType::Address,
+        MoveTypeLayout::Vector(vector_layout) => {
+            // Special case for byte arrays
+            if **vector_layout == MoveTypeLayout::U8 {
+                return DynSolType::Bytes;
+            }
+            DynSolType::Array(Box::new(layout_to_sol_type(vector_layout)))
+        }
+        MoveTypeLayout::Struct(struct_layout) => {
+            let (struct_tag, field_layouts) = match struct_layout {
+                MoveStructLayout::WithTypes { type_, fields } => (type_, fields),
+                _ => unreachable!("Must have type because layout is constructed with `type_to_fully_annotated_layout`"),
+            };
+
+            // Special case data marked as being fixed bytes
+            if FIXED_BYTES_TAG.eq(struct_tag) {
+                // TODO: Support any `bytesN` fixed bytes. Possibly needs a struct or enum type for each one in Evm.
+                // Currently only `bytes32` is supported as an output for `SolidityFixedBytes`.
+                // L2 contracts don't return any other `bytes` type.
+                return DynSolType::FixedBytes(32);
+            }
+
+            // Equality check like fixed bytes will not work because the type tags will not match.
+            // Instead of equality, check specifically for module id and name to match.
+            if FIXED_ARRAY_TAG.module_id() == struct_tag.module_id()
+                && FIXED_ARRAY_TAG.name == struct_tag.name
+            {
+                // Fixed size vs dynamic array are defined e.g. as `uint[3]` vs `uint[]` in Solidity.
+                // Move doesn't support fixed size vectors, hence we don't know the actual size beforehand.
+                unimplemented!("Fixed size arrays are not supported in move");
+            }
+
+            if STRING_TAG.eq(struct_tag) {
+                return DynSolType::String;
+            }
+
+            // All other struct types are tuples in Solidity
+            DynSolType::Tuple(
+                field_layouts
+                    .iter()
+                    .map(|field_layout| layout_to_sol_type(&field_layout.layout))
+                    .collect(),
+            )
+        }
+        MoveTypeLayout::Native(_, native_layout) => layout_to_sol_type(native_layout),
+    }
+}
+
+fn sol_to_value(sv: DynSolValue) -> Value {
+    match sv {
+        DynSolValue::Bool(b) => Value::bool(b),
+        DynSolValue::Uint(u, size) => match size {
+            8 => Value::u8(u.to_move_u256().unchecked_as_u8()),
+            16 => Value::u16(u.to_move_u256().unchecked_as_u16()),
+            32 => Value::u32(u.to_move_u256().unchecked_as_u32()),
+            64 => Value::u64(u.to_move_u256().unchecked_as_u64()),
+            128 => Value::u128(u.to_move_u256().unchecked_as_u128()),
+            256 => Value::u256(u.to_move_u256()),
+            _ => unreachable!("Only 8, 16, 32, 64, 128 and 256 bit uints are supported by move"),
+        },
+        // Move doesn't have fixed-length arrays, the output will be the same regardless of the length
+        DynSolValue::FixedBytes(w, _size) => Value::vector_u8(w.to_vec()),
+        DynSolValue::Address(a) => Value::address(a.to_move_address()),
+        DynSolValue::Bytes(b) => Value::vector_u8(b),
+        DynSolValue::String(s) => {
+            Value::struct_(Struct::pack(vec![Value::vector_u8(s.into_bytes())]))
+        }
+        DynSolValue::Array(a) => Value::vector_for_testing_only(
+            // TODO: Make sure all the vector elements are of the same type
+            a.into_iter().map(sol_to_value).collect::<Vec<_>>(),
+        ),
+        DynSolValue::Tuple(t) => Value::struct_(Struct::pack(
+            t.into_iter().map(sol_to_value).collect::<Vec<_>>(),
+        )),
+        _ => unreachable!("Int, FixedArray, Function and CustomStruct are not supported"),
     }
 }
 
