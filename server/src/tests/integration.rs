@@ -9,7 +9,6 @@ use {
             k256::ecdsa::SigningKey,
             local::{LocalSigner, PrivateKeySigner},
         },
-        sol,
         transports::http::reqwest::Url,
     },
     anyhow::{Context, Result},
@@ -38,12 +37,6 @@ const L2_RPC_URL: &str = "http://localhost:8545";
 const OP_BRIDGE_IN_SECS: u64 = 90;
 const OP_START_IN_SECS: u64 = 20;
 const TXN_RECEIPT_WAIT_IN_MILLIS: u64 = 100;
-
-sol!(
-    #[sol(rpc)]
-    ERC20,
-    "src/tests/res/ERC20.json"
-);
 
 #[tokio::test]
 async fn test_on_ethereum() -> Result<()> {
