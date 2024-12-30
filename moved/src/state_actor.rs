@@ -247,9 +247,10 @@ impl<
                     Finalized | Pending | Latest | Safe => self.height,
                     Earliest => 0,
                 };
+                // TODO: simulation should account for gas from non-zero L1 fee
                 let outcome = simulate_transaction(transaction, self.state.resolver(), &self.genesis_config, &self.base_token, block_height);
                 match outcome {
-                    Ok(outcome) => response_channel.send(Ok(outcome.gas_used)).ok(),
+                    Ok(outcome) => response_channel.send(Ok(1000 * outcome.gas_used)).ok(),
                     Err(e) => response_channel.send(Err(e)).ok(),
                 }
             }

@@ -111,6 +111,8 @@ pub enum InvalidTransactionCause {
     InvalidOption,
     #[error("Object must already exist to pass as an entry function argument")]
     InvalidObject,
+    #[error("Failed to pay L1 fee")]
+    FailedToPayL1Fee,
 }
 
 impl From<InvalidTransactionCause> for Error {

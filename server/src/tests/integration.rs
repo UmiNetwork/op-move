@@ -1,5 +1,6 @@
 use {
     alloy::{
+        contract::CallBuilder,
         network::{EthereumWallet, TransactionBuilder},
         primitives::{address, utils::parse_ether, Address, U256},
         providers::{Provider, ProviderBuilder},
@@ -12,6 +13,13 @@ use {
         transports::http::reqwest::Url,
     },
     anyhow::{Context, Result},
+    aptos_types::transaction::{EntryFunction, Module},
+    move_binary_format::CompiledModule,
+    move_core_types::{ident_str, language_storage::ModuleId, value::MoveValue},
+    moved::{
+        primitives::ToMoveAddress,
+        types::transactions::{ScriptOrModule, TransactionData},
+    },
     openssl::rand::rand_bytes,
     serde_json::Value,
     std::{
@@ -76,8 +84,8 @@ async fn test_on_ethereum() -> Result<()> {
     // 10. Test out the OP bridge
     use_optimism_bridge().await?;
 
-    // 11. Test out an ERC20 token
-    deploy_erc20_token().await?;
+    // 11. Test out a simple Move contract
+    deploy_move_counter().await?;
 
     // 12. Cleanup generated files and folders
     cleanup_files();
@@ -428,26 +436,59 @@ async fn use_optimism_bridge() -> Result<()> {
     Ok(())
 }
 
-async fn deploy_erc20_token() -> Result<()> {
+async fn deploy_move_counter() -> Result<()> {
     let from_wallet = get_prefunded_wallet().await?;
     let provider = ProviderBuilder::new()
         .with_recommended_fillers()
         .wallet(EthereumWallet::from(from_wallet.to_owned()))
         .on_http(Url::parse(L2_RPC_URL)?);
 
-    // Any address can be the initial owner of tokens, use Admin address for simplicity
-    let admin_address = var("ADMIN_ADDRESS")?.parse()?;
-    let contract = ERC20::deploy(
-        &provider,
-        "Gold".to_string(),
-        "AU".to_string(),
-        admin_address,
-        parse_ether("1000")?,
-    )
-    .await?;
-    let balance = contract.balanceOf(admin_address).call().await?._0;
-    assert_eq!(balance, parse_ether("1000")?);
+    let bytecode_hex = std::fs::read_to_string("src/tests/res/counter.hex").unwrap();
+    let bytecode = hex::decode(bytecode_hex.trim()).unwrap();
+    let bytecode = set_module_address(bytecode, from_wallet.address());
+
+    let call = CallBuilder::new_raw_deploy(&provider, bytecode.into());
+    let contract_address = call.deploy().await.unwrap();
+
+    let input = TransactionData::EntryFunction(EntryFunction::new(
+        ModuleId::new(
+            contract_address.to_move_address(),
+            ident_str!("counter").into(),
+        ),
+        ident_str!("publish").into(),
+        Vec::new(),
+        vec![
+            bcs::to_bytes(&MoveValue::Address(from_wallet.address().to_move_address())).unwrap(),
+            bcs::to_bytes(&MoveValue::U64(7)).unwrap(),
+        ],
+    ));
+    let pending_tx = CallBuilder::new_raw(&provider, bcs::to_bytes(&input).unwrap().into())
+        .to(contract_address)
+        .send()
+        .await
+        .unwrap();
+    let receipt = pending_tx.get_receipt().await.unwrap();
+    assert!(receipt.status(), "Transaction should succeed");
+
     Ok(())
+}
+
+// Ensure the self-address of the module to deploy matches the given address
+fn set_module_address(bytecode: Vec<u8>, address: Address) -> Vec<u8> {
+    let module: ScriptOrModule = bcs::from_bytes(&bytecode).unwrap();
+    if let ScriptOrModule::Module(module) = module {
+        let mut code = module.into_inner();
+        let mut compiled_module = CompiledModule::deserialize(&code).unwrap();
+        let self_module_index = compiled_module.self_module_handle_idx.0 as usize;
+        let self_address_index =
+            compiled_module.module_handles[self_module_index].address.0 as usize;
+        compiled_module.address_identifiers[self_address_index] = address.to_move_address();
+        code.clear();
+        compiled_module.serialize(&mut code).unwrap();
+        bcs::to_bytes(&ScriptOrModule::Module(Module::new(code))).unwrap()
+    } else {
+        bytecode
+    }
 }
 
 fn cleanup_files() {

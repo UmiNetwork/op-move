@@ -61,13 +61,15 @@ pub(super) fn verify_transaction(
         ));
     }
 
-    base_token.charge_l1_cost(
-        &sender_move_address,
-        l1_cost,
-        session,
-        traversal_context,
-        gas_meter,
-    )?;
+    base_token
+        .charge_l1_cost(
+            &sender_move_address,
+            l1_cost,
+            session,
+            traversal_context,
+            gas_meter,
+        )
+        .map_err(|_| InvalidTransaction(InvalidTransactionCause::FailedToPayL1Fee))?;
 
     check_nonce(
         tx.nonce,
