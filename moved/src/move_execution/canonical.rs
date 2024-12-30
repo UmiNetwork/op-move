@@ -6,7 +6,7 @@ use {
             create_move_vm, create_vm_session,
             eth_token::{BaseTokenAccounts, TransferArgs},
             evm_native,
-            execute::{deploy_module, execute_entry_function, execute_script},
+            execute::{deploy_module, execute_entry_function, execute_l2_contract, execute_script},
             gas::{new_gas_meter, total_gas_used},
             nonces::check_nonce,
             Logs,
@@ -107,6 +107,7 @@ pub(super) fn execute_canonical_transaction(
     let mut traversal_context = TraversalContext::new(&traversal_storage);
     let mut gas_meter = new_gas_meter(genesis_config, tx.gas_limit());
     let mut deployment = None;
+    let mut evm_logs = Vec::new();
 
     verify_transaction(
         tx,
@@ -151,10 +152,23 @@ pub(super) fn execute_canonical_transaction(
 
             base_token.transfer(args, &mut session, &mut traversal_context, &mut gas_meter)
         }
+        TransactionData::L2Contract(contract) => {
+            evm_logs = execute_l2_contract(
+                &sender_move_address,
+                &contract.to_move_address(),
+                tx.value,
+                tx.data.to_vec(),
+                &mut session,
+                &mut traversal_context,
+                &mut gas_meter,
+            )?;
+            Ok(())
+        }
     };
 
     let (mut changes, mut extensions) = session.finish_with_extensions()?;
-    let logs = extensions.logs();
+    let mut logs = extensions.logs();
+    logs.extend(evm_logs);
     let evm_changes = evm_native::extract_evm_changes(&extensions);
     changes
         .squash(evm_changes)

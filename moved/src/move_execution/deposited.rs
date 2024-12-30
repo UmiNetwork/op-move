@@ -6,6 +6,7 @@ use {
         move_execution::{
             create_move_vm, create_vm_session, eth_token, evm_native,
             gas::{new_gas_meter, total_gas_used},
+            ADDRESS_LAYOUT, U256_LAYOUT,
         },
         primitives::{ToMoveAddress, ToMoveU256, B256},
         types::{
@@ -18,14 +19,10 @@ use {
     move_binary_format::errors::PartialVMError,
     move_core_types::{
         account_address::AccountAddress, language_storage::ModuleId, resolver::MoveResolver,
-        value::MoveTypeLayout,
     },
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
     move_vm_types::values::Value,
 };
-
-const ADDRESS_LAYOUT: MoveTypeLayout = MoveTypeLayout::Address;
-const U256_LAYOUT: MoveTypeLayout = MoveTypeLayout::U256;
 
 // Topic identifying the event
 // ETHBridgeFinalized(address indexed from, address indexed to, uint256 amount, bytes extraData)

@@ -72,6 +72,8 @@ pub enum UserError {
     InvalidSignature(#[from] alloy::primitives::SignatureError),
     #[error("Error during EVM execution for L2 bridge {0:?}")]
     DepositFailure(Vec<u8>),
+    #[error("L2 contract call failure")]
+    L2ContractCallFailure,
 }
 
 /// The error caused by invalid transaction input parameter.

@@ -25,6 +25,7 @@ use {
 const TOKEN_ADMIN: AccountAddress = FRAMEWORK_ADDRESS;
 const TOKEN_MODULE_NAME: &IdentStr = ident_str!("eth_token");
 const MINT_FUNCTION_NAME: &IdentStr = ident_str!("mint");
+const BURN_FUNCTION_NAME: &IdentStr = ident_str!("burn");
 const GET_BALANCE_FUNCTION_NAME: &IdentStr = ident_str!("get_balance");
 const TRANSFER_FUNCTION_NAME: &IdentStr = ident_str!("transfer");
 
@@ -127,6 +128,35 @@ pub fn mint_eth<G: GasMeter>(
             println!("{e:?}");
             crate::Error::eth_token_invariant_violation(EthToken::MintAlwaysSucceeds)
         })?;
+
+    Ok(())
+}
+
+pub fn burn_eth<G: GasMeter>(
+    from: &AccountAddress,
+    amount: U256,
+    session: &mut Session,
+    traversal_context: &mut TraversalContext,
+    gas_meter: &mut G,
+) -> Result<(), crate::Error> {
+    let token_module_id = ModuleId::new(FRAMEWORK_ADDRESS, TOKEN_MODULE_NAME.into());
+    let admin_arg = bcs::to_bytes(&MoveValue::Signer(TOKEN_ADMIN)).expect("signer can serialize");
+    let from_arg = bcs::to_bytes(from).expect("address can serialize");
+    let amount_arg =
+        bcs::to_bytes(&MoveValue::U256(amount.to_move_u256())).expect("amount can serialize");
+
+    session.execute_entry_function(
+        &token_module_id,
+        BURN_FUNCTION_NAME,
+        Vec::new(),
+        vec![
+            admin_arg.as_slice(),
+            from_arg.as_slice(),
+            amount_arg.as_slice(),
+        ],
+        gas_meter,
+        traversal_context,
+    )?;
 
     Ok(())
 }

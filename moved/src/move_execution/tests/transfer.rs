@@ -31,6 +31,28 @@ fn test_deposit_tx() {
 }
 
 #[test]
+fn test_initiate_withdrawal() {
+    let mut ctx = TestContext::new();
+    let mint_amount = U256::from(1_000_000);
+    ctx.deposit_eth(EVM_ADDRESS, mint_amount);
+
+    let withdraw_amount = U256::from(1_000);
+    let l2_parser = address!("4200000000000000000000000000000000000016");
+    // Transfering an amount to L2ToL1MessageParser triggers the withdrawal method via `receive() payable`
+    let outcome = ctx.transfer(l2_parser, withdraw_amount, 0);
+
+    // Topic signature of MessagePassed event. The signature is generated with the command below:
+    // cast sig-event "MessagePassed(uint256 indexed nonce, address indexed sender, address indexed target, uint256 value, uint256 gasLimit, bytes data, bytes32 withdrawalHash)"
+    let expected_topic = B256::new(hex!(
+        "02a52367d10742d8032712c1bb8e0144ff1ec5ffda1ed7d70bb05a2744955054"
+    ));
+    assert!(outcome.logs.iter().any(|l| l.topics()[0] == expected_topic));
+
+    let new_balance = ctx.get_balance(EVM_ADDRESS);
+    assert_eq!(new_balance, mint_amount - withdraw_amount);
+}
+
+#[test]
 fn test_withdrawal_tx() {
     let mut ctx = TestContext::new();
 
