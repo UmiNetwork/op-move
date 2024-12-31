@@ -32,7 +32,11 @@ use {
     canonical::execute_canonical_transaction,
     deposited::execute_deposited_transaction,
     move_binary_format::errors::PartialVMError,
-    move_core_types::{language_storage::TypeTag, resolver::MoveResolver, value::MoveValue},
+    move_core_types::{
+        language_storage::TypeTag,
+        resolver::MoveResolver,
+        value::{MoveTypeLayout, MoveValue},
+    },
     move_vm_runtime::{
         move_vm::MoveVM, native_extensions::NativeContextExtensions, session::Session,
     },
@@ -51,6 +55,9 @@ mod tag_validation;
 
 #[cfg(test)]
 mod tests;
+
+const ADDRESS_LAYOUT: MoveTypeLayout = MoveTypeLayout::Address;
+const U256_LAYOUT: MoveTypeLayout = MoveTypeLayout::U256;
 
 pub fn create_move_vm() -> crate::Result<MoveVM> {
     let mut builder = SafeNativeBuilder::new(

@@ -1,6 +1,13 @@
 use {
     super::tag_validation::{validate_entry_type_tag, validate_entry_value},
-    crate::{error::Error, InvalidTransactionCause, ScriptTransaction},
+    crate::{
+        error::Error,
+        move_execution::{eth_token::burn_eth, evm_native, ADDRESS_LAYOUT, U256_LAYOUT},
+        primitives::{ToMoveU256, U256},
+        Error::User,
+        InvalidTransactionCause, ScriptTransaction, UserError,
+    },
+    alloy::primitives::{Log, LogData},
     aptos_types::transaction::{EntryFunction, Module, Script},
     move_binary_format::CompiledModule,
     move_core_types::{
@@ -113,6 +120,59 @@ pub(super) fn execute_script<G: GasMeter>(
         traversal_context,
     )?;
     Ok(())
+}
+
+pub(super) fn execute_l2_contract<G: GasMeter>(
+    signer: &AccountAddress,
+    contract: &AccountAddress,
+    value: U256,
+    data: Vec<u8>,
+    session: &mut Session,
+    traversal_context: &mut TraversalContext,
+    gas_meter: &mut G,
+) -> crate::Result<Vec<Log<LogData>>> {
+    let module = ModuleId::new(
+        evm_native::EVM_NATIVE_ADDRESS,
+        evm_native::EVM_NATIVE_MODULE.into(),
+    );
+    let function_name = evm_native::EVM_CALL_FN_NAME;
+    // Unwraps in serialization are safe because the layouts match the types.
+    let args = vec![
+        Value::address(*signer)
+            .simple_serialize(&ADDRESS_LAYOUT)
+            .unwrap(),
+        Value::address(*contract)
+            .simple_serialize(&ADDRESS_LAYOUT)
+            .unwrap(),
+        Value::u256(value.to_move_u256())
+            .simple_serialize(&U256_LAYOUT)
+            .unwrap(),
+        Value::vector_u8(data)
+            .simple_serialize(&evm_native::CODE_LAYOUT)
+            .unwrap(),
+    ];
+    let outcome = session
+        .execute_function_bypass_visibility(
+            &module,
+            function_name,
+            Vec::new(),
+            args,
+            gas_meter,
+            traversal_context,
+        )
+        .map_err(|e| User(UserError::Vm(e)))?;
+
+    let evm_outcome = evm_native::extract_evm_result(outcome);
+
+    if evm_outcome.is_success {
+        // TODO: ETH is burned until the value from EVM is reflected on MoveVM
+        // Ethereum takes out the ETH value at the beginning of the transaction,
+        // however, move fungible token is taken out only if the EVM succeeds.
+        burn_eth(signer, value, session, traversal_context, gas_meter)?;
+    } else {
+        return Err(User(UserError::L2ContractCallFailure));
+    }
+    Ok(evm_outcome.logs)
 }
 
 // If `t` is wrapped in `Type::Reference` or `Type::MutableReference`,

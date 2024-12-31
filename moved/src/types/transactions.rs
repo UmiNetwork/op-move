@@ -6,7 +6,7 @@ use {
             TxLegacy,
         },
         eips::eip2930::AccessList,
-        primitives::{Address, Bloom, Bytes, Log, LogData, TxKind, B256, U256, U64},
+        primitives::{address, Address, Bloom, Bytes, Log, LogData, TxKind, B256, U256, U64},
         rlp::{Buf, Decodable, Encodable, RlpDecodable, RlpEncodable},
         rpc::types::TransactionRequest,
     },
@@ -22,6 +22,8 @@ use {
 };
 
 const DEPOSITED_TYPE_BYTE: u8 = 0x7e;
+const L2_LOWEST_ADDRESS: Address = address!("4200000000000000000000000000000000000000");
+const L2_HIGHEST_ADDRESS: Address = address!("42000000000000000000000000000000000000ff");
 
 /// OP-stack special transactions defined in
 /// https://specs.optimism.io/protocol/deposits.html#the-deposited-transaction-type
@@ -367,13 +369,16 @@ pub enum TransactionData {
     ScriptOrModule(ScriptOrModule),
     // Entry function should be the 3rd option to match the SDK TransactionPayload
     EntryFunction(EntryFunction),
+    L2Contract(Address),
 }
 
 impl TransactionData {
     pub fn parse_from(tx: &NormalizedEthTransaction) -> crate::Result<Self> {
         match tx.to {
             TxKind::Call(to) => {
-                if tx.data.is_empty() {
+                if to.ge(&L2_LOWEST_ADDRESS) && to.le(&L2_HIGHEST_ADDRESS) {
+                    Ok(Self::L2Contract(to))
+                } else if tx.data.is_empty() {
                     // When there is no transaction data then we interpret the
                     // transaction as a base token transfer between EOAs.
                     Ok(Self::EoaBaseTokenTransfer(to))
