@@ -131,11 +131,6 @@ pub(super) fn execute_l2_contract<G: GasMeter>(
     traversal_context: &mut TraversalContext,
     gas_meter: &mut G,
 ) -> crate::Result<Vec<Log<LogData>>> {
-    // Take out the ETH value right away according to Ethereum spec
-    if value > U256::ZERO {
-        burn_eth(signer, value, session, traversal_context, gas_meter)?;
-    }
-
     let module = ModuleId::new(
         evm_native::EVM_NATIVE_ADDRESS,
         evm_native::EVM_NATIVE_MODULE.into(),
@@ -168,7 +163,13 @@ pub(super) fn execute_l2_contract<G: GasMeter>(
         .map_err(|e| User(UserError::Vm(e)))?;
 
     let evm_outcome = evm_native::extract_evm_result(outcome);
-    if !evm_outcome.is_success {
+
+    if evm_outcome.is_success {
+        // TODO: ETH is burned until the value from EVM is reflected on MoveVM
+        // Ethereum takes out the ETH value at the beginning of the transaction,
+        // however, move fungible token is taken out only if the EVM succeeds.
+        burn_eth(signer, value, session, traversal_context, gas_meter)?;
+    } else {
         return Err(User(UserError::L2ContractCallFailure));
     }
     Ok(evm_outcome.logs)

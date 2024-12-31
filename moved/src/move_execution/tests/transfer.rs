@@ -53,6 +53,24 @@ fn test_initiate_withdrawal() {
 }
 
 #[test]
+fn test_initiate_withdrawal_zero_balance() {
+    let mut ctx = TestContext::new();
+    let withdraw_amount = U256::from(1_000);
+    let l2_parser = address!("4200000000000000000000000000000000000016");
+
+    let (tx_hash, tx) = create_transaction_with_value(
+        &mut ctx.signer,
+        TxKind::Call(l2_parser),
+        Vec::new(),
+        U256::from(withdraw_amount),
+    );
+
+    let transaction = TestTransaction::new(tx, tx_hash);
+    let err = ctx.execute_tx(&transaction).unwrap_err();
+    assert!(err.to_string().contains("VMError with status ABORTED"));
+}
+
+#[test]
 fn test_withdrawal_tx() {
     let mut ctx = TestContext::new();
 
