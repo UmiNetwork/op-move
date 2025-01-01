@@ -18,7 +18,7 @@ impl ToEthAddress for AccountAddress {
     }
 }
 
-pub(crate) trait ToMoveAddress {
+pub trait ToMoveAddress {
     fn to_move_address(&self) -> AccountAddress;
 }
 
