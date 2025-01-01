@@ -276,7 +276,7 @@ fn init_and_start_op_geth() -> Result<Child> {
         .output()
         .context("Call to state dump failed")?;
     check_output(output);
-    let op_geth_logs = std::fs::File::create("op_geth.log").unwrap();
+    let op_geth_logs = File::create("op_geth.log").unwrap();
     // Run geth as a child process, so we can continue with the test
     let op_geth_process = Command::new("op-geth")
         // Geth fails to start IPC when the directory name is too long, so simply keeping it short
@@ -331,7 +331,7 @@ fn init_and_start_op_geth() -> Result<Child> {
 }
 
 fn run_op() -> Result<(Child, Child, Child)> {
-    let op_node_logs = std::fs::File::create("op_node.log").unwrap();
+    let op_node_logs = File::create("op_node.log").unwrap();
     let op_node_process = Command::new("op-node")
         .current_dir("src/tests/optimism/packages/contracts-bedrock")
         .args([
@@ -363,7 +363,7 @@ fn run_op() -> Result<(Child, Child, Child)> {
         .stdout(op_node_logs)
         .spawn()?;
 
-    let op_batcher_logs = std::fs::File::create("op_batcher.log").unwrap();
+    let op_batcher_logs = File::create("op_batcher.log").unwrap();
     let op_batcher_process = Command::new("op-batcher")
         .args([
             "--l2-eth-rpc",
@@ -395,7 +395,7 @@ fn run_op() -> Result<(Child, Child, Child)> {
         .stdout(op_batcher_logs)
         .spawn()?;
 
-    let op_proposer_logs = std::fs::File::create("op_proposer.log").unwrap();
+    let op_proposer_logs = File::create("op_proposer.log").unwrap();
     let op_proposer_process = Command::new("op-proposer")
         .args([
             "--poll-interval",
