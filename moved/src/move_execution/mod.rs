@@ -49,7 +49,7 @@ use {
 mod canonical;
 mod deposited;
 mod eth_token;
-mod evm_native;
+pub mod evm_native;
 mod execute;
 mod gas;
 mod nonces;

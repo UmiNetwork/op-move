@@ -274,6 +274,16 @@ impl<
             Query::TransactionReceipt { tx_hash, response_channel } => {
                 response_channel.send(self.query_transaction_receipt(tx_hash)).ok()
             }
+            Query::GetProof { address, storage_slots, height, response_channel } => {
+                response_channel.send(
+                    self.state_queries.get_proof(
+                        self.state.db(),
+                        address.to_move_address(),
+                        &storage_slots,
+                        self.resolve_height(height)
+                    )
+                ).ok()
+            }
         };
     }
 
@@ -660,6 +670,16 @@ mod test_doubles {
             assert_eq!(height, self.1);
 
             Some(3)
+        }
+
+        fn get_proof(
+            &self,
+            _db: &(impl TreeReader + Sync),
+            _account: AccountAddress,
+            _storage_slots: &[U256],
+            _height: BlockHeight,
+        ) -> Option<crate::types::queries::ProofResponse> {
+            None
         }
     }
 }

@@ -34,7 +34,7 @@ impl<'a> NativeEVMContext<'a> {
         state: &'a impl MoveResolver<PartialVMError>,
         block_header: HeaderForExecution,
     ) -> Self {
-        let inner_db = ResolverBackedDB { resolver: state };
+        let inner_db = ResolverBackedDB::new(state);
         let db = CacheDB::new(inner_db);
         Self {
             resolver: state,
@@ -47,6 +47,12 @@ impl<'a> NativeEVMContext<'a> {
 
 pub struct ResolverBackedDB<'a> {
     resolver: &'a dyn MoveResolver<PartialVMError>,
+}
+
+impl<'a> ResolverBackedDB<'a> {
+    pub fn new(resolver: &'a impl MoveResolver<PartialVMError>) -> Self {
+        Self { resolver }
+    }
 }
 
 impl<'a> DatabaseRef for ResolverBackedDB<'a> {

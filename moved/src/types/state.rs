@@ -4,6 +4,7 @@
 //! accepts.
 
 use {
+    super::queries::ProofResponse,
     crate::{
         block::{ExtendedBlock, Header},
         primitives::{Address, Bytes, ToU64, B2048, B256, U256, U64},
@@ -211,6 +212,12 @@ pub enum Query {
     TransactionReceipt {
         tx_hash: B256,
         response_channel: oneshot::Sender<Option<TransactionReceipt>>,
+    },
+    GetProof {
+        address: Address,
+        storage_slots: Vec<U256>,
+        height: BlockNumberOrTag,
+        response_channel: oneshot::Sender<Option<ProofResponse>>,
     },
 }
 

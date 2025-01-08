@@ -1,5 +1,5 @@
 pub use self::{
-    native_evm_context::NativeEVMContext,
+    native_evm_context::{NativeEVMContext, ResolverBackedDB},
     native_impl::{append_evm_natives, EVM_CALL_FN_NAME},
     state_changes::{extract_evm_changes, genesis_state_changes},
     type_utils::extract_evm_result,
@@ -21,7 +21,7 @@ mod native_evm_context;
 mod native_impl;
 mod solidity_abi;
 mod state_changes;
-mod type_utils;
+pub mod type_utils;
 
 #[cfg(test)]
 mod tests;
@@ -45,7 +45,7 @@ pub static CODE_LAYOUT: LazyLock<MoveTypeLayout> =
 /// that is used in `revm`. It saves space if the same bytecode is deployed more than once
 /// because we still only store the whole bytecode one time and simply duplicate the same hash
 /// across all the contracts using that bytecode.
-static ACCOUNT_INFO_LAYOUT: LazyLock<MoveTypeLayout> = LazyLock::new(|| {
+pub static ACCOUNT_INFO_LAYOUT: LazyLock<MoveTypeLayout> = LazyLock::new(|| {
     MoveTypeLayout::Struct(MoveStructLayout::Runtime(vec![
         MoveTypeLayout::U256,                                 // balance
         MoveTypeLayout::U64,                                  // nonce
