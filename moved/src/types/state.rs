@@ -13,7 +13,7 @@ use {
     },
     alloy::{
         consensus::transaction::TxEnvelope,
-        eips::{eip2718::Encodable2718, BlockNumberOrTag},
+        eips::{eip2718::Encodable2718, BlockId, BlockNumberOrTag},
         primitives::Bloom,
         rpc::types::{BlockTransactions, FeeHistory, TransactionRequest},
     },
@@ -216,7 +216,7 @@ pub enum Query {
     GetProof {
         address: Address,
         storage_slots: Vec<U256>,
-        height: BlockNumberOrTag,
+        height: BlockId,
         response_channel: oneshot::Sender<Option<ProofResponse>>,
     },
 }

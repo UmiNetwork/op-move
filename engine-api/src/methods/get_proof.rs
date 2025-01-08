@@ -4,7 +4,7 @@ use {
         jsonrpc::JsonRpcError,
     },
     alloy::{
-        eips::BlockNumberOrTag,
+        eips::{BlockId, BlockNumberOrTag},
         primitives::{Address, U256},
     },
     moved::types::{
@@ -25,9 +25,7 @@ pub async fn execute(
     Ok(serde_json::to_value(response).expect("Must be able to JSON-serialize response"))
 }
 
-fn parse_params(
-    request: serde_json::Value,
-) -> Result<(Address, Vec<U256>, BlockNumberOrTag), JsonRpcError> {
+fn parse_params(request: serde_json::Value) -> Result<(Address, Vec<U256>, BlockId), JsonRpcError> {
     let params = json_utils::get_params_list(&request);
     match params {
         [] | [_] => Err(JsonRpcError {
@@ -38,12 +36,16 @@ fn parse_params(
         [a, b] => {
             let address: Address = json_utils::deserialize(a)?;
             let storage_slots = json_utils::deserialize(b)?;
-            Ok((address, storage_slots, BlockNumberOrTag::Latest))
+            Ok((
+                address,
+                storage_slots,
+                BlockId::Number(BlockNumberOrTag::Latest),
+            ))
         }
         [a, b, c] => {
             let address: Address = json_utils::deserialize(a)?;
             let storage_slots = json_utils::deserialize(b)?;
-            let block_number: BlockNumberOrTag = json_utils::deserialize(c)?;
+            let block_number: BlockId = json_utils::deserialize(c)?;
             Ok((address, storage_slots, block_number))
         }
         _ => Err(JsonRpcError {
@@ -57,7 +59,7 @@ fn parse_params(
 async fn inner_execute(
     address: Address,
     storage_slots: Vec<U256>,
-    height: BlockNumberOrTag,
+    height: BlockId,
     state_channel: mpsc::Sender<StateMessage>,
 ) -> Result<ProofResponse, JsonRpcError> {
     let (tx, rx) = oneshot::channel();
@@ -107,11 +109,11 @@ mod tests {
         );
         assert_eq!(storage_slots, Vec::new());
         match block {
-            "latest" => assert_eq!(block_number, BlockNumberOrTag::Latest),
-            "pending" => assert_eq!(block_number, BlockNumberOrTag::Pending),
+            "latest" => assert_eq!(block_number, BlockNumberOrTag::Latest.into()),
+            "pending" => assert_eq!(block_number, BlockNumberOrTag::Pending.into()),
             _ => assert_eq!(
                 block_number,
-                BlockNumberOrTag::Number(U64::from_str(block).unwrap().into_limbs()[0])
+                BlockNumberOrTag::Number(U64::from_str(block).unwrap().into_limbs()[0]).into()
             ),
         }
     }
@@ -127,7 +129,7 @@ mod tests {
             "params": [
                 "0x4200000000000000000000000000000000000016",
                 [],
-                "latest",
+                "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d",
             ],
             "id": 1
         });
