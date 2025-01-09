@@ -19,6 +19,7 @@ pub enum MethodName {
     EstimateGas,
     Call,
     TransactionReceipt,
+    GetProof,
 }
 
 impl FromStr for MethodName {
@@ -43,6 +44,7 @@ impl FromStr for MethodName {
             "eth_estimateGas" => Self::EstimateGas,
             "eth_call" => Self::Call,
             "eth_getTransactionReceipt" => Self::TransactionReceipt,
+            "eth_getProof" => Self::GetProof,
             other => {
                 return Err(JsonRpcError::without_data(
                     -32601,
