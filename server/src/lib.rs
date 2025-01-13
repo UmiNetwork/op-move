@@ -89,7 +89,7 @@ pub async fn run() {
 
     let mut state = InMemoryState::new();
     let (genesis_changes, table_changes) = genesis::init(&genesis_config, &state);
-    let state_query = InMemoryStateQueries::from_genesis(genesis_changes.clone());
+    let state_query = InMemoryStateQueries::from_genesis(genesis_config.initial_state_root);
     genesis::apply(genesis_changes, table_changes, &genesis_config, &mut state);
 
     let base_token = MovedBaseTokenAccounts::new(genesis_config.treasury);

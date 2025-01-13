@@ -74,6 +74,7 @@ pub mod tests {
         let mut state = InMemoryState::new();
         let (changes, table_changes) = genesis::init(&genesis_config, &state);
         genesis::apply(changes.clone(), table_changes, &genesis_config, &mut state);
+        let initial_state_root = genesis_config.initial_state_root;
 
         let state = StateActor::new(
             rx,
@@ -90,7 +91,7 @@ pub mod tests {
             MovedBaseTokenAccounts::new(AccountAddress::ONE),
             InMemoryBlockQueries,
             block_memory,
-            InMemoryStateQueries::from_genesis(changes),
+            InMemoryStateQueries::from_genesis(initial_state_root),
             StateActor::on_tx_noop(),
             StateActor::on_tx_batch_noop(),
         );

@@ -151,7 +151,8 @@ mod tests {
 
         for bytes in response.account_proof {
             let list: Vec<alloy::rlp::Bytes> = alloy::rlp::decode_exact(bytes).unwrap();
-            assert_eq!(list.len(), 3);
+            // Leaf and extension nodes have length 2; branch nodes have length 17
+            assert!(list.len() == 2 || list.len() == 17);
         }
 
         state_handle.await.unwrap();

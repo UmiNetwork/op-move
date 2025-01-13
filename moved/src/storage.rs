@@ -1,17 +1,16 @@
 use {
-    crate::primitives::{KeyHashable, ToB256, B256},
-    aptos_types::{
-        state_store::{state_key::StateKey, state_value::StateValue},
-        transaction::Version,
-    },
-    jmt::{mock::MockTreeStore, storage::TreeReader, JellyfishMerkleTree, KeyHash},
+    crate::primitives::{KeyHashable, B256},
+    aptos_types::state_store::{state_key::StateKey, state_value::StateValue},
+    eth_trie::{EthTrie, MemoryDB, Trie, DB},
     move_binary_format::errors::PartialVMError,
     move_core_types::{effects::ChangeSet, resolver::MoveResolver},
     move_table_extension::{TableChangeSet, TableResolver},
     move_vm_test_utils::InMemoryStorage,
-    sha3::Keccak256,
-    std::{collections::HashMap, fmt::Debug},
+    std::{collections::HashMap, fmt::Debug, sync::Arc},
 };
+
+// TODO: Should change `State` interface to return `Result`.
+pub const IN_MEMORY_EXPECT_MSG: &str = "In-memory storage cannot fail";
 
 /// A global blockchain state trait.
 ///
@@ -41,7 +40,7 @@ pub trait State {
         table_changes: TableChangeSet,
     ) -> Result<(), Self::Err>;
 
-    fn db(&self) -> &(impl TreeReader + Sync);
+    fn db(&self) -> Arc<impl DB>;
 
     /// Returns a reference to a [`MoveResolver`] that can resolve both resources and modules.
     fn resolver(&self) -> &(impl MoveResolver<Self::Err> + TableResolver);
@@ -52,8 +51,8 @@ pub trait State {
 
 pub struct InMemoryState {
     resolver: InMemoryStorage,
-    db: MockTreeStore,
-    version: Version,
+    db: Arc<MemoryDB>,
+    current_state_root: Option<B256>,
 }
 
 impl Default for InMemoryState {
@@ -63,18 +62,24 @@ impl Default for InMemoryState {
 }
 
 impl InMemoryState {
-    const ALLOW_OVERWRITE: bool = false;
+    // Per `eth-trie` docs: If "light" is true, the data is deleted from the database
+    // at the time of submission.
+    const IS_LIGHT: bool = false;
 
     pub fn new() -> Self {
         Self {
             resolver: InMemoryStorage::new(),
-            db: MockTreeStore::new(Self::ALLOW_OVERWRITE),
-            version: 0,
+            db: Arc::new(MemoryDB::new(Self::IS_LIGHT)),
+            current_state_root: None,
         }
     }
 
-    fn tree(&self) -> JellyfishMerkleTree<impl TreeReader, Keccak256> {
-        JellyfishMerkleTree::new(&self.db)
+    fn tree(&self) -> EthTrie<MemoryDB> {
+        let db = self.db.clone();
+        match self.current_state_root {
+            None => EthTrie::new(db),
+            Some(root) => EthTrie::from(db, root).expect(IN_MEMORY_EXPECT_MSG),
+        }
     }
 }
 
@@ -97,8 +102,8 @@ impl State for InMemoryState {
         Ok(())
     }
 
-    fn db(&self) -> &(impl TreeReader + Sync) {
-        &self.db
+    fn db(&self) -> Arc<impl DB> {
+        self.db.clone()
     }
 
     fn resolver(&self) -> &(impl MoveResolver<Self::Err> + TableResolver) {
@@ -106,53 +111,39 @@ impl State for InMemoryState {
     }
 
     fn state_root(&self) -> B256 {
-        self.version()
-            .map(|version| self.tree().get_root_hash(version).unwrap().to_h256())
-            .unwrap_or_default()
+        self.current_state_root.unwrap_or_default()
     }
 }
 
 impl InMemoryState {
-    /// This method return none only in case it is called before genesis i.e. state is completely
-    /// blank, there are no nodes in the trie.
-    fn version(&self) -> Option<Version> {
-        self.version.checked_sub(1)
-    }
-
-    fn next_version(&mut self) -> Version {
-        self.version += 1;
-        self.version - 1
-    }
-
     fn insert_change_set_into_merkle_trie(&mut self, change_set: &ChangeSet) -> B256 {
-        let version = self.next_version();
         let values = change_set.to_tree_values();
-        let value_set = values.into_iter().map(|(k, v)| {
-            (
-                k,
-                v.map(|x| bcs::to_bytes(&x).expect("Must serialize value")),
+
+        let mut trie = self.tree();
+        for (k, v) in values {
+            let key_bytes = k.key_hash();
+            let value_bytes = v
+                .as_ref()
+                .map(|x| bcs::to_bytes(x).expect("Value must serialize"));
+            trie.insert(
+                key_bytes.0.as_slice(),
+                value_bytes.as_deref().unwrap_or(&[]),
             )
-        });
-        let (root_hash, tree_update_batch) = self
-            .tree()
-            .put_value_set(value_set, version)
-            .expect("Fails on duplicate key or storage read. In memory storage cannot fail.");
-
-        self.db
-            .write_tree_update_batch(tree_update_batch)
-            .expect("Fails on duplicate key or storage write. In memory storage cannot fail.");
-
-        root_hash.to_h256()
+            .expect(IN_MEMORY_EXPECT_MSG);
+        }
+        let root = trie.root_hash().expect(IN_MEMORY_EXPECT_MSG);
+        self.current_state_root = Some(root);
+        root
     }
 }
 
-/// The jellyfish merkle trie key is the hash of the actual key.
-type TreeKey = KeyHash;
+/// The merkle patricia trie key is the hash of the actual key.
+type TreeKey = StateKey;
 
-/// The jellyfish merkle trie value. None indicates the value was deleted.
+/// The merkle patricia trie value. None indicates the value was deleted.
 type TreeValue = Option<StateValue>;
 
-/// Converts itself to a set of updates for a jellyfish merkle trie.
+/// Converts itself to a set of updates for a merkle patricia trie.
 ///
 /// This trait is defined by a single operation called [`Self::to_tree_values`].
 trait ToTreeValues {
@@ -211,7 +202,6 @@ impl ToTreeValues for ChangeSet {
                         (key, value)
                     }))
             })
-            .map(|(k, v)| (k.key_hash(), v))
             .collect::<HashMap<_, _>>()
     }
 }
