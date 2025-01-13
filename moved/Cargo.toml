@@ -21,6 +21,7 @@ aptos-native-interface.workspace = true
 aptos-storage-interface.workspace = true
 bcs.workspace = true
 better_any.workspace = true
+borsh.workspace = true
 bytes.workspace = true
 hex.workspace = true
 jmt.workspace = true

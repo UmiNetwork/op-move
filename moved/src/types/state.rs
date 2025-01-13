@@ -4,6 +4,7 @@
 //! accepts.
 
 use {
+    super::queries::ProofResponse,
     crate::{
         block::{ExtendedBlock, Header},
         primitives::{Address, Bytes, ToU64, B2048, B256, U256, U64},
@@ -12,7 +13,7 @@ use {
     },
     alloy::{
         consensus::transaction::TxEnvelope,
-        eips::{eip2718::Encodable2718, BlockNumberOrTag},
+        eips::{eip2718::Encodable2718, BlockId, BlockNumberOrTag},
         primitives::Bloom,
         rpc::types::{BlockTransactions, FeeHistory, TransactionRequest},
     },
@@ -211,6 +212,12 @@ pub enum Query {
     TransactionReceipt {
         tx_hash: B256,
         response_channel: oneshot::Sender<Option<TransactionReceipt>>,
+    },
+    GetProof {
+        address: Address,
+        storage_slots: Vec<U256>,
+        height: BlockId,
+        response_channel: oneshot::Sender<Option<ProofResponse>>,
     },
 }
 

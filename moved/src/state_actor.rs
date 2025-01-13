@@ -18,9 +18,10 @@ use {
             BaseTokenAccounts, CreateL1GasFee, CreateL2GasFee, L1GasFee, L1GasFeeInput,
             L2GasFeeInput, LogsBloom,
         },
-        primitives::{self, ToEthAddress, ToMoveAddress, ToSaturatedU64, B256, U256, U64},
+        primitives::{self, Address, ToEthAddress, ToMoveAddress, ToSaturatedU64, B256, U256, U64},
         storage::State,
         types::{
+            queries::ProofResponse,
             state::{
                 Command, ExecutionOutcome, Payload, PayloadId, PayloadResponse, Query,
                 StateMessage, ToPayloadIdInput, TransactionReceipt, TransactionWithReceipt,
@@ -34,6 +35,7 @@ use {
         consensus::Receipt,
         eips::{
             eip2718::Encodable2718,
+            BlockId,
             BlockNumberOrTag::{self, *},
         },
         primitives::{keccak256, Bloom},
@@ -274,7 +276,40 @@ impl<
             Query::TransactionReceipt { tx_hash, response_channel } => {
                 response_channel.send(self.query_transaction_receipt(tx_hash)).ok()
             }
+            Query::GetProof { address, storage_slots, height, response_channel } => {
+                response_channel.send(
+                    self.get_proof(
+                        address,
+                        storage_slots,
+                        height,
+                    )
+                ).ok()
+            }
         };
+    }
+
+    fn get_proof(
+        &self,
+        address: Address,
+        storage_slots: Vec<U256>,
+        height: BlockId,
+    ) -> Option<ProofResponse> {
+        let height = match height {
+            BlockId::Number(n) => self.resolve_height(n),
+            BlockId::Hash(h) => {
+                self.block_queries
+                    .by_hash(&self.block_memory, h.block_hash, false)?
+                    .0
+                    .header
+                    .number
+            }
+        };
+        self.state_queries.get_proof(
+            self.state.db(),
+            address.to_move_address(),
+            &storage_slots,
+            height,
+        )
     }
 
     pub fn handle_command(&mut self, msg: Command) {
@@ -660,6 +695,16 @@ mod test_doubles {
             assert_eq!(height, self.1);
 
             Some(3)
+        }
+
+        fn get_proof(
+            &self,
+            _db: &(impl TreeReader + Sync),
+            _account: AccountAddress,
+            _storage_slots: &[U256],
+            _height: BlockHeight,
+        ) -> Option<crate::types::queries::ProofResponse> {
+            None
         }
     }
 }

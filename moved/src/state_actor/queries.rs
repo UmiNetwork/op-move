@@ -1,8 +1,16 @@
 use {
     crate::{
-        move_execution::{quick_get_eth_balance, quick_get_nonce},
-        primitives::{KeyHashable, U256},
+        move_execution::{
+            evm_native::{self, EVM_NATIVE_ADDRESS},
+            quick_get_eth_balance, quick_get_nonce,
+        },
+        primitives::{KeyHashable, ToB256, ToEthAddress, U256},
+        types::{
+            queries::{JmtProof, ProofResponse, StorageProof},
+            transactions::{L2_HIGHEST_ADDRESS, L2_LOWEST_ADDRESS},
+        },
     },
+    alloy::primitives::Bytes as AlloyBytes,
     aptos_types::state_store::{state_key::StateKey, state_value::StateValue},
     bytes::Bytes,
     jmt::{storage::TreeReader, JellyfishMerkleTree, SimpleHasher},
@@ -17,6 +25,7 @@ use {
         vm_status::StatusCode,
     },
     move_table_extension::{TableHandle, TableResolver},
+    revm::DatabaseRef,
     sha3::Keccak256,
     std::{fmt::Debug, marker::PhantomData},
 };
@@ -64,6 +73,14 @@ pub trait StateQueries {
         account: AccountAddress,
         height: BlockHeight,
     ) -> Option<Nonce>;
+
+    fn get_proof(
+        &self,
+        db: &(impl TreeReader + Sync),
+        account: AccountAddress,
+        storage_slots: &[U256],
+        height: BlockHeight,
+    ) -> Option<ProofResponse>;
 }
 
 #[derive(Debug)]
@@ -160,6 +177,70 @@ impl StateQueries for InMemoryStateQueries {
 
         Some(quick_get_nonce(&account, &resolver))
     }
+
+    fn get_proof(
+        &self,
+        db: &(impl TreeReader + Sync),
+        account: AccountAddress,
+        storage_slots: &[U256],
+        height: BlockHeight,
+    ) -> Option<ProofResponse> {
+        let address = account.to_eth_address();
+
+        // Only L2 contract addresses supported at this time
+        if address < L2_LOWEST_ADDRESS || L2_HIGHEST_ADDRESS < address {
+            return None;
+        }
+
+        // All L2 contract account data is part of the EVM state
+        let resolver = self.storage.resolver(db, height)?;
+        let evm_db = evm_native::ResolverBackedDB::new(&resolver);
+        let account_info = evm_db.basic_ref(address).ok()??;
+
+        let account_struct = evm_native::type_utils::account_info_struct_tag(&address);
+        let tree = JellyfishMerkleTree::new(db);
+        let version = self.storage.tags.get(height as usize).copied()?;
+        let root = tree.get_root_hash(version).ok()?;
+        let account_proof = get_proof(&tree, version, &EVM_NATIVE_ADDRESS, &account_struct)?;
+
+        let mut storage_proof = Vec::new();
+        for index in storage_slots {
+            let storage_struct =
+                evm_native::type_utils::account_storage_struct_tag(&address, index);
+            let value = evm_db.storage_ref(address, *index).ok()?;
+            let proof = get_proof(&tree, version, &EVM_NATIVE_ADDRESS, &storage_struct)?;
+            storage_proof.push(StorageProof {
+                key: (*index).into(),
+                value,
+                proof,
+            });
+        }
+
+        Some(ProofResponse {
+            address,
+            balance: account_info.balance,
+            code_hash: account_info.code_hash,
+            nonce: account_info.nonce,
+            storage_hash: root.to_h256(),
+            account_proof,
+            storage_proof,
+        })
+    }
+}
+
+fn get_proof<R>(
+    tree: &JellyfishMerkleTree<'_, R, Keccak256>,
+    version: u64,
+    account: &AccountAddress,
+    resource: &StructTag,
+) -> Option<Vec<AlloyBytes>>
+where
+    R: TreeReader,
+{
+    let state_key = StateKey::resource(account, resource).ok()?;
+    let (_, proof) = tree.get_with_proof(state_key.key_hash(), version).ok()?;
+    let encodable_proof: JmtProof = (&proof).into();
+    Some(encodable_proof.encode_for_response())
 }
 
 /// This is a [`MoveResolver`] that reads data generated at `version`.

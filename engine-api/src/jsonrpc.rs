@@ -1,5 +1,4 @@
 use {
-    crate::schema::BlockNumberOrTag,
     std::fmt,
     tokio::sync::{mpsc::error::SendError, oneshot::error::RecvError},
 };
@@ -32,7 +31,7 @@ impl JsonRpcError {
         Self::without_data(-1, format!("Failed to access state: {e:?}"))
     }
 
-    pub fn block_not_found(block_number: BlockNumberOrTag) -> Self {
+    pub fn block_not_found<T: fmt::Display>(block_number: T) -> Self {
         JsonRpcError::without_data(-32001, format!("Block not found: {block_number}"))
     }
 }

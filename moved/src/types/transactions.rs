@@ -22,8 +22,8 @@ use {
 };
 
 const DEPOSITED_TYPE_BYTE: u8 = 0x7e;
-const L2_LOWEST_ADDRESS: Address = address!("4200000000000000000000000000000000000000");
-const L2_HIGHEST_ADDRESS: Address = address!("42000000000000000000000000000000000000ff");
+pub const L2_LOWEST_ADDRESS: Address = address!("4200000000000000000000000000000000000000");
+pub const L2_HIGHEST_ADDRESS: Address = address!("42000000000000000000000000000000000000ff");
 
 /// OP-stack special transactions defined in
 /// https://specs.optimism.io/protocol/deposits.html#the-deposited-transaction-type
