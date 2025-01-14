@@ -4,20 +4,20 @@ use {
             evm_native::{self, EVM_NATIVE_ADDRESS},
             quick_get_eth_balance, quick_get_nonce,
         },
-        primitives::{KeyHashable, ToB256, ToEthAddress, U256},
+        primitives::{KeyHashable, ToEthAddress, B256, U256},
+        storage::IN_MEMORY_EXPECT_MSG,
         types::{
-            queries::{JmtProof, ProofResponse, StorageProof},
+            queries::{ProofResponse, StorageProof},
             transactions::{L2_HIGHEST_ADDRESS, L2_LOWEST_ADDRESS},
         },
     },
     alloy::primitives::Bytes as AlloyBytes,
     aptos_types::state_store::{state_key::StateKey, state_value::StateValue},
     bytes::Bytes,
-    jmt::{storage::TreeReader, JellyfishMerkleTree, SimpleHasher},
+    eth_trie::{EthTrie, Trie, TrieError, DB},
     move_binary_format::errors::PartialVMError,
     move_core_types::{
         account_address::AccountAddress,
-        effects::ChangeSet,
         language_storage::{ModuleId, StructTag},
         metadata::Metadata,
         resolver::{ModuleResolver, MoveResolver, ResourceResolver},
@@ -26,8 +26,7 @@ use {
     },
     move_table_extension::{TableHandle, TableResolver},
     revm::DatabaseRef,
-    sha3::Keccak256,
-    std::{fmt::Debug, marker::PhantomData},
+    std::{fmt::Debug, sync::Arc},
 };
 
 /// A non-negative integer for indicating the amount of base token on an account.
@@ -60,7 +59,7 @@ pub trait StateQueries {
     /// base token associated with `account`.
     fn balance_at(
         &self,
-        db: &(impl TreeReader + Sync),
+        db: Arc<impl DB>,
         account: AccountAddress,
         height: BlockHeight,
     ) -> Option<Balance>;
@@ -69,14 +68,14 @@ pub trait StateQueries {
     /// associated with `account`.
     fn nonce_at(
         &self,
-        db: &(impl TreeReader + Sync),
+        db: Arc<impl DB>,
         account: AccountAddress,
         height: BlockHeight,
     ) -> Option<Nonce>;
 
     fn get_proof(
         &self,
-        db: &(impl TreeReader + Sync),
+        db: Arc<impl DB>,
         account: AccountAddress,
         storage_slots: &[U256],
         height: BlockHeight,
@@ -85,41 +84,31 @@ pub trait StateQueries {
 
 #[derive(Debug)]
 pub struct StateMemory {
-    tags: Vec<Version>,
-    version: Version,
+    state_roots: Vec<B256>,
 }
 
 impl StateMemory {
     /// Creates state memory with `genesis_changes` on `version` 0 tagged as block `height` 0.
-    pub fn from_genesis(_genesis_changes: ChangeSet) -> Self {
+    pub fn from_genesis(genesis_state_root: B256) -> Self {
         Self {
-            tags: vec![0],
-            version: 0,
+            state_roots: vec![genesis_state_root],
         }
     }
 
-    fn add(&mut self, _changes: ChangeSet) {
-        let _version = self.next_version();
+    fn push_state_root(&mut self, root: B256) {
+        self.state_roots.push(root);
     }
 
-    fn tag(&mut self) {
-        self.tags.push(self.version);
+    fn get_root_by_height(&self, height: BlockHeight) -> Option<B256> {
+        self.state_roots.get(height as usize).copied()
     }
 
     fn resolver<'a>(
         &'a self,
-        db: &'a (impl TreeReader + Sync),
+        db: Arc<impl DB + 'a>,
         height: BlockHeight,
     ) -> Option<impl MoveResolver<PartialVMError> + TableResolver + 'a> {
-        Some(HistoricResolver::<_, Keccak256>::new(
-            db,
-            self.tags.get(height as usize).copied()?,
-        ))
-    }
-
-    fn next_version(&mut self) -> Version {
-        self.version += 1;
-        self.version
+        Some(HistoricResolver::new(db, self.get_root_by_height(height)?))
     }
 }
 
@@ -134,22 +123,15 @@ impl InMemoryStateQueries {
     }
 
     /// Creates state memory with `genesis_changes` on `version` 0 tagged as block `height` 0.
-    pub fn from_genesis(genesis_changes: ChangeSet) -> Self {
-        Self::new(StateMemory::from_genesis(genesis_changes))
+    pub fn from_genesis(genesis_state_root: B256) -> Self {
+        Self::new(StateMemory::from_genesis(genesis_state_root))
     }
 
-    /// Adds `change` into state memory.
-    ///
-    /// The internal version number is incremented by this operation.
-    pub fn add(&mut self, change: ChangeSet) {
-        self.storage.add(change);
-    }
-
-    /// Marks current version with current block height.
+    /// Marks current state root with current block height.
     ///
     /// The internal block height number is incremented by this operation.
-    pub fn tag(&mut self) {
-        self.storage.tag();
+    pub fn push_state_root(&mut self, root: B256) {
+        self.storage.push_state_root(root);
     }
 }
 
@@ -158,7 +140,7 @@ impl StateQueries for InMemoryStateQueries {
 
     fn balance_at(
         &self,
-        db: &(impl TreeReader + Sync),
+        db: Arc<impl DB>,
         account: AccountAddress,
         height: BlockHeight,
     ) -> Option<Balance> {
@@ -169,7 +151,7 @@ impl StateQueries for InMemoryStateQueries {
 
     fn nonce_at(
         &self,
-        db: &(impl TreeReader + Sync),
+        db: Arc<impl DB>,
         account: AccountAddress,
         height: BlockHeight,
     ) -> Option<Nonce> {
@@ -180,7 +162,7 @@ impl StateQueries for InMemoryStateQueries {
 
     fn get_proof(
         &self,
-        db: &(impl TreeReader + Sync),
+        db: Arc<impl DB>,
         account: AccountAddress,
         storage_slots: &[U256],
         height: BlockHeight,
@@ -193,22 +175,21 @@ impl StateQueries for InMemoryStateQueries {
         }
 
         // All L2 contract account data is part of the EVM state
-        let resolver = self.storage.resolver(db, height)?;
+        let resolver = self.storage.resolver(db.clone(), height)?;
         let evm_db = evm_native::ResolverBackedDB::new(&resolver);
         let account_info = evm_db.basic_ref(address).ok()??;
 
         let account_struct = evm_native::type_utils::account_info_struct_tag(&address);
-        let tree = JellyfishMerkleTree::new(db);
-        let version = self.storage.tags.get(height as usize).copied()?;
-        let root = tree.get_root_hash(version).ok()?;
-        let account_proof = get_proof(&tree, version, &EVM_NATIVE_ADDRESS, &account_struct)?;
+        let root = self.storage.get_root_by_height(height)?;
+        let mut tree = EthTrie::from(db, root).expect(IN_MEMORY_EXPECT_MSG);
+        let account_proof = get_proof(&mut tree, &EVM_NATIVE_ADDRESS, &account_struct)?;
 
         let mut storage_proof = Vec::new();
         for index in storage_slots {
             let storage_struct =
                 evm_native::type_utils::account_storage_struct_tag(&address, index);
             let value = evm_db.storage_ref(address, *index).ok()?;
-            let proof = get_proof(&tree, version, &EVM_NATIVE_ADDRESS, &storage_struct)?;
+            let proof = get_proof(&mut tree, &EVM_NATIVE_ADDRESS, &storage_struct)?;
             storage_proof.push(StorageProof {
                 key: (*index).into(),
                 value,
@@ -221,7 +202,7 @@ impl StateQueries for InMemoryStateQueries {
             balance: account_info.balance,
             code_hash: account_info.code_hash,
             nonce: account_info.nonce,
-            storage_hash: root.to_h256(),
+            storage_hash: root,
             account_proof,
             storage_proof,
         })
@@ -229,38 +210,32 @@ impl StateQueries for InMemoryStateQueries {
 }
 
 fn get_proof<R>(
-    tree: &JellyfishMerkleTree<'_, R, Keccak256>,
-    version: u64,
+    tree: &mut EthTrie<R>,
     account: &AccountAddress,
     resource: &StructTag,
 ) -> Option<Vec<AlloyBytes>>
 where
-    R: TreeReader,
+    R: DB,
 {
     let state_key = StateKey::resource(account, resource).ok()?;
-    let (_, proof) = tree.get_with_proof(state_key.key_hash(), version).ok()?;
-    let encodable_proof: JmtProof = (&proof).into();
-    Some(encodable_proof.encode_for_response())
+    let key_hash = state_key.key_hash();
+    let proof = tree.get_proof(key_hash.0.as_slice()).ok()?;
+    Some(proof.into_iter().map(Into::into).collect())
 }
 
 /// This is a [`MoveResolver`] that reads data generated at `version`.
-pub struct HistoricResolver<'a, R, H> {
-    db: &'a R,
-    version: u64,
-    hasher: PhantomData<H>,
+pub struct HistoricResolver<D> {
+    db: Arc<D>,
+    root: B256,
 }
 
-impl<'a, R, H> HistoricResolver<'a, R, H> {
-    pub fn new(db: &'a R, version: Version) -> Self {
-        Self {
-            db,
-            version,
-            hasher: PhantomData,
-        }
+impl<D> HistoricResolver<D> {
+    pub fn new(db: Arc<D>, root: B256) -> Self {
+        Self { db, root }
     }
 }
 
-impl<'a, R: TreeReader + Sync, H: SimpleHasher> ModuleResolver for HistoricResolver<'a, R, H> {
+impl<D: DB> ModuleResolver for HistoricResolver<D> {
     type Error = PartialVMError;
 
     fn get_module_metadata(&self, _module_id: &ModuleId) -> Vec<Metadata> {
@@ -268,18 +243,16 @@ impl<'a, R: TreeReader + Sync, H: SimpleHasher> ModuleResolver for HistoricResol
     }
 
     fn get_module(&self, id: &ModuleId) -> Result<Option<Bytes>, Self::Error> {
-        let tree = JellyfishMerkleTree::<'_, R, H>::new(self.db);
+        let tree = EthTrie::from(self.db.clone(), self.root).expect(IN_MEMORY_EXPECT_MSG);
         let state_key = StateKey::module(id.address(), id.name());
-        let (value, _) = tree
-            .get_with_proof(state_key.key_hash(), self.version)
-            .inspect_err(|e| print!("{e:?}"))
-            .map_err(|_| PartialVMError::new(StatusCode::MISSING_DATA))?;
+        let key_hash = state_key.key_hash();
+        let value = tree.get(key_hash.0.as_slice()).map_err(trie_err)?;
 
         Ok(deserialize_state_value(value))
     }
 }
 
-impl<'a, R: TreeReader + Sync, H: SimpleHasher> ResourceResolver for HistoricResolver<'a, R, H> {
+impl<D: DB> ResourceResolver for HistoricResolver<D> {
     type Error = PartialVMError;
 
     fn get_resource_bytes_with_metadata_and_layout(
@@ -289,14 +262,12 @@ impl<'a, R: TreeReader + Sync, H: SimpleHasher> ResourceResolver for HistoricRes
         _metadata: &[Metadata],
         _layout: Option<&MoveTypeLayout>,
     ) -> Result<(Option<Bytes>, usize), Self::Error> {
-        let tree = JellyfishMerkleTree::<'_, R, H>::new(self.db);
+        let tree = EthTrie::from(self.db.clone(), self.root).expect(IN_MEMORY_EXPECT_MSG);
         let state_key = StateKey::resource(address, struct_tag)
             .inspect_err(|e| print!("{e:?}"))
             .map_err(|_| PartialVMError::new(StatusCode::DATA_FORMAT_ERROR))?;
-        let (value, _) = tree
-            .get_with_proof(state_key.key_hash(), self.version)
-            .inspect_err(|e| print!("{e:?}"))
-            .map_err(|_| PartialVMError::new(StatusCode::MISSING_DATA))?;
+        let key_hash = state_key.key_hash();
+        let value = tree.get(key_hash.0.as_slice()).map_err(trie_err)?;
         let value = deserialize_state_value(value);
         let len = value.as_ref().map(|v| v.len()).unwrap_or_default();
 
@@ -304,7 +275,7 @@ impl<'a, R: TreeReader + Sync, H: SimpleHasher> ResourceResolver for HistoricRes
     }
 }
 
-impl<'a, R: TreeReader + Sync, H: SimpleHasher> TableResolver for HistoricResolver<'a, R, H> {
+impl<D: DB> TableResolver for HistoricResolver<D> {
     fn resolve_table_entry_bytes_with_layout(
         &self,
         _handle: &TableHandle,
@@ -321,6 +292,10 @@ fn deserialize_state_value(bytes: Option<Vec<u8>>) -> Option<Bytes> {
     Some(inner)
 }
 
+fn trie_err(e: TrieError) -> PartialVMError {
+    PartialVMError::new(StatusCode::STORAGE_ERROR).with_message(format!("{e:?}"))
+}
+
 #[cfg(test)]
 mod tests {
     use {
@@ -333,6 +308,7 @@ mod tests {
             types::session_id::SessionId,
         },
         alloy::hex,
+        move_core_types::effects::ChangeSet,
         move_table_extension::TableChangeSet,
         move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
         move_vm_types::gas::UnmeteredGasMeter,
@@ -357,7 +333,7 @@ mod tests {
             self.0.apply_with_tables(changes, table_changes)
         }
 
-        fn db(&self) -> &(impl TreeReader + Sync) {
+        fn db(&self) -> Arc<impl DB> {
             self.0.db()
         }
 
@@ -404,13 +380,13 @@ mod tests {
         let genesis_config = GenesisConfig::default();
         init_and_apply(&genesis_config, &mut state);
 
-        let (mut state, genesis_changes) = (state.0, state.1);
+        let mut state = state.0;
         let addr = AccountAddress::TWO;
 
-        let mut storage = StateMemory::from_genesis(genesis_changes);
+        let mut storage = StateMemory::from_genesis(genesis_config.initial_state_root);
 
-        storage.add(mint_one_eth(&mut state, addr));
-        storage.tag();
+        mint_one_eth(&mut state, addr);
+        storage.push_state_root(state.state_root());
 
         let query = InMemoryStateQueries::new(storage);
 
@@ -430,17 +406,17 @@ mod tests {
         let genesis_config = GenesisConfig::default();
         init_and_apply(&genesis_config, &mut state);
 
-        let (mut state, genesis_changes) = (state.0, state.1);
+        let mut state = state.0;
 
         let addr = AccountAddress::TWO;
 
-        let mut storage = StateMemory::from_genesis(genesis_changes);
+        let mut storage = StateMemory::from_genesis(genesis_config.initial_state_root);
 
-        storage.add(mint_one_eth(&mut state, addr));
-        storage.tag();
-        storage.add(mint_one_eth(&mut state, addr));
-        storage.add(mint_one_eth(&mut state, addr));
-        storage.tag();
+        mint_one_eth(&mut state, addr);
+        storage.push_state_root(state.state_root());
+        mint_one_eth(&mut state, addr);
+        mint_one_eth(&mut state, addr);
+        storage.push_state_root(state.state_root());
 
         let query = InMemoryStateQueries::new(storage);
 
@@ -460,17 +436,17 @@ mod tests {
         let genesis_config = GenesisConfig::default();
         init_and_apply(&genesis_config, &mut state);
 
-        let (mut state, genesis_changes) = (state.0, state.1);
+        let mut state = state.0;
 
         let addr = AccountAddress::TWO;
 
-        let mut storage = StateMemory::from_genesis(genesis_changes);
+        let mut storage = StateMemory::from_genesis(genesis_config.initial_state_root);
 
-        storage.add(mint_one_eth(&mut state, addr));
-        storage.tag();
-        storage.add(mint_one_eth(&mut state, addr));
-        storage.add(mint_one_eth(&mut state, addr));
-        storage.tag();
+        mint_one_eth(&mut state, addr);
+        storage.push_state_root(state.state_root());
+        mint_one_eth(&mut state, addr);
+        mint_one_eth(&mut state, addr);
+        storage.push_state_root(state.state_root());
 
         let query = InMemoryStateQueries::new(storage);
 
@@ -497,13 +473,13 @@ mod tests {
         let genesis_config = GenesisConfig::default();
         init_and_apply(&genesis_config, &mut state);
 
-        let (state, genesis_changes) = (state.0, state.1);
+        let state = state.0;
 
         let addr = AccountAddress::new(hex!(
             "123456136717634683648732647632874638726487fefefefefeefefefefefff"
         ));
 
-        let storage = StateMemory::from_genesis(genesis_changes);
+        let storage = StateMemory::from_genesis(genesis_config.initial_state_root);
 
         let query = InMemoryStateQueries::new(storage);
 
@@ -550,13 +526,13 @@ mod tests {
         let genesis_config = GenesisConfig::default();
         init_and_apply(&genesis_config, &mut state);
 
-        let (mut state, genesis_changes) = (state.0, state.1);
+        let mut state = state.0;
         let addr = AccountAddress::TWO;
 
-        let mut storage = StateMemory::from_genesis(genesis_changes);
+        let mut storage = StateMemory::from_genesis(genesis_config.initial_state_root);
 
-        storage.add(inc_one_nonce(0, &mut state, addr));
-        storage.tag();
+        inc_one_nonce(0, &mut state, addr);
+        storage.push_state_root(state.state_root());
 
         let query = InMemoryStateQueries::new(storage);
 
@@ -576,17 +552,17 @@ mod tests {
         let genesis_config = GenesisConfig::default();
         init_and_apply(&genesis_config, &mut state);
 
-        let (mut state, genesis_changes) = (state.0, state.1);
+        let mut state = state.0;
 
         let addr = AccountAddress::TWO;
 
-        let mut storage = StateMemory::from_genesis(genesis_changes);
+        let mut storage = StateMemory::from_genesis(genesis_config.initial_state_root);
 
-        storage.add(inc_one_nonce(0, &mut state, addr));
-        storage.tag();
-        storage.add(inc_one_nonce(1, &mut state, addr));
-        storage.add(inc_one_nonce(2, &mut state, addr));
-        storage.tag();
+        inc_one_nonce(0, &mut state, addr);
+        storage.push_state_root(state.state_root());
+        inc_one_nonce(1, &mut state, addr);
+        inc_one_nonce(2, &mut state, addr);
+        storage.push_state_root(state.state_root());
 
         let query = InMemoryStateQueries::new(storage);
 
@@ -606,17 +582,17 @@ mod tests {
         let genesis_config = GenesisConfig::default();
         init_and_apply(&genesis_config, &mut state);
 
-        let (mut state, genesis_changes) = (state.0, state.1);
+        let mut state = state.0;
 
         let addr = AccountAddress::TWO;
 
-        let mut storage = StateMemory::from_genesis(genesis_changes);
+        let mut storage = StateMemory::from_genesis(genesis_config.initial_state_root);
 
-        storage.add(inc_one_nonce(0, &mut state, addr));
-        storage.tag();
-        storage.add(inc_one_nonce(1, &mut state, addr));
-        storage.add(inc_one_nonce(2, &mut state, addr));
-        storage.tag();
+        inc_one_nonce(0, &mut state, addr);
+        storage.push_state_root(state.state_root());
+        inc_one_nonce(1, &mut state, addr);
+        inc_one_nonce(2, &mut state, addr);
+        storage.push_state_root(state.state_root());
 
         let query = InMemoryStateQueries::new(storage);
 
@@ -643,13 +619,13 @@ mod tests {
         let genesis_config = GenesisConfig::default();
         init_and_apply(&genesis_config, &mut state);
 
-        let (state, genesis_changes) = (state.0, state.1);
+        let state = state.0;
 
         let addr = AccountAddress::new(hex!(
             "123456136717634683648732647632874638726487fefefefefeefefefefefff"
         ));
 
-        let storage = StateMemory::from_genesis(genesis_changes);
+        let storage = StateMemory::from_genesis(genesis_config.initial_state_root);
 
         let query = InMemoryStateQueries::new(storage);
 

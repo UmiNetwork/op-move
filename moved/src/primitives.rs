@@ -1,12 +1,10 @@
 pub use alloy::primitives::{aliases::B2048, Address, Bytes, B256, B64, U256, U64};
 use {
     alloy::consensus::{Receipt, ReceiptWithBloom},
-    aptos_crypto::HashValue,
     aptos_types::state_store::state_key::StateKey,
-    jmt::{KeyHash, RootHash},
     move_core_types::{account_address::AccountAddress, u256::U256 as MoveU256},
     op_alloy::consensus::{OpDepositReceipt, OpDepositReceiptWithBloom, OpReceiptEnvelope},
-    sha3::Keccak256,
+    sha3::{Digest, Keccak256},
 };
 
 pub(crate) trait ToEthAddress {
@@ -34,21 +32,7 @@ impl<T: AsRef<[u8; 20]>> ToMoveAddress for T {
     }
 }
 
-pub(crate) trait ToB256 {
-    fn to_h256(self) -> B256;
-}
-
-impl ToB256 for HashValue {
-    fn to_h256(self) -> B256 {
-        B256::from_slice(self.as_slice())
-    }
-}
-
-impl ToB256 for RootHash {
-    fn to_h256(self) -> B256 {
-        B256::new(self.0)
-    }
-}
+pub struct KeyHash(pub B256);
 
 pub trait KeyHashable {
     fn key_hash(&self) -> KeyHash;
@@ -56,7 +40,11 @@ pub trait KeyHashable {
 
 impl KeyHashable for StateKey {
     fn key_hash(&self) -> KeyHash {
-        KeyHash::with::<Keccak256>(bcs::to_bytes(&self).expect("key must serialize"))
+        let bytes = self.encoded();
+        let mut digest = Keccak256::new();
+        digest.update(bytes);
+        let hash = digest.finalize();
+        KeyHash(B256::new(hash.into()))
     }
 }
 
@@ -174,28 +162,6 @@ mod tests {
         alloy::primitives::{address, hex},
         test_case::test_case,
     };
-
-    #[test]
-    fn conversion_from_hash_value_to_h256_and_back_produces_identical_value() {
-        let bytes = hex!("123456789abcdef000000feedb1123535271351623521abcefdabdfc0000001f");
-        let value = HashValue::from_slice(bytes).unwrap();
-        let converted = value.to_h256();
-        let actual_value = HashValue::from_slice(converted.as_slice()).unwrap();
-        let expected_value = value;
-
-        assert_eq!(actual_value, expected_value);
-    }
-
-    #[test]
-    fn conversion_from_hash_value_to_h256_matches_original_bytes() {
-        let bytes = hex!("123456789abcdef000000feedb1123535271351623521abcefdabdfc0000001f");
-        let value = HashValue::from_slice(bytes).unwrap();
-        let converted = value.to_h256();
-        let actual_bytes = converted.as_slice();
-        let expected_bytes = &bytes;
-
-        assert_eq!(actual_bytes, expected_bytes);
-    }
 
     #[test]
     fn test_move_from_eth_address_match_at_intersection() {

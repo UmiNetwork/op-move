@@ -650,11 +650,17 @@ impl<
     > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, InMemoryStateQueries>
 {
     pub fn on_tx_in_memory() -> OnTx<Self> {
-        Box::new(|| Box::new(|state, changes| state.state_queries.add(changes)))
+        Box::new(|| Box::new(|_state, _changes| ()))
     }
 
     pub fn on_tx_batch_in_memory() -> OnTxBatch<Self> {
-        Box::new(|| Box::new(|state| state.state_queries.tag()))
+        Box::new(|| {
+            Box::new(|state| {
+                state
+                    .state_queries
+                    .push_state_root(state.state.state_root())
+            })
+        })
     }
 }
 
@@ -664,8 +670,8 @@ pub use test_doubles::*;
 #[cfg(any(feature = "test-doubles", test))]
 mod test_doubles {
     use {
-        super::*, crate::primitives::U256, jmt::storage::TreeReader,
-        move_core_types::account_address::AccountAddress,
+        super::*, crate::primitives::U256, eth_trie::DB,
+        move_core_types::account_address::AccountAddress, std::sync::Arc,
     };
 
     pub struct MockStateQueries(pub AccountAddress, pub BlockHeight);
@@ -675,7 +681,7 @@ mod test_doubles {
 
         fn balance_at(
             &self,
-            _db: &(impl TreeReader + Sync),
+            _db: Arc<impl DB>,
             account: AccountAddress,
             height: BlockHeight,
         ) -> Option<Balance> {
@@ -687,7 +693,7 @@ mod test_doubles {
 
         fn nonce_at(
             &self,
-            _db: &(impl TreeReader + Sync),
+            _db: Arc<impl DB>,
             account: AccountAddress,
             height: BlockHeight,
         ) -> Option<Nonce> {
@@ -699,7 +705,7 @@ mod test_doubles {
 
         fn get_proof(
             &self,
-            _db: &(impl TreeReader + Sync),
+            _db: Arc<impl DB>,
             _account: AccountAddress,
             _storage_slots: &[U256],
             _height: BlockHeight,
@@ -941,8 +947,7 @@ mod tests {
         let changes_addition = mint_eth(&state, addr, initial_balance);
         state.apply(changes_addition.clone()).unwrap();
 
-        let mut state_queries = InMemoryStateQueries::from_genesis(genesis_changes);
-        state_queries.add(changes_addition);
+        let state_queries = InMemoryStateQueries::from_genesis(state.state_root());
 
         let state = StateActor::new(
             rx,
