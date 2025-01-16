@@ -1,10 +1,11 @@
 use {
     crate::{
         move_execution::evm_native::{
-            type_utils::ACCOUNT_INFO_PREFIX, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
+            type_utils::{ACCOUNT_INFO_PREFIX, ACCOUNT_STORAGE_PREFIX},
+            EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
         },
         primitives::{Address, KeyHashable, B256},
-        types::state::TreeKey,
+        types::state::{TreeKey, TreeValue},
     },
     alloy::hex::FromHex,
     aptos_types::state_store::{state_key::StateKey, state_value::StateValue},
@@ -153,21 +154,13 @@ impl<D: DB> InsertChangeSetIntoMerkleTrie for EthTrie<D> {
 
         for (k, v) in values {
             let key_bytes = k.key_hash();
-            let value_bytes = v
-                .as_ref()
-                .map(|x| bcs::to_bytes(x).expect("Value must serialize"));
-            self.insert(
-                key_bytes.0.as_slice(),
-                value_bytes.as_deref().unwrap_or(&[]),
-            )?;
+            let value_bytes = v.serialize();
+            self.insert(key_bytes.0.as_slice(), &value_bytes)?;
         }
 
         self.root_hash()
     }
 }
-
-/// The merkle patricia trie value. None indicates the value was deleted.
-type TreeValue = Option<StateValue>;
 
 /// Converts itself to a set of updates for a merkle patricia trie.
 ///
@@ -219,10 +212,26 @@ impl ToTreeValues for ChangeSet {
                         let value = v.clone().ok().map(StateValue::new_legacy);
                         let key = StateKey::module(address, k.as_ident_str());
 
-                        (TreeKey::StateKey(key), value)
+                        (
+                            TreeKey::StateKey(key),
+                            value
+                                .map(TreeValue::StateValue)
+                                .unwrap_or(TreeValue::Deleted),
+                        )
                     })
                     .chain(changes.resources().iter().map(move |(k, v)| {
-                        let value = v.clone().ok().map(StateValue::new_legacy);
+                        let value = if is_evm_storage_or_account_key(k) {
+                            v.clone()
+                                .ok()
+                                .map(TreeValue::Evm)
+                                .unwrap_or(TreeValue::Deleted)
+                        } else {
+                            v.clone()
+                                .ok()
+                                .map(StateValue::new_legacy)
+                                .map(TreeValue::StateValue)
+                                .unwrap_or(TreeValue::Deleted)
+                        };
                         let key = if let Some(address) = evm_key_address(k) {
                             TreeKey::Evm(address)
                         } else {
@@ -245,6 +254,13 @@ pub fn evm_key_address(k: &StructTag) -> Option<Address> {
     } else {
         None
     }
+}
+
+pub fn is_evm_storage_or_account_key(k: &StructTag) -> bool {
+    k.address == EVM_NATIVE_ADDRESS
+        && k.module.as_ident_str() == EVM_NATIVE_MODULE
+        && (k.name.as_str().starts_with(ACCOUNT_INFO_PREFIX)
+            || k.name.as_str().starts_with(ACCOUNT_STORAGE_PREFIX))
 }
 
 #[cfg(test)]

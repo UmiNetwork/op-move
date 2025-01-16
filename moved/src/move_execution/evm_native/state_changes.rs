@@ -2,12 +2,12 @@ use {
     super::{
         native_evm_context::NativeEVMContext,
         type_utils::{
-            account_info_struct_tag, account_info_to_move_value, account_storage_struct_tag,
-            code_hash_struct_tag, get_account_code_hash,
+            account_info_struct_tag, account_storage_struct_tag, code_hash_struct_tag,
+            get_account_code_hash,
         },
-        ACCOUNT_INFO_LAYOUT, ACCOUNT_STORAGE_LAYOUT, CODE_LAYOUT, EVM_NATIVE_ADDRESS,
+        CODE_LAYOUT, EVM_NATIVE_ADDRESS,
     },
-    crate::primitives::ToMoveU256,
+    crate::move_execution::evm_native::trie_types,
     move_binary_format::errors::PartialVMError,
     move_core_types::{
         effects::{AccountChangeSet, ChangeSet, Op},
@@ -138,16 +138,51 @@ fn add_account_changes(
             .unwrap_or(false)
     };
 
+    let read_resource = |struct_tag: &StructTag| {
+        let exists_in_prior_changes = prior_changes.resources().get(struct_tag);
+        if let Some(prior) = exists_in_prior_changes {
+            return Ok(prior.clone().ok());
+        }
+        resolver.get_resource(&EVM_NATIVE_ADDRESS, struct_tag)
+    };
+
+    // TODO: need to handle self-destruct case.
+    // In that case the storage resource needs to be deleted instead.
+    let storage_tag = account_storage_struct_tag(address);
+    let mut storage = read_resource(&storage_tag)
+        .ok()
+        .flatten()
+        .and_then(|bytes| trie_types::AccountStorage::try_deserialize(&bytes))
+        .unwrap_or_default();
+    for (index, value) in account.changed_storage_slots() {
+        storage.insert(*index, value.present_value);
+    }
+    let is_created = !resource_exists(&storage_tag);
+    let storage_root = storage.root_hash();
+    let storage_bytes = storage.serialize();
+    let op = if is_created {
+        Op::New(storage_bytes.into())
+    } else {
+        Op::Modify(storage_bytes.into())
+    };
+    result
+        .add_resource_op(storage_tag, op)
+        .expect("Resource cannot already exist in result");
+
     // Push AccountInfo resource
     let struct_tag = account_info_struct_tag(address);
-    let account_info = account_info_to_move_value(&account.info, code_hash)
-        .simple_serialize(&ACCOUNT_INFO_LAYOUT)
-        .expect("Account info must serialize");
+    let account_info = trie_types::Account::new(
+        account.info.nonce,
+        account.info.balance,
+        account.info.code_hash,
+        storage_root,
+    );
+    let account_bytes = account_info.serialize();
     let is_created = !resource_exists(&struct_tag);
     let op = if is_created {
-        Op::New(account_info.into())
+        Op::New(account_bytes.into())
     } else {
-        Op::Modify(account_info.into())
+        Op::Modify(account_bytes.into())
     };
     result
         .add_resource_op(struct_tag, op)
@@ -170,29 +205,5 @@ fn add_account_changes(
                 result.add_resource_op(struct_tag, op).ok();
             }
         }
-    }
-
-    // TODO: If an address self-destructs and then is re-created then its storage
-    // must be entirely reset. With the current model we cannot easily delete all the
-    // storage for an account (we would need to loop through all the resources for
-    // the EVM native). Therefore this may need a redesign if we decide to support
-    // EVM self-destruct.
-    for (index, value) in account.changed_storage_slots() {
-        let struct_tag = account_storage_struct_tag(address, index);
-        let op = if value.present_value.is_zero() {
-            Op::Delete
-        } else {
-            let move_value = Value::u256(value.present_value.to_move_u256())
-                .simple_serialize(&ACCOUNT_STORAGE_LAYOUT)
-                .expect("EVM storage value must serialize");
-            if value.original_value.is_zero() {
-                Op::New(move_value.into())
-            } else {
-                Op::Modify(move_value.into())
-            }
-        };
-        result
-            .add_resource_op(struct_tag, op)
-            .expect("Cannot have duplicate storage index");
     }
 }

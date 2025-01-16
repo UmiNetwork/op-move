@@ -17,11 +17,12 @@ use {
         primitives::Bloom,
         rpc::types::{BlockTransactions, FeeHistory, TransactionRequest},
     },
-    aptos_types::state_store::state_key::StateKey,
+    aptos_types::state_store::{state_key::StateKey, state_value::StateValue},
     op_alloy::{
         consensus::{OpReceiptEnvelope, OpTxEnvelope},
         rpc_types::L1BlockInfo,
     },
+    std::borrow::Cow,
     tokio::sync::oneshot,
 };
 
@@ -388,6 +389,28 @@ impl KeyHashable for TreeKey {
                 KeyHash(alloy::primitives::keccak256(bytes))
             }
             Self::Evm(address) => KeyHash(alloy::primitives::keccak256(address)),
+        }
+    }
+}
+
+/// Type representing the keys used in the state trie.
+///
+/// As with the keys, EVM values are treated separately.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TreeValue {
+    Deleted,
+    StateValue(StateValue),
+    Evm(bytes::Bytes),
+}
+
+impl TreeValue {
+    pub fn serialize(&self) -> Cow<[u8]> {
+        match self {
+            Self::Deleted => Cow::Borrowed(&[]),
+            Self::Evm(bytes) => Cow::Borrowed(bytes),
+            Self::StateValue(value) => {
+                Cow::Owned(bcs::to_bytes(value).expect("StateValue must serialize"))
+            }
         }
     }
 }

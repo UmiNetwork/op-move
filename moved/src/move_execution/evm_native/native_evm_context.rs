@@ -1,17 +1,15 @@
 use {
     super::{
-        type_utils::{
-            account_info_struct_tag, account_storage_struct_tag, code_hash_struct_tag,
-            move_value_to_account_info,
-        },
-        ACCOUNT_INFO_LAYOUT, ACCOUNT_STORAGE_LAYOUT, CODE_LAYOUT, EVM_NATIVE_ADDRESS,
+        trie_types,
+        type_utils::{account_info_struct_tag, account_storage_struct_tag, code_hash_struct_tag},
+        CODE_LAYOUT, EVM_NATIVE_ADDRESS,
     },
-    crate::{block::HeaderForExecution, primitives::ToU256},
+    crate::block::HeaderForExecution,
     alloy::primitives::map::HashMap,
     aptos_types::vm_status::StatusCode,
     better_any::{Tid, TidAble},
     move_binary_format::errors::PartialVMError,
-    move_core_types::{resolver::MoveResolver, u256},
+    move_core_types::resolver::MoveResolver,
     move_vm_types::values::{VMValueCast, Value},
     revm::{
         db::{CacheDB, DatabaseRef},
@@ -19,6 +17,7 @@ use {
             utilities::KECCAK_EMPTY, Account, AccountInfo, Address, Bytecode, B256, U256,
         },
     },
+    std::sync::RwLock,
 };
 
 #[derive(Tid)]
@@ -47,11 +46,33 @@ impl<'a> NativeEVMContext<'a> {
 
 pub struct ResolverBackedDB<'a> {
     resolver: &'a dyn MoveResolver<PartialVMError>,
+    storage_cache: RwLock<HashMap<Address, trie_types::AccountStorage>>,
 }
 
 impl<'a> ResolverBackedDB<'a> {
     pub fn new(resolver: &'a impl MoveResolver<PartialVMError>) -> Self {
-        Self { resolver }
+        Self {
+            resolver,
+            storage_cache: RwLock::new(HashMap::default()),
+        }
+    }
+
+    pub fn storage_for(
+        &self,
+        address: &Address,
+    ) -> Result<trie_types::AccountStorage, PartialVMError> {
+        let struct_tag = account_storage_struct_tag(address);
+        match self
+            .resolver
+            .get_resource(&EVM_NATIVE_ADDRESS, &struct_tag)?
+        {
+            Some(bytes) => {
+                let storage = trie_types::AccountStorage::try_deserialize(&bytes)
+                    .expect("EVM account storage must deserialize correctly");
+                Ok(storage)
+            }
+            None => Ok(trie_types::AccountStorage::default()),
+        }
     }
 }
 
@@ -64,10 +85,10 @@ impl<'a> DatabaseRef for ResolverBackedDB<'a> {
             .resolver
             .get_resource(&EVM_NATIVE_ADDRESS, &struct_tag)?;
         let value = resource.map(|bytes| {
-            Value::simple_deserialize(&bytes, &ACCOUNT_INFO_LAYOUT)
+            trie_types::Account::try_deserialize(&bytes)
                 .expect("EVM account info must deserialize correctly.")
         });
-        let info = value.map(move_value_to_account_info).transpose()?;
+        let info = value.map(Into::into);
         Ok(info)
     }
 
@@ -93,21 +114,18 @@ impl<'a> DatabaseRef for ResolverBackedDB<'a> {
     }
 
     fn storage_ref(&self, address: Address, index: U256) -> Result<U256, Self::Error> {
-        let struct_tag = account_storage_struct_tag(&address, &index);
-        let value = match self
-            .resolver
-            .get_resource(&EVM_NATIVE_ADDRESS, &struct_tag)?
-        {
-            Some(bytes) => {
-                let value = Value::simple_deserialize(&bytes, &ACCOUNT_STORAGE_LAYOUT)
-                    .expect("EVM account storage must deserialize correctly");
-                value.value_as::<u256::U256>()?.to_u256()
-            }
-            None => {
-                // Zero is the default value when there is no entry
-                return Ok(U256::ZERO);
-            }
-        };
+        let mut cache_lock = self
+            .storage_cache
+            .write()
+            .expect("ResolverBackedDB::storage_cache not poisoned");
+
+        if let Some(storage) = cache_lock.get(&address) {
+            return Ok(storage.get(index));
+        }
+
+        let storage = self.storage_for(&address)?;
+        let value = storage.get(index);
+        cache_lock.insert(address, storage);
         Ok(value)
     }
 

@@ -1,19 +1,17 @@
 use {
     super::{EvmNativeOutcome, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE},
-    crate::primitives::{ToEthAddress, ToMoveAddress, ToMoveU256, ToU256},
+    crate::primitives::{ToEthAddress, ToMoveAddress, ToMoveU256},
     alloy::hex::ToHexExt,
-    move_binary_format::errors::PartialVMError,
     move_core_types::{
         account_address::AccountAddress, identifier::Identifier, language_storage::StructTag,
     },
     move_vm_runtime::session::SerializedReturnValues,
-    move_vm_types::values::{Struct, VMValueCast, Value, Vector},
-    revm::primitives::{
-        utilities::KECCAK_EMPTY, AccountInfo, Address, ExecutionResult, Log, B256, U256,
-    },
+    move_vm_types::values::{Struct, Value, Vector},
+    revm::primitives::{utilities::KECCAK_EMPTY, AccountInfo, Address, ExecutionResult, Log, B256},
 };
 
 pub const ACCOUNT_INFO_PREFIX: &str = "Account_";
+pub const ACCOUNT_STORAGE_PREFIX: &str = "Storage_";
 
 pub fn account_info_struct_tag(address: &Address) -> StructTag {
     let name = format!("{ACCOUNT_INFO_PREFIX}{}", address.encode_hex());
@@ -37,8 +35,8 @@ pub fn code_hash_struct_tag(code_hash: &B256) -> StructTag {
     }
 }
 
-pub fn account_storage_struct_tag(address: &Address, index: &U256) -> StructTag {
-    let name = format!("Storage_{}_{:x}", address.encode_hex(), index);
+pub fn account_storage_struct_tag(address: &Address) -> StructTag {
+    let name = format!("{ACCOUNT_STORAGE_PREFIX}{}", address.encode_hex());
     let name = Identifier::new(name).expect("Account storage name is valid");
     StructTag {
         address: EVM_NATIVE_ADDRESS,
@@ -60,31 +58,6 @@ pub fn get_account_code_hash(info: &AccountInfo) -> B256 {
     } else {
         info.code_hash
     }
-}
-
-pub fn account_info_to_move_value(info: &AccountInfo, code_hash: B256) -> Value {
-    let fields = [
-        Value::u256(info.balance.to_move_u256()),
-        Value::u64(info.nonce),
-        Value::vector_u8(code_hash),
-    ];
-    Value::struct_(Struct::pack(fields))
-}
-
-pub fn move_value_to_account_info(value: Value) -> Result<AccountInfo, PartialVMError> {
-    let s: Struct = value.cast()?;
-    let mut fields = s.unpack()?;
-    // Safety: Unwrap is safe because AccountInfo has 3 fields (see `account_info_to_move_value`)
-    let balance: move_core_types::u256::U256 = fields.next().unwrap().cast()?;
-    let nonce: u64 = fields.next().unwrap().cast()?;
-    let code_hash: Vec<u8> = fields.next().unwrap().cast()?;
-    let code_hash: B256 = B256::from_slice(&code_hash);
-    Ok(AccountInfo {
-        balance: balance.to_u256(),
-        nonce,
-        code_hash,
-        code: None,
-    })
 }
 
 pub fn evm_log_to_move_value(log: Log) -> Value {
@@ -174,18 +147,4 @@ pub fn extract_evm_result(outcome: SerializedReturnValues) -> EvmNativeOutcome {
         output,
         logs,
     }
-}
-
-#[test]
-fn test_account_info_round_trip() {
-    let bytecode = revm::primitives::Bytecode::new();
-    let account_info = AccountInfo {
-        balance: U256::from(1234),
-        nonce: 7,
-        code_hash: bytecode.hash_slow(),
-        code: None,
-    };
-    let value = account_info_to_move_value(&account_info, account_info.code_hash);
-    let info_rt = move_value_to_account_info(value).unwrap();
-    assert_eq!(account_info, info_rt);
 }

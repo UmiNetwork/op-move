@@ -1,18 +1,15 @@
 use {
     crate::{
-        move_execution::{
-            evm_native::{self, EVM_NATIVE_ADDRESS},
-            quick_get_eth_balance, quick_get_nonce,
-        },
+        move_execution::{evm_native, quick_get_eth_balance, quick_get_nonce},
         primitives::{KeyHashable, ToEthAddress, B256, U256},
-        storage::{evm_key_address, IN_MEMORY_EXPECT_MSG},
+        storage::{evm_key_address, is_evm_storage_or_account_key, IN_MEMORY_EXPECT_MSG},
         types::{
             queries::{ProofResponse, StorageProof},
             state::TreeKey,
             transactions::{L2_HIGHEST_ADDRESS, L2_LOWEST_ADDRESS},
         },
     },
-    alloy::primitives::Bytes as AlloyBytes,
+    alloy::primitives::keccak256,
     aptos_types::state_store::{state_key::StateKey, state_value::StateValue},
     bytes::Bytes,
     eth_trie::{EthTrie, Trie, TrieError, DB},
@@ -190,19 +187,23 @@ impl StateQueries for InMemoryStateQueries {
             .map(Into::into)
             .collect();
 
-        let mut storage_proof = Vec::new();
-        for index in storage_slots {
-            let storage_struct =
-                evm_native::type_utils::account_storage_struct_tag(&address, index);
-            let value = evm_db.storage_ref(address, *index).ok()?;
-            // TODO: need to revisit EVM storage proofs.
-            let proof = get_proof(&mut tree, &EVM_NATIVE_ADDRESS, &storage_struct)?;
-            storage_proof.push(StorageProof {
-                key: (*index).into(),
-                value,
-                proof,
-            });
-        }
+        let storage_proof = if storage_slots.is_empty() {
+            Vec::new()
+        } else {
+            let mut storage_proof = Vec::new();
+            let mut storage = evm_db.storage_for(&address).ok()?;
+            for &index in storage_slots {
+                let key = keccak256::<[u8; 32]>(index.to_be_bytes());
+                let value = evm_db.storage_ref(address, index).ok()?;
+                let proof = storage.trie.get_proof(key.as_slice()).ok()?;
+                storage_proof.push(StorageProof {
+                    key: index.into(),
+                    value,
+                    proof: proof.into_iter().map(Into::into).collect(),
+                });
+            }
+            storage_proof
+        };
 
         Some(ProofResponse {
             address,
@@ -214,20 +215,6 @@ impl StateQueries for InMemoryStateQueries {
             storage_proof,
         })
     }
-}
-
-fn get_proof<R>(
-    tree: &mut EthTrie<R>,
-    account: &AccountAddress,
-    resource: &StructTag,
-) -> Option<Vec<AlloyBytes>>
-where
-    R: DB,
-{
-    let state_key = StateKey::resource(account, resource).ok()?;
-    let key_hash = TreeKey::StateKey(state_key).key_hash();
-    let proof = tree.get_proof(key_hash.0.as_slice()).ok()?;
-    Some(proof.into_iter().map(Into::into).collect())
 }
 
 /// This is a [`MoveResolver`] that reads data generated at `version`.
@@ -280,7 +267,12 @@ impl<D: DB> ResourceResolver for HistoricResolver<D> {
         };
         let key_hash = tree_key.key_hash();
         let value = tree.get(key_hash.0.as_slice()).map_err(trie_err)?;
-        let value = deserialize_state_value(value);
+        let value = if is_evm_storage_or_account_key(struct_tag) {
+            // In the case of EVM there is no additional serialization
+            value.map(Into::into)
+        } else {
+            deserialize_state_value(value)
+        };
         let len = value.as_ref().map(|v| v.len()).unwrap_or_default();
 
         Ok((value, len))
