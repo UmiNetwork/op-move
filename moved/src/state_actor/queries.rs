@@ -23,7 +23,6 @@ use {
         vm_status::StatusCode,
     },
     move_table_extension::{TableHandle, TableResolver},
-    revm::DatabaseRef,
     std::{fmt::Debug, sync::Arc},
 };
 
@@ -175,7 +174,7 @@ impl StateQueries for InMemoryStateQueries {
         // All L2 contract account data is part of the EVM state
         let resolver = self.storage.resolver(db.clone(), height)?;
         let evm_db = evm_native::ResolverBackedDB::new(&resolver);
-        let account_info = evm_db.basic_ref(address).ok()??;
+        let account_info = evm_db.get_account(&address).ok()??;
 
         let root = self.storage.get_root_by_height(height)?;
         let mut tree = EthTrie::from(db, root).expect(IN_MEMORY_EXPECT_MSG);
@@ -194,7 +193,7 @@ impl StateQueries for InMemoryStateQueries {
             let mut storage = evm_db.storage_for(&address).ok()?;
             for &index in storage_slots {
                 let key = keccak256::<[u8; 32]>(index.to_be_bytes());
-                let value = evm_db.storage_ref(address, index).ok()?;
+                let value = storage.get(index);
                 let proof = storage.trie.get_proof(key.as_slice()).ok()?;
                 storage_proof.push(StorageProof {
                     key: index.into(),
@@ -207,10 +206,10 @@ impl StateQueries for InMemoryStateQueries {
 
         Some(ProofResponse {
             address,
-            balance: account_info.balance,
-            code_hash: account_info.code_hash,
-            nonce: account_info.nonce,
-            storage_hash: root,
+            balance: account_info.inner.balance,
+            code_hash: account_info.inner.code_hash,
+            nonce: account_info.inner.nonce,
+            storage_hash: account_info.inner.storage_root,
             account_proof,
             storage_proof,
         })

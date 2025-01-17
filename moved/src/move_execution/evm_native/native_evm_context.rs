@@ -74,13 +74,12 @@ impl<'a> ResolverBackedDB<'a> {
             None => Ok(trie_types::AccountStorage::default()),
         }
     }
-}
 
-impl<'a> DatabaseRef for ResolverBackedDB<'a> {
-    type Error = PartialVMError;
-
-    fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
-        let struct_tag = account_info_struct_tag(&address);
+    pub fn get_account(
+        &self,
+        address: &Address,
+    ) -> Result<Option<trie_types::Account>, PartialVMError> {
+        let struct_tag = account_info_struct_tag(address);
         let resource = self
             .resolver
             .get_resource(&EVM_NATIVE_ADDRESS, &struct_tag)?;
@@ -88,6 +87,15 @@ impl<'a> DatabaseRef for ResolverBackedDB<'a> {
             trie_types::Account::try_deserialize(&bytes)
                 .expect("EVM account info must deserialize correctly.")
         });
+        Ok(value)
+    }
+}
+
+impl<'a> DatabaseRef for ResolverBackedDB<'a> {
+    type Error = PartialVMError;
+
+    fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+        let value = self.get_account(&address)?;
         let info = value.map(Into::into);
         Ok(info)
     }
