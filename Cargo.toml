@@ -39,6 +39,7 @@ eth_trie = "0.5.0"
 flate2 = "1"
 handlebars = "6.2"
 hex = "0.4"
+hex-literal = "0.4"
 hyper = "0.14"
 jsonwebtoken = { version = "9", default-features = false }
 move-binary-format = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
