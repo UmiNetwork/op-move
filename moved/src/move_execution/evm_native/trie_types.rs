@@ -85,7 +85,7 @@ impl AccountStorage {
         let trie_key = keccak256::<[u8; 32]>(index.to_be_bytes());
         let bytes = self.trie.get(trie_key.as_slice()).expect(Self::TRIE_EXPECT);
         bytes
-            .map(|bytes| U256::from_be_slice(&bytes))
+            .map(|bytes| rlp::decode_exact(&bytes).expect("Trie data RLP encoded"))
             .unwrap_or_default()
     }
 
@@ -96,7 +96,7 @@ impl AccountStorage {
                 .remove(trie_key.as_slice())
                 .expect(Self::TRIE_EXPECT);
         } else {
-            let value: [u8; 32] = value.to_be_bytes();
+            let value = rlp::encode_fixed_size(&value);
             self.trie
                 .insert(trie_key.as_slice(), &value)
                 .expect(Self::TRIE_EXPECT);
