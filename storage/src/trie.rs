@@ -6,6 +6,7 @@ use {
 
 pub const COLUMN_FAMILY: &str = "trie";
 pub const ROOT_COLUMN_FAMILY: &str = "trie_root";
+pub const COLUMN_FAMILIES: [&str; 2] = [COLUMN_FAMILY, ROOT_COLUMN_FAMILY];
 pub const ROOT_KEY: &str = "trie_root";
 
 pub struct RocksEthTrieDb<'db> {
