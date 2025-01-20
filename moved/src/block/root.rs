@@ -33,7 +33,7 @@ pub trait BlockRepository: Debug {
 
 pub type Header = alloy::consensus::Header;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct ExtendedBlock {
     /// The block hash is the output of keccak-256 algorithm with RLP encoded block header as input.
     pub hash: B256,
@@ -62,7 +62,7 @@ impl ExtendedBlock {
 }
 
 /// TODO: Add withdrawals
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct Block {
     pub header: Header,
     pub transactions: Vec<OpTxEnvelope>,

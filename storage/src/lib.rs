@@ -1,7 +1,11 @@
+mod all;
+mod block;
 mod state;
 mod trie;
 
 pub use {
+    all::COLUMN_FAMILIES,
+    block::RocksDbBlockRepository,
     state::RocksDbState,
-    trie::{RocksEthTrieDb, COLUMN_FAMILIES, COLUMN_FAMILY, ROOT_COLUMN_FAMILY, ROOT_KEY},
+    trie::{RocksEthTrieDb, ROOT_KEY},
 };
