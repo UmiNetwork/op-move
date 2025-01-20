@@ -3,6 +3,7 @@ use {
     eth_trie::{EthTrie, MemoryDB, Trie},
     moved::{
         genesis::config::GenesisConfig,
+        move_execution::evm_native::trie_types,
         types::{queries::ProofResponse, state::StateMessage},
     },
     moved_engine_api::schema::{
@@ -129,14 +130,23 @@ async fn test_get_proof() -> anyhow::Result<()> {
     trie.verify_proof(
         state_root,
         key.as_slice(),
-        response
-            .account_proof
-            .into_iter()
-            .map(|x| x.to_vec())
-            .collect(),
+        response.account_proof.iter().map(|x| x.to_vec()).collect(),
     )
     .unwrap()
     .unwrap();
+
+    // Proof contains the right account data
+    let account = trie_types::Account::new(
+        response.nonce,
+        response.balance,
+        response.code_hash,
+        response.storage_hash,
+    );
+    let leaf = response.account_proof.last().unwrap();
+    assert!(
+        hex::encode(leaf).contains(hex::encode(account.serialize()).as_str()),
+        "Proof leaf contains account data"
+    );
 
     drop(state_channel);
     state_task.await.unwrap();
