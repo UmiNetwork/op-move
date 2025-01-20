@@ -4,9 +4,8 @@ use {
     rocksdb::{AsColumnFamilyRef, DB as RocksDb},
 };
 
-pub const COLUMN_FAMILY: &str = "trie";
+pub const TRIE_COLUMN_FAMILY: &str = "trie";
 pub const ROOT_COLUMN_FAMILY: &str = "trie_root";
-pub const COLUMN_FAMILIES: [&str; 2] = [COLUMN_FAMILY, ROOT_COLUMN_FAMILY];
 pub const ROOT_KEY: &str = "trie_root";
 
 pub struct RocksEthTrieDb<'db> {
@@ -31,7 +30,7 @@ impl<'db> RocksEthTrieDb<'db> {
 
     fn cf(&self) -> &impl AsColumnFamilyRef {
         self.db
-            .cf_handle(COLUMN_FAMILY)
+            .cf_handle(TRIE_COLUMN_FAMILY)
             .expect("Column family should exist")
     }
 
