@@ -393,7 +393,7 @@ impl KeyHashable for TreeKey {
     }
 }
 
-/// Type representing the keys used in the state trie.
+/// Type representing the values used in the state trie.
 ///
 /// As with the keys, EVM values are treated separately.
 #[derive(Debug, Clone, PartialEq, Eq)]

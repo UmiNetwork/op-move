@@ -46,6 +46,22 @@ impl<'a> NativeEVMContext<'a> {
 
 pub struct ResolverBackedDB<'a> {
     resolver: &'a dyn MoveResolver<PartialVMError>,
+    // This cache is used because each EVM account has a single resource for all
+    // its storage slots and therefore may be a large amount of data that takes
+    // a non-trivial amount of time to deserialize. By caching the storage representation
+    // in memory we only have to do the deserialization once per transaction. This
+    // optimization is likely helpful because it is common to access more than one
+    // storage slot for an EVM smart contract even in a single transaction. In the
+    // future if we choose to split storage across multiple resources to limit the
+    // size of a single resource, a cache will still be useful since reconstructing
+    // the storage from all the resource pieces will also be non-trivial.
+    //
+    // The cache must be wrapped in a type that allows interior mutability
+    // because the `DatabaseRef` interface uses immutable references. Since this
+    // cache is only used for a single transaction execution it is unlikely that
+    // it will ever need to multi-threaded access, so a thread-unsafe type like
+    // `RefCell` would be sufficient. But at the same time, I don't think the overhead
+    // of `RwLock` is that large, so I think it is ok to use.
     storage_cache: RwLock<HashMap<Address, trie_types::AccountStorage>>,
 }
 
