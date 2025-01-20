@@ -67,6 +67,13 @@ impl AccountStorage {
     }
 
     pub fn try_deserialize(bytes: &[u8]) -> Option<Self> {
+        // The serialization format for the `AccountStorage` type is
+        // `[root_hash (32 bytes)] || [trie db (bcs BTreeMap)]`, where
+        // `||` represents byte concatenation. Therefore, if the given
+        // bytes are less than 32 we cannot deserialize at all (need at
+        // least 32 bytes for the root hash). If there are at least 32
+        // bytes then those first 32 are taken directly to be the root
+        // hash while the remainder are deserialized into the trie data.
         if bytes.len() < 32 {
             return None;
         }
