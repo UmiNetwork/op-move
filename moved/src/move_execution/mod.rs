@@ -116,11 +116,13 @@ where
     vm.new_session_with_extensions(state, native_extensions)
 }
 
+#[derive(Debug)]
 pub enum TransactionExecutionInput<'input, S, F, B> {
     Deposit(DepositExecutionInput<'input, S>),
     Canonical(CanonicalExecutionInput<'input, S, F, B>),
 }
 
+#[derive(Debug)]
 pub struct DepositExecutionInput<'input, S> {
     pub tx: &'input DepositedTx,
     pub tx_hash: &'input B256,
@@ -137,6 +139,7 @@ impl<'input, S, F, B> From<DepositExecutionInput<'input, S>>
     }
 }
 
+#[derive(Debug)]
 pub struct CanonicalExecutionInput<'input, S, F, B> {
     pub tx: &'input NormalizedEthTransaction,
     pub tx_hash: &'input B256,

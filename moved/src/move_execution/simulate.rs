@@ -4,8 +4,10 @@ use {
         block::HeaderForExecution,
         genesis::config::GenesisConfig,
         move_execution::{
-            canonical::verify_transaction, create_move_vm, create_vm_session, execute_transaction,
-            gas::new_gas_meter, quick_get_nonce, BaseTokenAccounts, CanonicalExecutionInput,
+            canonical::{verify_transaction, CanonicalVerificationInput},
+            create_move_vm, create_vm_session, execute_transaction,
+            gas::new_gas_meter,
+            quick_get_nonce, BaseTokenAccounts, CanonicalExecutionInput,
         },
         primitives::{ToMoveAddress, B256, U256},
         types::{
@@ -83,26 +85,27 @@ pub fn call_transaction(
     let mut traversal_context = TraversalContext::new(&traversal_storage);
     let mut gas_meter = new_gas_meter(genesis_config, tx.gas_limit());
 
-    verify_transaction(
-        &tx,
-        &mut session,
-        &mut traversal_context,
-        &mut gas_meter,
+    let mut verify_input = CanonicalVerificationInput {
+        tx: &tx,
+        session: &mut session,
+        traversal_context: &mut traversal_context,
+        gas_meter: &mut gas_meter,
         genesis_config,
-        0,
-        0,
+        l1_cost: 0,
+        l2_cost: 0,
         base_token,
-    )?;
+    };
+    verify_transaction(&mut verify_input)?;
 
     match tx_data {
         TransactionData::EntryFunction(entry_fn) => {
-            let outcome = session.execute_function_bypass_visibility(
+            let outcome = verify_input.session.execute_function_bypass_visibility(
                 entry_fn.module(),
                 entry_fn.function(),
                 entry_fn.ty_args().to_vec(),
                 entry_fn.args().to_vec(),
-                &mut gas_meter,
-                &mut traversal_context,
+                verify_input.gas_meter,
+                verify_input.traversal_context,
             )?;
             Ok(bcs::to_bytes(&outcome.return_values)?)
         }
@@ -110,9 +113,9 @@ pub fn call_transaction(
             crate::move_execution::execute::execute_script(
                 script,
                 &tx.signer.to_move_address(),
-                &mut session,
-                &mut traversal_context,
-                &mut gas_meter,
+                verify_input.session,
+                verify_input.traversal_context,
+                verify_input.gas_meter,
             )?;
             Ok(vec![])
         }
