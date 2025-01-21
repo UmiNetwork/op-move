@@ -7,7 +7,7 @@ use {
             create_move_vm, create_vm_session, eth_token,
             evm_native::{self, EvmNativeOutcome},
             gas::{new_gas_meter, total_gas_used},
-            ADDRESS_LAYOUT, U256_LAYOUT,
+            DepositExecutionInput, ADDRESS_LAYOUT, U256_LAYOUT,
         },
         primitives::{ToMoveAddress, ToMoveU256, B256},
         types::{
@@ -31,26 +31,33 @@ const ETH_BRIDGE_FINALIZED: B256 = B256::new(hex!(
     "31b2166ff604fc5672ea5df08a78081d2bc6d746cadce880747f3643d819e83d"
 ));
 
-pub(super) fn execute_deposited_transaction(
-    tx: &DepositedTx,
-    tx_hash: &B256,
-    state: &(impl MoveResolver<PartialVMError> + TableResolver),
-    genesis_config: &GenesisConfig,
-    block_header: HeaderForExecution,
+pub(super) fn execute_deposited_transaction<S: MoveResolver<PartialVMError> + TableResolver>(
+    input: DepositExecutionInput<S>,
 ) -> crate::Result<TransactionExecutionOutcome> {
     #[cfg(any(feature = "test-doubles", test))]
-    if tx.data.is_empty() {
-        return direct_mint(tx, tx_hash, state, genesis_config, block_header);
+    if input.tx.data.is_empty() {
+        return direct_mint(
+            input.tx,
+            input.tx_hash,
+            input.state,
+            input.genesis_config,
+            input.block_header,
+        );
     }
 
     let move_vm = create_move_vm()?;
-    let session_id = SessionId::new_from_deposited(tx, tx_hash, genesis_config, block_header);
-    let mut session = create_vm_session(&move_vm, state, session_id);
+    let session_id = SessionId::new_from_deposited(
+        input.tx,
+        input.tx_hash,
+        input.genesis_config,
+        input.block_header,
+    );
+    let mut session = create_vm_session(&move_vm, input.state, session_id);
     let traversal_storage = TraversalStorage::new();
     let mut traversal_context = TraversalContext::new(&traversal_storage);
     // The type of `tx.gas` is essentially `[u64; 1]` so taking the 0th element
     // is a 1:1 mapping to `u64`.
-    let mut gas_meter = new_gas_meter(genesis_config, tx.gas.as_limbs()[0]);
+    let mut gas_meter = new_gas_meter(input.genesis_config, input.tx.gas.as_limbs()[0]);
 
     let module = ModuleId::new(
         evm_native::EVM_NATIVE_ADDRESS,
@@ -59,16 +66,16 @@ pub(super) fn execute_deposited_transaction(
     let function_name = evm_native::EVM_CALL_FN_NAME;
     // Unwraps in serialization are safe because the layouts match the types.
     let args = vec![
-        Value::address(tx.from.to_move_address())
+        Value::address(input.tx.from.to_move_address())
             .simple_serialize(&ADDRESS_LAYOUT)
             .unwrap(),
-        Value::address(tx.to.to_move_address())
+        Value::address(input.tx.to.to_move_address())
             .simple_serialize(&ADDRESS_LAYOUT)
             .unwrap(),
-        Value::u256(tx.value.to_move_u256())
+        Value::u256(input.tx.value.to_move_u256())
             .simple_serialize(&U256_LAYOUT)
             .unwrap(),
-        Value::vector_u8(tx.data.iter().copied())
+        Value::vector_u8(input.tx.data.iter().copied())
             .simple_serialize(&evm_native::CODE_LAYOUT)
             .unwrap(),
     ];
@@ -108,7 +115,7 @@ pub(super) fn execute_deposited_transaction(
     };
 
     let (mut changes, extensions) = session.finish_with_extensions()?;
-    let gas_used = total_gas_used(&gas_meter, genesis_config);
+    let gas_used = total_gas_used(&gas_meter, input.genesis_config);
     let evm_changes = evm_native::extract_evm_changes(&extensions);
     changes
         .squash(evm_changes)

@@ -16,7 +16,7 @@ use {
         primitives::{ToEthAddress, B256},
         types::{
             session_id::SessionId,
-            transactions::{NormalizedExtendedTxEnvelope, TransactionExecutionOutcome},
+            transactions::{DepositedTx, NormalizedEthTransaction, TransactionExecutionOutcome},
         },
     },
     alloy::primitives::{Bloom, Keccak256, Log, LogData},
@@ -116,33 +116,57 @@ where
     vm.new_session_with_extensions(state, native_extensions)
 }
 
-#[allow(clippy::too_many_arguments)]
-pub fn execute_transaction(
-    tx: &NormalizedExtendedTxEnvelope,
-    tx_hash: &B256,
-    state: &(impl MoveResolver<PartialVMError> + TableResolver),
-    genesis_config: &GenesisConfig,
-    l1_cost: u64,
-    l2_fee: impl L2GasFee,
-    l2_input: L2GasFeeInput,
-    base_token: &impl BaseTokenAccounts,
-    block_header: HeaderForExecution,
+pub enum TransactionExecutionInput<'input, S, F, B> {
+    Deposit(DepositExecutionInput<'input, S>),
+    Canonical(CanonicalExecutionInput<'input, S, F, B>),
+}
+
+pub struct DepositExecutionInput<'input, S> {
+    pub tx: &'input DepositedTx,
+    pub tx_hash: &'input B256,
+    pub state: &'input S,
+    pub genesis_config: &'input GenesisConfig,
+    pub block_header: HeaderForExecution,
+}
+
+impl<'input, S, F, B> From<DepositExecutionInput<'input, S>>
+    for TransactionExecutionInput<'input, S, F, B>
+{
+    fn from(value: DepositExecutionInput<'input, S>) -> Self {
+        Self::Deposit(value)
+    }
+}
+
+pub struct CanonicalExecutionInput<'input, S, F, B> {
+    pub tx: &'input NormalizedEthTransaction,
+    pub tx_hash: &'input B256,
+    pub state: &'input S,
+    pub genesis_config: &'input GenesisConfig,
+    pub l1_cost: u64,
+    pub l2_fee: F,
+    pub l2_input: L2GasFeeInput,
+    pub base_token: &'input B,
+    pub block_header: HeaderForExecution,
+}
+
+impl<'input, S, F, B> From<CanonicalExecutionInput<'input, S, F, B>>
+    for TransactionExecutionInput<'input, S, F, B>
+{
+    fn from(value: CanonicalExecutionInput<'input, S, F, B>) -> Self {
+        Self::Canonical(value)
+    }
+}
+
+pub fn execute_transaction<
+    S: MoveResolver<PartialVMError> + TableResolver,
+    F: L2GasFee,
+    B: BaseTokenAccounts,
+>(
+    input: TransactionExecutionInput<S, F, B>,
 ) -> crate::Result<TransactionExecutionOutcome> {
-    match tx {
-        NormalizedExtendedTxEnvelope::DepositedTx(tx) => {
-            execute_deposited_transaction(tx, tx_hash, state, genesis_config, block_header)
-        }
-        NormalizedExtendedTxEnvelope::Canonical(tx) => execute_canonical_transaction(
-            tx,
-            tx_hash,
-            state,
-            genesis_config,
-            l1_cost,
-            l2_fee,
-            l2_input,
-            base_token,
-            block_header,
-        ),
+    match input {
+        TransactionExecutionInput::Deposit(input) => execute_deposited_transaction(input),
+        TransactionExecutionInput::Canonical(input) => execute_canonical_transaction(input),
     }
 }
 

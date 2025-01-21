@@ -5,7 +5,10 @@ use {
     },
     crate::{
         block::HeaderForExecution,
-        move_execution::{create_move_vm, create_vm_session, execute_transaction, tests::*},
+        move_execution::{
+            create_move_vm, create_vm_session, execute_transaction, tests::*,
+            CanonicalExecutionInput,
+        },
         primitives::{ToEthAddress, ToMoveAddress, ToMoveU256},
         storage::{InMemoryState, State},
         tests::{ALT_EVM_ADDRESS, EVM_ADDRESS},
@@ -167,18 +170,19 @@ fn test_solidity_fixed_bytes() {
             TxKind::Call(EVM_ADDRESS),
             bcs::to_bytes(&TransactionData::EntryFunction(entry_fn)).unwrap(),
         );
-        execute_transaction(
-            &tx,
-            &tx_hash,
-            state.resolver(),
-            &ctx.genesis_config,
-            0,
-            U256::ZERO,
-            (u64::MAX, U256::ZERO).into(),
-            &(),
-            HeaderForExecution::default(),
-        )
-        .unwrap()
+        let tx = tx.into_canonical().unwrap();
+        let input = CanonicalExecutionInput {
+            tx: &tx,
+            tx_hash: &tx_hash,
+            state: state.resolver(),
+            genesis_config: &ctx.genesis_config,
+            l1_cost: 0,
+            l2_fee: U256::ZERO,
+            l2_input: (u64::MAX, U256::ZERO).into(),
+            base_token: &(),
+            block_header: HeaderForExecution::default(),
+        };
+        execute_transaction(input.into()).unwrap()
     };
 
     // Calling with empty bytes is an error
