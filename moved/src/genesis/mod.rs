@@ -5,11 +5,19 @@ use {
 
 pub use framework::FRAMEWORK_ADDRESS;
 
+mod cache;
 pub mod config;
 mod framework;
 mod l2_contracts;
 
 pub fn init(
+    config: &GenesisConfig,
+    state: &impl State<Err = PartialVMError>,
+) -> (ChangeSet, TableChangeSet) {
+    cache::try_load().unwrap_or_else(|| cache::save(config, state))
+}
+
+pub fn init_raw(
     config: &GenesisConfig,
     state: &impl State<Err = PartialVMError>,
 ) -> (ChangeSet, TableChangeSet) {
