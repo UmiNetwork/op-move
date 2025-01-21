@@ -4,7 +4,8 @@ use {
         error::UserError,
         genesis::config::GenesisConfig,
         move_execution::{
-            create_move_vm, create_vm_session, eth_token, evm_native,
+            create_move_vm, create_vm_session, eth_token,
+            evm_native::{self, EvmNativeOutcome},
             gas::{new_gas_meter, total_gas_used},
             ADDRESS_LAYOUT, U256_LAYOUT,
         },
@@ -87,35 +88,22 @@ pub(super) fn execute_deposited_transaction(
         if !evm_outcome.is_success {
             return Err(UserError::DepositFailure(evm_outcome.output));
         }
-        // TODO: Should consider ERC-20 deposits here too?
-        let bridge_log = evm_outcome
-            .logs
-            .iter()
-            .find(|l| l.topics()[0] == ETH_BRIDGE_FINALIZED)
-            .ok_or(UserError::DepositFailure(evm_outcome.output))?;
-        // For the ETHBridgeFinalized log the topics are:
-        // topics[0]: 0x31b2166ff604fc5672ea5df08a78081d2bc6d746cadce880747f3643d819e83d (fixed identifier)
-        // topics[1]: from address (sender)
-        // topics[2]: to address (destination)
-        let dest_address = AccountAddress::new(bridge_log.topics()[2].0);
-        // For the ETHBridgeFinalized log the data is Solidity ABI encoded a tuple consisting of
-        // 1. amount deposited (32 bytes since it is U256)
-        // 2. extra data (optional; ignored by us)
-        let amount = U256::from_be_slice(&bridge_log.data.data[..32]);
-        Ok((dest_address, amount, evm_outcome.logs))
+        let mint_params = get_mint_params(&evm_outcome);
+        Ok((mint_params, evm_outcome.logs))
     });
 
     let (logs, vm_outcome) = match mint_params {
-        Ok((dest_address, amount, logs)) => {
+        Ok((Some(mint_params), logs)) => {
             eth_token::mint_eth(
-                &dest_address,
-                amount,
+                &mint_params.destination,
+                mint_params.amount,
                 &mut session,
                 &mut traversal_context,
                 &mut gas_meter,
             )?;
             (logs, Ok(()))
         }
+        Ok((None, logs)) => (logs, Ok(())),
         Err(e) => (Vec::new(), Err(e)),
     };
 
@@ -135,6 +123,36 @@ pub(super) fn execute_deposited_transaction(
         logs,
         None,
     ))
+}
+
+// Note: Not all deposit-type transactions are actual deposits; hence
+// why the return value of this function is an `Option`. Deposit-type
+// transactions are produced by the sequencer to call L2 contracts other
+// than the bridge.
+fn get_mint_params(outcome: &EvmNativeOutcome) -> Option<MintParams> {
+    // TODO: Should consider ERC-20 deposits here too?
+    let bridge_log = outcome
+        .logs
+        .iter()
+        .find(|l| l.topics()[0] == ETH_BRIDGE_FINALIZED)?;
+    // For the ETHBridgeFinalized log the topics are:
+    // topics[0]: 0x31b2166ff604fc5672ea5df08a78081d2bc6d746cadce880747f3643d819e83d (fixed identifier)
+    // topics[1]: from address (sender)
+    // topics[2]: to address (destination)
+    let destination = AccountAddress::new(bridge_log.topics()[2].0);
+    // For the ETHBridgeFinalized log the data is Solidity ABI encoded a tuple consisting of
+    // 1. amount deposited (32 bytes since it is U256)
+    // 2. extra data (optional; ignored by us)
+    let amount = U256::from_be_slice(&bridge_log.data.data[..32]);
+    Some(MintParams {
+        destination,
+        amount,
+    })
+}
+
+struct MintParams {
+    destination: AccountAddress,
+    amount: U256,
 }
 
 /// This function is only used in tests.
