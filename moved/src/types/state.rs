@@ -15,11 +15,11 @@ use {
         consensus::transaction::TxEnvelope,
         eips::{eip2718::Encodable2718, BlockId, BlockNumberOrTag},
         primitives::Bloom,
-        rpc::types::{BlockTransactions, FeeHistory, TransactionRequest},
+        rpc::types::{BlockTransactions, FeeHistory, TransactionRequest, Withdrawals},
     },
     aptos_types::state_store::{state_key::StateKey, state_value::StateValue},
     op_alloy::{
-        consensus::{OpReceiptEnvelope, OpTxEnvelope},
+        consensus::{OpReceiptEnvelope, OpTxEnvelope, TxDeposit},
         rpc_types::L1BlockInfo,
     },
     std::borrow::Cow,
@@ -263,9 +263,8 @@ impl BlockResponse {
                 total_difficulty: None,
                 size: None,
             },
-            // TODO: review fields below
             uncles: Vec::new(),
-            withdrawals: None,
+            withdrawals: Some(Withdrawals(Vec::new())),
         })
     }
 
@@ -290,11 +289,11 @@ impl BlockResponse {
                                 .expect("Block transactions should contain valid signature"),
                             inner,
                         };
+                        let version_nonce = get_deposit_nonce(&tx.inner);
                         op_alloy::rpc_types::Transaction {
                             inner: tx,
-                            // TODO: what are these fields?
-                            deposit_nonce: None,
-                            deposit_receipt_version: None,
+                            deposit_nonce: version_nonce.as_ref().map(|v| v.nonce),
+                            deposit_receipt_version: version_nonce.map(|v| v.version),
                         }
                     })
                     .collect(),
@@ -306,11 +305,60 @@ impl BlockResponse {
                 total_difficulty: None,
                 size: None,
             },
-            // TODO: review fields below
             uncles: Vec::new(),
-            withdrawals: None,
+            withdrawals: Some(Withdrawals(Vec::new())),
         })
     }
+}
+
+// Nonce and version for messages of CrossDomainMessenger L2 contract.
+struct VersionedNonce {
+    version: u64,
+    nonce: u64,
+}
+
+fn get_deposit_nonce(tx: &OpTxEnvelope) -> Option<VersionedNonce> {
+    if let OpTxEnvelope::Deposit(tx) = tx {
+        inner_get_deposit_nonce(tx)
+    } else {
+        None
+    }
+}
+
+fn inner_get_deposit_nonce(tx: &TxDeposit) -> Option<VersionedNonce> {
+    use alloy::sol_types::SolType;
+
+    // Function selector for `relayMessage`.
+    // See optimism/packages/contracts-bedrock/src/universal/CrossDomainMessenger.sol
+    const RELAY_MESSAGE_SELECTOR: [u8; 4] = [0xd7, 0x64, 0xad, 0x0b];
+
+    // The upper 16 bits are for the version, the rest are for the nonce.
+    const NONCE_MASK: U256 = U256::from_be_bytes(alloy::hex!(
+        "0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    ));
+
+    alloy::sol! {
+        struct RelayMessageArgs {
+            uint256 nonce;
+            address sender;
+            address target;
+            uint256 value;
+            uint256 min_gas_limit;
+            bytes message;
+        }
+    }
+
+    if !tx.input.starts_with(&RELAY_MESSAGE_SELECTOR) {
+        return None;
+    }
+
+    let args = RelayMessageArgs::abi_decode_params(&tx.input[4..], true).ok()?;
+
+    // See optimism/packages/contracts-bedrock/src/libraries/Encoding.sol
+    let encoded_versioned_nonce = args.nonce;
+    let version = encoded_versioned_nonce.checked_shr(240)?.saturating_to();
+    let nonce = (encoded_versioned_nonce & NONCE_MASK).saturating_to();
+    Some(VersionedNonce { version, nonce })
 }
 
 fn compute_from(tx: &OpTxEnvelope) -> Result<Address, alloy::primitives::SignatureError> {
@@ -483,4 +531,17 @@ impl WithPayloadAttributes for Header {
             ..self
         }
     }
+}
+
+#[test]
+fn test_get_deposit_nonce() {
+    const INPUT: [u8; 420] = alloy::hex!("d764ad0b0001000000000000000000000000000000000000000000000000000000000002000000000000000000000000c8088d0362bb4ac757ca77e211c30503d39cef4800000000000000000000000042000000000000000000000000000000000000100000000000000000000000000000000000000000000000056bc75e2d631000000000000000000000000000000000000000000000000000000000000000030d4000000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000000a41635f5fd000000000000000000000000c152ff76a513e15be1be43d102a881f076e707b3000000000000000000000000c152ff76a513e15be1be43d102a881f076e707b30000000000000000000000000000000000000000000000056bc75e2d631000000000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+
+    let tx = TxDeposit {
+        input: INPUT.into(),
+        ..Default::default()
+    };
+    let VersionedNonce { version, nonce } = inner_get_deposit_nonce(&tx).unwrap();
+    assert_eq!(nonce, 2);
+    assert_eq!(version, 1);
 }
