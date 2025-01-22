@@ -5,14 +5,14 @@ use {
         genesis::config::GenesisConfig,
         move_execution::{
             canonical::verify_transaction, create_move_vm, create_vm_session, execute_transaction,
-            gas::new_gas_meter, quick_get_nonce, BaseTokenAccounts,
+            gas::new_gas_meter, quick_get_nonce, BaseTokenAccounts, CanonicalExecutionInput,
         },
         primitives::{ToMoveAddress, B256, U256},
         types::{
             session_id::SessionId,
             transactions::{
-                NormalizedEthTransaction, NormalizedExtendedTxEnvelope, ScriptOrModule,
-                TransactionData, TransactionExecutionOutcome,
+                NormalizedEthTransaction, ScriptOrModule, TransactionData,
+                TransactionExecutionOutcome,
             },
         },
         Error::InvalidTransaction,
@@ -37,7 +37,6 @@ pub fn simulate_transaction(
     if request.from.is_some() && request.nonce.is_none() {
         tx.nonce = quick_get_nonce(&tx.signer.to_move_address(), state);
     }
-    let tx = NormalizedExtendedTxEnvelope::Canonical(tx);
 
     let block_header = HeaderForExecution {
         number: block_height,
@@ -50,18 +49,19 @@ pub fn simulate_transaction(
 
     let l2_input = L2GasFeeInput::new(u64::MAX, U256::ZERO);
     let l2_fee = CreateMovedL2GasFee.with_default_gas_fee_multiplier();
-
-    execute_transaction(
-        &tx,
-        &B256::random(),
+    let input = CanonicalExecutionInput {
+        tx: &tx,
+        tx_hash: &B256::random(),
         state,
         genesis_config,
-        0,
+        l1_cost: 0,
         l2_fee,
         l2_input,
         base_token,
         block_header,
-    )
+    };
+
+    execute_transaction(input.into())
 }
 
 pub fn call_transaction(

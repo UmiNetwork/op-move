@@ -201,6 +201,14 @@ impl TryFrom<ExtendedTxEnvelope> for NormalizedExtendedTxEnvelope {
 }
 
 impl NormalizedExtendedTxEnvelope {
+    pub fn into_canonical(self) -> Option<NormalizedEthTransaction> {
+        if let Self::Canonical(tx) = self {
+            Some(tx)
+        } else {
+            None
+        }
+    }
+
     pub fn tip_per_gas(&self, base_fee: U256) -> U256 {
         match self {
             Self::DepositedTx(..) => U256::ZERO,

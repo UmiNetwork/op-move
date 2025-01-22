@@ -1,4 +1,4 @@
-use super::*;
+use {super::*, crate::types::transactions::NormalizedExtendedTxEnvelope};
 
 /// Represents the base token state for a test transaction
 #[derive(Debug)]
@@ -252,29 +252,54 @@ impl TestContext {
     ) -> crate::Result<TransactionExecutionOutcome> {
         let l2_fee = CreateMovedL2GasFee.with_default_gas_fee_multiplier();
         let l2_gas_input = L2GasFeeInput::new(tx.l2_gas_limit, tx.l2_gas_price);
+        let tx_hash = tx.tx_hash;
+        let l1_cost = tx.l1_cost;
+
         match &tx.base_token {
-            TestBaseToken::Empty => execute_transaction(
-                &tx.tx,
-                &tx.tx_hash,
-                self.state.resolver(),
-                &self.genesis_config,
-                0,
-                l2_fee,
-                l2_gas_input,
-                &(),
-                HeaderForExecution::default(),
-            ),
-            TestBaseToken::Moved(moved_base_token) => execute_transaction(
-                &tx.tx,
-                &tx.tx_hash,
-                self.state.resolver(),
-                &self.genesis_config,
-                tx.l1_cost,
-                l2_fee,
-                l2_gas_input,
-                moved_base_token,
-                HeaderForExecution::default(),
-            ),
+            TestBaseToken::Empty => execute_transaction(match &tx.tx {
+                NormalizedExtendedTxEnvelope::Canonical(tx) => CanonicalExecutionInput {
+                    tx,
+                    tx_hash: &tx_hash,
+                    state: self.state.resolver(),
+                    genesis_config: &self.genesis_config,
+                    l1_cost: 0,
+                    l2_fee,
+                    l2_input: l2_gas_input,
+                    base_token: &(),
+                    block_header: HeaderForExecution::default(),
+                }
+                .into(),
+                NormalizedExtendedTxEnvelope::DepositedTx(tx) => DepositExecutionInput {
+                    tx,
+                    tx_hash: &tx_hash,
+                    state: self.state.resolver(),
+                    genesis_config: &self.genesis_config,
+                    block_header: HeaderForExecution::default(),
+                }
+                .into(),
+            }),
+            TestBaseToken::Moved(moved_base_token) => execute_transaction(match &tx.tx {
+                NormalizedExtendedTxEnvelope::Canonical(tx) => CanonicalExecutionInput {
+                    tx,
+                    tx_hash: &tx_hash,
+                    state: self.state.resolver(),
+                    genesis_config: &self.genesis_config,
+                    l1_cost,
+                    l2_fee,
+                    l2_input: l2_gas_input,
+                    base_token: moved_base_token,
+                    block_header: HeaderForExecution::default(),
+                }
+                .into(),
+                NormalizedExtendedTxEnvelope::DepositedTx(tx) => DepositExecutionInput {
+                    tx,
+                    tx_hash: &tx_hash,
+                    state: self.state.resolver(),
+                    genesis_config: &self.genesis_config,
+                    block_header: HeaderForExecution::default(),
+                }
+                .into(),
+            }),
         }
     }
 

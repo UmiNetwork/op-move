@@ -488,20 +488,32 @@ impl<
                 normalized_tx.gas_limit(),
                 normalized_tx.effective_gas_price(base_fee),
             );
-            let outcome = match execute_transaction(
-                &normalized_tx,
-                &tx_hash,
-                self.state.resolver(),
-                &self.genesis_config,
-                l1_fee
-                    .as_ref()
-                    .map(|v| v.l1_fee(l1_cost_input.clone()).to_saturated_u64())
-                    .unwrap_or(0),
-                l2_fee.clone(),
-                l2_gas_input,
-                &self.base_token,
-                block_header.clone(),
-            ) {
+            let input = match &normalized_tx {
+                NormalizedExtendedTxEnvelope::Canonical(tx) => CanonicalExecutionInput {
+                    tx,
+                    tx_hash: &tx_hash,
+                    state: self.state.resolver(),
+                    genesis_config: &self.genesis_config,
+                    l1_cost: l1_fee
+                        .as_ref()
+                        .map(|v| v.l1_fee(l1_cost_input.clone()).to_saturated_u64())
+                        .unwrap_or(0),
+                    l2_fee: l2_fee.clone(),
+                    l2_input: l2_gas_input,
+                    base_token: &self.base_token,
+                    block_header: block_header.clone(),
+                }
+                .into(),
+                NormalizedExtendedTxEnvelope::DepositedTx(tx) => DepositExecutionInput {
+                    tx,
+                    tx_hash: &tx_hash,
+                    state: self.state.resolver(),
+                    genesis_config: &self.genesis_config,
+                    block_header: block_header.clone(),
+                }
+                .into(),
+            };
+            let outcome = match execute_transaction(input) {
                 Ok(outcome) => outcome,
                 Err(User(e)) => unreachable!("User errors are handled in execution {e:?}"),
                 Err(InvalidTransaction(_)) => continue,
@@ -668,6 +680,7 @@ impl<
     }
 }
 
+use crate::move_execution::{CanonicalExecutionInput, DepositExecutionInput};
 #[cfg(any(feature = "test-doubles", test))]
 pub use test_doubles::*;
 
