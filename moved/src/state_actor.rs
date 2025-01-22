@@ -390,6 +390,9 @@ impl<
                 Some((tx_hash, (tx, L1GasFeeInput::from(slice))))
             })
             .chain(self.mem_pool.drain())
+            .filter(|(tx_hash, _)|
+                // Do not include transactions we have already processed before
+                !self.tx_receipts.contains_key(tx_hash))
             .collect::<Vec<_>>();
         let parent = self
             .block_repository
