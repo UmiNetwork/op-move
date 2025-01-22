@@ -1,5 +1,5 @@
 use {
-    moved::primitives::{Address, U256},
+    moved_primitives::{Address, U256},
     serde::{Deserialize, Serialize},
 };
 

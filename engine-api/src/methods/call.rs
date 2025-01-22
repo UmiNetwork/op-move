@@ -68,7 +68,7 @@ mod tests {
             hex::FromHex,
             primitives::{Address, Bytes},
         },
-        moved::primitives::U64,
+        moved_primitives::U64,
         std::str::FromStr,
         test_case::test_case,
     };

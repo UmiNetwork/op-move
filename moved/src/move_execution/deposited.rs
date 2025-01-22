@@ -1,13 +1,11 @@
 use {
     crate::{
         error::UserError,
-        genesis::config::GenesisConfig,
         move_execution::{
             create_move_vm, create_vm_session, eth_token,
             gas::{new_gas_meter, total_gas_used},
             DepositExecutionInput, ADDRESS_LAYOUT, U256_LAYOUT,
         },
-        primitives::{ToMoveAddress, ToMoveU256, B256},
         types::{
             session_id::SessionId,
             transactions::{DepositedTx, TransactionExecutionOutcome},
@@ -25,6 +23,8 @@ use {
         evm_native::{self, EvmNativeOutcome},
         native_evm_context::HeaderForExecution,
     },
+    moved_genesis::config::GenesisConfig,
+    moved_primitives::{ToMoveAddress, ToMoveU256, B256},
 };
 
 // Topic identifying the event

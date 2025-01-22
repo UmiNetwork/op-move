@@ -1,4 +1,7 @@
-use {super::*, crate::types::transactions::NormalizedExtendedTxEnvelope};
+use {
+    super::*, crate::types::transactions::NormalizedExtendedTxEnvelope,
+    moved_genesis::config::CHAIN_ID,
+};
 
 /// Represents the base token state for a test transaction
 #[derive(Debug)]
@@ -83,7 +86,8 @@ impl TestContext {
     pub fn new() -> Self {
         let genesis_config = GenesisConfig::default();
         let mut state = InMemoryState::new();
-        init_and_apply(&genesis_config, &mut state);
+        let (changes, tables) = moved_genesis_image::load();
+        moved_genesis::apply(changes, tables, &genesis_config, &mut state);
 
         Self {
             state,

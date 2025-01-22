@@ -4,10 +4,8 @@ use {
         jsonrpc::JsonRpcError,
         schema::{ExecutionPayloadV3, GetPayloadResponseV3, PayloadStatusV1, Status},
     },
-    moved::{
-        primitives::B256,
-        types::state::{Command, StateMessage},
-    },
+    moved::types::state::{Command, StateMessage},
+    moved_primitives::B256,
     tokio::sync::{mpsc, oneshot},
 };
 
@@ -198,11 +196,11 @@ mod tests {
                 Block, BlockMemory, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
                 InMemoryBlockRepository,
             },
-            genesis::{self, config::GenesisConfig},
-            primitives::{Address, Bytes, B2048, U256, U64},
             state_actor::InMemoryStateQueries,
-            storage::InMemoryState,
         },
+        moved_genesis::config::GenesisConfig,
+        moved_primitives::{Address, Bytes, B2048, U256, U64},
+        moved_state::InMemoryState,
     };
 
     #[test]
@@ -289,8 +287,8 @@ mod tests {
         repository.add(&mut block_memory, genesis_block);
 
         let mut state = InMemoryState::new();
-        let (changes, table_changes) = genesis::init(&genesis_config, &state);
-        genesis::apply(changes.clone(), table_changes, &genesis_config, &mut state);
+        let (changes, table_changes) = moved_genesis_image::load();
+        moved_genesis::apply(changes.clone(), table_changes, &genesis_config, &mut state);
         let initial_state_root = genesis_config.initial_state_root;
 
         let state = moved::state_actor::StateActor::new(

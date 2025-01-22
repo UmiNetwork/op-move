@@ -1,14 +1,12 @@
 use {
     super::{CreateL2GasFee, CreateMovedL2GasFee, L2GasFeeInput},
     crate::{
-        genesis::config::GenesisConfig,
         move_execution::{
             canonical::{verify_transaction, CanonicalVerificationInput},
             create_move_vm, create_vm_session, execute_transaction,
             gas::new_gas_meter,
             quick_get_nonce, BaseTokenAccounts, CanonicalExecutionInput,
         },
-        primitives::{ToMoveAddress, B256, U256},
         types::{
             session_id::SessionId,
             transactions::{
@@ -25,6 +23,8 @@ use {
     move_table_extension::TableResolver,
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
     moved_evm_ext::native_evm_context::HeaderForExecution,
+    moved_genesis::config::GenesisConfig,
+    moved_primitives::{ToMoveAddress, B256, U256},
     std::time::{SystemTime, UNIX_EPOCH},
 };
 

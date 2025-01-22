@@ -4,11 +4,9 @@ use {
     move_binary_format::errors::PartialVMError,
     move_core_types::{effects::ChangeSet, resolver::MoveResolver},
     move_table_extension::{TableChangeSet, TableResolver},
-    moved::{
-        primitives::B256,
-        state_actor::HistoricResolver,
-        storage::{InsertChangeSetIntoMerkleTrie, State},
-    },
+    moved::state_actor::HistoricResolver,
+    moved_primitives::B256,
+    moved_state::{InsertChangeSetIntoMerkleTrie, State},
     std::sync::Arc,
 };
 

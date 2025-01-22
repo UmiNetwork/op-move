@@ -1,10 +1,5 @@
 use {
-    crate::{
-        genesis::FRAMEWORK_ADDRESS,
-        primitives::{ToMoveU256, ToU256},
-        types::session_id::SessionId,
-        EthToken,
-    },
+    crate::{types::session_id::SessionId, EthToken},
     alloy::primitives::U256,
     aptos_table_natives::TableResolver,
     move_binary_format::errors::PartialVMError,
@@ -20,6 +15,8 @@ use {
         gas::{GasMeter, UnmeteredGasMeter},
         values::Value,
     },
+    moved_genesis::FRAMEWORK_ADDRESS,
+    moved_primitives::{ToMoveU256, ToU256},
 };
 
 const TOKEN_ADMIN: AccountAddress = FRAMEWORK_ADDRESS;

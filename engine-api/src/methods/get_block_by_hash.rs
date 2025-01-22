@@ -4,10 +4,8 @@ use {
         jsonrpc::JsonRpcError,
         schema::GetBlockResponse,
     },
-    moved::{
-        primitives::B256,
-        types::state::{Query, StateMessage},
-    },
+    moved::types::state::{Query, StateMessage},
+    moved_primitives::B256,
     tokio::sync::{mpsc, oneshot},
 };
 

@@ -1,6 +1,6 @@
 //! This module is concerned about calculating fees charged for gas usage.
 
-use {crate::primitives::U256, std::cmp::Ordering};
+use {moved_primitives::U256, std::cmp::Ordering};
 
 /// Determines amount of fees charged per gas used in transaction execution.
 ///

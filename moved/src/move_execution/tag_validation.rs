@@ -320,13 +320,13 @@ mod tests {
         super::*,
         crate::{
             move_execution::{create_move_vm, create_vm_session},
-            primitives::ToMoveAddress,
-            storage::State,
             tests::EVM_ADDRESS,
             types::session_id::SessionId,
         },
         alloy::primitives::address,
         move_core_types::value::MoveStruct,
+        moved_primitives::ToMoveAddress,
+        moved_state::{InMemoryState, State},
     };
 
     #[test]
@@ -524,7 +524,7 @@ mod tests {
         ];
 
         let move_vm = create_move_vm().unwrap();
-        let state = crate::storage::InMemoryState::new();
+        let state = InMemoryState::new();
         let mut session = create_vm_session(&move_vm, state.resolver(), SessionId::default());
         for (type_tag, test_case, expected_outcome) in test_cases {
             let actual_outcome =
@@ -597,7 +597,7 @@ mod tests {
         ];
 
         let move_vm = create_move_vm().unwrap();
-        let state = crate::storage::InMemoryState::new();
+        let state = InMemoryState::new();
         let mut session = create_vm_session(&move_vm, state.resolver(), SessionId::default());
         for (type_tag, test_case, expected_outcome) in test_cases {
             let actual_outcome =

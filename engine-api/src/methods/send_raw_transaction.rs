@@ -4,10 +4,8 @@ use {
         jsonrpc::JsonRpcError,
     },
     alloy::{consensus::transaction::TxEnvelope, rlp::Decodable},
-    moved::{
-        primitives::{Bytes, B256},
-        types::state::{Command, StateMessage},
-    },
+    moved::types::state::{Command, StateMessage},
+    moved_primitives::{Bytes, B256},
     tokio::sync::mpsc,
 };
 

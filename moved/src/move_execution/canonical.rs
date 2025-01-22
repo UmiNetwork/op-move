@@ -1,7 +1,6 @@
 use {
     super::{L2GasFee, L2GasFeeInput},
     crate::{
-        genesis::config::GenesisConfig,
         move_execution::{
             create_move_vm, create_vm_session,
             eth_token::{BaseTokenAccounts, TransferArgs},
@@ -10,7 +9,6 @@ use {
             nonces::check_nonce,
             CanonicalExecutionInput, Logs,
         },
-        primitives::{ToMoveAddress, ToSaturatedU64},
         types::{
             session_id::SessionId,
             transactions::{
@@ -29,6 +27,8 @@ use {
         module_traversal::{TraversalContext, TraversalStorage},
         session::Session,
     },
+    moved_genesis::config::GenesisConfig,
+    moved_primitives::{ToMoveAddress, ToSaturatedU64},
 };
 
 pub struct CanonicalVerificationInput<'input, 'r, 'l, B> {

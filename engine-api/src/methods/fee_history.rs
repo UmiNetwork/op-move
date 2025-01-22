@@ -86,7 +86,7 @@ async fn inner_execute(
 #[cfg(test)]
 mod tests {
     use {
-        super::*, crate::methods::tests::create_state_actor, moved::primitives::U64,
+        super::*, crate::methods::tests::create_state_actor, moved_primitives::U64,
         std::str::FromStr, test_case::test_case,
     };
 

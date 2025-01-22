@@ -32,23 +32,20 @@ pub mod tests {
                 BaseGasFee, Block, BlockHash, BlockMemory, BlockQueries, BlockRepository,
                 Eip1559GasFee, InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash,
             },
-            genesis::{
-                self,
-                config::{GenesisConfig, CHAIN_ID},
-            },
             move_execution::{
                 BaseTokenAccounts, CreateL1GasFee, CreateL2GasFee, MovedBaseTokenAccounts,
             },
-            primitives::{Address, B256, U256, U64},
             state_actor::{
                 InMemoryStateQueries, MockStateQueries, NewPayloadId, StateActor, StateQueries,
             },
-            storage::InMemoryState,
             types::{
                 state::{Command, Payload, StateMessage},
                 transactions::{DepositedTx, ExtendedTxEnvelope},
             },
         },
+        moved_genesis::config::{GenesisConfig, CHAIN_ID},
+        moved_primitives::{Address, B256, U256, U64},
+        moved_state::InMemoryState,
         tokio::sync::{
             mpsc::{self, Sender},
             oneshot,
@@ -72,8 +69,8 @@ pub mod tests {
         repository.add(&mut block_memory, genesis_block);
 
         let mut state = InMemoryState::new();
-        let (changes, table_changes) = genesis::init(&genesis_config, &state);
-        genesis::apply(changes.clone(), table_changes, &genesis_config, &mut state);
+        let (changes, table_changes) = moved_genesis_image::load();
+        moved_genesis::apply(changes.clone(), table_changes, &genesis_config, &mut state);
         let initial_state_root = genesis_config.initial_state_root;
 
         let state = StateActor::new(

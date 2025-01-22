@@ -4,8 +4,6 @@ use {
             create_move_vm, create_vm_session, execute_transaction, tests::*,
             CanonicalExecutionInput,
         },
-        primitives::{ToEthAddress, ToMoveAddress, ToMoveU256},
-        storage::{InMemoryState, State},
         tests::{ALT_EVM_ADDRESS, EVM_ADDRESS},
         types::{session_id::SessionId, transactions::TransactionData},
     },
@@ -41,6 +39,8 @@ use {
         native_evm_context::HeaderForExecution,
         type_utils::extract_evm_result,
     },
+    moved_primitives::{ToEthAddress, ToMoveAddress, ToMoveU256},
+    moved_state::{InMemoryState, State},
     revm::primitives::{TxKind, U256},
 };
 

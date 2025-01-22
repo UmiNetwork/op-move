@@ -11,15 +11,12 @@ use {
         block::{
             BaseGasFee, Block, BlockHash, BlockQueries, BlockRepository, ExtendedBlock, Header,
         },
-        genesis::config::GenesisConfig,
         move_execution::{
             execute_transaction,
             simulate::{call_transaction, simulate_transaction},
             BaseTokenAccounts, CreateL1GasFee, CreateL2GasFee, L1GasFee, L1GasFeeInput,
             L2GasFeeInput, LogsBloom,
         },
-        primitives::{self, Address, ToEthAddress, ToMoveAddress, ToSaturatedU64, B256, U256, U64},
-        storage::State,
         types::{
             queries::ProofResponse,
             state::{
@@ -45,6 +42,11 @@ use {
     move_binary_format::errors::PartialVMError,
     move_core_types::effects::ChangeSet,
     moved_evm_ext::native_evm_context::HeaderForExecution,
+    moved_genesis::config::GenesisConfig,
+    moved_primitives::{
+        self, Address, ToEthAddress, ToMoveAddress, ToSaturatedU64, B256, U256, U64,
+    },
+    moved_state::State,
     revm::primitives::TxKind,
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
@@ -55,7 +57,7 @@ mod queries;
 
 #[cfg(any(feature = "test-doubles", test))]
 pub type InMemStateActor = StateActor<
-    crate::storage::InMemoryState,
+    moved_state::InMemoryState,
     u64,
     crate::block::MovedBlockHash,
     crate::block::InMemoryBlockRepository,
@@ -620,7 +622,7 @@ impl<
                 removed: false,
             })
             .collect();
-        let receipt = primitives::with_rpc_logs(&rx.receipt, logs);
+        let receipt = moved_primitives::with_rpc_logs(&rx.receipt, logs);
         let result = TransactionReceipt {
             inner: AlloyTxReceipt {
                 inner: receipt,
@@ -689,8 +691,8 @@ pub use test_doubles::*;
 #[cfg(any(feature = "test-doubles", test))]
 mod test_doubles {
     use {
-        super::*, crate::primitives::U256, eth_trie::DB,
-        move_core_types::account_address::AccountAddress, std::sync::Arc,
+        super::*, eth_trie::DB, move_core_types::account_address::AccountAddress,
+        moved_primitives::U256, std::sync::Arc,
     };
 
     pub struct MockStateQueries(pub AccountAddress, pub BlockHeight);
@@ -826,9 +828,7 @@ mod tests {
                 BlockMemory, Eip1559GasFee, InMemoryBlockQueries, InMemoryBlockRepository,
                 MovedBlockHash,
             },
-            genesis::{self, config::CHAIN_ID},
             move_execution::{create_move_vm, create_vm_session, MovedBaseTokenAccounts},
-            storage::InMemoryState,
             tests::{signer::Signer, EVM_ADDRESS, PRIVATE_KEY},
             types::session_id::SessionId,
         },
@@ -840,6 +840,8 @@ mod tests {
         move_core_types::{account_address::AccountAddress, effects::ChangeSet},
         move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
         move_vm_types::gas::UnmeteredGasMeter,
+        moved_genesis::config::{GenesisConfig, CHAIN_ID},
+        moved_state::InMemoryState,
         test_case::test_case,
         tokio::sync::{
             mpsc::{self, Sender},
@@ -879,7 +881,8 @@ mod tests {
         repository.add(&mut block_memory, genesis_block);
 
         let mut state = InMemoryState::new();
-        genesis::init_and_apply(&genesis_config, &mut state);
+        let (changes, tables) = moved_genesis_image::load();
+        moved_genesis::apply(changes, tables, &genesis_config, &mut state);
 
         let state = StateActor::new(
             rx,
@@ -959,7 +962,7 @@ mod tests {
         repository.add(&mut block_memory, genesis_block);
 
         let mut state = InMemoryState::new();
-        let (genesis_changes, table_changes) = genesis::init(&genesis_config, &state);
+        let (genesis_changes, table_changes) = moved_genesis_image::load();
         state
             .apply_with_tables(genesis_changes.clone(), table_changes)
             .unwrap();
@@ -1001,7 +1004,7 @@ mod tests {
         head_height: BlockHeight,
         expected_height: BlockHeight,
     ) {
-        let address = primitives::Address::new(hex!("11223344556677889900ffeeaabbccddee111111"));
+        let address = Address::new(hex!("11223344556677889900ffeeaabbccddee111111"));
         let (state_actor, _) = create_state_actor_with_given_queries(
             head_height,
             MockStateQueries(address.to_move_address(), expected_height),
@@ -1031,7 +1034,7 @@ mod tests {
         head_height: BlockHeight,
         expected_height: BlockHeight,
     ) {
-        let address = primitives::Address::new(hex!("44223344556677889900ffeeaabbccddee111111"));
+        let address = Address::new(hex!("44223344556677889900ffeeaabbccddee111111"));
         let (state_actor, _) = create_state_actor_with_given_queries(
             head_height,
             MockStateQueries(address.to_move_address(), expected_height),
@@ -1052,7 +1055,7 @@ mod tests {
 
     #[test]
     fn test_fetched_balances_are_updated_after_transfer_of_funds() {
-        let to = primitives::Address::new(hex!("44223344556677889900ffeeaabbccddee111111"));
+        let to = Address::new(hex!("44223344556677889900ffeeaabbccddee111111"));
         let initial_balance = U256::from(5);
         let amount = U256::from(4);
         let (mut state_actor, _) =
@@ -1108,7 +1111,7 @@ mod tests {
 
     #[test]
     fn test_fetched_nonces_are_updated_after_executing_transaction() {
-        let to = primitives::Address::new(hex!("44223344556677889900ffeeaabbccddee111111"));
+        let to = Address::new(hex!("44223344556677889900ffeeaabbccddee111111"));
         let initial_balance = U256::from(5);
         let amount = U256::from(4);
         let (mut state_actor, _) =

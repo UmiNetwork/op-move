@@ -1,13 +1,11 @@
 use {
     super::transactions::DepositedTx,
-    crate::{
-        genesis::config::{GenesisConfig, CHAIN_ID},
-        primitives::{ToMoveAddress, B256},
-        types::transactions::NormalizedEthTransaction,
-    },
+    crate::types::transactions::NormalizedEthTransaction,
     alloy::primitives::U256,
     aptos_types::transaction::EntryFunction,
     aptos_vm::move_vm_ext::UserTransactionContext,
+    moved_genesis::config::{GenesisConfig, CHAIN_ID},
+    moved_primitives::{ToMoveAddress, B256},
 };
 
 /// This struct represents a unique identifier for the current session of the MoveVM.

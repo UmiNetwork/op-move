@@ -1,4 +1,4 @@
-mod nodes;
+pub mod nodes;
 
 use {
     alloy::hex::FromHex,

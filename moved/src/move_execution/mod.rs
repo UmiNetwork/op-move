@@ -8,13 +8,9 @@ pub use {
 };
 
 use {
-    crate::{
-        genesis::config::GenesisConfig,
-        primitives::{ToEthAddress, B256},
-        types::{
-            session_id::SessionId,
-            transactions::{DepositedTx, NormalizedEthTransaction, TransactionExecutionOutcome},
-        },
+    crate::types::{
+        session_id::SessionId,
+        transactions::{DepositedTx, NormalizedEthTransaction, TransactionExecutionOutcome},
     },
     alloy::primitives::{Bloom, Keccak256, Log, LogData},
     aptos_framework::natives::{
@@ -44,6 +40,8 @@ use {
         evm_native::events::{evm_logs_event_to_log, EVM_LOGS_EVENT_LAYOUT, EVM_LOGS_EVENT_TAG},
         native_evm_context::HeaderForExecution,
     },
+    moved_genesis::config::GenesisConfig,
+    moved_primitives::{ToEthAddress, B256},
     std::ops::Deref,
 };
 

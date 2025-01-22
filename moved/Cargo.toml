@@ -44,7 +44,10 @@ sui-types.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 moved-evm-ext = { path = "../evm-ext" }
+moved-genesis = { path = "../genesis" }
 moved-genesis-image = { path = "../genesis-image" }
+moved-primitives = { path = "../primitives" }
+moved-state = { path = "../state" }
 
 [dev-dependencies]
 anyhow.workspace = true

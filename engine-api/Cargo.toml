@@ -10,6 +10,10 @@ moved.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
+moved-state = { path = "../state" }
+moved-primitives = { path = "../primitives" }
+moved-genesis = { path = "../genesis" }
+moved-genesis-image = { path = "../genesis-image" }
 
 [dev-dependencies]
 move-core-types.workspace = true

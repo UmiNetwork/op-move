@@ -1,9 +1,8 @@
 use {
-    crate::{
-        genesis::config::GenesisConfig, primitives::U256,
-        types::transactions::NormalizedEthTransaction,
-    },
+    crate::types::transactions::NormalizedEthTransaction,
     aptos_gas_meter::{AptosGasMeter, GasAlgebra, StandardGasAlgebra, StandardGasMeter},
+    moved_genesis::config::GenesisConfig,
+    moved_primitives::U256,
     op_alloy::rpc_types::L1BlockInfo,
 };
 

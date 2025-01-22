@@ -1,6 +1,6 @@
 use {
     eth_trie::DB,
-    moved::primitives::B256,
+    moved_primitives::B256,
     rocksdb::{AsColumnFamilyRef, DB as RocksDb},
 };
 

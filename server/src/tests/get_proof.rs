@@ -1,15 +1,13 @@
 use {
     crate::initialize_state_actor,
     eth_trie::{EthTrie, MemoryDB, Trie},
-    moved::{
-        genesis::config::GenesisConfig,
-        types::{queries::ProofResponse, state::StateMessage},
-    },
+    moved::types::{queries::ProofResponse, state::StateMessage},
     moved_engine_api::schema::{
         ForkchoiceUpdatedResponseV1, GetBlockResponse, GetPayloadResponseV3, PayloadStatusV1,
         Status,
     },
     moved_evm_ext::evm_native::trie_types,
+    moved_genesis::config::GenesisConfig,
     serde::de::DeserializeOwned,
     std::sync::Arc,
     tokio::sync::mpsc,

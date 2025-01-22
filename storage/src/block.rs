@@ -2,9 +2,9 @@ use {
     crate::generic::ToKey,
     moved::{
         block::{BlockQueries, BlockRepository, ExtendedBlock},
-        primitives::B256,
         types::state::BlockResponse,
     },
+    moved_primitives::B256,
     rocksdb::{AsColumnFamilyRef, DB as RocksDb},
 };
 

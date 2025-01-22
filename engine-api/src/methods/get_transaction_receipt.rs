@@ -3,10 +3,8 @@ use {
         json_utils::{self, access_state_error},
         jsonrpc::JsonRpcError,
     },
-    moved::{
-        primitives::B256,
-        types::state::{Query, StateMessage, TransactionReceipt},
-    },
+    moved::types::state::{Query, StateMessage, TransactionReceipt},
+    moved_primitives::B256,
     tokio::sync::{mpsc, oneshot},
 };
 
