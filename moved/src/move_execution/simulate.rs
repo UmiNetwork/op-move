@@ -1,7 +1,6 @@
 use {
     super::{CreateL2GasFee, CreateMovedL2GasFee, L2GasFeeInput},
     crate::{
-        block::HeaderForExecution,
         genesis::config::GenesisConfig,
         move_execution::{
             canonical::{verify_transaction, CanonicalVerificationInput},
@@ -25,6 +24,7 @@ use {
     move_core_types::resolver::MoveResolver,
     move_table_extension::TableResolver,
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
+    moved_evm_ext::native_evm_context::HeaderForExecution,
     std::time::{SystemTime, UNIX_EPOCH},
 };
 

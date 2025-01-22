@@ -1,6 +1,6 @@
 use {
     crate::{
-        move_execution::{evm_native, quick_get_eth_balance, quick_get_nonce},
+        move_execution::{quick_get_eth_balance, quick_get_nonce},
         primitives::{KeyHashable, ToEthAddress, B256, U256},
         storage::{evm_key_address, is_evm_storage_or_account_key, IN_MEMORY_EXPECT_MSG},
         types::{
@@ -23,6 +23,7 @@ use {
         vm_status::StatusCode,
     },
     move_table_extension::{TableHandle, TableResolver},
+    moved_evm_ext::evm_native,
     std::{fmt::Debug, sync::Arc},
 };
 

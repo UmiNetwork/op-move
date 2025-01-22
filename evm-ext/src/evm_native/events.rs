@@ -1,12 +1,12 @@
 use {
     super::{EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE},
-    crate::primitives::ToEthAddress,
     alloy::primitives::{Log, LogData, B256},
     move_core_types::{
         ident_str,
         language_storage::StructTag,
         value::{MoveStructLayout, MoveTypeLayout, MoveValue},
     },
+    moved_primitives::ToEthAddress,
     std::sync::LazyLock,
 };
 

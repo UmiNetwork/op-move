@@ -1,10 +1,5 @@
 use {
-    super::{
-        state_changes::extract_evm_changes, type_utils::extract_evm_result, EvmNativeOutcome,
-        CODE_LAYOUT, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
-    },
     crate::{
-        block::HeaderForExecution,
         move_execution::{
             create_move_vm, create_vm_session, execute_transaction, tests::*,
             CanonicalExecutionInput,
@@ -37,6 +32,14 @@ use {
     move_vm_types::{
         gas::UnmeteredGasMeter,
         values::{Struct, Value},
+    },
+    moved_evm_ext::{
+        evm_native::{
+            extract_evm_changes, EvmNativeOutcome, CODE_LAYOUT, EVM_NATIVE_ADDRESS,
+            EVM_NATIVE_MODULE,
+        },
+        native_evm_context::HeaderForExecution,
+        type_utils::extract_evm_result,
     },
     revm::primitives::{TxKind, U256},
 };

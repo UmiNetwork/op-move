@@ -29,3 +29,4 @@ dotenvy.workspace = true
 eth_trie.workspace = true
 move-binary-format.workspace = true
 openssl.workspace = true
+moved-evm-ext = { path = "../evm-ext" }

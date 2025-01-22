@@ -1,0 +1,44 @@
+use {
+    move_binary_format::errors::PartialVMError,
+    move_core_types::effects::ChangeSet,
+    move_table_extension::TableChangeSet,
+    moved_genesis::{
+        build, config::GenesisConfig, SerdeAllChanges, SerdeChanges, SerdeTableChangeSet,
+    },
+    moved_state::{InMemoryState, State},
+    std::io::{Read, Write},
+};
+
+fn main() {
+    let state = InMemoryState::default();
+    let genesis_config = GenesisConfig::default();
+
+    save(&genesis_config, &state);
+}
+
+pub fn save(
+    config: &GenesisConfig,
+    state: &impl State<Err = PartialVMError>,
+) -> (ChangeSet, TableChangeSet) {
+    let path = std::env::var("OUT_DIR").unwrap() + "/genesis.bin";
+    let (changes, tables) = build(config, state);
+    let changes = SerdeChanges::from(changes);
+    let tables = SerdeTableChangeSet::from(tables);
+    let all_changes = SerdeAllChanges::new(changes, tables);
+    let contents = bcs::to_bytes(&all_changes).unwrap();
+    let mut file = std::fs::File::create(path).unwrap();
+    file.write_all(contents.as_slice()).unwrap();
+    file.flush().unwrap();
+
+    (all_changes.changes.into(), all_changes.tables.into())
+}
+
+pub fn try_load() -> Option<(ChangeSet, TableChangeSet)> {
+    let path = std::env::var("OUT_DIR").unwrap() + "/genesis.bin";
+    let mut file = std::fs::File::open(path).ok()?;
+    let mut contents = Vec::new();
+    file.read_to_end(&mut contents).ok()?;
+    let contents: SerdeAllChanges = bcs::from_bytes(contents.as_slice()).ok()?;
+
+    Some((contents.changes.into(), contents.tables.into()))
+}

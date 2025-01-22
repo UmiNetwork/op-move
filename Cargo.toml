@@ -1,10 +1,10 @@
 [workspace]
 resolver = "2"
 members = [
-    "engine-api",
-    "genesis-builder",
-    "moved",
-    "server",
+    "engine-api", "evm-ext", "genesis",
+    "genesis-builder", "genesis-image",
+    "moved", "primitives",
+    "server", "state",
     "storage",
 ]
 

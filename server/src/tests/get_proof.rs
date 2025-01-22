@@ -3,13 +3,13 @@ use {
     eth_trie::{EthTrie, MemoryDB, Trie},
     moved::{
         genesis::config::GenesisConfig,
-        move_execution::evm_native::trie_types,
         types::{queries::ProofResponse, state::StateMessage},
     },
     moved_engine_api::schema::{
         ForkchoiceUpdatedResponseV1, GetBlockResponse, GetPayloadResponseV3, PayloadStatusV1,
         Status,
     },
+    moved_evm_ext::evm_native::trie_types,
     serde::de::DeserializeOwned,
     std::sync::Arc,
     tokio::sync::mpsc,

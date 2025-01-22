@@ -1,6 +1,5 @@
 pub use {
     eth_token::{mint_eth, quick_get_eth_balance, BaseTokenAccounts, MovedBaseTokenAccounts},
-    evm_native::genesis_state_changes,
     gas::{
         CreateEcotoneL1GasFee, CreateL1GasFee, CreateL2GasFee, CreateMovedL2GasFee, EcotoneGasFee,
         L1GasFee, L1GasFeeInput, L2GasFee, L2GasFeeInput, MovedGasFee,
@@ -9,9 +8,7 @@ pub use {
 };
 
 use {
-    self::evm_native::events::{evm_logs_event_to_log, EVM_LOGS_EVENT_LAYOUT, EVM_LOGS_EVENT_TAG},
     crate::{
-        block::HeaderForExecution,
         genesis::config::GenesisConfig,
         primitives::{ToEthAddress, B256},
         types::{
@@ -43,13 +40,16 @@ use {
     move_vm_runtime::{
         move_vm::MoveVM, native_extensions::NativeContextExtensions, session::Session,
     },
+    moved_evm_ext::{
+        evm_native::events::{evm_logs_event_to_log, EVM_LOGS_EVENT_LAYOUT, EVM_LOGS_EVENT_TAG},
+        native_evm_context::HeaderForExecution,
+    },
     std::ops::Deref,
 };
 
 mod canonical;
 mod deposited;
 mod eth_token;
-pub mod evm_native;
 mod execute;
 mod gas;
 mod nonces;
@@ -71,7 +71,7 @@ pub fn create_move_vm() -> crate::Result<MoveVM> {
         Features::default(),
     );
     let mut natives = aptos_natives_with_builder(&mut builder);
-    evm_native::append_evm_natives(&mut natives, &builder);
+    moved_evm_ext::evm_native::append_evm_natives(&mut natives, &builder);
     let vm = MoveVM::new(natives)?;
     Ok(vm)
 }
@@ -108,7 +108,7 @@ where
     native_extensions.add(NativeTableContext::new(txn_hash, state));
 
     // EVM native extension
-    native_extensions.add(evm_native::NativeEVMContext::new(
+    native_extensions.add(moved_evm_ext::evm_native::NativeEVMContext::new(
         state,
         session_id.block_header,
     ));

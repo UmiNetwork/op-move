@@ -1,13 +1,12 @@
 use {
-    super::{
+    crate::{
+        evm_native::{trie_types, CODE_LAYOUT, EVM_NATIVE_ADDRESS},
         native_evm_context::NativeEVMContext,
         type_utils::{
             account_info_struct_tag, account_storage_struct_tag, code_hash_struct_tag,
             get_account_code_hash,
         },
-        CODE_LAYOUT, EVM_NATIVE_ADDRESS,
     },
-    crate::move_execution::evm_native::trie_types,
     move_binary_format::errors::PartialVMError,
     move_core_types::{
         effects::{AccountChangeSet, ChangeSet, Op},

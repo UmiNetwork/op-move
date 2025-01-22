@@ -1,24 +1,30 @@
 use {
-    self::config::GenesisConfig, crate::storage::State, move_binary_format::errors::PartialVMError,
-    move_core_types::effects::ChangeSet, move_table_extension::TableChangeSet,
+    self::config::GenesisConfig, move_binary_format::errors::PartialVMError,
+    move_core_types::effects::ChangeSet, move_table_extension::TableChangeSet, moved_state::State,
 };
 
-pub use framework::FRAMEWORK_ADDRESS;
+pub use {
+    cache::{
+        SerdeAccountChanges, SerdeAllChanges, SerdeChanges, SerdeOp, SerdeTableChange,
+        SerdeTableChangeSet, SerdeTableInfo,
+    },
+    framework::FRAMEWORK_ADDRESS,
+};
 
 mod cache;
 pub mod config;
 mod framework;
 mod l2_contracts;
+mod vm;
 
 pub fn init(
-    _config: &GenesisConfig,
-    _state: &impl State<Err = PartialVMError>,
+    config: &GenesisConfig,
+    state: &impl State<Err = PartialVMError>,
 ) -> (ChangeSet, TableChangeSet) {
-    moved_genesis_image::load()
-    // cache::try_load().unwrap_or_else(|| cache::save(config, state))
+    cache::try_load().unwrap_or_else(|| cache::save(config, state))
 }
 
-pub fn init_raw(
+pub fn build(
     config: &GenesisConfig,
     state: &impl State<Err = PartialVMError>,
 ) -> (ChangeSet, TableChangeSet) {
@@ -31,7 +37,7 @@ pub fn init_raw(
     let mut changes = ChangeSet::new();
 
     // Deploy Move/Aptos/Sui frameworks
-    let (changes_framework, table_changes) = framework::init_state(state);
+    let (changes_framework, table_changes) = framework::init_state((), state);
 
     // Deploy OP stack L2 contracts
     let changes_l2 = l2_contracts::init_state(l2_contract_genesis, state);
@@ -67,7 +73,7 @@ pub fn apply(
     );
 }
 
-pub fn init_and_apply(config: &GenesisConfig, state: &mut impl State<Err = PartialVMError>) {
+pub fn build_and_apply(config: &GenesisConfig, state: &mut impl State<Err = PartialVMError>) {
     let (changes, table_changes) = init(config, state);
     apply(changes, table_changes, config, state);
 }

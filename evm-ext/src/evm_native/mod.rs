@@ -21,9 +21,6 @@ mod state_changes;
 pub mod trie_types;
 pub mod type_utils;
 
-#[cfg(test)]
-mod tests;
-
 /// Address where the EVM native is stored
 pub const EVM_NATIVE_ADDRESS: AccountAddress = AccountAddress::ONE;
 

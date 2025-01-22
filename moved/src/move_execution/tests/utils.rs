@@ -266,7 +266,7 @@ impl TestContext {
                     l2_fee,
                     l2_input: l2_gas_input,
                     base_token: &(),
-                    block_header: HeaderForExecution::default(),
+                    block_header: Default::default(),
                 }
                 .into(),
                 NormalizedExtendedTxEnvelope::DepositedTx(tx) => DepositExecutionInput {
@@ -274,7 +274,7 @@ impl TestContext {
                     tx_hash: &tx_hash,
                     state: self.state.resolver(),
                     genesis_config: &self.genesis_config,
-                    block_header: HeaderForExecution::default(),
+                    block_header: Default::default(),
                 }
                 .into(),
             }),
@@ -288,7 +288,7 @@ impl TestContext {
                     l2_fee,
                     l2_input: l2_gas_input,
                     base_token: moved_base_token,
-                    block_header: HeaderForExecution::default(),
+                    block_header: Default::default(),
                 }
                 .into(),
                 NormalizedExtendedTxEnvelope::DepositedTx(tx) => DepositExecutionInput {
@@ -296,7 +296,7 @@ impl TestContext {
                     tx_hash: &tx_hash,
                     state: self.state.resolver(),
                     genesis_config: &self.genesis_config,
-                    block_header: HeaderForExecution::default(),
+                    block_header: Default::default(),
                 }
                 .into(),
             }),

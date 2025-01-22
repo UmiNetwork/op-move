@@ -1,11 +1,9 @@
 use {
     crate::{
-        block::HeaderForExecution,
         error::UserError,
         genesis::config::GenesisConfig,
         move_execution::{
             create_move_vm, create_vm_session, eth_token,
-            evm_native::{self, EvmNativeOutcome},
             gas::{new_gas_meter, total_gas_used},
             DepositExecutionInput, ADDRESS_LAYOUT, U256_LAYOUT,
         },
@@ -23,6 +21,10 @@ use {
     },
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
     move_vm_types::values::Value,
+    moved_evm_ext::{
+        evm_native::{self, EvmNativeOutcome},
+        native_evm_context::HeaderForExecution,
+    },
 };
 
 // Topic identifying the event

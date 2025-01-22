@@ -2,7 +2,7 @@ use {
     super::tag_validation::{validate_entry_type_tag, validate_entry_value},
     crate::{
         error::Error,
-        move_execution::{eth_token::burn_eth, evm_native, ADDRESS_LAYOUT, U256_LAYOUT},
+        move_execution::{eth_token::burn_eth, ADDRESS_LAYOUT, U256_LAYOUT},
         primitives::{ToMoveU256, U256},
         Error::User,
         InvalidTransactionCause, ScriptTransaction, UserError,
@@ -17,6 +17,7 @@ use {
     },
     move_vm_runtime::{module_traversal::TraversalContext, session::Session},
     move_vm_types::{gas::GasMeter, loaded_data::runtime_types::Type, values::Value},
+    moved_evm_ext::evm_native,
 };
 
 pub(super) fn execute_entry_function<G: GasMeter>(

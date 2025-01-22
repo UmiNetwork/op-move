@@ -10,7 +10,6 @@ use {
     crate::{
         block::{
             BaseGasFee, Block, BlockHash, BlockQueries, BlockRepository, ExtendedBlock, Header,
-            HeaderForExecution,
         },
         genesis::config::GenesisConfig,
         move_execution::{
@@ -45,6 +44,7 @@ use {
     },
     move_binary_format::errors::PartialVMError,
     move_core_types::effects::ChangeSet,
+    moved_evm_ext::native_evm_context::HeaderForExecution,
     revm::primitives::TxKind,
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},

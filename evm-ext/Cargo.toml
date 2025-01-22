@@ -1,8 +1,8 @@
 [package]
-name = "moved"
-description = "Moved execution"
-version = "0.1.0"
-edition = "2021"
+name = "moved-evm-ext"
+description.workspace = true
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
 alloy.workspace = true
@@ -43,8 +43,7 @@ sui-framework.workspace = true
 sui-types.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
-moved-evm-ext = { path = "../evm-ext" }
-moved-genesis-image = { path = "../genesis-image" }
+moved-primitives = { path = "../primitives" }
 
 [dev-dependencies]
 anyhow.workspace = true

@@ -1,12 +1,12 @@
 use {
     super::{EvmNativeOutcome, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE},
-    crate::primitives::{ToEthAddress, ToMoveAddress, ToMoveU256},
     alloy::hex::ToHexExt,
     move_core_types::{
         account_address::AccountAddress, identifier::Identifier, language_storage::StructTag,
     },
     move_vm_runtime::session::SerializedReturnValues,
     move_vm_types::values::{Struct, Value, Vector},
+    moved_primitives::{ToEthAddress, ToMoveAddress, ToMoveU256},
     revm::primitives::{utilities::KECCAK_EMPTY, AccountInfo, Address, ExecutionResult, Log, B256},
 };
 

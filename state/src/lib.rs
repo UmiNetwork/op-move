@@ -1,8 +1,6 @@
+mod nodes;
+
 use {
-    crate::{
-        primitives::{Address, KeyHashable, B256},
-        types::state::{TreeKey, TreeValue},
-    },
     alloy::hex::FromHex,
     aptos_types::state_store::{state_key::StateKey, state_value::StateValue},
     eth_trie::{EthTrie, MemoryDB, Trie, TrieError, DB},
@@ -14,6 +12,8 @@ use {
         type_utils::{ACCOUNT_INFO_PREFIX, ACCOUNT_STORAGE_PREFIX},
         EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
     },
+    moved_primitives::{Address, KeyHashable, B256},
+    nodes::{TreeKey, TreeValue},
     std::{collections::HashMap, fmt::Debug, sync::Arc},
 };
 

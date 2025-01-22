@@ -54,6 +54,7 @@ use {
 
 mod counter;
 mod data_type;
+mod evm_native;
 mod framework;
 mod gas_cost;
 mod marketplace;
