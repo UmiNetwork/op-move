@@ -97,7 +97,8 @@ mod tests {
             "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
             "nonce": "0x0000000000000000",
             "uncles": [],
-            "transactions": []
+            "transactions": [],
+            "withdrawals": []
         }"#).unwrap();
 
         let response = execute(request, state_channel).await.unwrap();
