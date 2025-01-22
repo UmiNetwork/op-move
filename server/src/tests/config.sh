@@ -45,7 +45,7 @@ config=$(cat << EOL
   "batchInboxAddress": "0xff00000000000000000000000000000000042069",
   "batchSenderAddress": "$BATCHER_ADDRESS",
 
-  "l2OutputOracleSubmissionInterval": 120,
+  "l2OutputOracleSubmissionInterval": 30,
   "l2OutputOracleStartingBlockNumber": 0,
   "l2OutputOracleStartingTimestamp": $timestamp,
 
@@ -98,7 +98,7 @@ config=$(cat << EOL
   "proofMaturityDelaySeconds": 604800,
   "disputeGameFinalityDelaySeconds": 302400,
   "respectedGameType": 0,
-  "useFaultProofs": true,
+  "useFaultProofs": false,
 
 
 

@@ -1,8 +1,9 @@
 use {
     alloy::{
         contract::CallBuilder,
+        dyn_abi::EventExt,
         network::{EthereumWallet, TransactionBuilder},
-        primitives::{address, utils::parse_ether, Address, U256},
+        primitives::{address, utils::parse_ether, Address, B256, U256},
         providers::{Provider, ProviderBuilder},
         rpc::types::eth::TransactionRequest,
         signers::{
@@ -27,16 +28,20 @@ use {
         io::{prelude::*, Read},
         process::{Child, Command, Output},
         str::FromStr,
-        time::Duration,
+        time::{Duration, Instant},
     },
     tokio::{fs, runtime::Runtime},
 };
 
 const GETH_START_IN_SECS: u64 = 1; // 1 seconds to kick off L1 geth in dev mode
 const L2_RPC_URL: &str = "http://localhost:8545";
-const OP_BRIDGE_IN_SECS: u64 = 90;
+const OP_BRIDGE_IN_SECS: u64 = 2 * 60; // Allow up to two minutes for bridging
+const OP_BRIDGE_POLL_IN_SECS: u64 = 5;
 const OP_START_IN_SECS: u64 = 20;
 const TXN_RECEIPT_WAIT_IN_MILLIS: u64 = 100;
+
+mod heartbeat;
+mod withdrawal;
 
 #[tokio::test]
 async fn test_on_ethereum() -> Result<()> {
@@ -64,6 +69,11 @@ async fn test_on_ethereum() -> Result<()> {
     generate_genesis();
     generate_jwt()?;
 
+    // Background task to send transactions to L1 at regular intervals.
+    // This ensures the L1 will consistently be producing blocks which
+    // is something `op-proposer` expects.
+    let hb = heartbeat::start_heartbeat();
+
     // 7. Init op-geth to start accepting requests
     let op_geth = init_and_start_op_geth()?;
 
@@ -81,6 +91,15 @@ async fn test_on_ethereum() -> Result<()> {
     deploy_move_counter().await?;
 
     // 12. Cleanup generated files and folders
+    hb.abort();
+    tokio::select! {
+        join_result = hb => {
+            join_result.expect_err("Task aborted");
+        }
+        _ = tokio::time::sleep(Duration::from_secs(30)) => {
+            println!("WARN: failed to shutdown heartbeat task within 30s");
+        }
+    }
     cleanup_files();
     op_move_runtime.shutdown_background();
     cleanup_processes(vec![geth, op_geth, op_node, op_batcher, op_proposer])
@@ -114,11 +133,12 @@ async fn fund_accounts() -> Result<()> {
     // Normally we just fund these accounts once, but for some reason to generate a genesis file
     // we need at least 98 transactions on geth. So we repeat the transactions just to catch up.
     for _ in 0..10 {
-        send_ethers(&from_wallet, var("ADMIN_ADDRESS")?.parse()?, "10", true).await?;
-        send_ethers(&from_wallet, var("BATCHER_ADDRESS")?.parse()?, "10", true).await?;
-        send_ethers(&from_wallet, var("PROPOSER_ADDRESS")?.parse()?, "10", true).await?;
+        l1_send_ethers(&from_wallet, var("ADMIN_ADDRESS")?.parse()?, "10", true).await?;
+        l1_send_ethers(&from_wallet, var("BATCHER_ADDRESS")?.parse()?, "10", true).await?;
+        l1_send_ethers(&from_wallet, var("PROPOSER_ADDRESS")?.parse()?, "10", true).await?;
         let factory_deployer_address = address!("3fAB184622Dc19b6109349B94811493BF2a45362");
-        send_ethers(&from_wallet, factory_deployer_address, "1", true).await?;
+        l1_send_ethers(&from_wallet, factory_deployer_address, "1", true).await?;
+        l1_send_ethers(&from_wallet, heartbeat::ADDRESS, "10", true).await?;
     }
     Ok(())
 }
@@ -242,7 +262,8 @@ async fn start_geth() -> Result<Child> {
     let geth_process = Command::new("geth")
         .current_dir("src/tests/optimism/")
         .args([
-            // Generates blocks as the transactions come in with the --dev flag
+            // Ephemeral proof-of-authority network with a pre-funded developer account,
+            // with automatic mining when there are pending transactions.
             "--dev",
             "--datadir",
             "./l1_datadir",
@@ -410,6 +431,10 @@ fn run_op() -> Result<(Child, Child, Child)> {
             &var("PROPOSER_PRIVATE_KEY").expect("Missing proposer private key"),
             "--l1-eth-rpc",
             &var("L1_RPC_URL").expect("Missing Ethereum L1 RPC URL"),
+            "--num-confirmations",
+            "1",
+            "--allow-non-finalized",
+            "true",
         ])
         .stdout(op_proposer_logs)
         .spawn()?;
@@ -418,14 +443,32 @@ fn run_op() -> Result<(Child, Child, Child)> {
 
 async fn use_optimism_bridge() -> Result<()> {
     pause(Some(Duration::from_secs(OP_START_IN_SECS)));
+
+    deposit_to_l2().await?;
+    withdrawal::withdraw_to_l1().await?;
+
+    Ok(())
+}
+
+async fn deposit_to_l2() -> Result<()> {
+    let amount = "100";
+
     let bridge_address = Address::from_str(&get_deployed_address("L1StandardBridgeProxy")?)?;
     let prefunded_wallet = get_prefunded_wallet().await?;
-    send_ethers(&prefunded_wallet, bridge_address, "100", false).await?;
 
-    // The tokens sent to the bridge proxy should show up in OP node in over a minute
-    pause(Some(Duration::from_secs(OP_BRIDGE_IN_SECS)));
-    let balance = get_op_balance(prefunded_wallet.address()).await?;
-    assert_eq!(balance, parse_ether("100")?);
+    let pre_deposit_balance = get_op_balance(prefunded_wallet.address()).await?;
+    l1_send_ethers(&prefunded_wallet, bridge_address, amount, false).await?;
+
+    let now = Instant::now();
+    let expected_balance = pre_deposit_balance + parse_ether(amount)?;
+    while get_op_balance(prefunded_wallet.address()).await? != expected_balance {
+        if now.elapsed().as_secs() > OP_BRIDGE_IN_SECS {
+            anyhow::bail!(
+                "Failed to receive bridged funds within {OP_BRIDGE_POLL_IN_SECS} seconds"
+            );
+        }
+        tokio::time::sleep(Duration::from_secs(OP_BRIDGE_POLL_IN_SECS)).await;
+    }
     Ok(())
 }
 
@@ -519,12 +562,39 @@ async fn get_code_size(address: Address) -> Result<usize> {
     Ok(bytecode.len())
 }
 
+async fn l1_send_ethers(
+    from_wallet: &PrivateKeySigner,
+    to: Address,
+    how_many_ethers: &str,
+    check_balance: bool,
+) -> Result<()> {
+    send_ethers(
+        from_wallet,
+        to,
+        how_many_ethers,
+        check_balance,
+        &var("L1_RPC_URL")?,
+    )
+    .await?;
+    Ok(())
+}
+
+async fn l2_send_ethers(
+    from_wallet: &PrivateKeySigner,
+    to: Address,
+    how_many_ethers: &str,
+    check_balance: bool,
+) -> Result<B256> {
+    send_ethers(from_wallet, to, how_many_ethers, check_balance, L2_RPC_URL).await
+}
+
 async fn send_ethers(
     from_wallet: &PrivateKeySigner,
     to: Address,
     how_many_ethers: &str,
     check_balance: bool,
-) -> Result<U256> {
+    url: &str,
+) -> Result<B256> {
     let from = from_wallet.address();
     let tx = TransactionRequest::default()
         .with_from(from)
@@ -534,17 +604,17 @@ async fn send_ethers(
     let provider = ProviderBuilder::new()
         .with_recommended_fillers()
         .wallet(EthereumWallet::from(from_wallet.to_owned()))
-        .on_http(Url::parse(&var("L1_RPC_URL")?)?);
+        .on_http(Url::parse(url)?);
     let prev_balance = provider.get_balance(to).await?;
     let receipt = provider.send_transaction(tx).await?;
     pause(Some(Duration::from_millis(TXN_RECEIPT_WAIT_IN_MILLIS)));
-    receipt.watch().await?;
+    let tx_hash = receipt.watch().await?;
 
-    let new_balance = provider.get_balance(to).await?;
     if check_balance {
+        let new_balance = provider.get_balance(to).await?;
         assert_eq!(new_balance - prev_balance, parse_ether(how_many_ethers)?);
     }
-    Ok(new_balance)
+    Ok(tx_hash)
 }
 
 async fn get_op_balance(account: Address) -> Result<U256> {
