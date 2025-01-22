@@ -8,6 +8,8 @@ use {
 };
 
 pub trait BlockQueries: Debug {
+    /// The associated error type for the backing storage access operation.
+    type Err;
     type Storage;
 
     fn by_hash(
@@ -15,14 +17,14 @@ pub trait BlockQueries: Debug {
         storage: &Self::Storage,
         hash: B256,
         include_transactions: bool,
-    ) -> Option<BlockResponse>;
+    ) -> Result<Option<BlockResponse>, Self::Err>;
 
     fn by_height(
         &self,
         storage: &Self::Storage,
         height: u64,
         include_transactions: bool,
-    ) -> Option<BlockResponse>;
+    ) -> Result<Option<BlockResponse>, Self::Err>;
 }
 
 pub trait BlockRepository: Debug {

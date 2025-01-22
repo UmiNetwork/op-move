@@ -1,5 +1,6 @@
 mod all;
 mod block;
+mod generic;
 mod state;
 mod trie;
 

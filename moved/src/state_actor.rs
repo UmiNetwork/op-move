@@ -228,14 +228,14 @@ impl<
                 response_channel,
                 include_transactions,
             } => response_channel
-                .send(self.block_queries.by_hash(&self.block_memory, hash, include_transactions))
+                .send(self.block_queries.by_hash(&self.block_memory, hash, include_transactions).ok().flatten())
                 .ok(),
             Query::BlockByHeight {
                 height,
                 response_channel,
                 include_transactions,
             } => response_channel
-                .send(self.block_queries.by_height(&self.block_memory, self.resolve_height(height), include_transactions))
+                .send(self.block_queries.by_height(&self.block_memory, self.resolve_height(height), include_transactions).ok().flatten())
                 .ok(),
             Query::BlockNumber {
                 response_channel,
@@ -299,7 +299,8 @@ impl<
             BlockId::Number(n) => self.resolve_height(n),
             BlockId::Hash(h) => {
                 self.block_queries
-                    .by_hash(&self.block_memory, h.block_hash, false)?
+                    .by_hash(&self.block_memory, h.block_hash, false)
+                    .ok()??
                     .0
                     .header
                     .number
@@ -590,7 +591,8 @@ impl<
         let (rx, block_hash) = self.tx_receipts.get(&tx_hash)?;
         let block = self
             .block_queries
-            .by_hash(&self.block_memory, *block_hash, false)?;
+            .by_hash(&self.block_memory, *block_hash, false)
+            .ok()??;
         let contract_address = rx.contract_address;
         let (to, from) = match &rx.normalized_tx {
             NormalizedExtendedTxEnvelope::Canonical(tx) => {
