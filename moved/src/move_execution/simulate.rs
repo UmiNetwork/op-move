@@ -22,7 +22,7 @@ use {
     move_core_types::resolver::MoveResolver,
     move_table_extension::TableResolver,
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
-    moved_evm_ext::native_evm_context::HeaderForExecution,
+    moved_evm_ext::evm_native::HeaderForExecution,
     moved_genesis::config::GenesisConfig,
     moved_primitives::{ToMoveAddress, B256, U256},
     std::time::{SystemTime, UNIX_EPOCH},

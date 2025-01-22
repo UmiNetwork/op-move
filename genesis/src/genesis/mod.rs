@@ -1,28 +1,21 @@
+pub use {
+    framework::FRAMEWORK_ADDRESS,
+    serde::{
+        SerdeAccountChanges, SerdeAllChanges, SerdeChanges, SerdeOp, SerdeTableChange,
+        SerdeTableChangeSet, SerdeTableInfo,
+    },
+};
+
 use {
     self::config::GenesisConfig, move_binary_format::errors::PartialVMError,
     move_core_types::effects::ChangeSet, move_table_extension::TableChangeSet, moved_state::State,
 };
 
-pub use {
-    cache::{
-        SerdeAccountChanges, SerdeAllChanges, SerdeChanges, SerdeOp, SerdeTableChange,
-        SerdeTableChangeSet, SerdeTableInfo,
-    },
-    framework::FRAMEWORK_ADDRESS,
-};
-
-mod cache;
 pub mod config;
 mod framework;
 mod l2_contracts;
+mod serde;
 mod vm;
-
-pub fn init(
-    config: &GenesisConfig,
-    state: &impl State<Err = PartialVMError>,
-) -> (ChangeSet, TableChangeSet) {
-    cache::try_load().unwrap_or_else(|| cache::save(config, state))
-}
 
 pub fn build(
     config: &GenesisConfig,
@@ -74,6 +67,6 @@ pub fn apply(
 }
 
 pub fn build_and_apply(config: &GenesisConfig, state: &mut impl State<Err = PartialVMError>) {
-    let (changes, table_changes) = init(config, state);
+    let (changes, table_changes) = build(config, state);
     apply(changes, table_changes, config, state);
 }

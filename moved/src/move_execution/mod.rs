@@ -36,9 +36,9 @@ use {
     move_vm_runtime::{
         move_vm::MoveVM, native_extensions::NativeContextExtensions, session::Session,
     },
-    moved_evm_ext::{
-        evm_native::events::{evm_logs_event_to_log, EVM_LOGS_EVENT_LAYOUT, EVM_LOGS_EVENT_TAG},
-        native_evm_context::HeaderForExecution,
+    moved_evm_ext::evm_native::{
+        events::{evm_logs_event_to_log, EVM_LOGS_EVENT_LAYOUT, EVM_LOGS_EVENT_TAG},
+        HeaderForExecution,
     },
     moved_genesis::config::GenesisConfig,
     moved_primitives::{ToEthAddress, B256},

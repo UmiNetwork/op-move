@@ -6,7 +6,7 @@ use {
         build, config::GenesisConfig, SerdeAllChanges, SerdeChanges, SerdeTableChangeSet,
     },
     moved_state::{InMemoryState, State},
-    std::io::{Read, Write},
+    std::io::Write,
 };
 
 fn main() {
@@ -31,14 +31,4 @@ pub fn save(
     file.flush().unwrap();
 
     (all_changes.changes.into(), all_changes.tables.into())
-}
-
-pub fn try_load() -> Option<(ChangeSet, TableChangeSet)> {
-    let path = std::env::var("OUT_DIR").unwrap() + "/genesis.bin";
-    let mut file = std::fs::File::open(path).ok()?;
-    let mut contents = Vec::new();
-    file.read_to_end(&mut contents).ok()?;
-    let contents: SerdeAllChanges = bcs::from_bytes(contents.as_slice()).ok()?;
-
-    Some((contents.changes.into(), contents.tables.into()))
 }

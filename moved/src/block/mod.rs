@@ -13,5 +13,5 @@ pub use {
     gas::{BaseGasFee, Eip1559GasFee},
     hash::{BlockHash, MovedBlockHash},
     in_memory::{BlockMemory, InMemoryBlockQueries, InMemoryBlockRepository},
-    root::{Block, BlockQueries, BlockRepository, ExtendedBlock, Header, HeaderForExecution},
+    root::{Block, BlockQueries, BlockRepository, ExtendedBlock, Header},
 };

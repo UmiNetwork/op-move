@@ -19,10 +19,7 @@ use {
     },
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
     move_vm_types::values::Value,
-    moved_evm_ext::{
-        evm_native::{self, EvmNativeOutcome},
-        native_evm_context::HeaderForExecution,
-    },
+    moved_evm_ext::evm_native::{self, EvmNativeOutcome, HeaderForExecution},
     moved_genesis::config::GenesisConfig,
     moved_primitives::{ToMoveAddress, ToMoveU256, B256},
 };

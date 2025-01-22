@@ -31,13 +31,9 @@ use {
         gas::UnmeteredGasMeter,
         values::{Struct, Value},
     },
-    moved_evm_ext::{
-        evm_native::{
-            extract_evm_changes, EvmNativeOutcome, CODE_LAYOUT, EVM_NATIVE_ADDRESS,
-            EVM_NATIVE_MODULE,
-        },
-        native_evm_context::HeaderForExecution,
-        type_utils::extract_evm_result,
+    moved_evm_ext::evm_native::{
+        extract_evm_changes, extract_evm_result, EvmNativeOutcome, CODE_LAYOUT, EVM_NATIVE_ADDRESS,
+        EVM_NATIVE_MODULE,
     },
     moved_primitives::{ToEthAddress, ToMoveAddress, ToMoveU256},
     moved_state::{InMemoryState, State},

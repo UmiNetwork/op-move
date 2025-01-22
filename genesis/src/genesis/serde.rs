@@ -1,7 +1,5 @@
 use {
-    crate::genesis::{build, config::GenesisConfig},
     bytes::Bytes,
-    move_binary_format::errors::PartialVMError,
     move_core_types::{
         account_address::AccountAddress,
         effects::{AccountChanges, ChangeSet, Op},
@@ -9,11 +7,7 @@ use {
         language_storage::{ModuleId, StructTag, TypeTag},
     },
     move_table_extension::{TableChange, TableChangeSet, TableHandle, TableInfo},
-    moved_state::State,
-    std::{
-        collections::{BTreeMap, BTreeSet},
-        io::{Read, Write},
-    },
+    std::collections::{BTreeMap, BTreeSet},
 };
 
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, serde::Serialize, serde::Deserialize)]
@@ -204,31 +198,4 @@ impl From<SerdeTableChangeSet> for TableChangeSet {
                 .collect(),
         }
     }
-}
-
-pub fn save(
-    config: &GenesisConfig,
-    state: &impl State<Err = PartialVMError>,
-) -> (ChangeSet, TableChangeSet) {
-    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/genesis.bin");
-    let (changes, tables) = build(config, state);
-    let changes = SerdeChanges::from(changes);
-    let tables = SerdeTableChangeSet::from(tables);
-    let all_changes = SerdeAllChanges::new(changes, tables);
-    let contents = bcs::to_bytes(&all_changes).unwrap();
-    let mut file = std::fs::File::create(path).unwrap();
-    file.write_all(contents.as_slice()).unwrap();
-    file.flush().unwrap();
-
-    (all_changes.changes.into(), all_changes.tables.into())
-}
-
-pub fn try_load() -> Option<(ChangeSet, TableChangeSet)> {
-    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/genesis.bin");
-    let mut file = std::fs::File::open(path).ok()?;
-    let mut contents = Vec::new();
-    file.read_to_end(&mut contents).ok()?;
-    let contents: SerdeAllChanges = bcs::from_bytes(contents.as_slice()).ok()?;
-
-    Some((contents.changes.into(), contents.tables.into()))
 }

@@ -80,12 +80,3 @@ impl Block {
         ExtendedBlock::new(hash, U256::ZERO, self)
     }
 }
-
-/// A subset of the `Header` fields that are available while the transactions
-/// in the block are being executed.
-#[derive(Debug, Clone, Default)]
-pub struct HeaderForExecution {
-    pub number: u64,
-    pub timestamp: u64,
-    pub prev_randao: B256,
-}
