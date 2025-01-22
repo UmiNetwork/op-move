@@ -7,7 +7,7 @@ use {
         primitives::B256,
         types::state::BlockResponse,
     },
-    std::collections::HashMap,
+    std::{collections::HashMap, convert::Infallible},
 };
 
 /// A storage for blocks that keeps data in memory.
@@ -92,6 +92,7 @@ impl BlockRepository for InMemoryBlockRepository {
 pub struct InMemoryBlockQueries;
 
 impl BlockQueries for InMemoryBlockQueries {
+    type Err = Infallible;
     type Storage = BlockMemory;
 
     fn by_hash(
@@ -99,14 +100,14 @@ impl BlockQueries for InMemoryBlockQueries {
         mem: &BlockMemory,
         hash: B256,
         include_transactions: bool,
-    ) -> Option<BlockResponse> {
-        if include_transactions {
+    ) -> Result<Option<BlockResponse>, Self::Err> {
+        Ok(if include_transactions {
             mem.by_hash(hash)
                 .map(BlockResponse::from_block_with_transactions)
         } else {
             mem.by_hash(hash)
                 .map(BlockResponse::from_block_with_transaction_hashes)
-        }
+        })
     }
 
     fn by_height(
@@ -114,14 +115,14 @@ impl BlockQueries for InMemoryBlockQueries {
         mem: &BlockMemory,
         height: u64,
         include_transactions: bool,
-    ) -> Option<BlockResponse> {
-        if include_transactions {
+    ) -> Result<Option<BlockResponse>, Self::Err> {
+        Ok(if include_transactions {
             mem.by_height(height)
                 .map(BlockResponse::from_block_with_transactions)
         } else {
             mem.by_height(height)
                 .map(BlockResponse::from_block_with_transaction_hashes)
-        }
+        })
     }
 }
 
@@ -130,14 +131,25 @@ mod test_doubles {
     use super::*;
 
     impl BlockQueries for () {
+        type Err = Infallible;
         type Storage = ();
 
-        fn by_hash(&self, _: &Self::Storage, _: B256, _: bool) -> Option<BlockResponse> {
-            None
+        fn by_hash(
+            &self,
+            _: &Self::Storage,
+            _: B256,
+            _: bool,
+        ) -> Result<Option<BlockResponse>, Self::Err> {
+            Ok(None)
         }
 
-        fn by_height(&self, _: &Self::Storage, _: u64, _: bool) -> Option<BlockResponse> {
-            None
+        fn by_height(
+            &self,
+            _: &Self::Storage,
+            _: u64,
+            _: bool,
+        ) -> Result<Option<BlockResponse>, Self::Err> {
+            Ok(None)
         }
     }
 
