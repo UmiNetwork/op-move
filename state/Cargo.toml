@@ -1,6 +1,6 @@
 [package]
 name = "moved-state"
-description.workspace = true
+description = "Defines the domain of blockchain state"
 version.workspace = true
 edition.workspace = true
 
@@ -14,8 +14,8 @@ move-binary-format.workspace = true
 move-core-types.workspace = true
 move-table-extension.workspace = true
 move-vm-test-utils.workspace = true
-moved-evm-ext = { path = "../evm-ext" }
-moved-primitives = { path = "../primitives" }
+moved-evm-ext.workspace = true
+moved-primitives.workspace = true
 
 [features]
 default = []

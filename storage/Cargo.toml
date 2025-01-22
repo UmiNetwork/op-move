@@ -11,8 +11,8 @@ move-binary-format.workspace = true
 move-core-types.workspace = true
 move-table-extension.workspace = true
 moved.workspace = true
-moved-state = { path = "../state" }
-moved-primitives = { path = "../primitives" }
+moved-state.workspace = true
+moved-primitives.workspace = true
 rocksdb.workspace = true
 
 [dev-dependencies]

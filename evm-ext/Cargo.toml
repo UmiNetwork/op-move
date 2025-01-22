@@ -1,6 +1,6 @@
 [package]
 name = "moved-evm-ext"
-description.workspace = true
+description = "Extends the Move VM context with EVM module and built-in functions that allow for executing EVM bytecode inside Move VM"
 version.workspace = true
 edition.workspace = true
 
@@ -18,7 +18,7 @@ move-vm-runtime.workspace = true
 move-vm-types.workspace = true
 revm.workspace = true
 smallvec.workspace = true
-moved-primitives = { path = "../primitives" }
+moved-primitives.workspace = true
 
 [features]
 default = []

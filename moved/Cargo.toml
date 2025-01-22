@@ -30,11 +30,11 @@ serde.workspace = true
 sha2.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
-moved-evm-ext = { path = "../evm-ext" }
-moved-genesis = { path = "../genesis" }
-moved-genesis-image = { path = "../genesis-image" }
-moved-primitives = { path = "../primitives" }
-moved-state = { path = "../state" }
+moved-evm-ext.workspace = true
+moved-genesis.workspace = true
+moved-genesis-image.workspace = true
+moved-primitives.workspace = true
+moved-state.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true

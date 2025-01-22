@@ -1,6 +1,6 @@
 [package]
 name = "moved-genesis"
-description.workspace = true
+description = "Defines the domain of genesis blockchain state"
 version.workspace = true
 edition.workspace = true
 
@@ -25,9 +25,9 @@ serde.workspace = true
 serde_json.workspace = true
 sui-framework.workspace = true
 sui-types.workspace = true
-moved-primitives = { path = "../primitives" }
-moved-evm-ext = { path = "../evm-ext" }
-moved-state = { path = "../state" }
+moved-primitives.workspace = true
+moved-evm-ext.workspace = true
+moved-state.workspace = true
 
 [features]
 default = []

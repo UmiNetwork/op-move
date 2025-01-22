@@ -1,6 +1,6 @@
 [package]
 name = "moved-primitives"
-description.workspace = true
+description = "Defines the generic shared kernel of primitive types"
 version.workspace = true
 edition.workspace = true
 
