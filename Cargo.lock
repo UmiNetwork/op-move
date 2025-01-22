@@ -7101,6 +7101,7 @@ dependencies = [
  "moved-engine-api",
  "moved-evm-ext",
  "moved-genesis",
+ "moved-genesis-image",
  "moved-primitives",
  "moved-state",
  "once_cell",

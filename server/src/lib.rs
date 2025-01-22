@@ -138,7 +138,16 @@ pub fn initialize_state_actor(
     repository.add(&mut block_memory, genesis_block);
 
     let mut state = InMemoryState::new();
-    let (genesis_changes, table_changes) = moved_genesis::build(&genesis_config, &state);
+    let (genesis_changes, table_changes) = {
+        #[cfg(test)]
+        {
+            moved_genesis_image::load()
+        }
+        #[cfg(not(test))]
+        {
+            moved_genesis::build(&genesis_config, &state)
+        }
+    };
     let state_query = InMemoryStateQueries::from_genesis(genesis_config.initial_state_root);
     moved_genesis::apply(genesis_changes, table_changes, &genesis_config, &mut state);
 
