@@ -31,6 +31,10 @@ fn parse_params(
             data: request,
             message: "Not enough params".into(),
         }),
+        [a] => {
+            let transaction: TransactionRequest = json_utils::deserialize(a)?;
+            Ok((transaction, BlockNumberOrTag::Latest))
+        }
         [a, b] => {
             let transaction: TransactionRequest = json_utils::deserialize(a)?;
             let block_number: BlockNumberOrTag = json_utils::deserialize(b)?;
@@ -71,6 +75,19 @@ mod tests {
         std::str::FromStr,
         test_case::test_case,
     };
+
+    #[test]
+    fn test_parse_params_empty_block_number() {
+        let request = serde_json::json!({
+            "jsonrpc": "2.0",
+            "method": "eth_estimateGas",
+            "params": [{}],
+            "id": 1
+        });
+
+        let (_, block_number) = parse_params(request.clone()).unwrap();
+        assert_eq!(block_number, BlockNumberOrTag::Latest);
+    }
 
     #[test_case("0x1")]
     #[test_case("latest")]

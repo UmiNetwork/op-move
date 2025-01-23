@@ -103,7 +103,8 @@ pub async fn run() {
         .and_then(|state_channel, path, query, method, headers, body| {
             // TODO: Limit engine API access to only authenticated endpoint
             mirror(state_channel, path, query, method, headers, body, "9545")
-        });
+        })
+        .with(warp::cors().allow_any_origin());
 
     let auth_state_channel = state_channel;
     let auth_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8551));
@@ -113,7 +114,8 @@ pub async fn run() {
         .and(validate_jwt())
         .and_then(|state_channel, path, query, method, headers, body, _| {
             mirror(state_channel, path, query, method, headers, body, "9551")
-        });
+        })
+        .with(warp::cors().allow_any_origin());
 
     let (_, _, state_result) = tokio::join!(
         warp::serve(http_route).run(http_server_addr),
