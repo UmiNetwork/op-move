@@ -3,13 +3,12 @@ pub use utils::*;
 use {
     super::*,
     crate::{
-        block::HeaderForExecution,
-        genesis::{config::CHAIN_ID, init_and_apply},
         move_execution::eth_token::quick_get_eth_balance,
-        primitives::{ToMoveAddress, ToMoveU256, B256, U256, U64},
-        storage::{InMemoryState, State},
         tests::{signer::Signer, ALT_EVM_ADDRESS, ALT_PRIVATE_KEY, EVM_ADDRESS, PRIVATE_KEY},
-        types::transactions::{DepositedTx, ExtendedTxEnvelope, ScriptOrModule, TransactionData},
+        types::transactions::{
+            DepositedTx, ExtendedTxEnvelope, NormalizedExtendedTxEnvelope, ScriptOrModule,
+            TransactionData,
+        },
     },
     alloy::{
         consensus::{transaction::TxEip1559, SignableTransaction, TxEnvelope},
@@ -43,6 +42,8 @@ use {
     },
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
     move_vm_types::gas::UnmeteredGasMeter,
+    moved_shared::primitives::{ToMoveAddress, ToMoveU256, B256, U256, U64},
+    moved_state::{InMemoryState, State},
     regex::Regex,
     serde::de::DeserializeOwned,
     std::{
@@ -54,6 +55,7 @@ use {
 
 mod counter;
 mod data_type;
+mod evm_native;
 mod framework;
 mod gas_cost;
 mod marketplace;

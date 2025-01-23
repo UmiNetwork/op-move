@@ -2,8 +2,7 @@ use {
     super::tag_validation::{validate_entry_type_tag, validate_entry_value},
     crate::{
         error::Error,
-        move_execution::{eth_token::burn_eth, evm_native, ADDRESS_LAYOUT, U256_LAYOUT},
-        primitives::{ToMoveU256, U256},
+        move_execution::{eth_token::burn_eth, ADDRESS_LAYOUT, U256_LAYOUT},
         Error::User,
         InvalidTransactionCause, ScriptTransaction, UserError,
     },
@@ -17,6 +16,10 @@ use {
     },
     move_vm_runtime::{module_traversal::TraversalContext, session::Session},
     move_vm_types::{gas::GasMeter, loaded_data::runtime_types::Type, values::Value},
+    moved_evm_ext::{
+        extract_evm_result, CODE_LAYOUT, EVM_CALL_FN_NAME, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
+    },
+    moved_shared::primitives::{ToMoveU256, U256},
 };
 
 pub(super) fn execute_entry_function<G: GasMeter>(
@@ -131,11 +134,8 @@ pub(super) fn execute_l2_contract<G: GasMeter>(
     traversal_context: &mut TraversalContext,
     gas_meter: &mut G,
 ) -> crate::Result<Vec<Log<LogData>>> {
-    let module = ModuleId::new(
-        evm_native::EVM_NATIVE_ADDRESS,
-        evm_native::EVM_NATIVE_MODULE.into(),
-    );
-    let function_name = evm_native::EVM_CALL_FN_NAME;
+    let module = ModuleId::new(EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE.into());
+    let function_name = EVM_CALL_FN_NAME;
     // Unwraps in serialization are safe because the layouts match the types.
     let args = vec![
         Value::address(*signer)
@@ -148,7 +148,7 @@ pub(super) fn execute_l2_contract<G: GasMeter>(
             .simple_serialize(&U256_LAYOUT)
             .unwrap(),
         Value::vector_u8(data)
-            .simple_serialize(&evm_native::CODE_LAYOUT)
+            .simple_serialize(&CODE_LAYOUT)
             .unwrap(),
     ];
     let outcome = session
@@ -162,7 +162,7 @@ pub(super) fn execute_l2_contract<G: GasMeter>(
         )
         .map_err(|e| User(UserError::Vm(e)))?;
 
-    let evm_outcome = evm_native::extract_evm_result(outcome);
+    let evm_outcome = extract_evm_result(outcome);
 
     if evm_outcome.is_success {
         // TODO: ETH is burned until the value from EVM is reflected on MoveVM

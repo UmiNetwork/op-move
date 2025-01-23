@@ -4,9 +4,9 @@ use {
             root::{BlockQueries, BlockRepository},
             ExtendedBlock,
         },
-        primitives::B256,
         types::state::BlockResponse,
     },
+    moved_shared::primitives::B256,
     std::{collections::HashMap, convert::Infallible},
 };
 

@@ -8,13 +8,13 @@ use {
             Block, BlockHash, BlockMemory, BlockRepository, Eip1559GasFee, ExtendedBlock, Header,
             InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash,
         },
-        genesis::{self, config::GenesisConfig},
         move_execution::{CreateEcotoneL1GasFee, CreateMovedL2GasFee, MovedBaseTokenAccounts},
-        primitives::U256,
         state_actor::{InMemoryStateQueries, StateActor, StatePayloadId},
-        storage::InMemoryState,
         types::state::{Command, StateMessage},
     },
+    moved_genesis::config::GenesisConfig,
+    moved_shared::primitives::U256,
+    moved_state::InMemoryState,
     once_cell::sync::Lazy,
     std::{
         fs,
@@ -138,9 +138,18 @@ pub fn initialize_state_actor(
     repository.add(&mut block_memory, genesis_block);
 
     let mut state = InMemoryState::new();
-    let (genesis_changes, table_changes) = genesis::init(&genesis_config, &state);
+    let (genesis_changes, table_changes) = {
+        #[cfg(test)]
+        {
+            moved_genesis_image::load()
+        }
+        #[cfg(not(test))]
+        {
+            moved_genesis::build(&moved_genesis::MovedVm, &genesis_config, &state)
+        }
+    };
     let state_query = InMemoryStateQueries::from_genesis(genesis_config.initial_state_root);
-    genesis::apply(genesis_changes, table_changes, &genesis_config, &mut state);
+    moved_genesis::apply(genesis_changes, table_changes, &genesis_config, &mut state);
 
     let base_token = MovedBaseTokenAccounts::new(genesis_config.treasury);
     StateActor::new(

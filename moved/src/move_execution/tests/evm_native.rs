@@ -1,16 +1,9 @@
 use {
-    super::{
-        state_changes::extract_evm_changes, type_utils::extract_evm_result, EvmNativeOutcome,
-        CODE_LAYOUT, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
-    },
     crate::{
-        block::HeaderForExecution,
         move_execution::{
             create_move_vm, create_vm_session, execute_transaction, tests::*,
             CanonicalExecutionInput,
         },
-        primitives::{ToEthAddress, ToMoveAddress, ToMoveU256},
-        storage::{InMemoryState, State},
         tests::{ALT_EVM_ADDRESS, EVM_ADDRESS},
         types::{session_id::SessionId, transactions::TransactionData},
     },
@@ -38,6 +31,12 @@ use {
         gas::UnmeteredGasMeter,
         values::{Struct, Value},
     },
+    moved_evm_ext::{
+        extract_evm_changes, extract_evm_result, EvmNativeOutcome, CODE_LAYOUT, EVM_NATIVE_ADDRESS,
+        EVM_NATIVE_MODULE,
+    },
+    moved_shared::primitives::{ToEthAddress, ToMoveAddress, ToMoveU256},
+    moved_state::{InMemoryState, State},
     revm::primitives::{TxKind, U256},
 };
 

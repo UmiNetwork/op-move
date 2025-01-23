@@ -1,6 +1,5 @@
 pub use {
     eth_token::{mint_eth, quick_get_eth_balance, BaseTokenAccounts, MovedBaseTokenAccounts},
-    evm_native::genesis_state_changes,
     gas::{
         CreateEcotoneL1GasFee, CreateL1GasFee, CreateL2GasFee, CreateMovedL2GasFee, EcotoneGasFee,
         L1GasFee, L1GasFeeInput, L2GasFee, L2GasFeeInput, MovedGasFee,
@@ -9,29 +8,17 @@ pub use {
 };
 
 use {
-    self::evm_native::events::{evm_logs_event_to_log, EVM_LOGS_EVENT_LAYOUT, EVM_LOGS_EVENT_TAG},
-    crate::{
-        block::HeaderForExecution,
-        genesis::config::GenesisConfig,
-        primitives::{ToEthAddress, B256},
-        types::{
-            session_id::SessionId,
-            transactions::{DepositedTx, NormalizedEthTransaction, TransactionExecutionOutcome},
-        },
+    crate::types::{
+        session_id::SessionId,
+        transactions::{DepositedTx, NormalizedEthTransaction, TransactionExecutionOutcome},
     },
     alloy::primitives::{Bloom, Keccak256, Log, LogData},
     aptos_framework::natives::{
         event::NativeEventContext, object::NativeObjectContext,
         transaction_context::NativeTransactionContext,
     },
-    aptos_gas_schedule::{MiscGasParameters, NativeGasParameters, LATEST_GAS_FEATURE_VERSION},
-    aptos_native_interface::SafeNativeBuilder,
     aptos_table_natives::{NativeTableContext, TableResolver},
-    aptos_types::{
-        contract_event::ContractEvent,
-        on_chain_config::{Features, TimedFeaturesBuilder},
-    },
-    aptos_vm::natives::aptos_natives_with_builder,
+    aptos_types::contract_event::ContractEvent,
     canonical::execute_canonical_transaction,
     deposited::execute_deposited_transaction,
     move_binary_format::errors::PartialVMError,
@@ -43,13 +30,18 @@ use {
     move_vm_runtime::{
         move_vm::MoveVM, native_extensions::NativeContextExtensions, session::Session,
     },
+    moved_evm_ext::{
+        events::{evm_logs_event_to_log, EVM_LOGS_EVENT_LAYOUT, EVM_LOGS_EVENT_TAG},
+        HeaderForExecution,
+    },
+    moved_genesis::{config::GenesisConfig, CreateMoveVm, MovedVm},
+    moved_shared::primitives::{ToEthAddress, B256},
     std::ops::Deref,
 };
 
 mod canonical;
 mod deposited;
 mod eth_token;
-pub mod evm_native;
 mod execute;
 mod gas;
 mod nonces;
@@ -63,17 +55,7 @@ const ADDRESS_LAYOUT: MoveTypeLayout = MoveTypeLayout::Address;
 const U256_LAYOUT: MoveTypeLayout = MoveTypeLayout::U256;
 
 pub fn create_move_vm() -> crate::Result<MoveVM> {
-    let mut builder = SafeNativeBuilder::new(
-        LATEST_GAS_FEATURE_VERSION,
-        NativeGasParameters::zeros(),
-        MiscGasParameters::zeros(),
-        TimedFeaturesBuilder::enable_all().build(),
-        Features::default(),
-    );
-    let mut natives = aptos_natives_with_builder(&mut builder);
-    evm_native::append_evm_natives(&mut natives, &builder);
-    let vm = MoveVM::new(natives)?;
-    Ok(vm)
+    Ok(MovedVm.create_move_vm()?)
 }
 
 pub fn create_vm_session<'l, 'r, S>(
@@ -108,7 +90,7 @@ where
     native_extensions.add(NativeTableContext::new(txn_hash, state));
 
     // EVM native extension
-    native_extensions.add(evm_native::NativeEVMContext::new(
+    native_extensions.add(moved_evm_ext::NativeEVMContext::new(
         state,
         session_id.block_header,
     ));

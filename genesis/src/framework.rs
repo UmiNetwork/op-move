@@ -1,9 +1,8 @@
 use {
-    crate::{move_execution::create_move_vm, storage::State},
     alloy::primitives::address,
     aptos_framework::ReleaseBundle,
     aptos_table_natives::{NativeTableContext, TableChange, TableChangeSet},
-    move_binary_format::errors::PartialVMError,
+    move_binary_format::errors::{Location, PartialVMError, VMError},
     move_core_types::{
         account_address::AccountAddress,
         effects::{ChangeSet, Op},
@@ -13,21 +12,23 @@ use {
     },
     move_vm_runtime::{
         module_traversal::{TraversalContext, TraversalStorage},
+        move_vm::MoveVM,
         native_extensions::NativeContextExtensions,
         session::Session,
     },
     move_vm_types::gas::UnmeteredGasMeter,
+    moved_state::State,
     once_cell::sync::Lazy,
     std::{collections::BTreeMap, fs, path::PathBuf},
     sui_framework::SystemPackage,
     sui_types::base_types::ObjectID,
 };
 
-pub const CRATE_ROOT: &str = env!("CARGO_MANIFEST_DIR");
+pub const CRATE_ROOT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../moved");
 pub const APTOS_SNAPSHOT_NAME: &str = "aptos.mrb";
 pub const SUI_SNAPSHOT_NAME: &str = "sui.mrb";
 pub const L2_PACKAGE_NAME: &str = "L2";
-pub const FRAMEWORK_ADDRESS: AccountAddress = AccountAddress::ONE;
+pub const FRAMEWORK_ADDRESS: AccountAddress = moved_evm_ext::FRAMEWORK_ADDRESS;
 pub const L2_LOWEST_ADDRESS: AccountAddress =
     eth_address(&address!("4200000000000000000000000000000000000000").0 .0);
 pub const L2_HIGHEST_ADDRESS: AccountAddress =
@@ -87,10 +88,11 @@ pub fn load_sui_framework_snapshot() -> &'static BTreeMap<ObjectID, SystemPackag
 
 /// Initializes the blockchain state with Aptos and Sui frameworks.
 pub fn init_state(
+    vm: &impl CreateMoveVm,
     state: &impl State<Err = PartialVMError>,
 ) -> (ChangeSet, move_table_extension::TableChangeSet) {
     let (change_set, table_change_set) =
-        deploy_framework(state).expect("All bundle modules should be valid");
+        deploy_framework(vm, state).expect("All bundle modules should be valid");
 
     // This function converts a `TableChange` to a move table extension struct.
     // InMemoryStorage relies on this conversion to apply the storage changes correctly.
@@ -123,10 +125,15 @@ pub fn init_state(
     (change_set, table_change_set)
 }
 
+pub trait CreateMoveVm {
+    fn create_move_vm(&self) -> Result<MoveVM, VMError>;
+}
+
 fn deploy_framework(
+    vm: &impl CreateMoveVm,
     state: &impl State<Err = PartialVMError>,
-) -> crate::Result<(ChangeSet, TableChangeSet)> {
-    let vm = create_move_vm()?;
+) -> Result<(ChangeSet, TableChangeSet), VMError> {
+    let vm = vm.create_move_vm()?;
     let mut extensions = NativeContextExtensions::default();
     extensions.add(NativeTableContext::new([0u8; 32], state.resolver()));
     let mut session = vm.new_session_with_extensions(state.resolver(), extensions);
@@ -140,7 +147,8 @@ fn deploy_framework(
     let (change_set, mut extensions) = session.finish_with_extensions()?;
     let table_change_set = extensions
         .remove::<NativeTableContext>()
-        .into_change_set()?;
+        .into_change_set()
+        .map_err(|e| e.finish(Location::Undefined))?;
 
     Ok((change_set, table_change_set))
 }
@@ -148,7 +156,7 @@ fn deploy_framework(
 fn initialize_eth_token(
     session: &mut Session,
     traversal_context: &mut TraversalContext,
-) -> crate::Result<()> {
+) -> Result<(), VMError> {
     let module = ModuleId::new(FRAMEWORK_ADDRESS, ident_str!("eth_token").into());
     let function_name = ident_str!("init_module");
     let args = bcs::to_bytes(&MoveValue::Signer(FRAMEWORK_ADDRESS))
@@ -164,7 +172,7 @@ fn initialize_eth_token(
     Ok(())
 }
 
-fn deploy_aptos_framework(session: &mut Session) -> crate::Result<()> {
+fn deploy_aptos_framework(session: &mut Session) -> Result<(), VMError> {
     let framework = load_aptos_framework_snapshot();
     // Iterate over the bundled packages in the Aptos framework
     for package in &framework.packages {
@@ -203,7 +211,7 @@ fn deploy_aptos_framework(session: &mut Session) -> crate::Result<()> {
     Ok(())
 }
 
-fn deploy_sui_framework(session: &mut Session) -> crate::Result<()> {
+fn deploy_sui_framework(session: &mut Session) -> Result<(), VMError> {
     // Load the framework packages from the framework snapshot
     let snapshots = load_sui_framework_snapshot();
     let stdlib = snapshots
@@ -223,7 +231,7 @@ fn deploy_sui_framework(session: &mut Session) -> crate::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use {super::*, crate::storage::InMemoryState};
+    use {super::*, crate::vm::MovedVm, moved_state::InMemoryState};
 
     // Aptos framework has 133 modules and Sui has 69. They are kept mutually exclusive.
     const APTOS_MODULES_LEN: usize = 133;
@@ -243,7 +251,7 @@ mod tests {
         assert_eq!(sui_framework_len, SUI_MODULES_LEN);
 
         let state = InMemoryState::new();
-        let (change_set, _) = deploy_framework(&state).unwrap();
+        let (change_set, _) = deploy_framework(&MovedVm, &state).unwrap();
         assert_eq!(change_set.modules().count(), TOTAL_MODULES_LEN);
     }
 }

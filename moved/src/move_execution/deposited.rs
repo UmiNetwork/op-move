@@ -1,15 +1,11 @@
 use {
     crate::{
-        block::HeaderForExecution,
         error::UserError,
-        genesis::config::GenesisConfig,
         move_execution::{
             create_move_vm, create_vm_session, eth_token,
-            evm_native::{self, EvmNativeOutcome},
             gas::{new_gas_meter, total_gas_used},
             DepositExecutionInput, ADDRESS_LAYOUT, U256_LAYOUT,
         },
-        primitives::{ToMoveAddress, ToMoveU256, B256},
         types::{
             session_id::SessionId,
             transactions::{DepositedTx, TransactionExecutionOutcome},
@@ -23,6 +19,12 @@ use {
     },
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
     move_vm_types::values::Value,
+    moved_evm_ext::{
+        self, extract_evm_changes, extract_evm_result, EvmNativeOutcome, HeaderForExecution,
+        CODE_LAYOUT, EVM_CALL_FN_NAME, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
+    },
+    moved_genesis::config::GenesisConfig,
+    moved_shared::primitives::{ToMoveAddress, ToMoveU256, B256},
 };
 
 // Topic identifying the event
@@ -59,11 +61,8 @@ pub(super) fn execute_deposited_transaction<S: MoveResolver<PartialVMError> + Ta
     // is a 1:1 mapping to `u64`.
     let mut gas_meter = new_gas_meter(input.genesis_config, input.tx.gas.as_limbs()[0]);
 
-    let module = ModuleId::new(
-        evm_native::EVM_NATIVE_ADDRESS,
-        evm_native::EVM_NATIVE_MODULE.into(),
-    );
-    let function_name = evm_native::EVM_CALL_FN_NAME;
+    let module = ModuleId::new(EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE.into());
+    let function_name = EVM_CALL_FN_NAME;
     // Unwraps in serialization are safe because the layouts match the types.
     let args = vec![
         Value::address(input.tx.from.to_move_address())
@@ -76,7 +75,7 @@ pub(super) fn execute_deposited_transaction<S: MoveResolver<PartialVMError> + Ta
             .simple_serialize(&U256_LAYOUT)
             .unwrap(),
         Value::vector_u8(input.tx.data.iter().copied())
-            .simple_serialize(&evm_native::CODE_LAYOUT)
+            .simple_serialize(&CODE_LAYOUT)
             .unwrap(),
     ];
     let outcome = session
@@ -91,7 +90,7 @@ pub(super) fn execute_deposited_transaction<S: MoveResolver<PartialVMError> + Ta
         .map_err(Into::into);
 
     let mint_params = outcome.and_then(|values| {
-        let evm_outcome = evm_native::extract_evm_result(values);
+        let evm_outcome = extract_evm_result(values);
         if !evm_outcome.is_success {
             return Err(UserError::DepositFailure(evm_outcome.output));
         }
@@ -116,7 +115,7 @@ pub(super) fn execute_deposited_transaction<S: MoveResolver<PartialVMError> + Ta
 
     let (mut changes, extensions) = session.finish_with_extensions()?;
     let gas_used = total_gas_used(&gas_meter, input.genesis_config);
-    let evm_changes = evm_native::extract_evm_changes(&extensions);
+    let evm_changes = extract_evm_changes(&extensions);
     changes
         .squash(evm_changes)
         .expect("EVM changes must merge with other session changes");

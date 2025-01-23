@@ -63,7 +63,7 @@ async fn inner_execute(
 mod tests {
     use {
         super::*, crate::methods::tests::create_state_actor_with_mock_state_queries, alloy::hex,
-        move_core_types::account_address::AccountAddress, moved::primitives::U64,
+        move_core_types::account_address::AccountAddress, moved_shared::primitives::U64,
         std::str::FromStr, test_case::test_case,
     };
 

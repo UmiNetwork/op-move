@@ -1,7 +1,7 @@
 use {
     eth_trie::DB,
     hex_literal::hex,
-    moved::primitives::B256,
+    moved_shared::primitives::B256,
     moved_storage::{RocksEthTrieDb, ROOT_KEY},
 };
 

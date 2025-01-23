@@ -71,7 +71,7 @@ mod tests {
         super::*,
         crate::methods::tests::{create_state_actor, deposit_eth},
         alloy::primitives::Address,
-        moved::primitives::U64,
+        moved_shared::primitives::U64,
         std::str::FromStr,
         test_case::test_case,
     };

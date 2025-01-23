@@ -4,12 +4,11 @@ use {
         type_utils::{account_info_struct_tag, account_storage_struct_tag, code_hash_struct_tag},
         CODE_LAYOUT, EVM_NATIVE_ADDRESS,
     },
-    crate::block::HeaderForExecution,
     alloy::primitives::map::HashMap,
     aptos_types::vm_status::StatusCode,
     better_any::{Tid, TidAble},
     move_binary_format::errors::PartialVMError,
-    move_core_types::resolver::MoveResolver,
+    move_core_types::{account_address::AccountAddress, resolver::MoveResolver},
     move_vm_types::values::{VMValueCast, Value},
     revm::{
         db::{CacheDB, DatabaseRef},
@@ -19,6 +18,17 @@ use {
     },
     std::sync::RwLock,
 };
+
+pub const FRAMEWORK_ADDRESS: AccountAddress = AccountAddress::ONE;
+
+/// A subset of the `Header` fields that are available while the transactions
+/// in the block are being executed.
+#[derive(Debug, Clone, Default)]
+pub struct HeaderForExecution {
+    pub number: u64,
+    pub timestamp: u64,
+    pub prev_randao: B256,
+}
 
 #[derive(Tid)]
 pub struct NativeEVMContext<'a> {

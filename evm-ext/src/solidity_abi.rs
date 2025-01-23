@@ -1,9 +1,6 @@
 use {
     super::{EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE},
-    crate::{
-        genesis::FRAMEWORK_ADDRESS,
-        primitives::{ToEthAddress, ToMoveAddress, ToMoveU256, ToU256},
-    },
+    crate::native_evm_context::FRAMEWORK_ADDRESS,
     alloy::dyn_abi::{DynSolType, DynSolValue, Error},
     aptos_native_interface::{
         safely_pop_arg, safely_pop_type_arg, SafeNativeContext, SafeNativeError, SafeNativeResult,
@@ -17,6 +14,7 @@ use {
         loaded_data::runtime_types::Type,
         values::{Struct, Value},
     },
+    moved_shared::primitives::{ToEthAddress, ToMoveAddress, ToMoveU256, ToU256},
     revm::primitives::U256,
     smallvec::{smallvec, SmallVec},
     std::{collections::VecDeque, sync::LazyLock},

@@ -82,7 +82,7 @@ mod tests {
         super::*,
         crate::methods::tests::create_state_actor,
         alloy::{hex, primitives::address},
-        moved::primitives::U64,
+        moved_shared::primitives::U64,
         std::str::FromStr,
         test_case::test_case,
     };

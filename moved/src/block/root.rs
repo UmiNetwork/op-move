@@ -1,8 +1,6 @@
 use {
-    crate::{
-        primitives::{B256, U256},
-        types::state::BlockResponse,
-    },
+    crate::types::state::BlockResponse,
+    moved_shared::primitives::{B256, U256},
     op_alloy::consensus::OpTxEnvelope,
     std::fmt::Debug,
 };
@@ -81,13 +79,4 @@ impl Block {
     pub fn with_hash(self, hash: B256) -> ExtendedBlock {
         ExtendedBlock::new(hash, U256::ZERO, self)
     }
-}
-
-/// A subset of the `Header` fields that are available while the transactions
-/// in the block are being executed.
-#[derive(Debug, Clone, Default)]
-pub struct HeaderForExecution {
-    pub number: u64,
-    pub timestamp: u64,
-    pub prev_randao: B256,
 }

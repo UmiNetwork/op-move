@@ -1,12 +1,6 @@
+pub mod nodes;
+
 use {
-    crate::{
-        move_execution::evm_native::{
-            type_utils::{ACCOUNT_INFO_PREFIX, ACCOUNT_STORAGE_PREFIX},
-            EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
-        },
-        primitives::{Address, KeyHashable, B256},
-        types::state::{TreeKey, TreeValue},
-    },
     alloy::hex::FromHex,
     aptos_types::state_store::{state_key::StateKey, state_value::StateValue},
     eth_trie::{EthTrie, MemoryDB, Trie, TrieError, DB},
@@ -14,6 +8,12 @@ use {
     move_core_types::{effects::ChangeSet, language_storage::StructTag, resolver::MoveResolver},
     move_table_extension::{TableChangeSet, TableResolver},
     move_vm_test_utils::InMemoryStorage,
+    moved_evm_ext::{
+        type_utils::{ACCOUNT_INFO_PREFIX, ACCOUNT_STORAGE_PREFIX},
+        EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
+    },
+    moved_shared::primitives::{Address, KeyHashable, B256},
+    nodes::{TreeKey, TreeValue},
     std::{collections::HashMap, fmt::Debug, sync::Arc},
 };
 

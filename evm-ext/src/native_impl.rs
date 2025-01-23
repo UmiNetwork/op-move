@@ -5,7 +5,6 @@ use {
         type_utils::evm_result_to_move_value,
         EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
     },
-    crate::primitives::{ToEthAddress, ToU256},
     aptos_gas_algebra::{GasExpression, GasQuantity, InternalGasUnit},
     aptos_native_interface::{
         safely_pop_arg, SafeNativeBuilder, SafeNativeContext, SafeNativeError, SafeNativeResult,
@@ -15,6 +14,7 @@ use {
     move_core_types::{account_address::AccountAddress, ident_str, identifier::IdentStr},
     move_vm_runtime::native_functions::NativeFunctionTable,
     move_vm_types::{loaded_data::runtime_types::Type, values::Value},
+    moved_shared::primitives::{ToEthAddress, ToU256},
     revm::{
         db::DatabaseCommit,
         primitives::{Address, BlobExcessGasAndPrice, BlockEnv, EVMError, TxEnv, TxKind, U256},

@@ -1,15 +1,25 @@
-use {
-    self::config::GenesisConfig, crate::storage::State, move_binary_format::errors::PartialVMError,
-    move_core_types::effects::ChangeSet, move_table_extension::TableChangeSet,
+pub use {
+    framework::{CreateMoveVm, FRAMEWORK_ADDRESS},
+    serde::{
+        SerdeAccountChanges, SerdeAllChanges, SerdeChanges, SerdeOp, SerdeTableChange,
+        SerdeTableChangeSet, SerdeTableInfo,
+    },
+    vm::MovedVm,
 };
 
-pub use framework::FRAMEWORK_ADDRESS;
+use {
+    self::config::GenesisConfig, move_binary_format::errors::PartialVMError,
+    move_core_types::effects::ChangeSet, move_table_extension::TableChangeSet, moved_state::State,
+};
 
 pub mod config;
 mod framework;
 mod l2_contracts;
+mod serde;
+mod vm;
 
-pub fn init(
+pub fn build(
+    vm: &impl CreateMoveVm,
     config: &GenesisConfig,
     state: &impl State<Err = PartialVMError>,
 ) -> (ChangeSet, TableChangeSet) {
@@ -22,7 +32,7 @@ pub fn init(
     let mut changes = ChangeSet::new();
 
     // Deploy Move/Aptos/Sui frameworks
-    let (changes_framework, table_changes) = framework::init_state(state);
+    let (changes_framework, table_changes) = framework::init_state(vm, state);
 
     // Deploy OP stack L2 contracts
     let changes_l2 = l2_contracts::init_state(l2_contract_genesis, state);
@@ -58,7 +68,11 @@ pub fn apply(
     );
 }
 
-pub fn init_and_apply(config: &GenesisConfig, state: &mut impl State<Err = PartialVMError>) {
-    let (changes, table_changes) = init(config, state);
+pub fn build_and_apply(
+    vm: &impl CreateMoveVm,
+    config: &GenesisConfig,
+    state: &mut impl State<Err = PartialVMError>,
+) {
+    let (changes, table_changes) = build(vm, config, state);
     apply(changes, table_changes, config, state);
 }

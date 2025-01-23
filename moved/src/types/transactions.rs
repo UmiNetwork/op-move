@@ -1,5 +1,5 @@
 use {
-    crate::{primitives::ToMoveAddress, Error, InvalidTransactionCause, UserError},
+    crate::{Error, InvalidTransactionCause, UserError},
     alloy::{
         consensus::{
             Receipt, ReceiptWithBloom, Signed, Transaction, TxEip1559, TxEip2930, TxEnvelope,
@@ -14,6 +14,7 @@ use {
     move_core_types::{
         account_address::AccountAddress, effects::ChangeSet, language_storage::ModuleId,
     },
+    moved_shared::primitives::ToMoveAddress,
     op_alloy::consensus::{
         OpDepositReceipt, OpDepositReceiptWithBloom, OpReceiptEnvelope, OpTxEnvelope,
     },

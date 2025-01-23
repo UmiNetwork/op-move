@@ -16,10 +16,8 @@ use {
     aptos_types::transaction::{EntryFunction, Module},
     move_binary_format::CompiledModule,
     move_core_types::{ident_str, language_storage::ModuleId, value::MoveValue},
-    moved::{
-        primitives::ToMoveAddress,
-        types::transactions::{ScriptOrModule, TransactionData},
-    },
+    moved::types::transactions::{ScriptOrModule, TransactionData},
+    moved_shared::primitives::ToMoveAddress,
     openssl::rand::rand_bytes,
     serde_json::Value,
     std::{

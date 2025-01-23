@@ -1,8 +1,5 @@
 use {
-    crate::{
-        genesis::FRAMEWORK_ADDRESS, types::session_id::SessionId, Error, InvalidTransactionCause,
-        NonceChecking,
-    },
+    crate::{types::session_id::SessionId, Error, InvalidTransactionCause, NonceChecking},
     aptos_table_natives::TableResolver,
     move_binary_format::errors::PartialVMError,
     move_core_types::{
@@ -17,6 +14,7 @@ use {
         gas::{GasMeter, UnmeteredGasMeter},
         values::Value,
     },
+    moved_genesis::FRAMEWORK_ADDRESS,
 };
 
 const ACCOUNT_MODULE_NAME: &IdentStr = ident_str!("account");

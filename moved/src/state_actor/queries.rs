@@ -1,11 +1,8 @@
 use {
     crate::{
-        move_execution::{evm_native, quick_get_eth_balance, quick_get_nonce},
-        primitives::{KeyHashable, ToEthAddress, B256, U256},
-        storage::{evm_key_address, is_evm_storage_or_account_key, IN_MEMORY_EXPECT_MSG},
+        move_execution::{quick_get_eth_balance, quick_get_nonce},
         types::{
             queries::{ProofResponse, StorageProof},
-            state::TreeKey,
             transactions::{L2_HIGHEST_ADDRESS, L2_LOWEST_ADDRESS},
         },
     },
@@ -23,6 +20,11 @@ use {
         vm_status::StatusCode,
     },
     move_table_extension::{TableHandle, TableResolver},
+    moved_evm_ext::ResolverBackedDB,
+    moved_shared::primitives::{KeyHashable, ToEthAddress, B256, U256},
+    moved_state::{
+        evm_key_address, is_evm_storage_or_account_key, nodes::TreeKey, IN_MEMORY_EXPECT_MSG,
+    },
     std::{fmt::Debug, sync::Arc},
 };
 
@@ -173,7 +175,7 @@ impl StateQueries for InMemoryStateQueries {
 
         // All L2 contract account data is part of the EVM state
         let resolver = self.storage.resolver(db.clone(), height)?;
-        let evm_db = evm_native::ResolverBackedDB::new(&resolver);
+        let evm_db = ResolverBackedDB::new(&resolver);
         let account_info = evm_db.get_account(&address).ok()??;
 
         let root = self.storage.get_root_by_height(height)?;
@@ -304,10 +306,7 @@ mod tests {
     use {
         super::*,
         crate::{
-            genesis::{config::GenesisConfig, init_and_apply},
             move_execution::{check_nonce, create_move_vm, create_vm_session, mint_eth},
-            primitives::B256,
-            storage::{InMemoryState, State},
             types::session_id::SessionId,
         },
         alloy::hex,
@@ -315,6 +314,9 @@ mod tests {
         move_table_extension::TableChangeSet,
         move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
         move_vm_types::gas::UnmeteredGasMeter,
+        moved_genesis::config::GenesisConfig,
+        moved_shared::primitives::B256,
+        moved_state::{InMemoryState, State},
     };
 
     struct StateSpy(InMemoryState, ChangeSet);
@@ -381,7 +383,8 @@ mod tests {
         let mut state = StateSpy(state, ChangeSet::new());
 
         let genesis_config = GenesisConfig::default();
-        init_and_apply(&genesis_config, &mut state);
+        let (changes, tables) = moved_genesis_image::load();
+        moved_genesis::apply(changes, tables, &genesis_config, &mut state);
 
         let mut state = state.0;
         let addr = AccountAddress::TWO;
@@ -407,7 +410,8 @@ mod tests {
         let mut state = StateSpy(state, ChangeSet::new());
 
         let genesis_config = GenesisConfig::default();
-        init_and_apply(&genesis_config, &mut state);
+        let (changes, tables) = moved_genesis_image::load();
+        moved_genesis::apply(changes, tables, &genesis_config, &mut state);
 
         let mut state = state.0;
 
@@ -437,7 +441,8 @@ mod tests {
         let mut state = StateSpy(state, ChangeSet::new());
 
         let genesis_config = GenesisConfig::default();
-        init_and_apply(&genesis_config, &mut state);
+        let (changes, tables) = moved_genesis_image::load();
+        moved_genesis::apply(changes, tables, &genesis_config, &mut state);
 
         let mut state = state.0;
 
@@ -474,7 +479,8 @@ mod tests {
         let mut state = StateSpy(state, ChangeSet::new());
 
         let genesis_config = GenesisConfig::default();
-        init_and_apply(&genesis_config, &mut state);
+        let (changes, tables) = moved_genesis_image::load();
+        moved_genesis::apply(changes, tables, &genesis_config, &mut state);
 
         let state = state.0;
 
@@ -527,7 +533,8 @@ mod tests {
         let mut state = StateSpy(state, ChangeSet::new());
 
         let genesis_config = GenesisConfig::default();
-        init_and_apply(&genesis_config, &mut state);
+        let (changes, tables) = moved_genesis_image::load();
+        moved_genesis::apply(changes, tables, &genesis_config, &mut state);
 
         let mut state = state.0;
         let addr = AccountAddress::TWO;
@@ -553,7 +560,8 @@ mod tests {
         let mut state = StateSpy(state, ChangeSet::new());
 
         let genesis_config = GenesisConfig::default();
-        init_and_apply(&genesis_config, &mut state);
+        let (changes, tables) = moved_genesis_image::load();
+        moved_genesis::apply(changes, tables, &genesis_config, &mut state);
 
         let mut state = state.0;
 
@@ -583,7 +591,8 @@ mod tests {
         let mut state = StateSpy(state, ChangeSet::new());
 
         let genesis_config = GenesisConfig::default();
-        init_and_apply(&genesis_config, &mut state);
+        let (changes, tables) = moved_genesis_image::load();
+        moved_genesis::apply(changes, tables, &genesis_config, &mut state);
 
         let mut state = state.0;
 
@@ -620,7 +629,8 @@ mod tests {
         let mut state = StateSpy(state, ChangeSet::new());
 
         let genesis_config = GenesisConfig::default();
-        init_and_apply(&genesis_config, &mut state);
+        let (changes, tables) = moved_genesis_image::load();
+        moved_genesis::apply(changes, tables, &genesis_config, &mut state);
 
         let state = state.0;
 

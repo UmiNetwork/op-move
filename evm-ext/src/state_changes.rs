@@ -7,7 +7,7 @@ use {
         },
         CODE_LAYOUT, EVM_NATIVE_ADDRESS,
     },
-    crate::move_execution::evm_native::trie_types,
+    crate::trie_types,
     move_binary_format::errors::PartialVMError,
     move_core_types::{
         effects::{AccountChangeSet, ChangeSet, Op},

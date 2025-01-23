@@ -96,7 +96,7 @@ pub(super) mod tests {
         super::*,
         crate::methods::tests::create_state_actor,
         alloy::primitives::hex,
-        moved::primitives::{Address, Bytes, B256, U64},
+        moved_shared::primitives::{Address, Bytes, B256, U64},
     };
 
     pub fn example_request() -> serde_json::Value {

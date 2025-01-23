@@ -1,17 +1,14 @@
 use {
     super::{L2GasFee, L2GasFeeInput},
     crate::{
-        genesis::config::GenesisConfig,
         move_execution::{
             create_move_vm, create_vm_session,
             eth_token::{BaseTokenAccounts, TransferArgs},
-            evm_native,
             execute::{deploy_module, execute_entry_function, execute_l2_contract, execute_script},
             gas::{new_gas_meter, total_gas_used},
             nonces::check_nonce,
             CanonicalExecutionInput, Logs,
         },
-        primitives::{ToMoveAddress, ToSaturatedU64},
         types::{
             session_id::SessionId,
             transactions::{
@@ -30,6 +27,8 @@ use {
         module_traversal::{TraversalContext, TraversalStorage},
         session::Session,
     },
+    moved_genesis::config::GenesisConfig,
+    moved_shared::primitives::{ToMoveAddress, ToSaturatedU64},
 };
 
 pub struct CanonicalVerificationInput<'input, 'r, 'l, B> {
@@ -222,7 +221,7 @@ pub(super) fn execute_canonical_transaction<
     let (mut changes, mut extensions) = session.finish_with_extensions()?;
     let mut logs = extensions.logs();
     logs.extend(evm_logs);
-    let evm_changes = evm_native::extract_evm_changes(&extensions);
+    let evm_changes = moved_evm_ext::extract_evm_changes(&extensions);
     changes
         .squash(evm_changes)
         .expect("EVM changes must merge with other session changes");

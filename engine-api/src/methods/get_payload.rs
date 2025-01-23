@@ -70,12 +70,12 @@ mod tests {
                 Block, BlockMemory, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
                 InMemoryBlockRepository,
             },
-            genesis::{self, config::GenesisConfig},
-            primitives::{B256, U256},
             state_actor::InMemoryStateQueries,
-            storage::InMemoryState,
             types::state::Command,
         },
+        moved_genesis::config::GenesisConfig,
+        moved_shared::primitives::{B256, U256},
+        moved_state::InMemoryState,
     };
 
     #[test]
@@ -117,8 +117,8 @@ mod tests {
         repository.add(&mut block_memory, genesis_block);
 
         let mut state = InMemoryState::new();
-        let (changes, table_changes) = genesis::init(&genesis_config, &state);
-        genesis::apply(changes.clone(), table_changes, &genesis_config, &mut state);
+        let (changes, table_changes) = moved_genesis_image::load();
+        moved_genesis::apply(changes.clone(), table_changes, &genesis_config, &mut state);
         let initial_state_root = genesis_config.initial_state_root;
 
         let state = moved::state_actor::StateActor::new(

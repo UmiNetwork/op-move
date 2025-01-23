@@ -1,11 +1,12 @@
 pub use alloy::primitives::{aliases::B2048, Address, Bytes, B256, B64, U256, U64};
+
 use {
     alloy::consensus::{Receipt, ReceiptWithBloom},
     move_core_types::{account_address::AccountAddress, u256::U256 as MoveU256},
     op_alloy::consensus::{OpDepositReceipt, OpDepositReceiptWithBloom, OpReceiptEnvelope},
 };
 
-pub(crate) trait ToEthAddress {
+pub trait ToEthAddress {
     fn to_eth_address(&self) -> Address;
 }
 
@@ -46,7 +47,7 @@ impl ToU64 for U64 {
     }
 }
 
-pub(crate) trait ToSaturatedU64 {
+pub trait ToSaturatedU64 {
     fn to_saturated_u64(self) -> u64;
 }
 
@@ -59,7 +60,7 @@ impl ToSaturatedU64 for U256 {
     }
 }
 
-pub(crate) trait ToU256 {
+pub trait ToU256 {
     fn to_u256(self) -> U256;
 }
 
@@ -69,7 +70,7 @@ impl ToU256 for MoveU256 {
     }
 }
 
-pub(crate) trait ToMoveU256 {
+pub trait ToMoveU256 {
     fn to_move_u256(self) -> MoveU256;
 }
 

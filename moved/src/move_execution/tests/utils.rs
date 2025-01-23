@@ -1,4 +1,4 @@
-use {super::*, crate::types::transactions::NormalizedExtendedTxEnvelope};
+use {super::*, moved_genesis::config::CHAIN_ID};
 
 /// Represents the base token state for a test transaction
 #[derive(Debug)]
@@ -83,7 +83,8 @@ impl TestContext {
     pub fn new() -> Self {
         let genesis_config = GenesisConfig::default();
         let mut state = InMemoryState::new();
-        init_and_apply(&genesis_config, &mut state);
+        let (changes, tables) = moved_genesis_image::load();
+        moved_genesis::apply(changes, tables, &genesis_config, &mut state);
 
         Self {
             state,
@@ -266,7 +267,7 @@ impl TestContext {
                     l2_fee,
                     l2_input: l2_gas_input,
                     base_token: &(),
-                    block_header: HeaderForExecution::default(),
+                    block_header: Default::default(),
                 }
                 .into(),
                 NormalizedExtendedTxEnvelope::DepositedTx(tx) => DepositExecutionInput {
@@ -274,7 +275,7 @@ impl TestContext {
                     tx_hash: &tx_hash,
                     state: self.state.resolver(),
                     genesis_config: &self.genesis_config,
-                    block_header: HeaderForExecution::default(),
+                    block_header: Default::default(),
                 }
                 .into(),
             }),
@@ -288,7 +289,7 @@ impl TestContext {
                     l2_fee,
                     l2_input: l2_gas_input,
                     base_token: moved_base_token,
-                    block_header: HeaderForExecution::default(),
+                    block_header: Default::default(),
                 }
                 .into(),
                 NormalizedExtendedTxEnvelope::DepositedTx(tx) => DepositExecutionInput {
@@ -296,7 +297,7 @@ impl TestContext {
                     tx_hash: &tx_hash,
                     state: self.state.resolver(),
                     genesis_config: &self.genesis_config,
-                    block_header: HeaderForExecution::default(),
+                    block_header: Default::default(),
                 }
                 .into(),
             }),

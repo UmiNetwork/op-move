@@ -1,5 +1,7 @@
 pub use self::{
-    native_evm_context::{NativeEVMContext, ResolverBackedDB},
+    native_evm_context::{
+        HeaderForExecution, NativeEVMContext, ResolverBackedDB, FRAMEWORK_ADDRESS,
+    },
     native_impl::{append_evm_natives, EVM_CALL_FN_NAME},
     state_changes::{extract_evm_changes, genesis_state_changes},
     type_utils::extract_evm_result,
@@ -20,9 +22,6 @@ mod solidity_abi;
 mod state_changes;
 pub mod trie_types;
 pub mod type_utils;
-
-#[cfg(test)]
-mod tests;
 
 /// Address where the EVM native is stored
 pub const EVM_NATIVE_ADDRESS: AccountAddress = AccountAddress::ONE;

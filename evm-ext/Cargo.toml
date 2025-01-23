@@ -1,0 +1,25 @@
+[package]
+name = "moved-evm-ext"
+description = "Extends the Move VM context with EVM module and built-in functions that allow for executing EVM bytecode inside Move VM"
+version.workspace = true
+edition.workspace = true
+
+[features]
+default = []
+test-doubles = []
+
+[dependencies]
+alloy.workspace = true
+aptos-gas-algebra.workspace = true
+aptos-native-interface.workspace = true
+aptos-types.workspace = true
+bcs.workspace = true
+better_any.workspace = true
+eth_trie.workspace = true
+move-binary-format.workspace = true
+move-core-types.workspace = true
+move-vm-runtime.workspace = true
+move-vm-types.workspace = true
+moved-shared.workspace = true
+revm.workspace = true
+smallvec.workspace = true
