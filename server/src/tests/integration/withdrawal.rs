@@ -20,6 +20,7 @@ mod op_portal {
     );
 }
 
+const MAX_WITHDRAWAL_TIMEOUT: u64 = 10 * 60;
 const WITHDRAW_ADDRESS: Address =
     alloy::primitives::address!("4200000000000000000000000000000000000016");
 
@@ -79,17 +80,20 @@ pub async fn withdraw_to_l1() -> Result<()> {
             .saturating_to();
 
         // Timeout to prevent this from being an infinite loop if something breaks
-        if now.elapsed().as_secs() > 10 * 60 {
+        if now.elapsed().as_secs() > MAX_WITHDRAWAL_TIMEOUT {
             anyhow::bail!(
                 "WITHDRAW ERROR: L1 contract `L2OutputOracleProxy` not updated to block containing withdraw within 10 minutes. CurrentBlock={l2_block_number} TargetBlock={withdraw_block_number}"
             );
         }
 
-        if l2_block_number < withdraw_block_number {
-            tokio::time::sleep(Duration::from_secs(OP_BRIDGE_IN_SECS)).await;
-        } else {
+        // If the latest L2 block number that the L1 knows about
+        // is largr than the block where the withdraw happened then we
+        // can move on to the next step. Otherwise we wait before
+        // checking again.
+        if l2_block_number >= withdraw_block_number {
             break;
         }
+        tokio::time::sleep(Duration::from_secs(OP_BRIDGE_IN_SECS)).await;
     }
 
     // Get the latest L2 block height (according to the L1 contract).
