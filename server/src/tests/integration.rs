@@ -72,7 +72,7 @@ async fn test_on_ethereum() -> Result<()> {
     // Background task to send transactions to L1 at regular intervals.
     // This ensures the L1 will consistently be producing blocks which
     // is something `op-proposer` expects.
-    let hb = heartbeat::start_heartbeat();
+    let hb = heartbeat::HeartbeatTask::new();
 
     // 7. Init op-geth to start accepting requests
     let op_geth = init_and_start_op_geth()?;
@@ -91,15 +91,7 @@ async fn test_on_ethereum() -> Result<()> {
     deploy_move_counter().await?;
 
     // 12. Cleanup generated files and folders
-    hb.abort();
-    tokio::select! {
-        join_result = hb => {
-            join_result.expect_err("Task aborted");
-        }
-        _ = tokio::time::sleep(Duration::from_secs(30)) => {
-            println!("WARN: failed to shutdown heartbeat task within 30s");
-        }
-    }
+    hb.shutdown().await;
     cleanup_files();
     op_move_runtime.shutdown_background();
     cleanup_processes(vec![geth, op_geth, op_node, op_batcher, op_proposer])
