@@ -6,7 +6,7 @@ use {
         language_storage::StructTag,
         value::{MoveStructLayout, MoveTypeLayout, MoveValue},
     },
-    moved_primitives::ToEthAddress,
+    moved_shared::primitives::ToEthAddress,
     std::sync::LazyLock,
 };
 

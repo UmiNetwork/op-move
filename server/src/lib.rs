@@ -13,7 +13,7 @@ use {
         types::state::{Command, StateMessage},
     },
     moved_genesis::config::GenesisConfig,
-    moved_primitives::U256,
+    moved_shared::primitives::U256,
     moved_state::InMemoryState,
     once_cell::sync::Lazy,
     std::{

@@ -1,6 +1,6 @@
 use {
     aptos_types::state_store::{state_key::StateKey, state_value::StateValue},
-    moved_primitives::{Address, KeyHash, KeyHashable},
+    moved_shared::primitives::{Address, KeyHash, KeyHashable},
     std::borrow::Cow,
 };
 

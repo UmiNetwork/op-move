@@ -19,4 +19,4 @@ move-core-types.workspace = true
 move-table-extension.workspace = true
 move-vm-test-utils.workspace = true
 moved-evm-ext.workspace = true
-moved-primitives.workspace = true
+moved-shared.workspace = true

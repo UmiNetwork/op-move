@@ -6,7 +6,7 @@ use {
     aptos_vm::move_vm_ext::UserTransactionContext,
     moved_evm_ext::evm_native::HeaderForExecution,
     moved_genesis::config::{GenesisConfig, CHAIN_ID},
-    moved_primitives::{ToMoveAddress, B256},
+    moved_shared::primitives::{ToMoveAddress, B256},
 };
 
 /// This struct represents a unique identifier for the current session of the MoveVM.

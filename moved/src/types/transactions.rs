@@ -14,7 +14,7 @@ use {
     move_core_types::{
         account_address::AccountAddress, effects::ChangeSet, language_storage::ModuleId,
     },
-    moved_primitives::ToMoveAddress,
+    moved_shared::primitives::ToMoveAddress,
     op_alloy::consensus::{
         OpDepositReceipt, OpDepositReceiptWithBloom, OpReceiptEnvelope, OpTxEnvelope,
     },

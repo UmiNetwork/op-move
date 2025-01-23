@@ -28,7 +28,7 @@ use {
         session::Session,
     },
     moved_genesis::config::GenesisConfig,
-    moved_primitives::{ToMoveAddress, ToSaturatedU64},
+    moved_shared::primitives::{ToMoveAddress, ToSaturatedU64},
 };
 
 pub struct CanonicalVerificationInput<'input, 'r, 'l, B> {

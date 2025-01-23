@@ -35,7 +35,7 @@ use {
         HeaderForExecution,
     },
     moved_genesis::{config::GenesisConfig, CreateMoveVm, MovedVm},
-    moved_primitives::{ToEthAddress, B256},
+    moved_shared::primitives::{ToEthAddress, B256},
     std::ops::Deref,
 };
 

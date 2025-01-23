@@ -4,7 +4,7 @@ use {
         jsonrpc::JsonRpcError,
     },
     moved::types::state::{Query, StateMessage, TransactionReceipt},
-    moved_primitives::B256,
+    moved_shared::primitives::B256,
     tokio::sync::{mpsc, oneshot},
 };
 

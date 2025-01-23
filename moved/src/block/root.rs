@@ -1,6 +1,6 @@
 use {
     crate::types::state::BlockResponse,
-    moved_primitives::{B256, U256},
+    moved_shared::primitives::{B256, U256},
     op_alloy::consensus::OpTxEnvelope,
     std::fmt::Debug,
 };

@@ -14,7 +14,7 @@ use {
     move_core_types::{account_address::AccountAddress, ident_str, identifier::IdentStr},
     move_vm_runtime::native_functions::NativeFunctionTable,
     move_vm_types::{loaded_data::runtime_types::Type, values::Value},
-    moved_primitives::{ToEthAddress, ToU256},
+    moved_shared::primitives::{ToEthAddress, ToU256},
     revm::{
         db::DatabaseCommit,
         primitives::{Address, BlobExcessGasAndPrice, BlockEnv, EVMError, TxEnv, TxKind, U256},

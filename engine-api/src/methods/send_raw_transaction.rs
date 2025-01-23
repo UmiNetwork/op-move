@@ -5,7 +5,7 @@ use {
     },
     alloy::{consensus::transaction::TxEnvelope, rlp::Decodable},
     moved::types::state::{Command, StateMessage},
-    moved_primitives::{Bytes, B256},
+    moved_shared::primitives::{Bytes, B256},
     tokio::sync::mpsc,
 };
 

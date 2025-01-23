@@ -44,7 +44,7 @@ pub mod tests {
             },
         },
         moved_genesis::config::{GenesisConfig, CHAIN_ID},
-        moved_primitives::{Address, B256, U256, U64},
+        moved_shared::primitives::{Address, B256, U256, U64},
         moved_state::InMemoryState,
         tokio::sync::{
             mpsc::{self, Sender},

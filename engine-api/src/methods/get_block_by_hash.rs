@@ -5,7 +5,7 @@ use {
         schema::GetBlockResponse,
     },
     moved::types::state::{Query, StateMessage},
-    moved_primitives::B256,
+    moved_shared::primitives::B256,
     tokio::sync::{mpsc, oneshot},
 };
 

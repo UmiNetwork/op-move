@@ -17,7 +17,7 @@ use {
     move_vm_runtime::{module_traversal::TraversalContext, session::Session},
     move_vm_types::{gas::GasMeter, loaded_data::runtime_types::Type, values::Value},
     moved_evm_ext::evm_native,
-    moved_primitives::{ToMoveU256, U256},
+    moved_shared::primitives::{ToMoveU256, U256},
 };
 
 pub(super) fn execute_entry_function<G: GasMeter>(

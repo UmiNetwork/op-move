@@ -24,7 +24,7 @@ use {
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
     moved_evm_ext::evm_native::HeaderForExecution,
     moved_genesis::config::GenesisConfig,
-    moved_primitives::{ToMoveAddress, B256, U256},
+    moved_shared::primitives::{ToMoveAddress, B256, U256},
     std::time::{SystemTime, UNIX_EPOCH},
 };
 

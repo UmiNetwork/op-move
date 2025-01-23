@@ -16,7 +16,7 @@ use {
         values::Value,
     },
     moved_genesis::FRAMEWORK_ADDRESS,
-    moved_primitives::{ToMoveU256, ToU256},
+    moved_shared::primitives::{ToMoveU256, ToU256},
 };
 
 const TOKEN_ADMIN: AccountAddress = FRAMEWORK_ADDRESS;

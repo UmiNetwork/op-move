@@ -74,7 +74,7 @@ mod tests {
             types::state::Command,
         },
         moved_genesis::config::GenesisConfig,
-        moved_primitives::{B256, U256},
+        moved_shared::primitives::{B256, U256},
         moved_state::InMemoryState,
     };
 

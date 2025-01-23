@@ -3,7 +3,7 @@
 
 use {
     moved::types::state::{BlobsBundle, ExecutionPayload, Payload, PayloadResponse, Withdrawal},
-    moved_primitives::{Address, Bytes, B2048, B256, U256, U64},
+    moved_shared::primitives::{Address, Bytes, B2048, B256, U256, U64},
     serde::{Deserialize, Serialize},
     std::str::FromStr,
 };

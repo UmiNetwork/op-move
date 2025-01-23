@@ -17,7 +17,7 @@ use {
     move_binary_format::CompiledModule,
     move_core_types::{ident_str, language_storage::ModuleId, value::MoveValue},
     moved::types::transactions::{ScriptOrModule, TransactionData},
-    moved_primitives::ToMoveAddress,
+    moved_shared::primitives::ToMoveAddress,
     openssl::rand::rand_bytes,
     serde_json::Value,
     std::{

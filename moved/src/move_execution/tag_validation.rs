@@ -325,7 +325,7 @@ mod tests {
         },
         alloy::primitives::address,
         move_core_types::value::MoveStruct,
-        moved_primitives::ToMoveAddress,
+        moved_shared::primitives::ToMoveAddress,
         moved_state::{InMemoryState, State},
     };
 

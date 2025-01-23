@@ -42,7 +42,7 @@ use {
     },
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
     move_vm_types::gas::UnmeteredGasMeter,
-    moved_primitives::{ToMoveAddress, ToMoveU256, B256, U256, U64},
+    moved_shared::primitives::{ToMoveAddress, ToMoveU256, B256, U256, U64},
     moved_state::{InMemoryState, State},
     regex::Regex,
     serde::de::DeserializeOwned,

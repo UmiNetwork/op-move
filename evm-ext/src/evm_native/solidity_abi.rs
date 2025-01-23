@@ -14,7 +14,7 @@ use {
         loaded_data::runtime_types::Type,
         values::{Struct, Value},
     },
-    moved_primitives::{ToEthAddress, ToMoveAddress, ToMoveU256, ToU256},
+    moved_shared::primitives::{ToEthAddress, ToMoveAddress, ToMoveU256, ToU256},
     revm::primitives::U256,
     smallvec::{smallvec, SmallVec},
     std::{collections::VecDeque, sync::LazyLock},

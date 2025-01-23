@@ -5,7 +5,7 @@ use {
         schema::{ExecutionPayloadV3, GetPayloadResponseV3, PayloadStatusV1, Status},
     },
     moved::types::state::{Command, StateMessage},
-    moved_primitives::B256,
+    moved_shared::primitives::B256,
     tokio::sync::{mpsc, oneshot},
 };
 
@@ -199,7 +199,7 @@ mod tests {
             state_actor::InMemoryStateQueries,
         },
         moved_genesis::config::GenesisConfig,
-        moved_primitives::{Address, Bytes, B2048, U256, U64},
+        moved_shared::primitives::{Address, Bytes, B2048, U256, U64},
         moved_state::InMemoryState,
     };
 

@@ -35,7 +35,7 @@ use {
         extract_evm_changes, extract_evm_result, EvmNativeOutcome, CODE_LAYOUT, EVM_NATIVE_ADDRESS,
         EVM_NATIVE_MODULE,
     },
-    moved_primitives::{ToEthAddress, ToMoveAddress, ToMoveU256},
+    moved_shared::primitives::{ToEthAddress, ToMoveAddress, ToMoveU256},
     moved_state::{InMemoryState, State},
     revm::primitives::{TxKind, U256},
 };

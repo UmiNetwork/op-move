@@ -4,7 +4,7 @@ use {
         block::{BlockQueries, BlockRepository, ExtendedBlock},
         types::state::BlockResponse,
     },
-    moved_primitives::B256,
+    moved_shared::primitives::B256,
     rocksdb::{AsColumnFamilyRef, DB as RocksDb},
 };
 

@@ -1,4 +1,5 @@
 pub use alloy::primitives::{aliases::B2048, Address, Bytes, B256, B64, U256, U64};
+
 use {
     alloy::consensus::{Receipt, ReceiptWithBloom},
     move_core_types::{account_address::AccountAddress, u256::U256 as MoveU256},

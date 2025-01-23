@@ -6765,7 +6765,7 @@ dependencies = [
  "moved-evm-ext",
  "moved-genesis",
  "moved-genesis-image",
- "moved-primitives",
+ "moved-shared",
  "moved-state",
  "op-alloy",
  "regex",
@@ -6786,7 +6786,7 @@ dependencies = [
  "moved",
  "moved-genesis",
  "moved-genesis-image",
- "moved-primitives",
+ "moved-shared",
  "moved-state",
  "serde",
  "serde_json",
@@ -6809,7 +6809,7 @@ dependencies = [
  "move-core-types 0.0.4 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
  "move-vm-runtime",
  "move-vm-types 0.1.0 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
- "moved-primitives",
+ "moved-shared",
  "revm",
  "smallvec",
 ]
@@ -6834,7 +6834,7 @@ dependencies = [
  "move-vm-runtime",
  "move-vm-types 0.1.0 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
  "moved-evm-ext",
- "moved-primitives",
+ "moved-shared",
  "moved-state",
  "once_cell",
  "serde",
@@ -6853,16 +6853,6 @@ dependencies = [
  "move-table-extension",
  "moved-genesis",
  "moved-state",
-]
-
-[[package]]
-name = "moved-primitives"
-version = "0.1.0"
-dependencies = [
- "alloy",
- "move-core-types 0.0.4 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
- "op-alloy",
- "test-case",
 ]
 
 [[package]]
@@ -6887,7 +6877,7 @@ dependencies = [
  "moved-evm-ext",
  "moved-genesis",
  "moved-genesis-image",
- "moved-primitives",
+ "moved-shared",
  "moved-state",
  "once_cell",
  "openssl",
@@ -6896,6 +6886,16 @@ dependencies = [
  "tokio",
  "warp",
  "warp-reverse-proxy",
+]
+
+[[package]]
+name = "moved-shared"
+version = "0.1.0"
+dependencies = [
+ "alloy",
+ "move-core-types 0.0.4 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
+ "op-alloy",
+ "test-case",
 ]
 
 [[package]]
@@ -6912,7 +6912,7 @@ dependencies = [
  "move-table-extension",
  "move-vm-test-utils 0.1.0 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
  "moved-evm-ext",
- "moved-primitives",
+ "moved-shared",
 ]
 
 [[package]]
@@ -6926,7 +6926,7 @@ dependencies = [
  "move-core-types 0.0.4 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
  "move-table-extension",
  "moved",
- "moved-primitives",
+ "moved-shared",
  "moved-state",
  "rocksdb",
 ]

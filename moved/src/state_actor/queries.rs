@@ -21,7 +21,7 @@ use {
     },
     move_table_extension::{TableHandle, TableResolver},
     moved_evm_ext::evm_native,
-    moved_primitives::{KeyHashable, ToEthAddress, B256, U256},
+    moved_shared::primitives::{KeyHashable, ToEthAddress, B256, U256},
     moved_state::{
         evm_key_address, is_evm_storage_or_account_key, nodes::TreeKey, IN_MEMORY_EXPECT_MSG,
     },
@@ -315,7 +315,7 @@ mod tests {
         move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
         move_vm_types::gas::UnmeteredGasMeter,
         moved_genesis::config::GenesisConfig,
-        moved_primitives::B256,
+        moved_shared::primitives::B256,
         moved_state::{InMemoryState, State},
     };
 

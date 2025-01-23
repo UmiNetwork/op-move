@@ -16,7 +16,7 @@ use {
         primitives::Bloom,
         rpc::types::{BlockTransactions, FeeHistory, TransactionRequest, Withdrawals},
     },
-    moved_primitives::{Address, Bytes, ToU64, B2048, B256, U256, U64},
+    moved_shared::primitives::{Address, Bytes, ToU64, B2048, B256, U256, U64},
     op_alloy::{
         consensus::{OpReceiptEnvelope, OpTxEnvelope, TxDeposit},
         rpc_types::L1BlockInfo,

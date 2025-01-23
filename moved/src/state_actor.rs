@@ -43,7 +43,7 @@ use {
     move_core_types::effects::ChangeSet,
     moved_evm_ext::evm_native::HeaderForExecution,
     moved_genesis::config::GenesisConfig,
-    moved_primitives::{
+    moved_shared::primitives::{
         self, Address, ToEthAddress, ToMoveAddress, ToSaturatedU64, B256, U256, U64,
     },
     moved_state::State,
@@ -622,7 +622,7 @@ impl<
                 removed: false,
             })
             .collect();
-        let receipt = moved_primitives::with_rpc_logs(&rx.receipt, logs);
+        let receipt = primitives::with_rpc_logs(&rx.receipt, logs);
         let result = TransactionReceipt {
             inner: AlloyTxReceipt {
                 inner: receipt,
@@ -692,7 +692,7 @@ pub use test_doubles::*;
 mod test_doubles {
     use {
         super::*, eth_trie::DB, move_core_types::account_address::AccountAddress,
-        moved_primitives::U256, std::sync::Arc,
+        moved_shared::primitives::U256, std::sync::Arc,
     };
 
     pub struct MockStateQueries(pub AccountAddress, pub BlockHeight);

@@ -5,7 +5,7 @@ use {
     move_core_types::{effects::ChangeSet, resolver::MoveResolver},
     move_table_extension::{TableChangeSet, TableResolver},
     moved::state_actor::HistoricResolver,
-    moved_primitives::B256,
+    moved_shared::primitives::B256,
     moved_state::{InsertChangeSetIntoMerkleTrie, State},
     std::sync::Arc,
 };

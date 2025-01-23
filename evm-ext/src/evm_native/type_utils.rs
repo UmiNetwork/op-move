@@ -6,7 +6,7 @@ use {
     },
     move_vm_runtime::session::SerializedReturnValues,
     move_vm_types::values::{Struct, Value, Vector},
-    moved_primitives::{ToEthAddress, ToMoveAddress, ToMoveU256},
+    moved_shared::primitives::{ToEthAddress, ToMoveAddress, ToMoveU256},
     revm::primitives::{utilities::KECCAK_EMPTY, AccountInfo, Address, ExecutionResult, Log, B256},
 };
 

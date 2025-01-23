@@ -21,7 +21,7 @@ use {
     move_vm_types::values::Value,
     moved_evm_ext::evm_native::{self, EvmNativeOutcome, HeaderForExecution},
     moved_genesis::config::GenesisConfig,
-    moved_primitives::{ToMoveAddress, ToMoveU256, B256},
+    moved_shared::primitives::{ToMoveAddress, ToMoveU256, B256},
 };
 
 // Topic identifying the event

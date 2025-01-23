@@ -12,7 +12,7 @@ use {
         type_utils::{ACCOUNT_INFO_PREFIX, ACCOUNT_STORAGE_PREFIX},
         EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
     },
-    moved_primitives::{Address, KeyHashable, B256},
+    moved_shared::primitives::{Address, KeyHashable, B256},
     nodes::{TreeKey, TreeValue},
     std::{collections::HashMap, fmt::Debug, sync::Arc},
 };

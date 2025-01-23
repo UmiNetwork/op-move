@@ -20,6 +20,6 @@ move-binary-format.workspace = true
 move-core-types.workspace = true
 move-vm-runtime.workspace = true
 move-vm-types.workspace = true
-moved-primitives.workspace = true
+moved-shared.workspace = true
 revm.workspace = true
 smallvec.workspace = true

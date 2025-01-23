@@ -3,7 +3,7 @@ use {
     aptos_gas_schedule::{InitialGasSchedule, VMGasParameters},
     aptos_vm_types::storage::StorageGasParameters,
     move_core_types::account_address::AccountAddress,
-    moved_primitives::B256,
+    moved_shared::primitives::B256,
     std::path::{Path, PathBuf},
 };
 

@@ -6,7 +6,7 @@ use {
         },
         types::state::BlockResponse,
     },
-    moved_primitives::B256,
+    moved_shared::primitives::B256,
     std::{collections::HashMap, convert::Infallible},
 };
 

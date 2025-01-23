@@ -7,8 +7,8 @@ members = [
     "genesis-builder",
     "genesis-image",
     "moved",
-    "primitives",
     "server",
+    "shared",
     "state",
     "storage",
 ]
@@ -60,7 +60,7 @@ moved-engine-api = { path = "engine-api" }
 moved-evm-ext = { path = "evm-ext" }
 moved-genesis = { path = "genesis" }
 moved-genesis-image = { path = "genesis-image" }
-moved-primitives = { path = "primitives" }
+moved-shared = { path = "shared" }
 moved-state = { path = "state" }
 moved-storage = { path = "storage" }
 once_cell = "1.19"
