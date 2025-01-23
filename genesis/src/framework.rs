@@ -28,7 +28,7 @@ pub const CRATE_ROOT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../moved");
 pub const APTOS_SNAPSHOT_NAME: &str = "aptos.mrb";
 pub const SUI_SNAPSHOT_NAME: &str = "sui.mrb";
 pub const L2_PACKAGE_NAME: &str = "L2";
-pub const FRAMEWORK_ADDRESS: AccountAddress = moved_evm_ext::evm_native::FRAMEWORK_ADDRESS;
+pub const FRAMEWORK_ADDRESS: AccountAddress = moved_evm_ext::FRAMEWORK_ADDRESS;
 pub const L2_LOWEST_ADDRESS: AccountAddress =
     eth_address(&address!("4200000000000000000000000000000000000000").0 .0);
 pub const L2_HIGHEST_ADDRESS: AccountAddress =
@@ -231,7 +231,7 @@ fn deploy_sui_framework(session: &mut Session) -> Result<(), VMError> {
 
 #[cfg(test)]
 mod tests {
-    use {super::*, crate::genesis::vm::MovedVm, moved_state::InMemoryState};
+    use {super::*, crate::vm::MovedVm, moved_state::InMemoryState};
 
     // Aptos framework has 133 modules and Sui has 69. They are kept mutually exclusive.
     const APTOS_MODULES_LEN: usize = 133;

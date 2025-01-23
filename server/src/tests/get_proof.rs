@@ -6,7 +6,7 @@ use {
         ForkchoiceUpdatedResponseV1, GetBlockResponse, GetPayloadResponseV3, PayloadStatusV1,
         Status,
     },
-    moved_evm_ext::evm_native::trie_types,
+    moved_evm_ext::trie_types,
     moved_genesis::config::GenesisConfig,
     serde::de::DeserializeOwned,
     std::sync::Arc,

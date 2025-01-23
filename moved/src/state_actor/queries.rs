@@ -20,7 +20,7 @@ use {
         vm_status::StatusCode,
     },
     move_table_extension::{TableHandle, TableResolver},
-    moved_evm_ext::evm_native,
+    moved_evm_ext::ResolverBackedDB,
     moved_shared::primitives::{KeyHashable, ToEthAddress, B256, U256},
     moved_state::{
         evm_key_address, is_evm_storage_or_account_key, nodes::TreeKey, IN_MEMORY_EXPECT_MSG,
@@ -175,7 +175,7 @@ impl StateQueries for InMemoryStateQueries {
 
         // All L2 contract account data is part of the EVM state
         let resolver = self.storage.resolver(db.clone(), height)?;
-        let evm_db = evm_native::ResolverBackedDB::new(&resolver);
+        let evm_db = ResolverBackedDB::new(&resolver);
         let account_info = evm_db.get_account(&address).ok()??;
 
         let root = self.storage.get_root_by_height(height)?;

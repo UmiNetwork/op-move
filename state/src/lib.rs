@@ -8,7 +8,7 @@ use {
     move_core_types::{effects::ChangeSet, language_storage::StructTag, resolver::MoveResolver},
     move_table_extension::{TableChangeSet, TableResolver},
     move_vm_test_utils::InMemoryStorage,
-    moved_evm_ext::evm_native::{
+    moved_evm_ext::{
         type_utils::{ACCOUNT_INFO_PREFIX, ACCOUNT_STORAGE_PREFIX},
         EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
     },

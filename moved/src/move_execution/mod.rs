@@ -30,7 +30,7 @@ use {
     move_vm_runtime::{
         move_vm::MoveVM, native_extensions::NativeContextExtensions, session::Session,
     },
-    moved_evm_ext::evm_native::{
+    moved_evm_ext::{
         events::{evm_logs_event_to_log, EVM_LOGS_EVENT_LAYOUT, EVM_LOGS_EVENT_TAG},
         HeaderForExecution,
     },
@@ -90,7 +90,7 @@ where
     native_extensions.add(NativeTableContext::new(txn_hash, state));
 
     // EVM native extension
-    native_extensions.add(moved_evm_ext::evm_native::NativeEVMContext::new(
+    native_extensions.add(moved_evm_ext::NativeEVMContext::new(
         state,
         session_id.block_header,
     ));

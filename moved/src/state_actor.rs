@@ -41,7 +41,7 @@ use {
     },
     move_binary_format::errors::PartialVMError,
     move_core_types::effects::ChangeSet,
-    moved_evm_ext::evm_native::HeaderForExecution,
+    moved_evm_ext::HeaderForExecution,
     moved_genesis::config::GenesisConfig,
     moved_shared::primitives::{
         self, Address, ToEthAddress, ToMoveAddress, ToSaturatedU64, B256, U256, U64,

@@ -1,5 +1,5 @@
 use {
-    crate::genesis::framework::CreateMoveVm,
+    crate::framework::CreateMoveVm,
     aptos_gas_schedule::{MiscGasParameters, NativeGasParameters, LATEST_GAS_FEATURE_VERSION},
     aptos_native_interface::SafeNativeBuilder,
     aptos_types::on_chain_config::{Features, TimedFeaturesBuilder},
@@ -20,7 +20,7 @@ impl CreateMoveVm for MovedVm {
             Features::default(),
         );
         let mut natives = aptos_natives_with_builder(&mut builder);
-        moved_evm_ext::evm_native::append_evm_natives(&mut natives, &builder);
+        moved_evm_ext::append_evm_natives(&mut natives, &builder);
         let vm = MoveVM::new(natives)?;
         Ok(vm)
     }

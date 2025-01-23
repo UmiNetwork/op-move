@@ -1,6 +1,6 @@
 use {
     super::{EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE},
-    crate::evm_native::native_evm_context::FRAMEWORK_ADDRESS,
+    crate::native_evm_context::FRAMEWORK_ADDRESS,
     alloy::dyn_abi::{DynSolType, DynSolValue, Error},
     aptos_native_interface::{
         safely_pop_arg, safely_pop_type_arg, SafeNativeContext, SafeNativeError, SafeNativeResult,

@@ -4,5 +4,5 @@ use {
 };
 
 pub fn init_state(genesis: Genesis, state: &impl State<Err = PartialVMError>) -> ChangeSet {
-    moved_evm_ext::evm_native::genesis_state_changes(genesis, state.resolver())
+    moved_evm_ext::genesis_state_changes(genesis, state.resolver())
 }

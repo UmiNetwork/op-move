@@ -4,7 +4,7 @@ use {
     alloy::primitives::U256,
     aptos_types::transaction::EntryFunction,
     aptos_vm::move_vm_ext::UserTransactionContext,
-    moved_evm_ext::evm_native::HeaderForExecution,
+    moved_evm_ext::HeaderForExecution,
     moved_genesis::config::{GenesisConfig, CHAIN_ID},
     moved_shared::primitives::{ToMoveAddress, B256},
 };

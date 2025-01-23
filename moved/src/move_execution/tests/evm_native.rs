@@ -31,7 +31,7 @@ use {
         gas::UnmeteredGasMeter,
         values::{Struct, Value},
     },
-    moved_evm_ext::evm_native::{
+    moved_evm_ext::{
         extract_evm_changes, extract_evm_result, EvmNativeOutcome, CODE_LAYOUT, EVM_NATIVE_ADDRESS,
         EVM_NATIVE_MODULE,
     },
