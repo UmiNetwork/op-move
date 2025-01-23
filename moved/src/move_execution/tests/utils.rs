@@ -1,7 +1,4 @@
-use {
-    super::*, crate::types::transactions::NormalizedExtendedTxEnvelope,
-    moved_genesis::config::CHAIN_ID,
-};
+use {super::*, moved_genesis::config::CHAIN_ID};
 
 /// Represents the base token state for a test transaction
 #[derive(Debug)]
