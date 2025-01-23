@@ -4,6 +4,10 @@ description = "Defines the domain of blockchain state"
 version.workspace = true
 edition.workspace = true
 
+[features]
+default = []
+test-doubles = []
+
 [dependencies]
 alloy.workspace = true
 aptos-types.workspace = true
@@ -16,7 +20,3 @@ move-table-extension.workspace = true
 move-vm-test-utils.workspace = true
 moved-evm-ext.workspace = true
 moved-primitives.workspace = true
-
-[features]
-default = []
-test-doubles = []

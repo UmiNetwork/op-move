@@ -6750,8 +6750,6 @@ dependencies = [
  "anyhow",
  "aptos-framework",
  "aptos-gas-meter",
- "aptos-gas-schedule",
- "aptos-native-interface",
  "aptos-table-natives",
  "aptos-types",
  "aptos-vm",

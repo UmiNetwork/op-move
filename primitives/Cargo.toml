@@ -4,6 +4,10 @@ description = "Defines the generic shared kernel of primitive types"
 version.workspace = true
 edition.workspace = true
 
+[features]
+default = []
+test-doubles = []
+
 [dependencies]
 alloy.workspace = true
 move-core-types.workspace = true
@@ -11,7 +15,3 @@ op-alloy.workspace = true
 
 [dev-dependencies]
 test-case.workspace = true
-
-[features]
-default = []
-test-doubles = []

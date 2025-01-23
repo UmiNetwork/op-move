@@ -4,17 +4,19 @@ description = "Moved execution"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = []
+test-doubles = []
+
 [dependencies]
 alloy.workspace = true
 alloy-rlp.workspace = true
 alloy-trie.workspace = true
 aptos-framework.workspace = true
 aptos-gas-meter.workspace = true
-aptos-gas-schedule.workspace = true
 aptos-table-natives.workspace = true
 aptos-types.workspace = true
 aptos-vm.workspace = true
-aptos-native-interface.workspace = true
 bcs.workspace = true
 bytes.workspace = true
 eth_trie.workspace = true
@@ -23,6 +25,10 @@ move-core-types.workspace = true
 move-table-extension.workspace = true
 move-vm-runtime.workspace = true
 move-vm-types.workspace = true
+moved-evm-ext.workspace = true
+moved-genesis.workspace = true
+moved-primitives.workspace = true
+moved-state.workspace = true
 op-alloy.workspace = true
 regex.workspace = true
 revm.workspace = true
@@ -30,17 +36,9 @@ serde.workspace = true
 sha2.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
-moved-evm-ext.workspace = true
-moved-genesis.workspace = true
-moved-genesis-image.workspace = true
-moved-primitives.workspace = true
-moved-state.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true
 move-compiler.workspace = true
+moved-genesis-image.workspace = true
 test-case.workspace = true
-
-[features]
-default = []
-test-doubles = []
