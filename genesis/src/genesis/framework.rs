@@ -28,7 +28,7 @@ pub const CRATE_ROOT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../moved");
 pub const APTOS_SNAPSHOT_NAME: &str = "aptos.mrb";
 pub const SUI_SNAPSHOT_NAME: &str = "sui.mrb";
 pub const L2_PACKAGE_NAME: &str = "L2";
-pub const FRAMEWORK_ADDRESS: AccountAddress = AccountAddress::ONE;
+pub const FRAMEWORK_ADDRESS: AccountAddress = moved_evm_ext::evm_native::FRAMEWORK_ADDRESS;
 pub const L2_LOWEST_ADDRESS: AccountAddress =
     eth_address(&address!("4200000000000000000000000000000000000000").0 .0);
 pub const L2_HIGHEST_ADDRESS: AccountAddress =
@@ -88,7 +88,7 @@ pub fn load_sui_framework_snapshot() -> &'static BTreeMap<ObjectID, SystemPackag
 
 /// Initializes the blockchain state with Aptos and Sui frameworks.
 pub fn init_state(
-    vm: impl CreateMoveVm,
+    vm: &impl CreateMoveVm,
     state: &impl State<Err = PartialVMError>,
 ) -> (ChangeSet, move_table_extension::TableChangeSet) {
     let (change_set, table_change_set) =
@@ -126,11 +126,11 @@ pub fn init_state(
 }
 
 pub trait CreateMoveVm {
-    fn create_move_vm(self) -> Result<MoveVM, VMError>;
+    fn create_move_vm(&self) -> Result<MoveVM, VMError>;
 }
 
 fn deploy_framework(
-    vm: impl CreateMoveVm,
+    vm: &impl CreateMoveVm,
     state: &impl State<Err = PartialVMError>,
 ) -> Result<(ChangeSet, TableChangeSet), VMError> {
     let vm = vm.create_move_vm()?;
@@ -231,7 +231,7 @@ fn deploy_sui_framework(session: &mut Session) -> Result<(), VMError> {
 
 #[cfg(test)]
 mod tests {
-    use {super::*, moved_state::InMemoryState};
+    use {super::*, crate::genesis::vm::MovedVm, moved_state::InMemoryState};
 
     // Aptos framework has 133 modules and Sui has 69. They are kept mutually exclusive.
     const APTOS_MODULES_LEN: usize = 133;
@@ -251,7 +251,7 @@ mod tests {
         assert_eq!(sui_framework_len, SUI_MODULES_LEN);
 
         let state = InMemoryState::new();
-        let (change_set, _) = deploy_framework((), &state).unwrap();
+        let (change_set, _) = deploy_framework(&MovedVm, &state).unwrap();
         assert_eq!(change_set.modules().count(), TOTAL_MODULES_LEN);
     }
 }

@@ -145,7 +145,7 @@ pub fn initialize_state_actor(
         }
         #[cfg(not(test))]
         {
-            moved_genesis::build(&genesis_config, &state)
+            moved_genesis::build(&moved_genesis::MovedVm, &genesis_config, &state)
         }
     };
     let state_query = InMemoryStateQueries::from_genesis(genesis_config.initial_state_root);

@@ -17,14 +17,8 @@ use {
         event::NativeEventContext, object::NativeObjectContext,
         transaction_context::NativeTransactionContext,
     },
-    aptos_gas_schedule::{MiscGasParameters, NativeGasParameters, LATEST_GAS_FEATURE_VERSION},
-    aptos_native_interface::SafeNativeBuilder,
     aptos_table_natives::{NativeTableContext, TableResolver},
-    aptos_types::{
-        contract_event::ContractEvent,
-        on_chain_config::{Features, TimedFeaturesBuilder},
-    },
-    aptos_vm::natives::aptos_natives_with_builder,
+    aptos_types::contract_event::ContractEvent,
     canonical::execute_canonical_transaction,
     deposited::execute_deposited_transaction,
     move_binary_format::errors::PartialVMError,
@@ -40,7 +34,7 @@ use {
         events::{evm_logs_event_to_log, EVM_LOGS_EVENT_LAYOUT, EVM_LOGS_EVENT_TAG},
         HeaderForExecution,
     },
-    moved_genesis::config::GenesisConfig,
+    moved_genesis::{config::GenesisConfig, CreateMoveVm, MovedVm},
     moved_primitives::{ToEthAddress, B256},
     std::ops::Deref,
 };
@@ -61,17 +55,7 @@ const ADDRESS_LAYOUT: MoveTypeLayout = MoveTypeLayout::Address;
 const U256_LAYOUT: MoveTypeLayout = MoveTypeLayout::U256;
 
 pub fn create_move_vm() -> crate::Result<MoveVM> {
-    let mut builder = SafeNativeBuilder::new(
-        LATEST_GAS_FEATURE_VERSION,
-        NativeGasParameters::zeros(),
-        MiscGasParameters::zeros(),
-        TimedFeaturesBuilder::enable_all().build(),
-        Features::default(),
-    );
-    let mut natives = aptos_natives_with_builder(&mut builder);
-    moved_evm_ext::evm_native::append_evm_natives(&mut natives, &builder);
-    let vm = MoveVM::new(natives)?;
-    Ok(vm)
+    Ok(MovedVm.create_move_vm()?)
 }
 
 pub fn create_vm_session<'l, 'r, S>(

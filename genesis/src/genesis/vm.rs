@@ -8,8 +8,10 @@ use {
     move_vm_runtime::move_vm::MoveVM,
 };
 
-impl CreateMoveVm for () {
-    fn create_move_vm(self) -> Result<MoveVM, VMError> {
+pub struct MovedVm;
+
+impl CreateMoveVm for MovedVm {
+    fn create_move_vm(&self) -> Result<MoveVM, VMError> {
         let mut builder = SafeNativeBuilder::new(
             LATEST_GAS_FEATURE_VERSION,
             NativeGasParameters::zeros(),
