@@ -10,6 +10,7 @@ pub mod get_block_by_number;
 pub mod get_nonce;
 pub mod get_payload;
 pub mod get_proof;
+pub mod get_transaction_by_hash;
 pub mod get_transaction_receipt;
 pub mod new_payload;
 pub mod send_raw_transaction;

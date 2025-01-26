@@ -213,6 +213,10 @@ pub enum Query {
         tx_hash: B256,
         response_channel: oneshot::Sender<Option<TransactionReceipt>>,
     },
+    TransactionByHash {
+        tx_hash: B256,
+        response_channel: oneshot::Sender<Option<TransactionResponse>>,
+    },
     GetProof {
         address: Address,
         storage_slots: Vec<U256>,
@@ -228,6 +232,7 @@ impl From<Query> for StateMessage {
 }
 
 pub type RpcBlock = alloy::rpc::types::Block<op_alloy::rpc_types::Transaction>;
+pub type RpcTx = op_alloy::rpc_types::Transaction;
 
 #[derive(Debug)]
 pub struct BlockResponse(pub RpcBlock);
@@ -369,6 +374,9 @@ fn compute_from(tx: &OpTxEnvelope) -> Result<Address, alloy::primitives::Signatu
         _ => unreachable!("Tx type not supported"),
     }
 }
+
+#[derive(Debug)]
+pub struct TransactionResponse(pub op_alloy::rpc_types::Transaction);
 
 pub type TransactionReceipt = op_alloy::rpc_types::OpTransactionReceipt;
 
