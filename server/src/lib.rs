@@ -10,6 +10,7 @@ use {
         },
         move_execution::{CreateEcotoneL1GasFee, CreateMovedL2GasFee, MovedBaseTokenAccounts},
         state_actor::{InMemoryStateQueries, StateActor, StatePayloadId},
+        transaction::InMemoryTransactionRepository,
         types::state::{Command, StateMessage},
     },
     moved_genesis::config::GenesisConfig,
@@ -53,6 +54,7 @@ pub type ProductionStateActor = StateActor<
     InMemoryBlockQueries,
     BlockMemory,
     InMemoryStateQueries,
+    InMemoryTransactionRepository,
 >;
 
 #[derive(Parser)]
@@ -152,6 +154,9 @@ pub fn initialize_state_actor(
     moved_genesis::apply(genesis_changes, table_changes, &genesis_config, &mut state);
 
     let base_token = MovedBaseTokenAccounts::new(genesis_config.treasury);
+
+    let transaction_repository = InMemoryTransactionRepository::new();
+
     StateActor::new(
         rx,
         state,
@@ -171,6 +176,7 @@ pub fn initialize_state_actor(
         InMemoryBlockQueries,
         block_memory,
         state_query,
+        transaction_repository,
         moved::state_actor::StateActor::on_tx_in_memory(),
         moved::state_actor::StateActor::on_tx_batch_in_memory(),
     )

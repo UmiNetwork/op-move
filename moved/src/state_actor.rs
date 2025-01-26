@@ -68,6 +68,7 @@ pub type InMemStateActor = StateActor<
     crate::block::InMemoryBlockQueries,
     crate::block::BlockMemory,
     InMemoryStateQueries,
+    InMemoryTransactionRepository,
 >;
 
 /// A function invoked on a completion of new transaction execution batch.
@@ -90,6 +91,7 @@ pub struct StateActor<
     Q: BlockQueries<Storage = M>,
     M,
     SQ,
+    T,
 > {
     genesis_config: GenesisConfig,
     rx: Receiver<StateMessage>,
@@ -109,6 +111,7 @@ pub struct StateActor<
     base_token: B,
     block_memory: M,
     state_queries: SQ,
+    transaction_repository: T,
     // tx_hash -> (tx_with_receipt, block_hash)
     tx_receipts: HashMap<B256, (TransactionWithReceipt, B256)>,
     on_tx_batch: OnTxBatch<Self>,
@@ -127,7 +130,8 @@ impl<
         Q: BlockQueries<Storage = M> + Send + Sync + 'static,
         M: Send + Sync + 'static,
         SQ: StateQueries + Send + Sync + 'static,
-    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ>
+        T: TransactionRepository + Send + Sync + 'static,
+    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T>
 {
     pub fn spawn(mut self) -> JoinHandle<()> {
         tokio::spawn(async move {
@@ -153,7 +157,8 @@ impl<
         Q: BlockQueries<Storage = M>,
         M,
         SQ: StateQueries,
-    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ>
+        T: TransactionRepository,
+    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T>
 {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -172,6 +177,7 @@ impl<
         block_queries: Q,
         block_memory: M,
         state_queries: SQ,
+        transaction_repository: T,
         on_tx: OnTx<Self>,
         on_tx_batch: OnTxBatch<Self>,
     ) -> Self {
@@ -197,6 +203,7 @@ impl<
             tx_receipts: HashMap::new(),
             on_tx,
             on_tx_batch,
+            transaction_repository,
         }
     }
 
@@ -674,7 +681,8 @@ impl<
         B: BaseTokenAccounts,
         Q: BlockQueries<Storage = M>,
         M,
-    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, InMemoryStateQueries>
+        T: TransactionRepository,
+    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, InMemoryStateQueries, T>
 {
     pub fn on_tx_in_memory() -> OnTx<Self> {
         Box::new(|| Box::new(|_state, _changes| ()))
@@ -693,6 +701,7 @@ impl<
 
 use crate::{
     move_execution::{CanonicalExecutionInput, DepositExecutionInput},
+    transaction::{InMemoryTransactionRepository, TransactionRepository},
     types::state::TransactionResponse,
 };
 #[cfg(any(feature = "test-doubles", test))]
@@ -875,6 +884,7 @@ mod tests {
             impl BlockQueries<Storage = BlockMemory>,
             BlockMemory,
             SQ,
+            impl TransactionRepository,
         >,
         Sender<StateMessage>,
     ) {
@@ -910,6 +920,7 @@ mod tests {
             InMemoryBlockQueries,
             block_memory,
             state_queries,
+            InMemoryTransactionRepository::new(),
             StateActor::on_tx_noop(),
             StateActor::on_tx_batch_noop(),
         );
@@ -955,6 +966,7 @@ mod tests {
             impl BlockQueries<Storage = BlockMemory>,
             BlockMemory,
             impl StateQueries,
+            impl TransactionRepository,
         >,
         Sender<StateMessage>,
     ) {
@@ -997,6 +1009,7 @@ mod tests {
             InMemoryBlockQueries,
             block_memory,
             state_queries,
+            InMemoryTransactionRepository::new(),
             StateActor::on_tx_in_memory(),
             StateActor::on_tx_batch_in_memory(),
         );

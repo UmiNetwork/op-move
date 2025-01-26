@@ -39,6 +39,7 @@ pub mod tests {
             state_actor::{
                 InMemoryStateQueries, MockStateQueries, NewPayloadId, StateActor, StateQueries,
             },
+            transaction::{InMemoryTransactionRepository, TransactionRepository},
             types::{
                 state::{Command, Payload, StateMessage},
                 transactions::{DepositedTx, ExtendedTxEnvelope},
@@ -90,6 +91,7 @@ pub mod tests {
             InMemoryBlockQueries,
             block_memory,
             InMemoryStateQueries::from_genesis(initial_state_root),
+            InMemoryTransactionRepository::new(),
             StateActor::on_tx_noop(),
             StateActor::on_tx_batch_noop(),
         );
@@ -173,6 +175,7 @@ pub mod tests {
             impl BlockQueries<Storage = ()>,
             (),
             impl StateQueries,
+            impl TransactionRepository,
         >,
         Sender<StateMessage>,
     ) {
@@ -195,6 +198,7 @@ pub mod tests {
             (),
             (),
             MockStateQueries(address, height),
+            InMemoryTransactionRepository::new(),
             StateActor::on_tx_noop(),
             StateActor::on_tx_batch_noop(),
         );

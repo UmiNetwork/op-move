@@ -51,6 +51,7 @@ mod tests {
                 InMemoryBlockRepository,
             },
             state_actor::InMemoryStateQueries,
+            transaction::InMemoryTransactionRepository,
             types::state::Command,
         },
         moved_genesis::config::GenesisConfig,
@@ -117,6 +118,7 @@ mod tests {
             InMemoryBlockQueries,
             block_memory,
             InMemoryStateQueries::from_genesis(initial_state_root),
+            InMemoryTransactionRepository::new(),
             moved::state_actor::StateActor::on_tx_noop(),
             moved::state_actor::StateActor::on_tx_batch_noop(),
         );
