@@ -279,6 +279,9 @@ impl<
             Query::TransactionReceipt { tx_hash, response_channel } => {
                 response_channel.send(self.query_transaction_receipt(tx_hash)).ok()
             }
+            Query::TransactionByHash { tx_hash, response_channel } => response_channel
+                .send(self.query_transaction_by_hash(tx_hash))
+                .ok(),
             Query::GetProof { address, storage_slots, height, response_channel } => {
                 response_channel.send(
                     self.get_proof(
@@ -589,6 +592,10 @@ impl<
         (outcome, receipts)
     }
 
+    fn query_transaction_by_hash(&self, _tx_hash: B256) -> Option<TransactionResponse> {
+        None
+    }
+
     fn query_transaction_receipt(&self, tx_hash: B256) -> Option<TransactionReceipt> {
         let (rx, block_hash) = self.tx_receipts.get(&tx_hash)?;
         let block = self
@@ -684,7 +691,10 @@ impl<
     }
 }
 
-use crate::move_execution::{CanonicalExecutionInput, DepositExecutionInput};
+use crate::{
+    move_execution::{CanonicalExecutionInput, DepositExecutionInput},
+    types::state::TransactionResponse,
+};
 #[cfg(any(feature = "test-doubles", test))]
 pub use test_doubles::*;
 

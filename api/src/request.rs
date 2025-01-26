@@ -50,6 +50,7 @@ async fn inner_handle_request(
         ChainId => chain_id::execute(state_channel).await,
         GetBalance => get_balance::execute(request, state_channel).await,
         GetNonce => get_nonce::execute(request, state_channel).await,
+        GetTransactionByHash => get_transaction_by_hash::execute(request, state_channel).await,
         GetBlockByHash => get_block_by_hash::execute(request, state_channel).await,
         GetBlockByNumber => get_block_by_number::execute(request, state_channel).await,
         BlockNumber => block_number::execute(request, state_channel).await,
