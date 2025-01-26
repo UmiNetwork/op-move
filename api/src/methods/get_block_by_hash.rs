@@ -1,6 +1,6 @@
 use {
     crate::{
-        json_utils::{self, access_state_error},
+        json_utils::{access_state_error, parse_params_2},
         jsonrpc::JsonRpcError,
         schema::GetBlockResponse,
     },
@@ -13,7 +13,7 @@ pub async fn execute(
     request: serde_json::Value,
     state_channel: mpsc::Sender<StateMessage>,
 ) -> Result<serde_json::Value, JsonRpcError> {
-    let (block_hash, include_transactions) = parse_params(request)?;
+    let (block_hash, include_transactions) = parse_params_2(request)?;
     let response = inner_execute(block_hash, include_transactions, state_channel).await?;
     Ok(serde_json::to_value(response).expect("Must be able to JSON-serialize response"))
 }
@@ -34,19 +34,6 @@ async fn inner_execute(
     let maybe_response = rx.await.map_err(access_state_error)?;
 
     Ok(maybe_response.map(GetBlockResponse::from))
-}
-
-fn parse_params(request: serde_json::Value) -> Result<(B256, bool), JsonRpcError> {
-    let params = json_utils::get_params_list(&request);
-    match params {
-        [] | [_] => Err(JsonRpcError::parse_error(request, "Not enough params")),
-        [x, y] => {
-            let block_hash: B256 = json_utils::deserialize(x)?;
-            let include_transactions: bool = json_utils::deserialize(y)?;
-            Ok((block_hash, include_transactions))
-        }
-        _ => Err(JsonRpcError::parse_error(request, "Too many params")),
-    }
 }
 
 #[cfg(test)]

@@ -1,5 +1,8 @@
 use {
-    crate::{json_utils, json_utils::access_state_error, jsonrpc::JsonRpcError},
+    crate::{
+        json_utils::{access_state_error, parse_params_2},
+        jsonrpc::JsonRpcError,
+    },
     alloy::{
         eips::BlockNumberOrTag,
         primitives::{Address, U256},
@@ -12,34 +15,13 @@ pub async fn execute(
     request: serde_json::Value,
     state_channel: mpsc::Sender<StateMessage>,
 ) -> Result<serde_json::Value, JsonRpcError> {
-    let (address, block_number) = parse_params(request)?;
+    let (address, block_number) = parse_params_2(request)?;
     let response = inner_execute(address, block_number, state_channel)
         .await?
         .ok_or(JsonRpcError::block_not_found(block_number))?;
 
     // Format the balance as a hex string
-    Ok(serde_json::Value::String(format!("0x{:x}", response)))
-}
-
-fn parse_params(request: serde_json::Value) -> Result<(Address, BlockNumberOrTag), JsonRpcError> {
-    let params = json_utils::get_params_list(&request);
-    match params {
-        [] => Err(JsonRpcError {
-            code: -32602,
-            data: request,
-            message: "Not enough params".into(),
-        }),
-        [a, b] => {
-            let address: Address = json_utils::deserialize(a)?;
-            let block_number: BlockNumberOrTag = json_utils::deserialize(b)?;
-            Ok((address, block_number))
-        }
-        _ => Err(JsonRpcError {
-            code: -32602,
-            data: request,
-            message: "Too many params".into(),
-        }),
-    }
+    Ok(serde_json::Value::String(format!("0x{response:x}")))
 }
 
 async fn inner_execute(
@@ -81,7 +63,7 @@ mod tests {
             "id": 1
         });
 
-        let (address, block_number) = parse_params(request).unwrap();
+        let (address, block_number): (Address, BlockNumberOrTag) = parse_params_2(request).unwrap();
         assert_eq!(
             address,
             Address::from_str("0x0000000000000000000000000000000000000001").unwrap()
