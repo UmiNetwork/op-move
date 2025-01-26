@@ -2,7 +2,7 @@ use {
     crate::initialize_state_actor,
     eth_trie::{EthTrie, MemoryDB, Trie},
     moved::types::{queries::ProofResponse, state::StateMessage},
-    moved_engine_api::schema::{
+    moved_api::schema::{
         ForkchoiceUpdatedResponseV1, GetBlockResponse, GetPayloadResponseV3, PayloadStatusV1,
         Status,
     },
@@ -155,7 +155,7 @@ async fn handle_request<T: DeserializeOwned>(
     request: serde_json::Value,
     state_channel: &mpsc::Sender<StateMessage>,
 ) -> anyhow::Result<T> {
-    let response = moved_engine_api::request::handle(request.clone(), state_channel.clone()).await;
+    let response = moved_api::request::handle(request.clone(), state_channel.clone()).await;
 
     if let Some(error) = response.error {
         anyhow::bail!("Error response from request {request:?}: {error:?}");

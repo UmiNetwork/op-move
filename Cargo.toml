@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-    "engine-api",
+    "api",
     "evm-ext",
     "genesis",
     "genesis-builder",
@@ -56,10 +56,10 @@ move-vm-runtime = { git = "https://github.com/aptos-labs/aptos-core", tag = "apt
 move-vm-test-utils = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0", features = ["table-extension"] }
 move-vm-types = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 moved = { path = "moved" }
-moved-engine-api = { path = "engine-api" }
 moved-evm-ext = { path = "evm-ext" }
 moved-genesis = { path = "genesis" }
 moved-genesis-image = { path = "genesis-image" }
+moved-api = { path = "api" }
 moved-shared = { path = "shared" }
 moved-state = { path = "state" }
 moved-storage = { path = "storage" }

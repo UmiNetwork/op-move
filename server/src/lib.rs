@@ -267,8 +267,7 @@ async fn mirror(
         };
 
     let request = request.expect("geth responded, so body must have been JSON");
-    let op_move_response =
-        moved_engine_api::request::handle(request.clone(), state_channel.clone()).await;
+    let op_move_response = moved_api::request::handle(request.clone(), state_channel.clone()).await;
     let log = MirrorLog {
         request: &request,
         geth_response: &parsed_geth_response,

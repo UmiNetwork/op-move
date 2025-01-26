@@ -1,6 +1,6 @@
 [package]
-name = "moved-engine-api"
-description = "Moved execution Ethereum engine JSON-RPC API"
+name = "moved-api"
+description = "Moved execution Ethereum JSON-RPC API"
 version.workspace = true
 edition.workspace = true
 
