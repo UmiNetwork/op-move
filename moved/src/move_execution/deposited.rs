@@ -6,10 +6,7 @@ use {
             gas::{new_gas_meter, total_gas_used},
             DepositExecutionInput, ADDRESS_LAYOUT, U256_LAYOUT,
         },
-        types::{
-            session_id::SessionId,
-            transactions::{DepositedTx, TransactionExecutionOutcome},
-        },
+        types::{session_id::SessionId, transactions::TransactionExecutionOutcome},
     },
     alloy::{hex, primitives::U256},
     aptos_table_natives::TableResolver,
@@ -20,11 +17,16 @@ use {
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
     move_vm_types::values::Value,
     moved_evm_ext::{
-        self, extract_evm_changes, extract_evm_result, EvmNativeOutcome, HeaderForExecution,
-        CODE_LAYOUT, EVM_CALL_FN_NAME, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
+        self, extract_evm_changes, extract_evm_result, EvmNativeOutcome, CODE_LAYOUT,
+        EVM_CALL_FN_NAME, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
     },
-    moved_genesis::config::GenesisConfig,
     moved_shared::primitives::{ToMoveAddress, ToMoveU256, B256},
+};
+
+#[cfg(any(feature = "test-doubles", test))]
+use {
+    crate::types::transactions::DepositedTx, moved_evm_ext::HeaderForExecution,
+    moved_genesis::config::GenesisConfig,
 };
 
 // Topic identifying the event
