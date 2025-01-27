@@ -130,6 +130,9 @@ pub fn mint_eth<G: GasMeter>(
     traversal_context: &mut TraversalContext,
     gas_meter: &mut G,
 ) -> Result<(), crate::Error> {
+    if amount.is_zero() {
+        return Ok(());
+    }
     let token_module_id = ModuleId::new(FRAMEWORK_ADDRESS, TOKEN_MODULE_NAME.into());
     let admin_arg = bcs::to_bytes(&MoveValue::Signer(TOKEN_ADMIN)).expect("signer can serialize");
     let to_arg = bcs::to_bytes(to).expect("address can serialize");
@@ -164,6 +167,9 @@ pub fn burn_eth<G: GasMeter>(
     traversal_context: &mut TraversalContext,
     gas_meter: &mut G,
 ) -> Result<(), crate::Error> {
+    if amount.is_zero() {
+        return Ok(());
+    }
     let token_module_id = ModuleId::new(FRAMEWORK_ADDRESS, TOKEN_MODULE_NAME.into());
     let admin_arg = bcs::to_bytes(&MoveValue::Signer(TOKEN_ADMIN)).expect("signer can serialize");
     let from_arg = bcs::to_bytes(from).expect("address can serialize");
@@ -192,6 +198,9 @@ pub fn transfer_eth<G: GasMeter>(
     traversal_context: &mut TraversalContext,
     gas_meter: &mut G,
 ) -> Result<(), crate::Error> {
+    if args.amount.is_zero() {
+        return Ok(());
+    }
     let token_module_id = ModuleId::new(FRAMEWORK_ADDRESS, TOKEN_MODULE_NAME.into());
     let admin_arg = bcs::to_bytes(&MoveValue::Signer(TOKEN_ADMIN)).expect("signer can serialize");
     let from_arg = bcs::to_bytes(args.from).expect("from address can serialize");
