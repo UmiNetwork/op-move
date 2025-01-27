@@ -1,6 +1,6 @@
 use {
     crate::{
-        json_utils::{self, access_state_error},
+        json_utils::{access_state_error, parse_params_3},
         jsonrpc::JsonRpcError,
         schema::{ExecutionPayloadV3, GetPayloadResponseV3, PayloadStatusV1, Status},
     },
@@ -14,7 +14,7 @@ pub async fn execute_v3(
     state_channel: mpsc::Sender<StateMessage>,
 ) -> Result<serde_json::Value, JsonRpcError> {
     let (execution_payload, expected_blob_versioned_hashes, parent_beacon_block_root) =
-        parse_params_v3(request)?;
+        parse_params_3(request)?;
     let response = inner_execute_v3(
         execution_payload,
         expected_blob_versioned_hashes,
@@ -23,34 +23,6 @@ pub async fn execute_v3(
     )
     .await?;
     Ok(serde_json::to_value(response).expect("Must be able to JSON-serialize response"))
-}
-
-fn parse_params_v3(
-    request: serde_json::Value,
-) -> Result<(ExecutionPayloadV3, Vec<B256>, B256), JsonRpcError> {
-    let params = json_utils::get_params_list(&request);
-    match params {
-        [] | [_] | [_, _] => Err(JsonRpcError {
-            code: -32602,
-            data: request,
-            message: "Not enough params".into(),
-        }),
-        [x, y, z] => {
-            let execution_payload: ExecutionPayloadV3 = json_utils::deserialize(x)?;
-            let expected_blob_versioned_hashes: Vec<B256> = json_utils::deserialize(y)?;
-            let parent_beacon_block_root: B256 = json_utils::deserialize(z)?;
-            Ok((
-                execution_payload,
-                expected_blob_versioned_hashes,
-                parent_beacon_block_root,
-            ))
-        }
-        _ => Err(JsonRpcError {
-            code: -32602,
-            data: request,
-            message: "Too many params".into(),
-        }),
-    }
 }
 
 async fn inner_execute_v3(
@@ -240,7 +212,7 @@ mod tests {
         "#,
         ).unwrap();
 
-        let params = parse_params_v3(request).unwrap();
+        let params: (ExecutionPayloadV3, Vec<B256>, B256) = parse_params_3(request).unwrap();
 
         let expected_params = (
             ExecutionPayloadV3 {

@@ -1,7 +1,6 @@
 use {
     crate::{
-        json_utils,
-        json_utils::{access_state_error, transaction_error},
+        json_utils::{access_state_error, parse_params_2, transaction_error},
         jsonrpc::JsonRpcError,
     },
     alloy::{eips::BlockNumberOrTag, rpc::types::TransactionRequest},
@@ -13,33 +12,10 @@ pub async fn execute(
     request: serde_json::Value,
     state_channel: mpsc::Sender<StateMessage>,
 ) -> Result<serde_json::Value, JsonRpcError> {
-    let (transaction, block_number) = parse_params(request)?;
+    let (transaction, block_number) = parse_params_2(request)?;
     let response = inner_execute(transaction, block_number, state_channel).await?;
 
     Ok(serde_json::to_value(response).expect("Must be able to JSON-serialize response"))
-}
-
-fn parse_params(
-    request: serde_json::Value,
-) -> Result<(TransactionRequest, BlockNumberOrTag), JsonRpcError> {
-    let params = json_utils::get_params_list(&request);
-    match params {
-        [] => Err(JsonRpcError {
-            code: -32602,
-            data: request,
-            message: "Not enough params".into(),
-        }),
-        [a, b] => {
-            let transaction: TransactionRequest = json_utils::deserialize(a)?;
-            let block_number: BlockNumberOrTag = json_utils::deserialize(b)?;
-            Ok((transaction, block_number))
-        }
-        _ => Err(JsonRpcError {
-            code: -32602,
-            data: request,
-            message: "Too many params".into(),
-        }),
-    }
 }
 
 async fn inner_execute(
@@ -91,7 +67,8 @@ mod tests {
             "id": 1
         });
 
-        let (transaction, block_number) = parse_params(request.clone()).unwrap();
+        let (transaction, block_number): (TransactionRequest, BlockNumberOrTag) =
+            parse_params_2(request.clone()).unwrap();
         assert_eq!(
             transaction.from.unwrap(),
             Address::from_str("0x0000000000000000000000000000000000000001").unwrap()

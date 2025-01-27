@@ -1,5 +1,8 @@
 use {
-    crate::{json_utils, json_utils::access_state_error, jsonrpc::JsonRpcError},
+    crate::{
+        json_utils::{access_state_error, parse_params_0},
+        jsonrpc::JsonRpcError,
+    },
     moved::types::state::{Query, StateMessage},
     tokio::sync::{mpsc, oneshot},
 };
@@ -8,24 +11,12 @@ pub async fn execute(
     request: serde_json::Value,
     state_channel: mpsc::Sender<StateMessage>,
 ) -> Result<serde_json::Value, JsonRpcError> {
-    parse_params(request)?;
+    parse_params_0(request)?;
     let response = inner_execute(state_channel).await?;
 
     // Format the block number as a hex string
     Ok(serde_json::to_value(format!("0x{:x}", response))
         .expect("Must be able to JSON-serialize response"))
-}
-
-fn parse_params(request: serde_json::Value) -> Result<(), JsonRpcError> {
-    let params = json_utils::get_params_list(&request);
-    match params {
-        [] => Ok(()),
-        _ => Err(JsonRpcError {
-            code: -32602,
-            data: request,
-            message: "Too many params".into(),
-        }),
-    }
 }
 
 async fn inner_execute(state_channel: mpsc::Sender<StateMessage>) -> Result<u64, JsonRpcError> {

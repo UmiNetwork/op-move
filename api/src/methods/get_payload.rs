@@ -1,6 +1,6 @@
 use {
     crate::{
-        json_utils::{self, access_state_error},
+        json_utils::{access_state_error, parse_params_1},
         jsonrpc::JsonRpcError,
         schema::{GetPayloadResponseV3, PayloadId},
     },
@@ -12,29 +12,9 @@ pub async fn execute_v3(
     request: serde_json::Value,
     state_channel: mpsc::Sender<StateMessage>,
 ) -> Result<serde_json::Value, JsonRpcError> {
-    let payload_id = parse_params_v3(request)?;
+    let payload_id = parse_params_1(request)?;
     let response = inner_execute_v3(payload_id, state_channel).await?;
     Ok(serde_json::to_value(response).expect("Must be able to JSON-serialize response"))
-}
-
-fn parse_params_v3(request: serde_json::Value) -> Result<PayloadId, JsonRpcError> {
-    let params = json_utils::get_params_list(&request);
-    match params {
-        [] => Err(JsonRpcError {
-            code: -32602,
-            data: request,
-            message: "Not enough params".into(),
-        }),
-        [x] => {
-            let id: PayloadId = json_utils::deserialize(x)?;
-            Ok(id)
-        }
-        _ => Err(JsonRpcError {
-            code: -32602,
-            data: request,
-            message: "Too many params".into(),
-        }),
-    }
 }
 
 async fn inner_execute_v3(
@@ -94,7 +74,7 @@ mod tests {
         )
         .unwrap();
 
-        let params = parse_params_v3(request).unwrap();
+        let params: PayloadId = parse_params_1(request).unwrap();
 
         let expected_params = PayloadId::from(0x03421ee50df45cacu64);
 
