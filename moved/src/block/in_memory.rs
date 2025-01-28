@@ -4,6 +4,7 @@ use {
             root::{BlockQueries, BlockRepository},
             ExtendedBlock,
         },
+        in_memory::SharedMemory,
         types::state::BlockResponse,
     },
     moved_shared::primitives::B256,
@@ -76,14 +77,14 @@ impl InMemoryBlockRepository {
 }
 
 impl BlockRepository for InMemoryBlockRepository {
-    type Storage = BlockMemory;
+    type Storage = SharedMemory;
 
-    fn add(&mut self, mem: &mut BlockMemory, block: ExtendedBlock) {
-        mem.add(block)
+    fn add(&mut self, mem: &mut Self::Storage, block: ExtendedBlock) {
+        mem.block_memory.add(block)
     }
 
-    fn by_hash(&self, mem: &BlockMemory, hash: B256) -> Option<ExtendedBlock> {
-        mem.by_hash(hash)
+    fn by_hash(&self, mem: &Self::Storage, hash: B256) -> Option<ExtendedBlock> {
+        mem.block_memory.by_hash(hash)
     }
 }
 
@@ -93,34 +94,38 @@ pub struct InMemoryBlockQueries;
 
 impl BlockQueries for InMemoryBlockQueries {
     type Err = Infallible;
-    type Storage = BlockMemory;
+    type Storage = SharedMemory;
 
     fn by_hash(
         &self,
-        mem: &BlockMemory,
+        mem: &Self::Storage,
         hash: B256,
         include_transactions: bool,
     ) -> Result<Option<BlockResponse>, Self::Err> {
         Ok(if include_transactions {
-            mem.by_hash(hash)
+            mem.block_memory
+                .by_hash(hash)
                 .map(BlockResponse::from_block_with_transactions)
         } else {
-            mem.by_hash(hash)
+            mem.block_memory
+                .by_hash(hash)
                 .map(BlockResponse::from_block_with_transaction_hashes)
         })
     }
 
     fn by_height(
         &self,
-        mem: &BlockMemory,
+        mem: &Self::Storage,
         height: u64,
         include_transactions: bool,
     ) -> Result<Option<BlockResponse>, Self::Err> {
         Ok(if include_transactions {
-            mem.by_height(height)
+            mem.block_memory
+                .by_height(height)
                 .map(BlockResponse::from_block_with_transactions)
         } else {
-            mem.by_height(height)
+            mem.block_memory
+                .by_height(height)
                 .map(BlockResponse::from_block_with_transaction_hashes)
         })
     }

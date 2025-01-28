@@ -66,9 +66,9 @@ pub type InMemStateActor = StateActor<
     U256,
     crate::move_execution::MovedBaseTokenAccounts,
     crate::block::InMemoryBlockQueries,
-    crate::block::BlockMemory,
+    crate::in_memory::SharedMemory,
     InMemoryStateQueries,
-    InMemoryTransactionRepository,
+    crate::transaction::InMemoryTransactionRepository,
 >;
 
 /// A function invoked on a completion of new transaction execution batch.
@@ -79,20 +79,7 @@ type OnTxBatch<S> =
 type OnTx<S> =
     Box<dyn Fn() -> Box<dyn Fn(&mut S, ChangeSet) + Send + Sync + 'static> + Send + Sync + 'static>;
 
-pub struct StateActor<
-    S: State,
-    P: NewPayloadId,
-    H: BlockHash,
-    R: BlockRepository<Storage = M>,
-    G: BaseGasFee,
-    L1G: CreateL1GasFee,
-    L2G: CreateL2GasFee,
-    B: BaseTokenAccounts,
-    Q: BlockQueries<Storage = M>,
-    M,
-    SQ,
-    T,
-> {
+pub struct StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T> {
     genesis_config: GenesisConfig,
     rx: Receiver<StateMessage>,
     head: B256,
@@ -130,7 +117,7 @@ impl<
         Q: BlockQueries<Storage = M> + Send + Sync + 'static,
         M: Send + Sync + 'static,
         SQ: StateQueries + Send + Sync + 'static,
-        T: TransactionRepository + Send + Sync + 'static,
+        T: TransactionRepository<Storage = M> + Send + Sync + 'static,
     > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T>
 {
     pub fn spawn(mut self) -> JoinHandle<()> {
@@ -157,7 +144,7 @@ impl<
         Q: BlockQueries<Storage = M>,
         M,
         SQ: StateQueries,
-        T: TransactionRepository,
+        T: TransactionRepository<Storage = M>,
     > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T>
 {
     #[allow(clippy::too_many_arguments)]
@@ -341,6 +328,17 @@ impl<
                 let block = self.create_block(payload_attributes);
                 self.block_repository
                     .add(&mut self.block_memory, block.clone());
+                self.transaction_repository
+                    .extend(
+                        &mut self.block_memory,
+                        block
+                            .block
+                            .transactions
+                            .clone()
+                            .into_iter()
+                            .map(Transaction::new),
+                    )
+                    .unwrap();
                 self.height += 1;
                 self.pending_payload
                     .replace((id, PayloadResponse::from_block(block)));
@@ -701,9 +699,10 @@ impl<
 
 use crate::{
     move_execution::{CanonicalExecutionInput, DepositExecutionInput},
-    transaction::{InMemoryTransactionRepository, TransactionRepository},
+    transaction::{Transaction, TransactionRepository},
     types::state::TransactionResponse,
 };
+
 #[cfg(any(feature = "test-doubles", test))]
 pub use test_doubles::*;
 
@@ -843,12 +842,11 @@ mod tests {
     use {
         super::*,
         crate::{
-            block::{
-                BlockMemory, Eip1559GasFee, InMemoryBlockQueries, InMemoryBlockRepository,
-                MovedBlockHash,
-            },
+            block::{Eip1559GasFee, InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash},
+            in_memory::SharedMemory,
             move_execution::{create_move_vm, create_vm_session, MovedBaseTokenAccounts},
             tests::{signer::Signer, EVM_ADDRESS, PRIVATE_KEY},
+            transaction::InMemoryTransactionRepository,
             types::session_id::SessionId,
         },
         alloy::{
@@ -876,15 +874,15 @@ mod tests {
             impl State<Err = PartialVMError>,
             impl NewPayloadId,
             impl BlockHash,
-            impl BlockRepository<Storage = BlockMemory>,
+            impl BlockRepository<Storage = SharedMemory>,
             impl BaseGasFee,
             impl CreateL1GasFee,
             impl CreateL2GasFee,
             impl BaseTokenAccounts,
-            impl BlockQueries<Storage = BlockMemory>,
-            BlockMemory,
+            impl BlockQueries<Storage = SharedMemory>,
+            SharedMemory,
             SQ,
-            impl TransactionRepository,
+            impl TransactionRepository<Storage = SharedMemory>,
         >,
         Sender<StateMessage>,
     ) {
@@ -896,9 +894,9 @@ mod tests {
         ));
         let genesis_block = Block::default().with_hash(head_hash).with_value(U256::ZERO);
 
-        let mut block_memory = BlockMemory::new();
+        let mut memory = SharedMemory::new();
         let mut repository = InMemoryBlockRepository::new();
-        repository.add(&mut block_memory, genesis_block);
+        repository.add(&mut memory, genesis_block);
 
         let mut state = InMemoryState::new();
         let (changes, tables) = moved_genesis_image::load();
@@ -918,7 +916,7 @@ mod tests {
             U256::ZERO,
             MovedBaseTokenAccounts::new(AccountAddress::ONE),
             InMemoryBlockQueries,
-            block_memory,
+            memory,
             state_queries,
             InMemoryTransactionRepository::new(),
             StateActor::on_tx_noop(),
@@ -958,15 +956,15 @@ mod tests {
             impl State<Err = PartialVMError>,
             impl NewPayloadId,
             impl BlockHash,
-            impl BlockRepository<Storage = BlockMemory>,
+            impl BlockRepository<Storage = SharedMemory>,
             impl BaseGasFee,
             impl CreateL1GasFee,
             impl CreateL2GasFee,
             impl BaseTokenAccounts,
-            impl BlockQueries<Storage = BlockMemory>,
-            BlockMemory,
+            impl BlockQueries<Storage = SharedMemory>,
+            SharedMemory,
             impl StateQueries,
-            impl TransactionRepository,
+            impl TransactionRepository<Storage = SharedMemory>,
         >,
         Sender<StateMessage>,
     ) {
@@ -979,9 +977,9 @@ mod tests {
         let height = 0;
         let genesis_block = Block::default().with_hash(head_hash).with_value(U256::ZERO);
 
-        let mut block_memory = BlockMemory::new();
+        let mut memory = SharedMemory::new();
         let mut repository = InMemoryBlockRepository::new();
-        repository.add(&mut block_memory, genesis_block);
+        repository.add(&mut memory, genesis_block);
 
         let mut state = InMemoryState::new();
         let (genesis_changes, table_changes) = moved_genesis_image::load();
@@ -1007,7 +1005,7 @@ mod tests {
             U256::ZERO,
             MovedBaseTokenAccounts::new(AccountAddress::ONE),
             InMemoryBlockQueries,
-            block_memory,
+            memory,
             state_queries,
             InMemoryTransactionRepository::new(),
             StateActor::on_tx_in_memory(),

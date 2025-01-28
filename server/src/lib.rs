@@ -5,9 +5,10 @@ use {
     jsonwebtoken::{DecodingKey, Validation},
     moved::{
         block::{
-            Block, BlockHash, BlockMemory, BlockRepository, Eip1559GasFee, ExtendedBlock, Header,
+            Block, BlockHash, BlockRepository, Eip1559GasFee, ExtendedBlock, Header,
             InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash,
         },
+        in_memory::SharedMemory,
         move_execution::{CreateEcotoneL1GasFee, CreateMovedL2GasFee, MovedBaseTokenAccounts},
         state_actor::{InMemoryStateQueries, StateActor, StatePayloadId},
         transaction::InMemoryTransactionRepository,
@@ -52,7 +53,7 @@ pub type ProductionStateActor = StateActor<
     CreateMovedL2GasFee,
     MovedBaseTokenAccounts,
     InMemoryBlockQueries,
-    BlockMemory,
+    SharedMemory,
     InMemoryStateQueries,
     InMemoryTransactionRepository,
 >;
@@ -134,10 +135,10 @@ pub fn initialize_state_actor(
     let block_hash = MovedBlockHash;
     let genesis_block = create_genesis_block(&block_hash, &genesis_config);
 
-    let mut block_memory = BlockMemory::new();
+    let mut memory = SharedMemory::new();
     let mut repository = InMemoryBlockRepository::new();
     let head = genesis_block.hash;
-    repository.add(&mut block_memory, genesis_block);
+    repository.add(&mut memory, genesis_block);
 
     let mut state = InMemoryState::new();
     let (genesis_changes, table_changes) = {
@@ -174,7 +175,7 @@ pub fn initialize_state_actor(
         CreateMovedL2GasFee,
         base_token,
         InMemoryBlockQueries,
-        block_memory,
+        memory,
         state_query,
         transaction_repository,
         moved::state_actor::StateActor::on_tx_in_memory(),
