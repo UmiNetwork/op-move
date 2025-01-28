@@ -69,6 +69,7 @@ pub type InMemStateActor = StateActor<
     crate::in_memory::SharedMemory,
     InMemoryStateQueries,
     crate::transaction::InMemoryTransactionRepository,
+    crate::transaction::InMemoryTransactionQueries,
 >;
 
 /// A function invoked on a completion of new transaction execution batch.
@@ -79,7 +80,7 @@ type OnTxBatch<S> =
 type OnTx<S> =
     Box<dyn Fn() -> Box<dyn Fn(&mut S, ChangeSet) + Send + Sync + 'static> + Send + Sync + 'static>;
 
-pub struct StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T> {
+pub struct StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ> {
     genesis_config: GenesisConfig,
     rx: Receiver<StateMessage>,
     head: B256,
@@ -96,9 +97,10 @@ pub struct StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T> {
     l1_fee: L1G,
     l2_fee: L2G,
     base_token: B,
-    block_memory: M,
+    storage: M,
     state_queries: SQ,
     transaction_repository: T,
+    transaction_queries: TQ,
     // tx_hash -> (tx_with_receipt, block_hash)
     tx_receipts: HashMap<B256, (TransactionWithReceipt, B256)>,
     on_tx_batch: OnTxBatch<Self>,
@@ -118,7 +120,8 @@ impl<
         M: Send + Sync + 'static,
         SQ: StateQueries + Send + Sync + 'static,
         T: TransactionRepository<Storage = M> + Send + Sync + 'static,
-    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T>
+        TQ: TransactionQueries<Storage = M> + Send + Sync + 'static,
+    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ>
 {
     pub fn spawn(mut self) -> JoinHandle<()> {
         tokio::spawn(async move {
@@ -145,7 +148,8 @@ impl<
         M,
         SQ: StateQueries,
         T: TransactionRepository<Storage = M>,
-    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T>
+        TQ: TransactionQueries<Storage = M>,
+    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ>
 {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -165,6 +169,7 @@ impl<
         block_memory: M,
         state_queries: SQ,
         transaction_repository: T,
+        transaction_queries: TQ,
         on_tx: OnTx<Self>,
         on_tx_batch: OnTxBatch<Self>,
     ) -> Self {
@@ -185,12 +190,13 @@ impl<
             l2_fee,
             base_token,
             block_queries,
-            block_memory,
+            storage: block_memory,
             state_queries,
             tx_receipts: HashMap::new(),
             on_tx,
             on_tx_batch,
             transaction_repository,
+            transaction_queries,
         }
     }
 
@@ -224,14 +230,14 @@ impl<
                 response_channel,
                 include_transactions,
             } => response_channel
-                .send(self.block_queries.by_hash(&self.block_memory, hash, include_transactions).ok().flatten())
+                .send(self.block_queries.by_hash(&self.storage, hash, include_transactions).ok().flatten())
                 .ok(),
             Query::BlockByHeight {
                 height,
                 response_channel,
                 include_transactions,
             } => response_channel
-                .send(self.block_queries.by_height(&self.block_memory, self.resolve_height(height), include_transactions).ok().flatten())
+                .send(self.block_queries.by_height(&self.storage, self.resolve_height(height), include_transactions).ok().flatten())
                 .ok(),
             Query::BlockNumber {
                 response_channel,
@@ -274,7 +280,7 @@ impl<
                 response_channel.send(self.query_transaction_receipt(tx_hash)).ok()
             }
             Query::TransactionByHash { tx_hash, response_channel } => response_channel
-                .send(self.query_transaction_by_hash(tx_hash))
+                .send(self.transaction_queries.by_hash(&self.storage, tx_hash).ok().flatten())
                 .ok(),
             Query::GetProof { address, storage_slots, height, response_channel } => {
                 response_channel.send(
@@ -298,7 +304,7 @@ impl<
             BlockId::Number(n) => self.resolve_height(n),
             BlockId::Hash(h) => {
                 self.block_queries
-                    .by_hash(&self.block_memory, h.block_hash, false)
+                    .by_hash(&self.storage, h.block_hash, false)
                     .ok()??
                     .0
                     .header
@@ -326,11 +332,10 @@ impl<
                 let id = self.payload_id.new_payload_id(input);
                 response_channel.send(id).ok();
                 let block = self.create_block(payload_attributes);
-                self.block_repository
-                    .add(&mut self.block_memory, block.clone());
+                self.block_repository.add(&mut self.storage, block.clone());
                 self.transaction_repository
                     .extend(
-                        &mut self.block_memory,
+                        &mut self.storage,
                         block
                             .block
                             .transactions
@@ -379,7 +384,7 @@ impl<
             }
             Command::GenesisUpdate { block } => {
                 self.head = block.hash;
-                self.block_repository.add(&mut self.block_memory, block);
+                self.block_repository.add(&mut self.storage, block);
             }
         }
     }
@@ -407,7 +412,7 @@ impl<
             .collect::<Vec<_>>();
         let parent = self
             .block_repository
-            .by_hash(&self.block_memory, self.head)
+            .by_hash(&self.storage, self.head)
             .expect("Parent block should exist");
         let base_fee = self.gas_fee.base_fee_per_gas(
             parent.block.header.gas_limit,
@@ -597,15 +602,11 @@ impl<
         (outcome, receipts)
     }
 
-    fn query_transaction_by_hash(&self, _tx_hash: B256) -> Option<TransactionResponse> {
-        None
-    }
-
     fn query_transaction_receipt(&self, tx_hash: B256) -> Option<TransactionReceipt> {
         let (rx, block_hash) = self.tx_receipts.get(&tx_hash)?;
         let block = self
             .block_queries
-            .by_hash(&self.block_memory, *block_hash, false)
+            .by_hash(&self.storage, *block_hash, false)
             .ok()??;
         let contract_address = rx.contract_address;
         let (to, from) = match &rx.normalized_tx {
@@ -672,15 +673,16 @@ impl<
         S: State<Err = PartialVMError>,
         P: NewPayloadId,
         H: BlockHash,
-        R: BlockRepository<Storage = M>,
+        R: BlockRepository,
         G: BaseGasFee,
         L1G: CreateL1GasFee,
         L2G: CreateL2GasFee,
         B: BaseTokenAccounts,
-        Q: BlockQueries<Storage = M>,
+        Q: BlockQueries,
         M,
         T: TransactionRepository,
-    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, InMemoryStateQueries, T>
+        TQ: TransactionQueries,
+    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, InMemoryStateQueries, T, TQ>
 {
     pub fn on_tx_in_memory() -> OnTx<Self> {
         Box::new(|| Box::new(|_state, _changes| ()))
@@ -700,9 +702,9 @@ impl<
 use crate::{
     move_execution::{CanonicalExecutionInput, DepositExecutionInput},
     transaction::{Transaction, TransactionRepository},
-    types::state::TransactionResponse,
 };
 
+use crate::transaction::TransactionQueries;
 #[cfg(any(feature = "test-doubles", test))]
 pub use test_doubles::*;
 
@@ -846,7 +848,7 @@ mod tests {
             in_memory::SharedMemory,
             move_execution::{create_move_vm, create_vm_session, MovedBaseTokenAccounts},
             tests::{signer::Signer, EVM_ADDRESS, PRIVATE_KEY},
-            transaction::InMemoryTransactionRepository,
+            transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
             types::session_id::SessionId,
         },
         alloy::{
@@ -883,6 +885,7 @@ mod tests {
             SharedMemory,
             SQ,
             impl TransactionRepository<Storage = SharedMemory>,
+            impl TransactionQueries<Storage = SharedMemory>,
         >,
         Sender<StateMessage>,
     ) {
@@ -919,6 +922,7 @@ mod tests {
             memory,
             state_queries,
             InMemoryTransactionRepository::new(),
+            InMemoryTransactionQueries::new(),
             StateActor::on_tx_noop(),
             StateActor::on_tx_batch_noop(),
         );
@@ -965,6 +969,7 @@ mod tests {
             SharedMemory,
             impl StateQueries,
             impl TransactionRepository<Storage = SharedMemory>,
+            impl TransactionQueries<Storage = SharedMemory>,
         >,
         Sender<StateMessage>,
     ) {
@@ -1008,6 +1013,7 @@ mod tests {
             memory,
             state_queries,
             InMemoryTransactionRepository::new(),
+            InMemoryTransactionQueries::new(),
             StateActor::on_tx_in_memory(),
             StateActor::on_tx_batch_in_memory(),
         );

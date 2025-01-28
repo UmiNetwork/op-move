@@ -33,14 +33,8 @@ impl TransactionMemory {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct InMemoryTransactionRepository;
-
-impl Default for InMemoryTransactionRepository {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 impl InMemoryTransactionRepository {
     pub fn new() -> Self {
@@ -48,8 +42,14 @@ impl InMemoryTransactionRepository {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct InMemoryTransactionQueries;
+
+impl InMemoryTransactionQueries {
+    pub fn new() -> Self {
+        Self
+    }
+}
 
 impl TransactionRepository for InMemoryTransactionRepository {
     type Err = Infallible;

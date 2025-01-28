@@ -170,7 +170,7 @@ mod tests {
             },
             in_memory::SharedMemory,
             state_actor::InMemoryStateQueries,
-            transaction::InMemoryTransactionRepository,
+            transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
         },
         moved_genesis::config::GenesisConfig,
         moved_shared::primitives::{Address, Bytes, B2048, U256, U64},
@@ -284,6 +284,7 @@ mod tests {
             memory,
             InMemoryStateQueries::from_genesis(initial_state_root),
             InMemoryTransactionRepository::new(),
+            InMemoryTransactionQueries::new(),
             moved::state_actor::StateActor::on_tx_noop(),
             moved::state_actor::StateActor::on_tx_batch_noop(),
         );
