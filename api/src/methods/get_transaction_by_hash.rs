@@ -89,7 +89,7 @@ mod tests {
                 .unwrap(),
         )
         .unwrap();
-        let _block_hash = payload_response.execution_payload.block_hash;
+        let block_hash = payload_response.execution_payload.block_hash;
 
         let request = serde_json::Value::Object(
             iter::once((
@@ -116,10 +116,11 @@ mod tests {
             "yParity": "0x0",
             "v": "0x0",
             "hash": "0x3545efb3ce7a22353c346c98771640131b81baa64eb03113b20ad2bef5c0ec53",
-            "blockHash": null,
-            "blockNumber": null,
-            "transactionIndex": null,
-            "from": "0x0000000000000000000000000000000000000000"
+            "blockHash": block_hash,
+            "blockNumber": "0x1",
+            "transactionIndex": "0x2",
+            "from": "0x88f9b82462f6c4bf4a0fb15e5c3971559a316e7f",
+            "gasPrice": "0x0"
         });
 
         assert_eq!(actual_response, expected_response);

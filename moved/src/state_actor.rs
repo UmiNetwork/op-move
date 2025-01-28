@@ -1,3 +1,4 @@
+use alloy::consensus::Transaction;
 pub use {
     payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId},
     queries::{
@@ -333,6 +334,9 @@ impl<
                 response_channel.send(id).ok();
                 let block = self.create_block(payload_attributes);
                 self.block_repository.add(&mut self.storage, block.clone());
+                let block_number = block.block.header.number;
+                let block_hash = block.hash;
+                let base_fee = block.block.header.base_fee_per_gas;
                 self.transaction_repository
                     .extend(
                         &mut self.storage,
@@ -341,7 +345,16 @@ impl<
                             .transactions
                             .clone()
                             .into_iter()
-                            .map(Transaction::new),
+                            .enumerate()
+                            .map(|(transaction_index, inner)| {
+                                ExtendedTransaction::new(
+                                    inner.effective_gas_price(base_fee),
+                                    inner,
+                                    block_number,
+                                    block_hash,
+                                    transaction_index as u64,
+                                )
+                            }),
                     )
                     .unwrap();
                 self.height += 1;
@@ -701,7 +714,7 @@ impl<
 
 use crate::{
     move_execution::{CanonicalExecutionInput, DepositExecutionInput},
-    transaction::{Transaction, TransactionRepository},
+    transaction::{ExtendedTransaction, TransactionRepository},
 };
 
 use crate::transaction::TransactionQueries;

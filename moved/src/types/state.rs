@@ -8,7 +8,7 @@ use {
     crate::{
         block::{ExtendedBlock, Header},
         state_actor::NewPayloadIdInput,
-        transaction::Transaction,
+        transaction::ExtendedTransaction,
         types::transactions::NormalizedExtendedTxEnvelope,
     },
     alloy::{
@@ -379,69 +379,21 @@ fn compute_from(tx: &OpTxEnvelope) -> Result<Address, alloy::primitives::Signatu
 #[derive(Debug)]
 pub struct TransactionResponse(pub op_alloy::rpc_types::Transaction);
 
-impl TransactionResponse {
-    pub fn canonical(
-        inner: OpTxEnvelope,
-        block_hash: B256,
-        block_number: u64,
-        transaction_index: u64,
-        effective_gas_price: u128,
-        from: Address,
-    ) -> Self {
-        Self(op_alloy::rpc_types::Transaction {
-            inner: alloy::rpc::types::eth::Transaction {
-                inner,
-                block_hash: Some(block_hash),
-                block_number: Some(block_number),
-                transaction_index: Some(transaction_index),
-                effective_gas_price: Some(effective_gas_price),
-                from,
-            },
-            deposit_nonce: None,
-            deposit_receipt_version: None,
-        })
-    }
-
-    pub fn deposit(
-        inner: OpTxEnvelope,
-        block_hash: B256,
-        block_number: u64,
-        transaction_index: u64,
-        effective_gas_price: u128,
-        from: Address,
-        deposit_nonce: u64,
-        deposit_receipt_version: u64,
-    ) -> Self {
-        Self(op_alloy::rpc_types::Transaction {
-            inner: alloy::rpc::types::eth::Transaction {
-                inner,
-                block_hash: Some(block_hash),
-                block_number: Some(block_number),
-                transaction_index: Some(transaction_index),
-                effective_gas_price: Some(effective_gas_price),
-                from,
-            },
-            deposit_nonce: Some(deposit_nonce),
-            deposit_receipt_version: Some(deposit_receipt_version),
-        })
-    }
-}
-
-impl From<Transaction> for TransactionResponse {
-    fn from(value: Transaction) -> Self {
-        let (deposit_nonce, deposit_receipt_version) = get_deposit_nonce(&value.0)
+impl From<ExtendedTransaction> for TransactionResponse {
+    fn from(value: ExtendedTransaction) -> Self {
+        let (deposit_nonce, deposit_receipt_version) = get_deposit_nonce(value.inner())
             .map(|nonce| (Some(nonce.nonce), Some(nonce.version)))
             .unwrap_or((None, None));
 
         Self(op_alloy::rpc_types::Transaction {
             inner: alloy::rpc::types::eth::Transaction {
-                inner: value.0,
-                // TODO: Solve missing fields
-                block_hash: None,
-                block_number: None,
-                transaction_index: None,
-                effective_gas_price: None,
-                from: Default::default(),
+                from: compute_from(value.inner())
+                    .expect("Block transactions should contain valid signature"),
+                inner: value.inner,
+                block_hash: Some(value.block_hash),
+                block_number: Some(value.block_number),
+                transaction_index: Some(value.transaction_index),
+                effective_gas_price: Some(value.effective_gas_price),
             },
             deposit_nonce,
             deposit_receipt_version,
