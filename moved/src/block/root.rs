@@ -1,5 +1,6 @@
 use {
     crate::types::state::BlockResponse,
+    alloy::eips::eip2718::Encodable2718,
     moved_shared::primitives::{B256, U256},
     op_alloy::consensus::OpTxEnvelope,
     std::fmt::Debug,
@@ -58,6 +59,10 @@ impl ExtendedBlock {
     pub fn with_value(mut self, value: U256) -> Self {
         self.value = value;
         self
+    }
+
+    pub fn transaction_hashes(&self) -> impl Iterator<Item = B256> + use<'_> {
+        self.block.transactions.iter().map(|tx| tx.trie_hash())
     }
 }
 

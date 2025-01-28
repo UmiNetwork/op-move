@@ -103,9 +103,11 @@ impl BlockQueries for InMemoryBlockQueries {
         include_transactions: bool,
     ) -> Result<Option<BlockResponse>, Self::Err> {
         Ok(if include_transactions {
-            mem.block_memory
-                .by_hash(hash)
-                .map(BlockResponse::from_block_with_transactions)
+            mem.block_memory.by_hash(hash).map(|block| {
+                let transactions = mem.transaction_memory.by_hashes(block.transaction_hashes());
+
+                BlockResponse::from_block_with_transactions(block, transactions)
+            })
         } else {
             mem.block_memory
                 .by_hash(hash)
@@ -120,9 +122,11 @@ impl BlockQueries for InMemoryBlockQueries {
         include_transactions: bool,
     ) -> Result<Option<BlockResponse>, Self::Err> {
         Ok(if include_transactions {
-            mem.block_memory
-                .by_height(height)
-                .map(BlockResponse::from_block_with_transactions)
+            mem.block_memory.by_height(height).map(|block| {
+                let transactions = mem.transaction_memory.by_hashes(block.transaction_hashes());
+
+                BlockResponse::from_block_with_transactions(block, transactions)
+            })
         } else {
             mem.block_memory
                 .by_height(height)
