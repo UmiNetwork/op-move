@@ -10,7 +10,7 @@ use {
 
 #[derive(Debug, Default)]
 pub struct TransactionMemory {
-    mem: HashMap<B256, ExtendedTransaction>,
+    transactions: HashMap<B256, ExtendedTransaction>,
 }
 
 impl TransactionMemory {
@@ -18,16 +18,13 @@ impl TransactionMemory {
         Self::default()
     }
 
-    pub fn add(&mut self, tx: ExtendedTransaction) {
-        self.mem.insert(tx.hash(), tx);
-    }
-
     pub fn extend(&mut self, tx: impl IntoIterator<Item = ExtendedTransaction>) {
-        self.mem.extend(tx.into_iter().map(|tx| (tx.hash(), tx)));
+        self.transactions
+            .extend(tx.into_iter().map(|tx| (tx.hash(), tx)));
     }
 
     pub fn by_hash(&self, hash: B256) -> Option<ExtendedTransaction> {
-        self.mem.get(&hash).cloned()
+        self.transactions.get(&hash).cloned()
     }
 }
 
@@ -52,15 +49,6 @@ impl InMemoryTransactionQueries {
 impl TransactionRepository for InMemoryTransactionRepository {
     type Err = Infallible;
     type Storage = SharedMemory;
-
-    fn add(
-        &mut self,
-        storage: &mut Self::Storage,
-        transaction: ExtendedTransaction,
-    ) -> Result<(), Self::Err> {
-        storage.transaction_memory.add(transaction);
-        Ok(())
-    }
 
     fn extend(
         &mut self,
@@ -108,10 +96,6 @@ mod test_doubles {
     impl TransactionRepository for () {
         type Err = Infallible;
         type Storage = ();
-
-        fn add(&mut self, _: &mut Self::Storage, _: ExtendedTransaction) -> Result<(), Self::Err> {
-            Ok(())
-        }
 
         fn extend(
             &mut self,

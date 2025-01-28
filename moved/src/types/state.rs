@@ -233,7 +233,7 @@ impl From<Query> for StateMessage {
 }
 
 pub type RpcBlock = alloy::rpc::types::Block<op_alloy::rpc_types::Transaction>;
-pub type RpcTx = op_alloy::rpc_types::Transaction;
+pub type RpcTransaction = op_alloy::rpc_types::Transaction;
 
 #[derive(Debug)]
 pub struct BlockResponse(pub RpcBlock);
@@ -376,8 +376,7 @@ fn compute_from(tx: &OpTxEnvelope) -> Result<Address, alloy::primitives::Signatu
     }
 }
 
-#[derive(Debug)]
-pub struct TransactionResponse(pub op_alloy::rpc_types::Transaction);
+pub type TransactionResponse = op_alloy::rpc_types::Transaction;
 
 impl From<ExtendedTransaction> for TransactionResponse {
     fn from(value: ExtendedTransaction) -> Self {
@@ -385,7 +384,7 @@ impl From<ExtendedTransaction> for TransactionResponse {
             .map(|nonce| (Some(nonce.nonce), Some(nonce.version)))
             .unwrap_or((None, None));
 
-        Self(op_alloy::rpc_types::Transaction {
+        Self {
             inner: alloy::rpc::types::eth::Transaction {
                 from: compute_from(value.inner())
                     .expect("Block transactions should contain valid signature"),
@@ -397,7 +396,7 @@ impl From<ExtendedTransaction> for TransactionResponse {
             },
             deposit_nonce,
             deposit_receipt_version,
-        })
+        }
     }
 }
 

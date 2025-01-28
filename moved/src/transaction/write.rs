@@ -42,12 +42,6 @@ pub trait TransactionRepository {
     type Err: Debug;
     type Storage;
 
-    fn add(
-        &mut self,
-        storage: &mut Self::Storage,
-        transaction: ExtendedTransaction,
-    ) -> Result<(), Self::Err>;
-
     fn extend(
         &mut self,
         storage: &mut Self::Storage,

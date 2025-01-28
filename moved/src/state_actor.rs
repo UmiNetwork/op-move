@@ -1,4 +1,3 @@
-use alloy::consensus::Transaction;
 pub use {
     payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId},
     queries::{
@@ -15,9 +14,10 @@ use {
         move_execution::{
             execute_transaction,
             simulate::{call_transaction, simulate_transaction},
-            BaseTokenAccounts, CreateL1GasFee, CreateL2GasFee, L1GasFee, L1GasFeeInput,
-            L2GasFeeInput, LogsBloom,
+            BaseTokenAccounts, CanonicalExecutionInput, CreateL1GasFee, CreateL2GasFee,
+            DepositExecutionInput, L1GasFee, L1GasFeeInput, L2GasFeeInput, LogsBloom,
         },
+        transaction::{ExtendedTransaction, TransactionQueries, TransactionRepository},
         types::{
             queries::ProofResponse,
             state::{
@@ -30,7 +30,7 @@ use {
         Error::{InvalidTransaction, InvariantViolation, User},
     },
     alloy::{
-        consensus::Receipt,
+        consensus::{Receipt, Transaction},
         eips::{
             eip2718::Encodable2718,
             BlockId,
@@ -712,12 +712,6 @@ impl<
     }
 }
 
-use crate::{
-    move_execution::{CanonicalExecutionInput, DepositExecutionInput},
-    transaction::{ExtendedTransaction, TransactionRepository},
-};
-
-use crate::transaction::TransactionQueries;
 #[cfg(any(feature = "test-doubles", test))]
 pub use test_doubles::*;
 
