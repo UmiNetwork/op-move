@@ -3,13 +3,13 @@ use {
     op_alloy::consensus::OpTxEnvelope, std::fmt::Debug,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ExtendedTransaction {
-    pub effective_gas_price: u128,
     pub inner: OpTxEnvelope,
     pub block_number: u64,
     pub block_hash: B256,
     pub transaction_index: u64,
+    pub effective_gas_price: u128,
 }
 
 impl ExtendedTransaction {

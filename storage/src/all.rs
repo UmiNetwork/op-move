@@ -1,13 +1,15 @@
 use crate::{
     block::{BLOCK_COLUMN_FAMILY, HEIGHT_COLUMN_FAMILY},
+    transaction::TRANSACTION_COLUMN_FAMILY,
     trie::{ROOT_COLUMN_FAMILY, TRIE_COLUMN_FAMILY},
 };
 
-pub const COLUMN_FAMILIES: [&str; 4] = [
+pub const COLUMN_FAMILIES: [&str; 5] = [
     HEIGHT_COLUMN_FAMILY,
     TRIE_COLUMN_FAMILY,
     ROOT_COLUMN_FAMILY,
     BLOCK_COLUMN_FAMILY,
+    TRANSACTION_COLUMN_FAMILY,
 ];
 
 #[cfg(test)]

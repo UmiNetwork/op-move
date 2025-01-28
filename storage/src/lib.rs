@@ -2,6 +2,7 @@ mod all;
 mod block;
 mod generic;
 mod state;
+mod transaction;
 mod trie;
 
 pub use {
