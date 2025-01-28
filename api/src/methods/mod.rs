@@ -30,14 +30,19 @@ pub mod tests {
         move_core_types::account_address::AccountAddress,
         moved::{
             block::{
-                BaseGasFee, Block, BlockHash, BlockMemory, BlockQueries, BlockRepository,
-                Eip1559GasFee, InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash,
+                BaseGasFee, Block, BlockHash, BlockQueries, BlockRepository, Eip1559GasFee,
+                InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash,
             },
+            in_memory::SharedMemory,
             move_execution::{
                 BaseTokenAccounts, CreateL1GasFee, CreateL2GasFee, MovedBaseTokenAccounts,
             },
             state_actor::{
                 InMemoryStateQueries, MockStateQueries, NewPayloadId, StateActor, StateQueries,
+            },
+            transaction::{
+                InMemoryTransactionQueries, InMemoryTransactionRepository, TransactionQueries,
+                TransactionRepository,
             },
             types::{
                 state::{Command, Payload, StateMessage},
@@ -65,9 +70,9 @@ pub mod tests {
         ));
         let genesis_block = Block::default().with_hash(head_hash).with_value(U256::ZERO);
 
-        let mut block_memory = BlockMemory::new();
+        let mut memory = SharedMemory::new();
         let mut repository = InMemoryBlockRepository::new();
-        repository.add(&mut block_memory, genesis_block);
+        repository.add(&mut memory, genesis_block);
 
         let mut state = InMemoryState::new();
         let (changes, table_changes) = moved_genesis_image::load();
@@ -88,8 +93,10 @@ pub mod tests {
             U256::ZERO,
             MovedBaseTokenAccounts::new(AccountAddress::ONE),
             InMemoryBlockQueries,
-            block_memory,
+            memory,
             InMemoryStateQueries::from_genesis(initial_state_root),
+            InMemoryTransactionRepository::new(),
+            InMemoryTransactionQueries::new(),
             StateActor::on_tx_noop(),
             StateActor::on_tx_batch_noop(),
         );
@@ -173,6 +180,8 @@ pub mod tests {
             impl BlockQueries<Storage = ()>,
             (),
             impl StateQueries,
+            impl TransactionRepository<Storage = ()>,
+            impl TransactionQueries<Storage = ()>,
         >,
         Sender<StateMessage>,
     ) {
@@ -195,6 +204,8 @@ pub mod tests {
             (),
             (),
             MockStateQueries(address, height),
+            (),
+            (),
             StateActor::on_tx_noop(),
             StateActor::on_tx_batch_noop(),
         );

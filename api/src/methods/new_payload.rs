@@ -165,10 +165,12 @@ mod tests {
         alloy::primitives::hex,
         moved::{
             block::{
-                Block, BlockMemory, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
+                Block, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
                 InMemoryBlockRepository,
             },
+            in_memory::SharedMemory,
             state_actor::InMemoryStateQueries,
+            transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
         },
         moved_genesis::config::GenesisConfig,
         moved_shared::primitives::{Address, Bytes, B2048, U256, U64},
@@ -254,9 +256,9 @@ mod tests {
         ));
         let genesis_block = Block::default().with_hash(head_hash).with_value(U256::ZERO);
 
-        let mut block_memory = BlockMemory::new();
+        let mut memory = SharedMemory::new();
         let mut repository = InMemoryBlockRepository::new();
-        repository.add(&mut block_memory, genesis_block);
+        repository.add(&mut memory, genesis_block);
 
         let mut state = InMemoryState::new();
         let (changes, table_changes) = moved_genesis_image::load();
@@ -279,8 +281,10 @@ mod tests {
             U256::ZERO,
             (),
             InMemoryBlockQueries,
-            block_memory,
+            memory,
             InMemoryStateQueries::from_genesis(initial_state_root),
+            InMemoryTransactionRepository::new(),
+            InMemoryTransactionQueries::new(),
             moved::state_actor::StateActor::on_tx_noop(),
             moved::state_actor::StateActor::on_tx_batch_noop(),
         );

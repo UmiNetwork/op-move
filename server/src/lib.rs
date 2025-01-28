@@ -5,11 +5,13 @@ use {
     jsonwebtoken::{DecodingKey, Validation},
     moved::{
         block::{
-            Block, BlockHash, BlockMemory, BlockRepository, Eip1559GasFee, ExtendedBlock, Header,
+            Block, BlockHash, BlockRepository, Eip1559GasFee, ExtendedBlock, Header,
             InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash,
         },
+        in_memory::SharedMemory,
         move_execution::{CreateEcotoneL1GasFee, CreateMovedL2GasFee, MovedBaseTokenAccounts},
         state_actor::{InMemoryStateQueries, StateActor, StatePayloadId},
+        transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
         types::state::{Command, StateMessage},
     },
     moved_genesis::config::GenesisConfig,
@@ -51,8 +53,10 @@ pub type ProductionStateActor = StateActor<
     CreateMovedL2GasFee,
     MovedBaseTokenAccounts,
     InMemoryBlockQueries,
-    BlockMemory,
+    SharedMemory,
     InMemoryStateQueries,
+    InMemoryTransactionRepository,
+    InMemoryTransactionQueries,
 >;
 
 #[derive(Parser)]
@@ -132,10 +136,10 @@ pub fn initialize_state_actor(
     let block_hash = MovedBlockHash;
     let genesis_block = create_genesis_block(&block_hash, &genesis_config);
 
-    let mut block_memory = BlockMemory::new();
+    let mut memory = SharedMemory::new();
     let mut repository = InMemoryBlockRepository::new();
     let head = genesis_block.hash;
-    repository.add(&mut block_memory, genesis_block);
+    repository.add(&mut memory, genesis_block);
 
     let mut state = InMemoryState::new();
     let (genesis_changes, table_changes) = {
@@ -152,6 +156,10 @@ pub fn initialize_state_actor(
     moved_genesis::apply(genesis_changes, table_changes, &genesis_config, &mut state);
 
     let base_token = MovedBaseTokenAccounts::new(genesis_config.treasury);
+
+    let transaction_repository = InMemoryTransactionRepository::new();
+    let transaction_queries = InMemoryTransactionQueries::new();
+
     StateActor::new(
         rx,
         state,
@@ -169,8 +177,10 @@ pub fn initialize_state_actor(
         CreateMovedL2GasFee,
         base_token,
         InMemoryBlockQueries,
-        block_memory,
+        memory,
         state_query,
+        transaction_repository,
+        transaction_queries,
         moved::state_actor::StateActor::on_tx_in_memory(),
         moved::state_actor::StateActor::on_tx_batch_in_memory(),
     )
