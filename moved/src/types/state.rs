@@ -19,7 +19,7 @@ use {
     },
     moved_shared::primitives::{Address, Bytes, ToU64, B2048, B256, U256, U64},
     op_alloy::{
-        consensus::{OpReceiptEnvelope, OpTxEnvelope, TxDeposit},
+        consensus::{OpReceiptEnvelope, OpTxEnvelope},
         rpc_types::L1BlockInfo,
     },
     tokio::sync::oneshot,
@@ -232,147 +232,50 @@ impl From<Query> for StateMessage {
     }
 }
 
-pub type RpcBlock = alloy::rpc::types::Block<op_alloy::rpc_types::Transaction>;
+pub type RpcBlock = alloy::rpc::types::Block<RpcTransaction>;
 pub type RpcTransaction = op_alloy::rpc_types::Transaction;
 
 #[derive(Debug)]
 pub struct BlockResponse(pub RpcBlock);
 
 impl BlockResponse {
-    fn new(value: RpcBlock) -> Self {
-        Self(value)
+    fn new(transactions: BlockTransactions<RpcTransaction>, value: ExtendedBlock) -> Self {
+        Self(RpcBlock {
+            transactions,
+            header: alloy::rpc::types::Header {
+                hash: value.hash,
+                inner: value.block.header,
+                // TODO: review fields below
+                total_difficulty: None,
+                size: None,
+            },
+            uncles: Vec::new(),
+            withdrawals: Some(Withdrawals(Vec::new())),
+        })
     }
 
-    pub fn from_block_with_transaction_hashes(value: ExtendedBlock) -> Self {
-        Self::new(RpcBlock {
-            transactions: BlockTransactions::Hashes(
-                value
+    pub fn from_block_with_transaction_hashes(block: ExtendedBlock) -> Self {
+        Self::new(
+            BlockTransactions::Hashes(
+                block
                     .block
                     .transactions
                     .iter()
-                    .map(|tx| match tx {
-                        OpTxEnvelope::Legacy(tx) => *tx.hash(),
-                        OpTxEnvelope::Eip1559(tx) => *tx.hash(),
-                        OpTxEnvelope::Eip2930(tx) => *tx.hash(),
-                        OpTxEnvelope::Eip7702(tx) => *tx.hash(),
-                        OpTxEnvelope::Deposit(tx) => tx.hash(),
-                        _ => unreachable!("Tx type not supported"),
-                    })
+                    .map(OpTxEnvelope::trie_hash)
                     .collect(),
             ),
-            header: alloy::rpc::types::Header {
-                hash: value.hash,
-                inner: value.block.header,
-                // TODO: review fields below
-                total_difficulty: None,
-                size: None,
-            },
-            uncles: Vec::new(),
-            withdrawals: Some(Withdrawals(Vec::new())),
-        })
+            block,
+        )
     }
 
-    pub fn from_block_with_transactions(value: ExtendedBlock) -> Self {
-        Self::new(RpcBlock {
-            transactions: BlockTransactions::Full(
-                value
-                    .block
-                    .transactions
-                    .into_iter()
-                    .enumerate()
-                    .map(|(i, inner)| {
-                        let tx = alloy::rpc::types::Transaction {
-                            block_hash: Some(value.hash),
-                            block_number: Some(value.block.header.number),
-                            transaction_index: Some(i as u64),
-                            // TODO: Gassing it up requires either modifying supported variants of
-                            // `OpTxEnvelope` or storing a different type in block transactions
-                            // altogether
-                            effective_gas_price: None,
-                            from: compute_from(&inner)
-                                .expect("Block transactions should contain valid signature"),
-                            inner,
-                        };
-                        let version_nonce = get_deposit_nonce(&tx.inner);
-                        op_alloy::rpc_types::Transaction {
-                            inner: tx,
-                            deposit_nonce: version_nonce.as_ref().map(|v| v.nonce),
-                            deposit_receipt_version: version_nonce.map(|v| v.version),
-                        }
-                    })
-                    .collect(),
-            ),
-            header: alloy::rpc::types::Header {
-                hash: value.hash,
-                inner: value.block.header,
-                // TODO: review fields below
-                total_difficulty: None,
-                size: None,
-            },
-            uncles: Vec::new(),
-            withdrawals: Some(Withdrawals(Vec::new())),
-        })
-    }
-}
-
-// Nonce and version for messages of CrossDomainMessenger L2 contract.
-struct VersionedNonce {
-    version: u64,
-    nonce: u64,
-}
-
-fn get_deposit_nonce(tx: &OpTxEnvelope) -> Option<VersionedNonce> {
-    if let OpTxEnvelope::Deposit(tx) = tx {
-        inner_get_deposit_nonce(tx)
-    } else {
-        None
-    }
-}
-
-fn inner_get_deposit_nonce(tx: &TxDeposit) -> Option<VersionedNonce> {
-    use alloy::sol_types::SolType;
-
-    // Function selector for `relayMessage`.
-    // See optimism/packages/contracts-bedrock/src/universal/CrossDomainMessenger.sol
-    const RELAY_MESSAGE_SELECTOR: [u8; 4] = [0xd7, 0x64, 0xad, 0x0b];
-
-    // The upper 16 bits are for the version, the rest are for the nonce.
-    const NONCE_MASK: U256 = U256::from_be_bytes(alloy::hex!(
-        "0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-    ));
-
-    alloy::sol! {
-        struct RelayMessageArgs {
-            uint256 nonce;
-            address sender;
-            address target;
-            uint256 value;
-            uint256 min_gas_limit;
-            bytes message;
-        }
-    }
-
-    if !tx.input.starts_with(&RELAY_MESSAGE_SELECTOR) {
-        return None;
-    }
-
-    let args = RelayMessageArgs::abi_decode_params(&tx.input[4..], true).ok()?;
-
-    // See optimism/packages/contracts-bedrock/src/libraries/Encoding.sol
-    let encoded_versioned_nonce = args.nonce;
-    let version = encoded_versioned_nonce.checked_shr(240)?.saturating_to();
-    let nonce = (encoded_versioned_nonce & NONCE_MASK).saturating_to();
-    Some(VersionedNonce { version, nonce })
-}
-
-fn compute_from(tx: &OpTxEnvelope) -> Result<Address, alloy::primitives::SignatureError> {
-    match tx {
-        OpTxEnvelope::Legacy(tx) => tx.recover_signer(),
-        OpTxEnvelope::Eip1559(tx) => tx.recover_signer(),
-        OpTxEnvelope::Eip2930(tx) => tx.recover_signer(),
-        OpTxEnvelope::Eip7702(tx) => tx.recover_signer(),
-        OpTxEnvelope::Deposit(tx) => Ok(tx.from),
-        _ => unreachable!("Tx type not supported"),
+    pub fn from_block_with_transactions(
+        block: ExtendedBlock,
+        transactions: Vec<ExtendedTransaction>,
+    ) -> Self {
+        Self::new(
+            BlockTransactions::Full(transactions.into_iter().map(RpcTransaction::from).collect()),
+            block,
+        )
     }
 }
 
@@ -380,13 +283,15 @@ pub type TransactionResponse = op_alloy::rpc_types::Transaction;
 
 impl From<ExtendedTransaction> for TransactionResponse {
     fn from(value: ExtendedTransaction) -> Self {
-        let (deposit_nonce, deposit_receipt_version) = get_deposit_nonce(value.inner())
+        let (deposit_nonce, deposit_receipt_version) = value
+            .deposit_nonce()
             .map(|nonce| (Some(nonce.nonce), Some(nonce.version)))
             .unwrap_or((None, None));
 
         Self {
             inner: alloy::rpc::types::eth::Transaction {
-                from: compute_from(value.inner())
+                from: value
+                    .from()
                     .expect("Block transactions should contain valid signature"),
                 inner: value.inner,
                 block_hash: Some(value.block_hash),
@@ -505,17 +410,4 @@ impl WithPayloadAttributes for Header {
             ..self
         }
     }
-}
-
-#[test]
-fn test_get_deposit_nonce() {
-    const INPUT: [u8; 420] = alloy::hex!("d764ad0b0001000000000000000000000000000000000000000000000000000000000002000000000000000000000000c8088d0362bb4ac757ca77e211c30503d39cef4800000000000000000000000042000000000000000000000000000000000000100000000000000000000000000000000000000000000000056bc75e2d631000000000000000000000000000000000000000000000000000000000000000030d4000000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000000a41635f5fd000000000000000000000000c152ff76a513e15be1be43d102a881f076e707b3000000000000000000000000c152ff76a513e15be1be43d102a881f076e707b30000000000000000000000000000000000000000000000056bc75e2d631000000000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
-
-    let tx = TxDeposit {
-        input: INPUT.into(),
-        ..Default::default()
-    };
-    let VersionedNonce { version, nonce } = inner_get_deposit_nonce(&tx).unwrap();
-    assert_eq!(nonce, 2);
-    assert_eq!(version, 1);
 }

@@ -1,5 +1,5 @@
 use {
-    crate::generic::ToKey,
+    crate::{generic::ToKey, transaction::transaction_cf},
     moved::{
         block::{BlockQueries, BlockRepository, ExtendedBlock},
         types::state::BlockResponse,
@@ -47,15 +47,29 @@ impl BlockQueries for RocksDbBlockQueries {
         include_transactions: bool,
     ) -> Result<Option<BlockResponse>, Self::Err> {
         let cf = block_cf(db);
-
-        Ok(db
+        let block: Option<ExtendedBlock> = db
             .get_cf(&cf, hash)?
-            .and_then(|v| bcs::from_bytes(v.as_slice()).ok())
-            .map(if include_transactions {
-                BlockResponse::from_block_with_transactions
-            } else {
-                BlockResponse::from_block_with_transaction_hashes
-            }))
+            .and_then(|v| bcs::from_bytes(v.as_slice()).ok());
+
+        Ok(Some(match block {
+            Some(block) if include_transactions => {
+                let cf = transaction_cf(db);
+                let keys = block.transaction_hashes().collect::<Vec<B256>>();
+
+                let transactions = db
+                    .batched_multi_get_cf(&cf, keys.iter(), false)
+                    .into_iter()
+                    .filter_map(|v| {
+                        v.map(|v| v.and_then(|v| bcs::from_bytes(v.as_ref()).ok()))
+                            .transpose()
+                    })
+                    .collect::<Result<_, _>>()?;
+
+                BlockResponse::from_block_with_transactions(block, transactions)
+            }
+            Some(block) => BlockResponse::from_block_with_transaction_hashes(block),
+            None => return Ok(None),
+        }))
     }
 
     fn by_height(

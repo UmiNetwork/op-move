@@ -53,7 +53,7 @@ impl TransactionQueries for RocksDbTransactionQueries {
     }
 }
 
-fn transaction_cf(db: &RocksDb) -> impl AsColumnFamilyRef + use<'_> {
+pub(crate) fn transaction_cf(db: &RocksDb) -> impl AsColumnFamilyRef + use<'_> {
     db.cf_handle(TRANSACTION_COLUMN_FAMILY)
         .expect("Column family should exist")
 }

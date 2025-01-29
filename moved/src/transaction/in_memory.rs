@@ -26,6 +26,13 @@ impl TransactionMemory {
     pub fn by_hash(&self, hash: B256) -> Option<ExtendedTransaction> {
         self.transactions.get(&hash).cloned()
     }
+
+    pub fn by_hashes(&self, hashes: impl IntoIterator<Item = B256>) -> Vec<ExtendedTransaction> {
+        hashes
+            .into_iter()
+            .filter_map(|hash| self.by_hash(hash))
+            .collect()
+    }
 }
 
 #[derive(Debug, Default)]
