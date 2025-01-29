@@ -37,6 +37,10 @@ pub mod tests {
             move_execution::{
                 BaseTokenAccounts, CreateL1GasFee, CreateL2GasFee, MovedBaseTokenAccounts,
             },
+            receipt::{
+                InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory, ReceiptQueries,
+                ReceiptRepository,
+            },
             state_actor::{
                 InMemoryStateQueries, MockStateQueries, NewPayloadId, StateActor, StateQueries,
             },
@@ -97,6 +101,9 @@ pub mod tests {
             InMemoryStateQueries::from_genesis(initial_state_root),
             InMemoryTransactionRepository::new(),
             InMemoryTransactionQueries::new(),
+            ReceiptMemory::new(),
+            InMemoryReceiptRepository::new(),
+            InMemoryReceiptQueries::new(),
             StateActor::on_tx_noop(),
             StateActor::on_tx_batch_noop(),
         );
@@ -182,6 +189,9 @@ pub mod tests {
             impl StateQueries,
             impl TransactionRepository<Storage = ()>,
             impl TransactionQueries<Storage = ()>,
+            (),
+            impl ReceiptRepository<Storage = ()>,
+            impl ReceiptQueries<Storage = ()>,
         >,
         Sender<StateMessage>,
     ) {
@@ -204,6 +214,9 @@ pub mod tests {
             (),
             (),
             MockStateQueries(address, height),
+            (),
+            (),
+            (),
             (),
             (),
             StateActor::on_tx_noop(),

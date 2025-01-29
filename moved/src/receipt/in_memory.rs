@@ -4,6 +4,9 @@ use {
         receipt::{
             write::ReceiptRepository, ReceiptQueries, TransactionReceipt, TransactionWithReceipt,
         },
+        transaction::{
+            ExtendedTransaction, TransactionQueries, TransactionRepository, TransactionResponse,
+        },
         types::transactions::NormalizedExtendedTxEnvelope,
     },
     alloy::{primitives::TxKind, rpc::types::TransactionReceipt as AlloyTxReceipt},
@@ -120,6 +123,12 @@ impl ReceiptQueries for InMemoryReceiptQueries {
 #[derive(Debug)]
 pub struct InMemoryReceiptRepository;
 
+impl InMemoryReceiptRepository {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 impl ReceiptRepository for InMemoryReceiptRepository {
     type Err = Infallible;
     type Storage = ReceiptMemory;
@@ -132,5 +141,42 @@ impl ReceiptRepository for InMemoryReceiptRepository {
     ) -> Result<(), Self::Err> {
         storage.add(receipt, block_hash);
         Ok(())
+    }
+}
+
+#[cfg(any(feature = "test-doubles", test))]
+mod test_doubles {
+    use super::*;
+
+    impl ReceiptQueries for () {
+        type Err = Infallible;
+        type Storage = ();
+
+        fn by_transaction_hash<B: BlockQueries>(
+            &self,
+            _: &Self::Storage,
+            _: B,
+            _: &B::Storage,
+            _: B256,
+        ) -> Result<Option<TransactionReceipt>, Self::Err>
+        where
+            Self::Err: From<B::Err>,
+        {
+            Ok(None)
+        }
+    }
+
+    impl ReceiptRepository for () {
+        type Err = Infallible;
+        type Storage = ();
+
+        fn add(
+            &self,
+            _: &mut Self::Storage,
+            _: TransactionWithReceipt,
+            _: B256,
+        ) -> Result<(), Self::Err> {
+            Ok(())
+        }
     }
 }

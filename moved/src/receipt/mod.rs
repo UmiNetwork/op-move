@@ -1,6 +1,7 @@
 pub use {
+    in_memory::{InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory},
     read::{ReceiptQueries, TransactionReceipt},
-    write::TransactionWithReceipt,
+    write::{ReceiptRepository, TransactionWithReceipt},
 };
 
 mod in_memory;

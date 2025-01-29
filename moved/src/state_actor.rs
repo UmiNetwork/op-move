@@ -70,6 +70,9 @@ pub type InMemStateActor = StateActor<
     InMemoryStateQueries,
     crate::transaction::InMemoryTransactionRepository,
     crate::transaction::InMemoryTransactionQueries,
+    crate::receipt::ReceiptMemory,
+    crate::receipt::InMemoryReceiptRepository,
+    crate::receipt::InMemoryReceiptQueries,
 >;
 
 /// A function invoked on a completion of new transaction execution batch.
@@ -80,7 +83,7 @@ type OnTxBatch<S> =
 type OnTx<S> =
     Box<dyn Fn() -> Box<dyn Fn(&mut S, ChangeSet) + Send + Sync + 'static> + Send + Sync + 'static>;
 
-pub struct StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ> {
+pub struct StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ> {
     genesis_config: GenesisConfig,
     rx: Receiver<StateMessage>,
     head: B256,
@@ -101,6 +104,9 @@ pub struct StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ> {
     state_queries: SQ,
     transaction_repository: T,
     transaction_queries: TQ,
+    receipt_memory: N,
+    receipt_repository: RR,
+    receipt_queries: RQ,
     // tx_hash -> (tx_with_receipt, block_hash)
     tx_receipts: HashMap<B256, (TransactionWithReceipt, B256)>,
     on_tx_batch: OnTxBatch<Self>,
@@ -121,7 +127,10 @@ impl<
         SQ: StateQueries + Send + Sync + 'static,
         T: TransactionRepository<Storage = M> + Send + Sync + 'static,
         TQ: TransactionQueries<Storage = M> + Send + Sync + 'static,
-    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ>
+        N: Send + Sync + 'static,
+        RR: ReceiptRepository<Storage = N> + Send + Sync + 'static,
+        RQ: ReceiptQueries<Storage = N> + Send + Sync + 'static,
+    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ>
 {
     pub fn spawn(mut self) -> JoinHandle<()> {
         tokio::spawn(async move {
@@ -149,7 +158,10 @@ impl<
         SQ: StateQueries,
         T: TransactionRepository<Storage = M>,
         TQ: TransactionQueries<Storage = M>,
-    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ>
+        N,
+        RR: ReceiptRepository<Storage = N>,
+        RQ: ReceiptQueries<Storage = N>,
+    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ>
 {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -170,6 +182,9 @@ impl<
         state_queries: SQ,
         transaction_repository: T,
         transaction_queries: TQ,
+        receipt_memory: N,
+        receipt_repository: RR,
+        receipt_queries: RQ,
         on_tx: OnTx<Self>,
         on_tx_batch: OnTxBatch<Self>,
     ) -> Self {
@@ -197,6 +212,9 @@ impl<
             on_tx_batch,
             transaction_repository,
             transaction_queries,
+            receipt_memory,
+            receipt_repository,
+            receipt_queries,
         }
     }
 
@@ -694,7 +712,10 @@ impl<
         M,
         T: TransactionRepository,
         TQ: TransactionQueries,
-    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, InMemoryStateQueries, T, TQ>
+        N,
+        RR: ReceiptRepository<Storage = N>,
+        RQ: ReceiptQueries<Storage = N>,
+    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, InMemoryStateQueries, T, TQ, N, RR, RQ>
 {
     pub fn on_tx_in_memory() -> OnTx<Self> {
         Box::new(|| Box::new(|_state, _changes| ()))
@@ -711,7 +732,9 @@ impl<
     }
 }
 
-use crate::receipt::{TransactionReceipt, TransactionWithReceipt};
+use crate::receipt::{
+    ReceiptQueries, ReceiptRepository, TransactionReceipt, TransactionWithReceipt,
+};
 #[cfg(any(feature = "test-doubles", test))]
 pub use test_doubles::*;
 
@@ -854,6 +877,7 @@ mod tests {
             block::{Eip1559GasFee, InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash},
             in_memory::SharedMemory,
             move_execution::{create_move_vm, create_vm_session, MovedBaseTokenAccounts},
+            receipt::{InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory},
             tests::{signer::Signer, EVM_ADDRESS, PRIVATE_KEY},
             transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
             types::session_id::SessionId,
@@ -893,6 +917,9 @@ mod tests {
             SQ,
             impl TransactionRepository<Storage = SharedMemory>,
             impl TransactionQueries<Storage = SharedMemory>,
+            ReceiptMemory,
+            impl ReceiptRepository<Storage = ReceiptMemory>,
+            impl ReceiptQueries<Storage = ReceiptMemory>,
         >,
         Sender<StateMessage>,
     ) {
@@ -930,6 +957,9 @@ mod tests {
             state_queries,
             InMemoryTransactionRepository::new(),
             InMemoryTransactionQueries::new(),
+            ReceiptMemory::new(),
+            InMemoryReceiptRepository::new(),
+            InMemoryReceiptQueries::new(),
             StateActor::on_tx_noop(),
             StateActor::on_tx_batch_noop(),
         );
@@ -977,6 +1007,9 @@ mod tests {
             impl StateQueries,
             impl TransactionRepository<Storage = SharedMemory>,
             impl TransactionQueries<Storage = SharedMemory>,
+            ReceiptMemory,
+            impl ReceiptRepository<Storage = ReceiptMemory>,
+            impl ReceiptQueries<Storage = ReceiptMemory>,
         >,
         Sender<StateMessage>,
     ) {
@@ -1021,6 +1054,9 @@ mod tests {
             state_queries,
             InMemoryTransactionRepository::new(),
             InMemoryTransactionQueries::new(),
+            ReceiptMemory::new(),
+            InMemoryReceiptRepository::new(),
+            InMemoryReceiptQueries::new(),
             StateActor::on_tx_in_memory(),
             StateActor::on_tx_batch_in_memory(),
         );
