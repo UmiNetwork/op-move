@@ -1,7 +1,6 @@
 use {
-    moved::{
-        transaction::{ExtendedTransaction, TransactionQueries, TransactionRepository},
-        types::state::TransactionResponse,
+    moved::transaction::{
+        ExtendedTransaction, TransactionQueries, TransactionRepository, TransactionResponse,
     },
     moved_shared::primitives::B256,
     rocksdb::{AsColumnFamilyRef, WriteBatchWithTransaction, DB as RocksDb},

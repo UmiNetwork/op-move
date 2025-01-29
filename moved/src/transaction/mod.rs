@@ -1,6 +1,6 @@
 pub use {
     in_memory::{InMemoryTransactionQueries, InMemoryTransactionRepository, TransactionMemory},
-    read::TransactionQueries,
+    read::{TransactionQueries, TransactionResponse},
     write::{ExtendedTransaction, TransactionRepository},
 };
 

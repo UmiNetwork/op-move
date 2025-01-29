@@ -22,8 +22,7 @@ use {
             queries::ProofResponse,
             state::{
                 Command, ExecutionOutcome, Payload, PayloadId, PayloadResponse, Query,
-                StateMessage, ToPayloadIdInput, TransactionReceipt, TransactionWithReceipt,
-                WithExecutionOutcome, WithPayloadAttributes,
+                StateMessage, ToPayloadIdInput, WithExecutionOutcome, WithPayloadAttributes,
             },
             transactions::{ExtendedTxEnvelope, NormalizedExtendedTxEnvelope},
         },
@@ -712,6 +711,7 @@ impl<
     }
 }
 
+use crate::receipt::{TransactionReceipt, TransactionWithReceipt};
 #[cfg(any(feature = "test-doubles", test))]
 pub use test_doubles::*;
 

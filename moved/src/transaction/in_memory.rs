@@ -1,8 +1,9 @@
 use {
     crate::{
         in_memory::SharedMemory,
-        transaction::{ExtendedTransaction, TransactionQueries, TransactionRepository},
-        types::state::TransactionResponse,
+        transaction::{
+            ExtendedTransaction, TransactionQueries, TransactionRepository, TransactionResponse,
+        },
     },
     moved_shared::primitives::B256,
     std::{collections::HashMap, convert::Infallible},

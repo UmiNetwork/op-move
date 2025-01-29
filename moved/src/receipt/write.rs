@@ -1,0 +1,47 @@
+use {
+    crate::types::transactions::NormalizedExtendedTxEnvelope,
+    moved_shared::primitives::{Address, B256, U256},
+    op_alloy::{
+        consensus::{OpReceiptEnvelope, OpTxEnvelope},
+        rpc_types::L1BlockInfo,
+    },
+    std::fmt::Debug,
+};
+
+pub trait ReceiptRepository {
+    type Err: Debug;
+    type Storage;
+
+    fn add(
+        &self,
+        storage: &mut Self::Storage,
+        receipt: TransactionWithReceipt,
+        block_hash: B256,
+    ) -> Result<(), Self::Err>;
+}
+
+#[derive(Debug, Clone)]
+pub struct TransactionWithReceipt {
+    pub tx_hash: B256,
+    pub tx: OpTxEnvelope,
+    pub tx_index: u64,
+    pub normalized_tx: NormalizedExtendedTxEnvelope,
+    pub receipt: OpReceiptEnvelope,
+    pub l1_block_info: Option<L1BlockInfo>,
+    pub gas_used: u64,
+    pub l2_gas_price: U256,
+    /// If the transaction deployed a new contract, gives the address.
+    ///
+    /// In Move contracts are identified by AccountAddress + ModuleID,
+    /// so this field cannot capture all the detail of a new deployment,
+    /// however we cannot extend the field because it is here for Ethereum
+    /// compatibility. As a compromise, we will put the AccountAddress here
+    /// and the user would need to look up the ModuleID by inspecting the
+    /// transaction object itself.
+    pub contract_address: Option<Address>,
+    /// Counts the number of logs that exist in transactions appearing earlier
+    /// in the same block.
+    ///
+    /// This allows computing the log index for each log in this transaction.
+    pub logs_offset: u64,
+}
