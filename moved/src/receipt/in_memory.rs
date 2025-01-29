@@ -26,6 +26,10 @@ impl ReceiptMemory {
         }
     }
 
+    pub fn contains(&self, transaction_hash: B256) -> bool {
+        self.receipts.contains_key(&transaction_hash)
+    }
+
     pub fn add(&mut self, receipt: TransactionWithReceipt, block_hash: B256) {
         self.receipts.insert(receipt.tx_hash, (receipt, block_hash));
     }
@@ -54,7 +58,7 @@ impl ReceiptQueries for InMemoryReceiptQueries {
     fn by_transaction_hash<B: BlockQueries>(
         &self,
         storage: &Self::Storage,
-        block_queries: B,
+        block_queries: &B,
         block_storage: &B::Storage,
         transaction_hash: B256,
     ) -> Result<Option<TransactionReceipt>, Self::Err>
@@ -133,6 +137,10 @@ impl ReceiptRepository for InMemoryReceiptRepository {
     type Err = Infallible;
     type Storage = ReceiptMemory;
 
+    fn contains(&self, storage: &Self::Storage, transaction_hash: B256) -> Result<bool, Self::Err> {
+        Ok(storage.contains(transaction_hash))
+    }
+
     fn add(
         &self,
         storage: &mut Self::Storage,
@@ -155,7 +163,7 @@ mod test_doubles {
         fn by_transaction_hash<B: BlockQueries>(
             &self,
             _: &Self::Storage,
-            _: B,
+            _: &B,
             _: &B::Storage,
             _: B256,
         ) -> Result<Option<TransactionReceipt>, Self::Err>
@@ -169,6 +177,10 @@ mod test_doubles {
     impl ReceiptRepository for () {
         type Err = Infallible;
         type Storage = ();
+
+        fn contains(&self, _: &Self::Storage, _: B256) -> Result<bool, Self::Err> {
+            Ok(false)
+        }
 
         fn add(
             &self,

@@ -7,7 +7,7 @@ pub trait ReceiptQueries {
     fn by_transaction_hash<B: BlockQueries>(
         &self,
         storage: &Self::Storage,
-        block_queries: B,
+        block_queries: &B,
         block_storage: &B::Storage,
         transaction_hash: B256,
     ) -> Result<Option<TransactionReceipt>, Self::Err>

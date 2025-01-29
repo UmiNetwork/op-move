@@ -12,6 +12,8 @@ pub trait ReceiptRepository {
     type Err: Debug;
     type Storage;
 
+    fn contains(&self, storage: &Self::Storage, transaction_hash: B256) -> Result<bool, Self::Err>;
+
     fn add(
         &self,
         storage: &mut Self::Storage,

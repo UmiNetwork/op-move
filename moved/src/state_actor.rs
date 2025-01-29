@@ -107,8 +107,6 @@ pub struct StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ> {
     receipt_memory: N,
     receipt_repository: RR,
     receipt_queries: RQ,
-    // tx_hash -> (tx_with_receipt, block_hash)
-    tx_receipts: HashMap<B256, (TransactionWithReceipt, B256)>,
     on_tx_batch: OnTxBatch<Self>,
     on_tx: OnTx<Self>,
 }
@@ -131,6 +129,8 @@ impl<
         RR: ReceiptRepository<Storage = N> + Send + Sync + 'static,
         RQ: ReceiptQueries<Storage = N> + Send + Sync + 'static,
     > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ>
+where
+    RQ::Err: From<Q::Err>,
 {
     pub fn spawn(mut self) -> JoinHandle<()> {
         tokio::spawn(async move {
@@ -162,6 +162,8 @@ impl<
         RR: ReceiptRepository<Storage = N>,
         RQ: ReceiptQueries<Storage = N>,
     > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ>
+where
+    RQ::Err: From<Q::Err>,
 {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -207,7 +209,6 @@ impl<
             block_queries,
             storage: block_memory,
             state_queries,
-            tx_receipts: HashMap::new(),
             on_tx,
             on_tx_batch,
             transaction_repository,
@@ -295,7 +296,7 @@ impl<
                 response_channel.send(outcome).ok()
             }
             Query::TransactionReceipt { tx_hash, response_channel } => {
-                response_channel.send(self.query_transaction_receipt(tx_hash)).ok()
+                response_channel.send(self.receipt_queries.by_transaction_hash(&self.receipt_memory, &self.block_queries, &self.storage, tx_hash).unwrap()).ok()
             }
             Query::TransactionByHash { tx_hash, response_channel } => response_channel
                 .send(self.transaction_queries.by_hash(&self.storage, tx_hash).ok().flatten())
@@ -438,7 +439,7 @@ impl<
             .chain(self.mem_pool.drain())
             .filter(|(tx_hash, _)|
                 // Do not include transactions we have already processed before
-                !self.tx_receipts.contains_key(tx_hash))
+                !self.receipt_repository.contains(&self.receipt_memory, *tx_hash).unwrap())
             .collect::<Vec<_>>();
         let parent = self
             .block_repository
@@ -490,7 +491,9 @@ impl<
             .into_iter()
             .map(|v| {
                 let tx = v.tx.clone();
-                self.tx_receipts.insert(v.tx_hash, (v, hash));
+                self.receipt_repository
+                    .add(&mut self.receipt_memory, v, hash)
+                    .unwrap();
                 tx
             })
             .collect();
@@ -630,64 +633,6 @@ impl<
             total_tip,
         };
         (outcome, receipts)
-    }
-
-    fn query_transaction_receipt(&self, tx_hash: B256) -> Option<TransactionReceipt> {
-        let (rx, block_hash) = self.tx_receipts.get(&tx_hash)?;
-        let block = self
-            .block_queries
-            .by_hash(&self.storage, *block_hash, false)
-            .ok()??;
-        let contract_address = rx.contract_address;
-        let (to, from) = match &rx.normalized_tx {
-            NormalizedExtendedTxEnvelope::Canonical(tx) => {
-                let to = match tx.to {
-                    TxKind::Call(to) => Some(to),
-                    TxKind::Create => None,
-                };
-                (to, tx.signer)
-            }
-            NormalizedExtendedTxEnvelope::DepositedTx(tx) => (Some(tx.to), tx.from),
-        };
-        let logs = rx
-            .receipt
-            .logs()
-            .iter()
-            .enumerate()
-            .map(|(internal_index, log)| alloy::rpc::types::Log {
-                inner: log.clone(),
-                block_hash: Some(*block_hash),
-                block_number: Some(block.0.header.number),
-                block_timestamp: Some(block.0.header.timestamp),
-                transaction_hash: Some(tx_hash),
-                transaction_index: Some(rx.tx_index),
-                log_index: Some(rx.logs_offset + (internal_index as u64)),
-                removed: false,
-            })
-            .collect();
-        let receipt = primitives::with_rpc_logs(&rx.receipt, logs);
-        let result = TransactionReceipt {
-            inner: AlloyTxReceipt {
-                inner: receipt,
-                transaction_hash: tx_hash,
-                transaction_index: Some(rx.tx_index),
-                block_hash: Some(*block_hash),
-                block_number: Some(block.0.header.number),
-                gas_used: rx.gas_used as u128,
-                // TODO: make all gas prices bounded by u128?
-                effective_gas_price: rx.l2_gas_price.saturating_to(),
-                // Always None because we do not support eip-4844 transactions
-                blob_gas_used: None,
-                blob_gas_price: None,
-                from,
-                to,
-                contract_address,
-                // EIP-7702 not yet supported
-                authorization_list: None,
-            },
-            l1_block_info: rx.l1_block_info.unwrap_or_default(),
-        };
-        Some(result)
     }
 
     pub fn on_tx_batch_noop() -> OnTxBatch<Self> {
@@ -892,6 +837,7 @@ mod tests {
         move_vm_types::gas::UnmeteredGasMeter,
         moved_genesis::config::{GenesisConfig, CHAIN_ID},
         moved_state::InMemoryState,
+        std::convert::Infallible,
         test_case::test_case,
         tokio::sync::{
             mpsc::{self, Sender},
@@ -912,14 +858,14 @@ mod tests {
             impl CreateL1GasFee,
             impl CreateL2GasFee,
             impl BaseTokenAccounts,
-            impl BlockQueries<Storage = SharedMemory>,
+            impl BlockQueries<Storage = SharedMemory, Err = Infallible>,
             SharedMemory,
             SQ,
             impl TransactionRepository<Storage = SharedMemory>,
             impl TransactionQueries<Storage = SharedMemory>,
             ReceiptMemory,
             impl ReceiptRepository<Storage = ReceiptMemory>,
-            impl ReceiptQueries<Storage = ReceiptMemory>,
+            impl ReceiptQueries<Storage = ReceiptMemory, Err = Infallible>,
         >,
         Sender<StateMessage>,
     ) {
@@ -1002,14 +948,14 @@ mod tests {
             impl CreateL1GasFee,
             impl CreateL2GasFee,
             impl BaseTokenAccounts,
-            impl BlockQueries<Storage = SharedMemory>,
+            impl BlockQueries<Storage = SharedMemory, Err = Infallible>,
             SharedMemory,
             impl StateQueries,
             impl TransactionRepository<Storage = SharedMemory>,
             impl TransactionQueries<Storage = SharedMemory>,
             ReceiptMemory,
             impl ReceiptRepository<Storage = ReceiptMemory>,
-            impl ReceiptQueries<Storage = ReceiptMemory>,
+            impl ReceiptQueries<Storage = ReceiptMemory, Err = Infallible>,
         >,
         Sender<StateMessage>,
     ) {
