@@ -17,6 +17,7 @@ use {
             BaseTokenAccounts, CanonicalExecutionInput, CreateL1GasFee, CreateL2GasFee,
             DepositExecutionInput, L1GasFee, L1GasFeeInput, L2GasFeeInput, LogsBloom,
         },
+        receipt::{ReceiptQueries, ReceiptRepository, TransactionWithReceipt},
         transaction::{ExtendedTransaction, TransactionQueries, TransactionRepository},
         types::{
             queries::ProofResponse,
@@ -37,17 +38,16 @@ use {
         },
         primitives::{keccak256, Bloom},
         rlp::{Decodable, Encodable},
-        rpc::types::{FeeHistory, TransactionReceipt as AlloyTxReceipt},
+        rpc::types::FeeHistory,
     },
     move_binary_format::errors::PartialVMError,
     move_core_types::effects::ChangeSet,
     moved_evm_ext::HeaderForExecution,
     moved_genesis::config::GenesisConfig,
     moved_shared::primitives::{
-        self, Address, ToEthAddress, ToMoveAddress, ToSaturatedU64, B256, U256, U64,
+        Address, ToEthAddress, ToMoveAddress, ToSaturatedU64, B256, U256, U64,
     },
     moved_state::State,
-    revm::primitives::TxKind,
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
 };
@@ -677,9 +677,6 @@ impl<
     }
 }
 
-use crate::receipt::{
-    ReceiptQueries, ReceiptRepository, TransactionReceipt, TransactionWithReceipt,
-};
 #[cfg(any(feature = "test-doubles", test))]
 pub use test_doubles::*;
 
@@ -831,6 +828,7 @@ mod tests {
             consensus::{SignableTransaction, TxEip1559, TxEnvelope},
             hex,
             network::TxSignerSync,
+            primitives::TxKind,
         },
         move_core_types::{account_address::AccountAddress, effects::ChangeSet},
         move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},

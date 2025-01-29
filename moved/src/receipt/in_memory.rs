@@ -4,9 +4,6 @@ use {
         receipt::{
             write::ReceiptRepository, ReceiptQueries, TransactionReceipt, TransactionWithReceipt,
         },
-        transaction::{
-            ExtendedTransaction, TransactionQueries, TransactionRepository, TransactionResponse,
-        },
         types::transactions::NormalizedExtendedTxEnvelope,
     },
     alloy::{primitives::TxKind, rpc::types::TransactionReceipt as AlloyTxReceipt},
@@ -17,6 +14,12 @@ use {
 #[derive(Debug)]
 pub struct ReceiptMemory {
     receipts: HashMap<B256, (TransactionWithReceipt, B256)>,
+}
+
+impl Default for ReceiptMemory {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ReceiptMemory {
@@ -44,6 +47,12 @@ impl ReceiptMemory {
 
 #[derive(Debug)]
 pub struct InMemoryReceiptQueries;
+
+impl Default for InMemoryReceiptQueries {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl InMemoryReceiptQueries {
     pub fn new() -> Self {
@@ -126,6 +135,12 @@ impl ReceiptQueries for InMemoryReceiptQueries {
 
 #[derive(Debug)]
 pub struct InMemoryReceiptRepository;
+
+impl Default for InMemoryReceiptRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl InMemoryReceiptRepository {
     pub fn new() -> Self {
