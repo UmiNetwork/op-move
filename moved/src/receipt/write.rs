@@ -1,10 +1,6 @@
 use {
-    crate::types::transactions::NormalizedExtendedTxEnvelope,
     moved_shared::primitives::{Address, B256, U256},
-    op_alloy::{
-        consensus::{OpReceiptEnvelope, OpTxEnvelope},
-        rpc_types::L1BlockInfo,
-    },
+    op_alloy::{consensus::OpReceiptEnvelope, rpc_types::L1BlockInfo},
     std::fmt::Debug,
 };
 
@@ -14,20 +10,19 @@ pub trait ReceiptRepository {
 
     fn contains(&self, storage: &Self::Storage, transaction_hash: B256) -> Result<bool, Self::Err>;
 
-    fn add(
+    fn extend(
         &self,
         storage: &mut Self::Storage,
-        receipt: TransactionWithReceipt,
-        block_hash: B256,
+        receipts: impl IntoIterator<Item = ExtendedReceipt>,
     ) -> Result<(), Self::Err>;
 }
 
-#[derive(Debug, Clone)]
-pub struct TransactionWithReceipt {
-    pub tx_hash: B256,
-    pub tx: OpTxEnvelope,
-    pub tx_index: u64,
-    pub normalized_tx: NormalizedExtendedTxEnvelope,
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ExtendedReceipt {
+    pub transaction_hash: B256,
+    pub transaction_index: u64,
+    pub to: Option<Address>,
+    pub from: Address,
     pub receipt: OpReceiptEnvelope,
     pub l1_block_info: Option<L1BlockInfo>,
     pub gas_used: u64,
@@ -46,4 +41,14 @@ pub struct TransactionWithReceipt {
     ///
     /// This allows computing the log index for each log in this transaction.
     pub logs_offset: u64,
+    pub block_hash: B256,
+    pub block_number: u64,
+    pub block_timestamp: u64,
+}
+
+impl ExtendedReceipt {
+    pub fn with_block_hash(mut self, block_hash: B256) -> Self {
+        self.block_hash = block_hash;
+        self
+    }
 }

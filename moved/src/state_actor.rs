@@ -1,3 +1,4 @@
+use {alloy::primitives::TxKind, op_alloy::consensus::OpTxEnvelope};
 pub use {
     payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId},
     queries::{
@@ -17,7 +18,7 @@ use {
             BaseTokenAccounts, CanonicalExecutionInput, CreateL1GasFee, CreateL2GasFee,
             DepositExecutionInput, L1GasFee, L1GasFeeInput, L2GasFeeInput, LogsBloom,
         },
-        receipt::{ReceiptQueries, ReceiptRepository, TransactionWithReceipt},
+        receipt::{ExtendedReceipt, ReceiptQueries, ReceiptRepository},
         transaction::{ExtendedTransaction, TransactionQueries, TransactionRepository},
         types::{
             queries::ProofResponse,
@@ -296,7 +297,7 @@ where
                 response_channel.send(outcome).ok()
             }
             Query::TransactionReceipt { tx_hash, response_channel } => {
-                response_channel.send(self.receipt_queries.by_transaction_hash(&self.receipt_memory, &self.block_queries, &self.storage, tx_hash).unwrap()).ok()
+                response_channel.send(self.receipt_queries.by_transaction_hash(&self.receipt_memory, tx_hash).unwrap()).ok()
             }
             Query::TransactionByHash { tx_hash, response_channel } => response_channel
                 .send(self.transaction_queries.by_hash(&self.storage, tx_hash).ok().flatten())
@@ -456,6 +457,10 @@ where
             timestamp: payload_attributes.timestamp.as_limbs()[0],
             prev_randao: payload_attributes.prev_randao,
         };
+        let op_transactions: Vec<_> = transactions
+            .iter()
+            .map(|(_, (tx, _))| OpTxEnvelope::from(tx.clone()))
+            .collect();
         let (execution_outcome, receipts) = self.execute_transactions(
             transactions
                 .into_iter()
@@ -465,8 +470,8 @@ where
         );
 
         let transactions_root =
-            alloy_trie::root::ordered_trie_root_with_encoder(&receipts, |rx, buf| {
-                rx.tx.encode_2718(buf)
+            alloy_trie::root::ordered_trie_root_with_encoder(&op_transactions, |tx, buf| {
+                tx.encode_2718(buf)
             });
         // TODO: is this the correct withdrawals root calculation?
         let withdrawals_root = alloy_trie::root::ordered_trie_root(&payload_attributes.withdrawals);
@@ -487,18 +492,16 @@ where
 
         let hash = self.block_hash.block_hash(&header);
 
-        let transactions: Vec<_> = receipts
-            .into_iter()
-            .map(|v| {
-                let tx = v.tx.clone();
-                self.receipt_repository
-                    .add(&mut self.receipt_memory, v, hash)
-                    .unwrap();
-                tx
-            })
-            .collect();
+        self.receipt_repository
+            .extend(
+                &mut self.receipt_memory,
+                receipts
+                    .into_iter()
+                    .map(|receipt| receipt.with_block_hash(hash)),
+            )
+            .unwrap();
 
-        Block::new(header, transactions)
+        Block::new(header, op_transactions)
             .with_hash(hash)
             .with_value(total_tip)
     }
@@ -508,7 +511,7 @@ where
         transactions: impl Iterator<Item = (B256, ExtendedTxEnvelope, L1GasFeeInput)>,
         base_fee: U256,
         block_header: &HeaderForExecution,
-    ) -> (ExecutionOutcome, Vec<TransactionWithReceipt>) {
+    ) -> (ExecutionOutcome, Vec<ExtendedReceipt>) {
         let on_tx = (self.on_tx)();
         let mut total_tip = U256::ZERO;
         let mut receipts = Vec::new();
@@ -596,19 +599,33 @@ where
                 U256::from(outcome.gas_used).saturating_mul(normalized_tx.tip_per_gas(base_fee)),
             );
 
-            receipts.push(TransactionWithReceipt {
-                tx_hash,
-                tx: tx.into(),
-                normalized_tx,
+            let (to, from) = match &normalized_tx {
+                NormalizedExtendedTxEnvelope::Canonical(tx) => {
+                    let to = match tx.to {
+                        TxKind::Call(to) => Some(to),
+                        TxKind::Create => None,
+                    };
+                    (to, tx.signer)
+                }
+                NormalizedExtendedTxEnvelope::DepositedTx(tx) => (Some(tx.to), tx.from),
+            };
+
+            receipts.push(ExtendedReceipt {
+                transaction_hash: tx_hash,
+                to,
+                from,
                 receipt,
                 l1_block_info,
                 gas_used: outcome.gas_used,
                 l2_gas_price: outcome.l2_price,
-                tx_index,
+                transaction_index: tx_index,
                 contract_address: outcome
                     .deployment
                     .map(|(address, _)| address.to_eth_address()),
                 logs_offset: tx_log_offset,
+                block_hash: Default::default(),
+                block_number: block_header.number,
+                block_timestamp: block_header.timestamp,
             });
 
             tx_index += 1;
