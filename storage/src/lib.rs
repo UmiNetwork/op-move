@@ -1,6 +1,7 @@
 mod all;
 mod block;
 mod generic;
+mod receipt;
 mod state;
 mod transaction;
 mod trie;

@@ -1,5 +1,5 @@
 use {
-    crate::{generic::ToKey, transaction::transaction_cf},
+    crate::{generic::ToKey, transaction},
     moved::{
         block::{BlockQueries, BlockRepository, ExtendedBlock},
         types::state::BlockResponse,
@@ -53,7 +53,7 @@ impl BlockQueries for RocksDbBlockQueries {
 
         Ok(Some(match block {
             Some(block) if include_transactions => {
-                let cf = transaction_cf(db);
+                let cf = transaction::cf(db);
                 let keys = block.transaction_hashes().collect::<Vec<B256>>();
 
                 let transactions = db

@@ -6,7 +6,7 @@ use {
     rocksdb::{AsColumnFamilyRef, WriteBatchWithTransaction, DB as RocksDb},
 };
 
-pub const TRANSACTION_COLUMN_FAMILY: &str = "transaction";
+pub const COLUMN_FAMILY: &str = "transaction";
 
 #[derive(Debug)]
 pub struct RocksDbTransactionRepository;
@@ -20,7 +20,7 @@ impl TransactionRepository for RocksDbTransactionRepository {
         db: &mut Self::Storage,
         transactions: impl IntoIterator<Item = ExtendedTransaction>,
     ) -> Result<(), Self::Err> {
-        let cf = transaction_cf(db);
+        let cf = cf(db);
         let mut batch = WriteBatchWithTransaction::<false>::default();
 
         for transaction in transactions {
@@ -44,7 +44,7 @@ impl TransactionQueries for RocksDbTransactionQueries {
         db: &Self::Storage,
         hash: B256,
     ) -> Result<Option<TransactionResponse>, Self::Err> {
-        let cf = transaction_cf(db);
+        let cf = cf(db);
 
         Ok(db
             .get_cf(&cf, hash)?
@@ -52,7 +52,7 @@ impl TransactionQueries for RocksDbTransactionQueries {
     }
 }
 
-pub(crate) fn transaction_cf(db: &RocksDb) -> impl AsColumnFamilyRef + use<'_> {
-    db.cf_handle(TRANSACTION_COLUMN_FAMILY)
+pub(crate) fn cf(db: &RocksDb) -> impl AsColumnFamilyRef + use<'_> {
+    db.cf_handle(COLUMN_FAMILY)
         .expect("Column family should exist")
 }
