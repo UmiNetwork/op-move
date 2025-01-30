@@ -1,19 +1,15 @@
 use {
-    crate::{
-        block::BlockQueries,
-        receipt::{
-            write::ReceiptRepository, ReceiptQueries, TransactionReceipt, TransactionWithReceipt,
-        },
-        types::transactions::NormalizedExtendedTxEnvelope,
+    crate::receipt::{
+        write::ReceiptRepository, ExtendedReceipt, ReceiptQueries, TransactionReceipt,
     },
-    alloy::{primitives::TxKind, rpc::types::TransactionReceipt as AlloyTxReceipt},
+    alloy::rpc::types::TransactionReceipt as AlloyTxReceipt,
     moved_shared::{primitives, primitives::B256},
     std::{collections::HashMap, convert::Infallible},
 };
 
 #[derive(Debug)]
 pub struct ReceiptMemory {
-    receipts: HashMap<B256, (TransactionWithReceipt, B256)>,
+    receipts: HashMap<B256, ExtendedReceipt>,
 }
 
 impl Default for ReceiptMemory {
@@ -33,14 +29,15 @@ impl ReceiptMemory {
         self.receipts.contains_key(&transaction_hash)
     }
 
-    pub fn add(&mut self, receipt: TransactionWithReceipt, block_hash: B256) {
-        self.receipts.insert(receipt.tx_hash, (receipt, block_hash));
+    pub fn extend(&mut self, receipts: impl IntoIterator<Item = ExtendedReceipt>) {
+        self.receipts.extend(
+            receipts
+                .into_iter()
+                .map(|receipt| (receipt.transaction_hash, receipt)),
+        );
     }
 
-    pub fn by_transaction_hash(
-        &self,
-        transaction_hash: B256,
-    ) -> Option<&(TransactionWithReceipt, B256)> {
+    pub fn by_transaction_hash(&self, transaction_hash: B256) -> Option<&ExtendedReceipt> {
         self.receipts.get(&transaction_hash)
     }
 }
@@ -64,33 +61,15 @@ impl ReceiptQueries for InMemoryReceiptQueries {
     type Err = Infallible;
     type Storage = ReceiptMemory;
 
-    fn by_transaction_hash<B: BlockQueries>(
+    fn by_transaction_hash(
         &self,
         storage: &Self::Storage,
-        block_queries: &B,
-        block_storage: &B::Storage,
         transaction_hash: B256,
-    ) -> Result<Option<TransactionReceipt>, Self::Err>
-    where
-        Self::Err: From<B::Err>,
-    {
-        let Some((rx, block_hash)) = storage.by_transaction_hash(transaction_hash) else {
-            return Ok(None);
-        };
-        let Some(block) = block_queries.by_hash(block_storage, *block_hash, false)? else {
+    ) -> Result<Option<TransactionReceipt>, Self::Err> {
+        let Some(rx) = storage.by_transaction_hash(transaction_hash) else {
             return Ok(None);
         };
         let contract_address = rx.contract_address;
-        let (to, from) = match &rx.normalized_tx {
-            NormalizedExtendedTxEnvelope::Canonical(tx) => {
-                let to = match tx.to {
-                    TxKind::Call(to) => Some(to),
-                    TxKind::Create => None,
-                };
-                (to, tx.signer)
-            }
-            NormalizedExtendedTxEnvelope::DepositedTx(tx) => (Some(tx.to), tx.from),
-        };
         let logs = rx
             .receipt
             .logs()
@@ -98,11 +77,11 @@ impl ReceiptQueries for InMemoryReceiptQueries {
             .enumerate()
             .map(|(internal_index, log)| alloy::rpc::types::Log {
                 inner: log.clone(),
-                block_hash: Some(*block_hash),
-                block_number: Some(block.0.header.number),
-                block_timestamp: Some(block.0.header.timestamp),
+                block_hash: Some(rx.block_hash),
+                block_number: Some(rx.block_number),
+                block_timestamp: Some(rx.block_timestamp),
                 transaction_hash: Some(transaction_hash),
-                transaction_index: Some(rx.tx_index),
+                transaction_index: Some(rx.transaction_index),
                 log_index: Some(rx.logs_offset + (internal_index as u64)),
                 removed: false,
             })
@@ -112,17 +91,17 @@ impl ReceiptQueries for InMemoryReceiptQueries {
             inner: AlloyTxReceipt {
                 inner: receipt,
                 transaction_hash,
-                transaction_index: Some(rx.tx_index),
-                block_hash: Some(*block_hash),
-                block_number: Some(block.0.header.number),
+                transaction_index: Some(rx.transaction_index),
+                block_hash: Some(rx.block_hash),
+                block_number: Some(rx.block_number),
                 gas_used: rx.gas_used as u128,
                 // TODO: make all gas prices bounded by u128?
                 effective_gas_price: rx.l2_gas_price.saturating_to(),
                 // Always None because we do not support eip-4844 transactions
                 blob_gas_used: None,
                 blob_gas_price: None,
-                from,
-                to,
+                from: rx.from,
+                to: rx.to,
                 contract_address,
                 // EIP-7702 not yet supported
                 authorization_list: None,
@@ -156,13 +135,12 @@ impl ReceiptRepository for InMemoryReceiptRepository {
         Ok(storage.contains(transaction_hash))
     }
 
-    fn add(
+    fn extend(
         &self,
         storage: &mut Self::Storage,
-        receipt: TransactionWithReceipt,
-        block_hash: B256,
+        receipts: impl IntoIterator<Item = ExtendedReceipt>,
     ) -> Result<(), Self::Err> {
-        storage.add(receipt, block_hash);
+        storage.extend(receipts);
         Ok(())
     }
 }
@@ -175,16 +153,11 @@ mod test_doubles {
         type Err = Infallible;
         type Storage = ();
 
-        fn by_transaction_hash<B: BlockQueries>(
+        fn by_transaction_hash(
             &self,
             _: &Self::Storage,
-            _: &B,
-            _: &B::Storage,
             _: B256,
-        ) -> Result<Option<TransactionReceipt>, Self::Err>
-        where
-            Self::Err: From<B::Err>,
-        {
+        ) -> Result<Option<TransactionReceipt>, Self::Err> {
             Ok(None)
         }
     }
@@ -197,11 +170,10 @@ mod test_doubles {
             Ok(false)
         }
 
-        fn add(
+        fn extend(
             &self,
             _: &mut Self::Storage,
-            _: TransactionWithReceipt,
-            _: B256,
+            _: impl IntoIterator<Item = ExtendedReceipt>,
         ) -> Result<(), Self::Err> {
             Ok(())
         }
