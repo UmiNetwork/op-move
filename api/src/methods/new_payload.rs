@@ -169,6 +169,7 @@ mod tests {
                 InMemoryBlockRepository,
             },
             in_memory::SharedMemory,
+            receipt::{InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory},
             state_actor::InMemoryStateQueries,
             transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
         },
@@ -285,6 +286,9 @@ mod tests {
             InMemoryStateQueries::from_genesis(initial_state_root),
             InMemoryTransactionRepository::new(),
             InMemoryTransactionQueries::new(),
+            ReceiptMemory::new(),
+            InMemoryReceiptRepository::new(),
+            InMemoryReceiptQueries::new(),
             moved::state_actor::StateActor::on_tx_noop(),
             moved::state_actor::StateActor::on_tx_batch_noop(),
         );

@@ -7,9 +7,9 @@ use {
     super::queries::ProofResponse,
     crate::{
         block::{ExtendedBlock, Header},
+        receipt::TransactionReceipt,
         state_actor::NewPayloadIdInput,
-        transaction::ExtendedTransaction,
-        types::transactions::NormalizedExtendedTxEnvelope,
+        transaction::{ExtendedTransaction, TransactionResponse},
     },
     alloy::{
         consensus::transaction::TxEnvelope,
@@ -18,10 +18,7 @@ use {
         rpc::types::{BlockTransactions, FeeHistory, TransactionRequest, Withdrawals},
     },
     moved_shared::primitives::{Address, Bytes, ToU64, B2048, B256, U256, U64},
-    op_alloy::{
-        consensus::{OpReceiptEnvelope, OpTxEnvelope},
-        rpc_types::L1BlockInfo,
-    },
+    op_alloy::consensus::OpTxEnvelope,
     tokio::sync::oneshot,
 };
 
@@ -279,34 +276,6 @@ impl BlockResponse {
     }
 }
 
-pub type TransactionResponse = op_alloy::rpc_types::Transaction;
-
-impl From<ExtendedTransaction> for TransactionResponse {
-    fn from(value: ExtendedTransaction) -> Self {
-        let (deposit_nonce, deposit_receipt_version) = value
-            .deposit_nonce()
-            .map(|nonce| (Some(nonce.nonce), Some(nonce.version)))
-            .unwrap_or((None, None));
-
-        Self {
-            inner: alloy::rpc::types::eth::Transaction {
-                from: value
-                    .from()
-                    .expect("Block transactions should contain valid signature"),
-                inner: value.inner,
-                block_hash: Some(value.block_hash),
-                block_number: Some(value.block_number),
-                transaction_index: Some(value.transaction_index),
-                effective_gas_price: Some(value.effective_gas_price),
-            },
-            deposit_nonce,
-            deposit_receipt_version,
-        }
-    }
-}
-
-pub type TransactionReceipt = op_alloy::rpc_types::OpTransactionReceipt;
-
 #[derive(Debug)]
 pub struct ExecutionOutcome {
     pub receipts_root: B256,
@@ -314,32 +283,6 @@ pub struct ExecutionOutcome {
     pub logs_bloom: B2048,
     pub gas_used: U64,
     pub total_tip: U256,
-}
-
-#[derive(Debug, Clone)]
-pub struct TransactionWithReceipt {
-    pub tx_hash: B256,
-    pub tx: OpTxEnvelope,
-    pub tx_index: u64,
-    pub normalized_tx: NormalizedExtendedTxEnvelope,
-    pub receipt: OpReceiptEnvelope,
-    pub l1_block_info: Option<L1BlockInfo>,
-    pub gas_used: u64,
-    pub l2_gas_price: U256,
-    /// If the transaction deployed a new contract, gives the address.
-    ///
-    /// In Move contracts are identified by AccountAddress + ModuleID,
-    /// so this field cannot capture all the detail of a new deployment,
-    /// however we cannot extend the field because it is here for Ethereum
-    /// compatibility. As a compromise, we will put the AccountAddress here
-    /// and the user would need to look up the ModuleID by inspecting the
-    /// transaction object itself.
-    pub contract_address: Option<Address>,
-    /// Counts the number of logs that exist in transactions appearing earlier
-    /// in the same block.
-    ///
-    /// This allows computing the log index for each log in this transaction.
-    pub logs_offset: u64,
 }
 
 pub(crate) trait WithExecutionOutcome {

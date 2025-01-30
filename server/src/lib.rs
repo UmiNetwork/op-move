@@ -10,6 +10,7 @@ use {
         },
         in_memory::SharedMemory,
         move_execution::{CreateEcotoneL1GasFee, CreateMovedL2GasFee, MovedBaseTokenAccounts},
+        receipt::{InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory},
         state_actor::{InMemoryStateQueries, StateActor, StatePayloadId},
         transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
         types::state::{Command, StateMessage},
@@ -57,6 +58,9 @@ pub type ProductionStateActor = StateActor<
     InMemoryStateQueries,
     InMemoryTransactionRepository,
     InMemoryTransactionQueries,
+    ReceiptMemory,
+    InMemoryReceiptRepository,
+    InMemoryReceiptQueries,
 >;
 
 #[derive(Parser)]
@@ -159,6 +163,9 @@ pub fn initialize_state_actor(
 
     let transaction_repository = InMemoryTransactionRepository::new();
     let transaction_queries = InMemoryTransactionQueries::new();
+    let receipt_repository = InMemoryReceiptRepository::new();
+    let receipt_queries = InMemoryReceiptQueries::new();
+    let receipt_memory = ReceiptMemory::new();
 
     StateActor::new(
         rx,
@@ -181,6 +188,9 @@ pub fn initialize_state_actor(
         state_query,
         transaction_repository,
         transaction_queries,
+        receipt_memory,
+        receipt_repository,
+        receipt_queries,
         moved::state_actor::StateActor::on_tx_in_memory(),
         moved::state_actor::StateActor::on_tx_batch_in_memory(),
     )
