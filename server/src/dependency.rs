@@ -8,6 +8,7 @@ use {
     },
     moved_genesis::config::GenesisConfig,
     moved_state::State,
+    std::sync::Arc,
 };
 
 #[cfg(feature = "storage")]
@@ -56,7 +57,14 @@ pub fn block_repository() -> impl BlockRepository<Storage = SharedStorage> + Sen
 }
 
 pub fn state() -> impl State<Err = PartialVMError> + Send + Sync + 'static {
-    moved_state::InMemoryState::new()
+    #[cfg(feature = "storage")]
+    {
+        moved_storage::RocksDbState::new(Arc::new(moved_storage::RocksEthTrieDb::new(db())))
+    }
+    #[cfg(not(feature = "storage"))]
+    {
+        moved_state::InMemoryState::new()
+    }
 }
 
 pub fn state_query(genesis_config: &GenesisConfig) -> StateQueries {
