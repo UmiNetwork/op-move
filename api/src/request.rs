@@ -11,11 +11,12 @@ use {
 pub async fn handle(
     request: serde_json::Value,
     state_channel: mpsc::Sender<StateMessage>,
+    is_allowed: impl Fn(&MethodName) -> bool,
 ) -> JsonRpcResponse {
     let id = json_utils::get_field(&request, "id");
     let jsonrpc = json_utils::get_field(&request, "jsonrpc");
 
-    match inner_handle_request(request, state_channel).await {
+    match inner_handle_request(request, state_channel, is_allowed).await {
         Ok(r) => JsonRpcResponse {
             id,
             jsonrpc,
@@ -34,6 +35,7 @@ pub async fn handle(
 async fn inner_handle_request(
     request: serde_json::Value,
     state_channel: mpsc::Sender<StateMessage>,
+    is_allowed: impl Fn(&MethodName) -> bool,
 ) -> Result<serde_json::Value, JsonRpcError> {
     use {crate::methods::*, MethodName::*};
 
@@ -41,6 +43,10 @@ async fn inner_handle_request(
         .as_str()
         .ok_or(JsonRpcError::without_data(-32601, "Invalid/missing method"))?
         .parse()?;
+
+    if !is_allowed(&method) {
+        return Err(JsonRpcError::without_data(-32601, "Invalid/missing method"));
+    }
 
     match method {
         ForkChoiceUpdatedV3 => forkchoice_updated::execute_v3(request, state_channel).await,

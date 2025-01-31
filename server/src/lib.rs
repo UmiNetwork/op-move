@@ -15,6 +15,7 @@ use {
         transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
         types::state::{Command, StateMessage},
     },
+    moved_api::method_name::MethodName,
     moved_genesis::config::GenesisConfig,
     moved_shared::primitives::U256,
     moved_state::InMemoryState,
@@ -34,7 +35,7 @@ use {
     },
     warp_reverse_proxy::{
         extract_request_data_filter, proxy_to_and_forward_response, Headers, Method,
-        QueryParameters,
+        QueryParameters, Request,
     },
 };
 
@@ -109,8 +110,13 @@ pub async fn run() {
         .map(move || http_state_channel.clone())
         .and(extract_request_data_filter())
         .and_then(|state_channel, path, query, method, headers, body| {
-            // TODO: Limit engine API access to only authenticated endpoint
-            mirror(state_channel, path, query, method, headers, body, "9545")
+            mirror(
+                state_channel,
+                (path, query, method, headers, body),
+                "9545",
+                // Limit engine API access to only authenticated endpoint
+                MethodName::is_non_engine_api,
+            )
         })
         .with(warp::cors().allow_any_origin());
 
@@ -121,7 +127,12 @@ pub async fn run() {
         .and(extract_request_data_filter())
         .and(validate_jwt())
         .and_then(|state_channel, path, query, method, headers, body, _| {
-            mirror(state_channel, path, query, method, headers, body, "9551")
+            mirror(
+                state_channel,
+                (path, query, method, headers, body),
+                "9551",
+                |_| true,
+            )
         })
         .with(warp::cors().allow_any_origin());
 
@@ -236,14 +247,11 @@ pub fn validate_jwt() -> impl Filter<Extract = (String,), Error = Rejection> + C
 
 async fn mirror(
     state_channel: mpsc::Sender<StateMessage>,
-    path: FullPath,
-    query: QueryParameters,
-    method: Method,
-    headers: Headers,
-    body: Bytes,
+    request: Request,
     port: &str,
-) -> std::result::Result<warp::reply::Response, Rejection> {
-    use std::result::Result;
+    is_allowed: impl Fn(&MethodName) -> bool,
+) -> Result<warp::reply::Response, Rejection> {
+    let (path, query, method, headers, body) = request;
 
     let is_zipped = headers
         .get("accept-encoding")
@@ -287,7 +295,8 @@ async fn mirror(
         };
 
     let request = request.expect("geth responded, so body must have been JSON");
-    let op_move_response = moved_api::request::handle(request.clone(), state_channel.clone()).await;
+    let op_move_response =
+        moved_api::request::handle(request.clone(), state_channel.clone(), is_allowed).await;
     let log = MirrorLog {
         request: &request,
         geth_response: &parsed_geth_response,

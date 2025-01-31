@@ -155,7 +155,8 @@ async fn handle_request<T: DeserializeOwned>(
     request: serde_json::Value,
     state_channel: &mpsc::Sender<StateMessage>,
 ) -> anyhow::Result<T> {
-    let response = moved_api::request::handle(request.clone(), state_channel.clone()).await;
+    let response =
+        moved_api::request::handle(request.clone(), state_channel.clone(), |_| true).await;
 
     if let Some(error) = response.error {
         anyhow::bail!("Error response from request {request:?}: {error:?}");

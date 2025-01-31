@@ -20,6 +20,19 @@ pub enum MethodName {
     GetProof,
 }
 
+impl MethodName {
+    pub fn is_non_engine_api(&self) -> bool {
+        !self.is_engine_api()
+    }
+
+    pub fn is_engine_api(&self) -> bool {
+        matches!(
+            self,
+            Self::ForkChoiceUpdatedV3 | Self::GetPayloadV3 | Self::NewPayloadV3
+        )
+    }
+}
+
 impl FromStr for MethodName {
     type Err = JsonRpcError;
 
