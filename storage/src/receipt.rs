@@ -1,4 +1,5 @@
 use {
+    crate::generic::{FromValue, ToValue},
     moved::receipt::{ExtendedReceipt, ReceiptQueries, ReceiptRepository, TransactionReceipt},
     moved_shared::primitives::B256,
     rocksdb::{AsColumnFamilyRef, WriteBatchWithTransaction, DB as RocksDb},
@@ -28,7 +29,7 @@ impl ReceiptRepository for RocksDbReceiptRepository {
         let mut batch = WriteBatchWithTransaction::<false>::default();
 
         for receipt in receipts {
-            let bytes = bcs::to_bytes(&receipt).unwrap();
+            let bytes = receipt.to_value();
             batch.put_cf(&cf, receipt.transaction_hash, bytes);
         }
 
@@ -51,8 +52,8 @@ impl ReceiptQueries for RocksDbReceiptQueries {
         let cf = cf(db);
 
         Ok(db
-            .get_cf(&cf, transaction_hash)?
-            .and_then(|v| bcs::from_bytes(v.as_slice()).ok()))
+            .get_pinned_cf(&cf, transaction_hash)?
+            .map(|v| FromValue::from_value(v.as_ref())))
     }
 }
 

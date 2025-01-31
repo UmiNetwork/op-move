@@ -1,5 +1,8 @@
 use {
-    crate::{generic::ToKey, transaction},
+    crate::{
+        generic::{FromValue, ToKey, ToValue},
+        transaction,
+    },
     moved::{
         block::{BlockQueries, BlockRepository, ExtendedBlock},
         types::state::BlockResponse,
@@ -19,7 +22,7 @@ impl BlockRepository for RocksDbBlockRepository {
 
     fn add(&mut self, db: &mut Self::Storage, block: ExtendedBlock) {
         let cf = block_cf(db);
-        let bytes = bcs::to_bytes(&block).unwrap();
+        let bytes = block.to_value();
         db.put_cf(&cf, block.hash, bytes).unwrap();
         let cf = height_cf(db);
         db.put_cf(&cf, block.block.header.number.to_key(), block.hash)
@@ -28,8 +31,8 @@ impl BlockRepository for RocksDbBlockRepository {
 
     fn by_hash(&self, db: &Self::Storage, hash: B256) -> Option<ExtendedBlock> {
         let cf = block_cf(db);
-        let bytes = db.get_cf(&cf, hash).unwrap()?;
-        bcs::from_bytes(bytes.as_slice()).ok()
+        let bytes = db.get_pinned_cf(&cf, hash).unwrap()?;
+        Some(FromValue::from_value(bytes.as_ref()))
     }
 }
 
@@ -48,8 +51,8 @@ impl BlockQueries for RocksDbBlockQueries {
     ) -> Result<Option<BlockResponse>, Self::Err> {
         let cf = block_cf(db);
         let block: Option<ExtendedBlock> = db
-            .get_cf(&cf, hash)?
-            .and_then(|v| bcs::from_bytes(v.as_slice()).ok());
+            .get_pinned_cf(&cf, hash)?
+            .map(|v| FromValue::from_value(v.as_ref()));
 
         Ok(Some(match block {
             Some(block) if include_transactions => {
@@ -60,7 +63,7 @@ impl BlockQueries for RocksDbBlockQueries {
                     .batched_multi_get_cf(&cf, keys.iter(), false)
                     .into_iter()
                     .filter_map(|v| {
-                        v.map(|v| v.and_then(|v| bcs::from_bytes(v.as_ref()).ok()))
+                        v.map(|v| v.map(|v| FromValue::from_value(v.as_ref())))
                             .transpose()
                     })
                     .collect::<Result<_, _>>()?;

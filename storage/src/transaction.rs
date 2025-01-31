@@ -1,4 +1,5 @@
 use {
+    crate::generic::{FromValue, ToValue},
     moved::transaction::{
         ExtendedTransaction, TransactionQueries, TransactionRepository, TransactionResponse,
     },
@@ -24,7 +25,7 @@ impl TransactionRepository for RocksDbTransactionRepository {
         let mut batch = WriteBatchWithTransaction::<false>::default();
 
         for transaction in transactions {
-            let bytes = bcs::to_bytes(&transaction).unwrap();
+            let bytes = transaction.to_value();
             batch.put_cf(&cf, transaction.hash(), bytes);
         }
 
@@ -47,8 +48,8 @@ impl TransactionQueries for RocksDbTransactionQueries {
         let cf = cf(db);
 
         Ok(db
-            .get_cf(&cf, hash)?
-            .and_then(|v| bcs::from_bytes(v.as_slice()).ok()))
+            .get_pinned_cf(&cf, hash)?
+            .and_then(|v| FromValue::from_value(v.as_ref())))
     }
 }
 

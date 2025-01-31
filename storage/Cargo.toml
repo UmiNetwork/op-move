@@ -5,7 +5,6 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-bcs.workspace = true
 eth_trie.workspace = true
 move-binary-format.workspace = true
 move-core-types.workspace = true
@@ -14,6 +13,8 @@ moved.workspace = true
 moved-shared.workspace = true
 moved-state.workspace = true
 rocksdb.workspace = true
+serde.workspace = true
+serde_json.workspace = true
 
 [dev-dependencies]
 hex-literal.workspace = true
