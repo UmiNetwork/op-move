@@ -22,14 +22,14 @@ impl TransactionRepository for RocksDbTransactionRepository {
         transactions: impl IntoIterator<Item = ExtendedTransaction>,
     ) -> Result<(), Self::Err> {
         let cf = cf(db);
-        let mut batch = WriteBatchWithTransaction::<false>::default();
 
-        for transaction in transactions {
-            let bytes = transaction.to_value();
-            batch.put_cf(&cf, transaction.hash(), bytes);
-        }
-
-        db.write(batch)
+        db.write(transactions.into_iter().fold(
+            WriteBatchWithTransaction::<false>::default(),
+            |mut batch, transaction| {
+                batch.put_cf(&cf, transaction.hash(), transaction.to_value());
+                batch
+            },
+        ))
     }
 }
 
@@ -49,7 +49,7 @@ impl TransactionQueries for RocksDbTransactionQueries {
 
         Ok(db
             .get_pinned_cf(&cf, hash)?
-            .and_then(|v| FromValue::from_value(v.as_ref())))
+            .map(|v| ExtendedTransaction::from_value(v.as_ref()).into()))
     }
 }
 
@@ -75,7 +75,7 @@ mod tests {
         },
     };
 
-    pub const PRIVATE_KEY: [u8; 32] = [0xaa; 32];
+    const PRIVATE_KEY: [u8; 32] = [0xaa; 32];
 
     #[test]
     fn test_transaction_deserializes_from_serialized_bytes() {

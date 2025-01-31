@@ -26,14 +26,14 @@ impl ReceiptRepository for RocksDbReceiptRepository {
         receipts: impl IntoIterator<Item = ExtendedReceipt>,
     ) -> Result<(), Self::Err> {
         let cf = cf(db);
-        let mut batch = WriteBatchWithTransaction::<false>::default();
 
-        for receipt in receipts {
-            let bytes = receipt.to_value();
-            batch.put_cf(&cf, receipt.transaction_hash, bytes);
-        }
-
-        db.write(batch)
+        db.write(receipts.into_iter().fold(
+            WriteBatchWithTransaction::<false>::default(),
+            |mut batch, receipt| {
+                batch.put_cf(&cf, receipt.transaction_hash, receipt.to_value());
+                batch
+            },
+        ))
     }
 }
 
@@ -53,7 +53,7 @@ impl ReceiptQueries for RocksDbReceiptQueries {
 
         Ok(db
             .get_pinned_cf(&cf, transaction_hash)?
-            .map(|v| FromValue::from_value(v.as_ref())))
+            .map(|v| ExtendedReceipt::from_value(v.as_ref()).into()))
     }
 }
 
