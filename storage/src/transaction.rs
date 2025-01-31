@@ -13,7 +13,7 @@ pub struct RocksDbTransactionRepository;
 
 impl TransactionRepository for RocksDbTransactionRepository {
     type Err = rocksdb::Error;
-    type Storage = RocksDb;
+    type Storage = &'static RocksDb;
 
     fn extend(
         &mut self,
@@ -37,7 +37,7 @@ pub struct RocksDbTransactionQueries;
 
 impl TransactionQueries for RocksDbTransactionQueries {
     type Err = rocksdb::Error;
-    type Storage = RocksDb;
+    type Storage = &'static RocksDb;
 
     fn by_hash(
         &self,

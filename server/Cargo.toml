@@ -4,9 +4,9 @@ description = "Moved execution HTTP server (using warp)"
 version = "0.1.0"
 edition = "2021"
 
-[[bin]]
-path = "src/main.rs"
-name = "op-move"
+[features]
+default = []
+storage = ["moved-storage"]
 
 [dependencies]
 anyhow.workspace = true
@@ -17,12 +17,16 @@ flate2.workspace = true
 hex.workspace = true
 hyper.workspace = true
 jsonwebtoken.workspace = true
+lazy_static.workspace = true
+move-binary-format.workspace = true
 move-core-types.workspace = true
 moved.workspace = true
-moved-genesis.workspace = true
 moved-api.workspace = true
+moved-genesis.workspace = true
 moved-shared.workspace = true
 moved-state.workspace = true
+moved-storage.optional = true
+moved-storage.workspace = true
 once_cell.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -38,3 +42,7 @@ move-binary-format.workspace = true
 moved-evm-ext.workspace = true
 moved-genesis-image.workspace = true
 openssl.workspace = true
+
+[[bin]]
+path = "src/main.rs"
+name = "op-move"

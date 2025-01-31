@@ -15,7 +15,7 @@ pub const HEIGHT_COLUMN_FAMILY: &str = "height";
 pub struct RocksDbBlockRepository;
 
 impl BlockRepository for RocksDbBlockRepository {
-    type Storage = RocksDb;
+    type Storage = &'static RocksDb;
 
     fn add(&mut self, db: &mut Self::Storage, block: ExtendedBlock) {
         let cf = block_cf(db);
@@ -38,7 +38,7 @@ pub struct RocksDbBlockQueries;
 
 impl BlockQueries for RocksDbBlockQueries {
     type Err = rocksdb::Error;
-    type Storage = RocksDb;
+    type Storage = &'static RocksDb;
 
     fn by_hash(
         &self,

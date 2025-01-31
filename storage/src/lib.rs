@@ -1,14 +1,15 @@
 mod all;
-mod block;
-mod generic;
-mod receipt;
-mod state;
-mod transaction;
-mod trie;
+pub mod block;
+pub mod generic;
+pub mod receipt;
+pub mod state;
+pub mod transaction;
+pub mod trie;
 
 pub use {
     all::COLUMN_FAMILIES,
     block::RocksDbBlockRepository,
+    rocksdb::{self, DB as RocksDb},
     state::RocksDbState,
     trie::{RocksEthTrieDb, ROOT_KEY},
 };

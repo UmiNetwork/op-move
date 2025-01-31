@@ -11,7 +11,7 @@ pub struct RocksDbReceiptRepository;
 
 impl ReceiptRepository for RocksDbReceiptRepository {
     type Err = rocksdb::Error;
-    type Storage = RocksDb;
+    type Storage = &'static RocksDb;
 
     fn contains(&self, db: &Self::Storage, transaction_hash: B256) -> Result<bool, Self::Err> {
         let cf = cf(db);
@@ -41,7 +41,7 @@ pub struct RocksDbReceiptQueries;
 
 impl ReceiptQueries for RocksDbReceiptQueries {
     type Err = rocksdb::Error;
-    type Storage = RocksDb;
+    type Storage = &'static RocksDb;
 
     fn by_transaction_hash(
         &self,

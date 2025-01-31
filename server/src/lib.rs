@@ -3,22 +3,25 @@ use {
     clap::Parser,
     flate2::read::GzDecoder,
     jsonwebtoken::{DecodingKey, Validation},
+    move_binary_format::errors::PartialVMError,
     moved::{
         block::{
-            Block, BlockHash, BlockRepository, Eip1559GasFee, ExtendedBlock, Header,
-            InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash,
+            BaseGasFee, Block, BlockHash, BlockQueries, BlockRepository, Eip1559GasFee,
+            ExtendedBlock, Header,
         },
-        in_memory::SharedMemory,
-        move_execution::{CreateEcotoneL1GasFee, CreateMovedL2GasFee, MovedBaseTokenAccounts},
-        receipt::{InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory},
-        state_actor::{InMemoryStateQueries, StateActor, StatePayloadId},
-        transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
+        move_execution::{
+            BaseTokenAccounts, CreateEcotoneL1GasFee, CreateL1GasFee, CreateL2GasFee,
+            CreateMovedL2GasFee,
+        },
+        receipt::{ReceiptQueries, ReceiptRepository},
+        state_actor::{NewPayloadId, StateActor, StatePayloadId, StateQueries},
+        transaction::{TransactionQueries, TransactionRepository},
         types::state::{Command, StateMessage},
     },
     moved_api::method_name::MethodName,
     moved_genesis::config::GenesisConfig,
     moved_shared::primitives::U256,
-    moved_state::InMemoryState,
+    moved_state::State,
     once_cell::sync::Lazy,
     std::{
         fs,
@@ -39,30 +42,12 @@ use {
     },
 };
 
+mod dependency;
 mod geth_genesis;
 mod mirror;
 
 #[cfg(test)]
 mod tests;
-
-pub type ProductionStateActor = StateActor<
-    InMemoryState,
-    StatePayloadId,
-    MovedBlockHash,
-    InMemoryBlockRepository,
-    Eip1559GasFee,
-    CreateEcotoneL1GasFee,
-    CreateMovedL2GasFee,
-    MovedBaseTokenAccounts,
-    InMemoryBlockQueries,
-    SharedMemory,
-    InMemoryStateQueries,
-    InMemoryTransactionRepository,
-    InMemoryTransactionQueries,
-    ReceiptMemory,
-    InMemoryReceiptRepository,
-    InMemoryReceiptQueries,
->;
 
 #[derive(Parser)]
 struct Args {
@@ -147,16 +132,37 @@ pub async fn run() {
 pub fn initialize_state_actor(
     genesis_config: GenesisConfig,
     rx: mpsc::Receiver<StateMessage>,
-) -> ProductionStateActor {
-    let block_hash = MovedBlockHash;
-    let genesis_block = create_genesis_block(&block_hash, &genesis_config);
+) -> StateActor<
+    impl State<Err = PartialVMError> + Send + Sync + 'static,
+    impl NewPayloadId + Send + Sync + 'static,
+    impl BlockHash + Send + Sync + 'static,
+    impl BlockRepository<Storage = dependency::SharedStorage> + Send + Sync + 'static,
+    impl BaseGasFee + Send + Sync + 'static,
+    impl CreateL1GasFee + Send + Sync + 'static,
+    impl CreateL2GasFee + Send + Sync + 'static,
+    impl BaseTokenAccounts + Send + Sync + 'static,
+    impl BlockQueries<Storage = dependency::SharedStorage> + Send + Sync + 'static,
+    dependency::SharedStorage,
+    impl StateQueries + Send + Sync + 'static,
+    impl TransactionRepository<Storage = dependency::SharedStorage> + Send + Sync + 'static,
+    impl TransactionQueries<Storage = dependency::SharedStorage> + Send + Sync + 'static,
+    dependency::ReceiptStorage,
+    impl ReceiptRepository<Storage = dependency::ReceiptStorage> + Send + Sync + 'static,
+    impl ReceiptQueries<Storage = dependency::ReceiptStorage> + Send + Sync + 'static,
+> {
+    let block_hash = dependency::block_hash();
+    let base_token = dependency::base_token(&genesis_config);
+    let mut state = dependency::state();
+    let state_query = dependency::state_query(&genesis_config);
+    let mut storage = dependency::memory();
+    let mut block_repository = dependency::block_repository();
+    let block_queries = dependency::block_queries();
+    let transaction_repository = dependency::transaction_repository();
+    let transaction_queries = dependency::transaction_queries();
+    let receipt_storage = dependency::receipt_memory();
+    let receipt_repository = dependency::receipt_repository();
+    let receipt_queries = dependency::receipt_queries();
 
-    let mut memory = SharedMemory::new();
-    let mut repository = InMemoryBlockRepository::new();
-    let head = genesis_block.hash;
-    repository.add(&mut memory, genesis_block);
-
-    let mut state = InMemoryState::new();
     let (genesis_changes, table_changes) = {
         #[cfg(test)]
         {
@@ -167,16 +173,11 @@ pub fn initialize_state_actor(
             moved_genesis::build(&moved_genesis::MovedVm, &genesis_config, &state)
         }
     };
-    let state_query = InMemoryStateQueries::from_genesis(genesis_config.initial_state_root);
     moved_genesis::apply(genesis_changes, table_changes, &genesis_config, &mut state);
 
-    let base_token = MovedBaseTokenAccounts::new(genesis_config.treasury);
-
-    let transaction_repository = InMemoryTransactionRepository::new();
-    let transaction_queries = InMemoryTransactionQueries::new();
-    let receipt_repository = InMemoryReceiptRepository::new();
-    let receipt_queries = InMemoryReceiptQueries::new();
-    let receipt_memory = ReceiptMemory::new();
+    let genesis_block = create_genesis_block(&block_hash, &genesis_config);
+    let head = genesis_block.hash;
+    block_repository.add(&mut storage, genesis_block);
 
     StateActor::new(
         rx,
@@ -186,7 +187,7 @@ pub fn initialize_state_actor(
         genesis_config,
         StatePayloadId,
         block_hash,
-        repository,
+        block_repository,
         Eip1559GasFee::new(
             EIP1559_ELASTICITY_MULTIPLIER,
             EIP1559_BASE_FEE_MAX_CHANGE_DENOMINATOR,
@@ -194,12 +195,12 @@ pub fn initialize_state_actor(
         CreateEcotoneL1GasFee,
         CreateMovedL2GasFee,
         base_token,
-        InMemoryBlockQueries,
-        memory,
+        block_queries,
+        storage,
         state_query,
         transaction_repository,
         transaction_queries,
-        receipt_memory,
+        receipt_storage,
         receipt_repository,
         receipt_queries,
         moved::state_actor::StateActor::on_tx_in_memory(),

@@ -130,8 +130,6 @@ impl<
         RR: ReceiptRepository<Storage = N> + Send + Sync + 'static,
         RQ: ReceiptQueries<Storage = N> + Send + Sync + 'static,
     > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ>
-where
-    RQ::Err: From<Q::Err>,
 {
     pub fn spawn(mut self) -> JoinHandle<()> {
         tokio::spawn(async move {
@@ -163,8 +161,6 @@ impl<
         RR: ReceiptRepository<Storage = N>,
         RQ: ReceiptQueries<Storage = N>,
     > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ>
-where
-    RQ::Err: From<Q::Err>,
 {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -707,8 +703,6 @@ mod test_doubles {
     pub struct MockStateQueries(pub AccountAddress, pub BlockHeight);
 
     impl StateQueries for MockStateQueries {
-        type Storage = ();
-
         fn balance_at(
             &self,
             _db: Arc<impl DB>,

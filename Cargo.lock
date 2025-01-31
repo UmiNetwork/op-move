@@ -2196,7 +2196,7 @@ dependencies = [
  "bitflags 2.6.0",
  "cexpr",
  "clang-sys",
- "itertools 0.10.5",
+ "itertools 0.12.1",
  "lazy_static",
  "lazycell",
  "proc-macro2 1.0.92",
@@ -5445,7 +5445,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.6",
 ]
 
 [[package]]
@@ -6870,6 +6870,7 @@ dependencies = [
  "hex",
  "hyper 0.14.31",
  "jsonwebtoken 9.3.0",
+ "lazy_static",
  "move-binary-format 0.0.3 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
  "move-core-types 0.0.4 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
  "moved",
@@ -6879,6 +6880,7 @@ dependencies = [
  "moved-genesis-image",
  "moved-shared",
  "moved-state",
+ "moved-storage",
  "once_cell",
  "openssl",
  "serde",

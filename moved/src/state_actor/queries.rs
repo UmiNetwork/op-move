@@ -51,9 +51,6 @@ pub type Version = u64;
 ///   denomination at given block height.
 /// * [`Self::nonce_at`] - To fetch the nonce value set for an account at given block height.
 pub trait StateQueries {
-    /// The associated storage type for querying the blockchain state.
-    type Storage;
-
     /// Queries the blockchain state version corresponding with block `height` for the amount of
     /// base token associated with `account`.
     fn balance_at(
@@ -135,8 +132,6 @@ impl InMemoryStateQueries {
 }
 
 impl StateQueries for InMemoryStateQueries {
-    type Storage = StateMemory;
-
     fn balance_at(
         &self,
         db: Arc<impl DB>,
