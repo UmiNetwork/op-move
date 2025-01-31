@@ -85,7 +85,6 @@ async function executeChildProcess(cmd: string): Promise<[ChildProcess.ExecExcep
  *
  **************************************************************************************/
 async function isMovePackage(path: Fs.PathLike): Promise<boolean> {
-    // TODO: Use result-based error handling
     const stats: Fs.Stats = await Fs.promises.stat(path);
 
     if (stats.isDirectory()) {
@@ -98,7 +97,6 @@ async function isMovePackage(path: Fs.PathLike): Promise<boolean> {
 }
 
 async function listMovePackages(contractsPath: Fs.PathLike): Promise<Array<String>> {
-    // TODO: Use `readDir` to process result-based error handling
     const dirs: String[] = await Fs.promises.readdir(contractsPath);
 
     const promises: Promise<String | null>[] = dirs.map(async (name, _idx, _arr) => {
