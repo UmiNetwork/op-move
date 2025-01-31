@@ -5,7 +5,7 @@ use {
     std::fmt::Debug,
 };
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct ExtendedTransaction {
     pub inner: OpTxEnvelope,
     pub block_number: u64,

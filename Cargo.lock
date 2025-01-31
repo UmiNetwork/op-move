@@ -6921,6 +6921,7 @@ dependencies = [
 name = "moved-storage"
 version = "0.1.0"
 dependencies = [
+ "alloy",
  "eth_trie",
  "hex-literal",
  "move-binary-format 0.0.3 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
@@ -6929,6 +6930,7 @@ dependencies = [
  "moved",
  "moved-shared",
  "moved-state",
+ "op-alloy",
  "rocksdb",
  "serde",
  "serde_json",

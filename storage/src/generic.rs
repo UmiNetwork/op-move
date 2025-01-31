@@ -40,6 +40,7 @@ impl<T: serde::Serialize> ToValue for T {
 
 impl<'de, T: serde::Deserialize<'de>> FromValue<'de> for T {
     fn from_value(slice: &'de [u8]) -> Self {
-        serde_json::from_slice(slice).unwrap()
+        serde_json::from_slice(slice)
+            .unwrap_or_else(|e| panic!("{e}: {}", String::from_utf8_lossy(slice)))
     }
 }
