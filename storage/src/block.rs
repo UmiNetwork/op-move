@@ -5,10 +5,11 @@ use {
     },
     moved::{
         block::{BlockQueries, BlockRepository, ExtendedBlock},
+        transaction::ExtendedTransaction,
         types::state::BlockResponse,
     },
     moved_shared::primitives::B256,
-    rocksdb::{AsColumnFamilyRef, DB as RocksDb},
+    rocksdb::{AsColumnFamilyRef, WriteBatchWithTransaction, DB as RocksDb},
 };
 
 pub const BLOCK_COLUMN_FAMILY: &str = "block";
@@ -18,21 +19,26 @@ pub const HEIGHT_COLUMN_FAMILY: &str = "height";
 pub struct RocksDbBlockRepository;
 
 impl BlockRepository for RocksDbBlockRepository {
+    type Err = rocksdb::Error;
     type Storage = &'static RocksDb;
 
-    fn add(&mut self, db: &mut Self::Storage, block: ExtendedBlock) {
-        let cf = block_cf(db);
-        let bytes = block.to_value();
-        db.put_cf(&cf, block.hash, bytes).unwrap();
-        let cf = height_cf(db);
-        db.put_cf(&cf, block.block.header.number.to_key(), block.hash)
-            .unwrap();
+    fn add(&mut self, db: &mut Self::Storage, block: ExtendedBlock) -> Result<(), Self::Err> {
+        let mut batch = WriteBatchWithTransaction::<false>::default();
+
+        batch.put_cf(&block_cf(db), block.hash, block.to_value());
+        batch.put_cf(
+            &height_cf(db),
+            block.block.header.number.to_key(),
+            block.hash,
+        );
+
+        db.write(batch)
     }
 
-    fn by_hash(&self, db: &Self::Storage, hash: B256) -> Option<ExtendedBlock> {
-        let cf = block_cf(db);
-        let bytes = db.get_pinned_cf(&cf, hash).unwrap()?;
-        Some(FromValue::from_value(bytes.as_ref()))
+    fn by_hash(&self, db: &Self::Storage, hash: B256) -> Result<Option<ExtendedBlock>, Self::Err> {
+        Ok(db
+            .get_pinned_cf(&block_cf(db), hash)?
+            .map(|bytes| ExtendedBlock::from_value(bytes.as_ref())))
     }
 }
 
@@ -49,10 +55,9 @@ impl BlockQueries for RocksDbBlockQueries {
         hash: B256,
         include_transactions: bool,
     ) -> Result<Option<BlockResponse>, Self::Err> {
-        let cf = block_cf(db);
-        let block: Option<ExtendedBlock> = db
-            .get_pinned_cf(&cf, hash)?
-            .map(|v| FromValue::from_value(v.as_ref()));
+        let block = db
+            .get_pinned_cf(&block_cf(db), hash)?
+            .map(|v| ExtendedBlock::from_value(v.as_ref()));
 
         Ok(Some(match block {
             Some(block) if include_transactions => {
@@ -63,7 +68,7 @@ impl BlockQueries for RocksDbBlockQueries {
                     .batched_multi_get_cf(&cf, keys.iter(), false)
                     .into_iter()
                     .filter_map(|v| {
-                        v.map(|v| v.map(|v| FromValue::from_value(v.as_ref())))
+                        v.map(|v| v.map(|v| ExtendedTransaction::from_value(v.as_ref())))
                             .transpose()
                     })
                     .collect::<Result<_, _>>()?;
@@ -81,10 +86,8 @@ impl BlockQueries for RocksDbBlockQueries {
         height: u64,
         include_transactions: bool,
     ) -> Result<Option<BlockResponse>, Self::Err> {
-        let cf = height_cf(db);
-
-        db.get_cf(&cf, height.to_key())?
-            .map(|hash| B256::from_slice(hash.as_slice()))
+        db.get_pinned_cf(&height_cf(db), height.to_key())?
+            .map(|hash| B256::from_slice(hash.as_ref()))
             .map(|hash| self.by_hash(db, hash, include_transactions))
             .unwrap_or(Ok(None))
     }

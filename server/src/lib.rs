@@ -177,7 +177,9 @@ pub fn initialize_state_actor(
 
     let genesis_block = create_genesis_block(&block_hash, &genesis_config);
     let head = genesis_block.hash;
-    block_repository.add(&mut storage, genesis_block);
+    block_repository
+        .add(&mut storage, genesis_block)
+        .expect("Database should be ready");
 
     StateActor::new(
         rx,

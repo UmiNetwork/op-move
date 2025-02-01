@@ -77,14 +77,16 @@ impl InMemoryBlockRepository {
 }
 
 impl BlockRepository for InMemoryBlockRepository {
+    type Err = Infallible;
     type Storage = SharedMemory;
 
-    fn add(&mut self, mem: &mut Self::Storage, block: ExtendedBlock) {
-        mem.block_memory.add(block)
+    fn add(&mut self, mem: &mut Self::Storage, block: ExtendedBlock) -> Result<(), Self::Err> {
+        mem.block_memory.add(block);
+        Ok(())
     }
 
-    fn by_hash(&self, mem: &Self::Storage, hash: B256) -> Option<ExtendedBlock> {
-        mem.block_memory.by_hash(hash)
+    fn by_hash(&self, mem: &Self::Storage, hash: B256) -> Result<Option<ExtendedBlock>, Self::Err> {
+        Ok(mem.block_memory.by_hash(hash))
     }
 }
 
@@ -163,12 +165,15 @@ mod test_doubles {
     }
 
     impl BlockRepository for () {
+        type Err = ();
         type Storage = ();
 
-        fn add(&mut self, _storage: &mut Self::Storage, _block: ExtendedBlock) {}
+        fn add(&mut self, _: &mut Self::Storage, _: ExtendedBlock) -> Result<(), Self::Err> {
+            Ok(())
+        }
 
-        fn by_hash(&self, _storage: &Self::Storage, _hash: B256) -> Option<ExtendedBlock> {
-            None
+        fn by_hash(&self, _: &Self::Storage, _: B256) -> Result<Option<ExtendedBlock>, Self::Err> {
+            Ok(None)
         }
     }
 }

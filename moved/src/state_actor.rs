@@ -246,14 +246,14 @@ impl<
                 response_channel,
                 include_transactions,
             } => response_channel
-                .send(self.block_queries.by_hash(&self.storage, hash, include_transactions).ok().flatten())
+                .send(self.block_queries.by_hash(&self.storage, hash, include_transactions).unwrap())
                 .ok(),
             Query::BlockByHeight {
                 height,
                 response_channel,
                 include_transactions,
             } => response_channel
-                .send(self.block_queries.by_height(&self.storage, self.resolve_height(height), include_transactions).ok().flatten())
+                .send(self.block_queries.by_height(&self.storage, self.resolve_height(height), include_transactions).unwrap())
                 .ok(),
             Query::BlockNumber {
                 response_channel,
@@ -348,7 +348,9 @@ impl<
                 let id = self.payload_id.new_payload_id(input);
                 response_channel.send(id).ok();
                 let block = self.create_block(payload_attributes);
-                self.block_repository.add(&mut self.storage, block.clone());
+                self.block_repository
+                    .add(&mut self.storage, block.clone())
+                    .unwrap();
                 let block_number = block.block.header.number;
                 let block_hash = block.hash;
                 let base_fee = block.block.header.base_fee_per_gas;
@@ -412,7 +414,7 @@ impl<
             }
             Command::GenesisUpdate { block } => {
                 self.head = block.hash;
-                self.block_repository.add(&mut self.storage, block);
+                self.block_repository.add(&mut self.storage, block).unwrap();
             }
         }
     }
@@ -441,6 +443,7 @@ impl<
         let parent = self
             .block_repository
             .by_hash(&self.storage, self.head)
+            .unwrap()
             .expect("Parent block should exist");
         let base_fee = self.gas_fee.base_fee_per_gas(
             parent.block.header.gas_limit,
@@ -888,7 +891,7 @@ mod tests {
 
         let mut memory = SharedMemory::new();
         let mut repository = InMemoryBlockRepository::new();
-        repository.add(&mut memory, genesis_block);
+        repository.add(&mut memory, genesis_block).unwrap();
 
         let mut state = InMemoryState::new();
         let (changes, tables) = moved_genesis_image::load();
@@ -979,7 +982,7 @@ mod tests {
 
         let mut memory = SharedMemory::new();
         let mut repository = InMemoryBlockRepository::new();
-        repository.add(&mut memory, genesis_block);
+        repository.add(&mut memory, genesis_block).unwrap();
 
         let mut state = InMemoryState::new();
         let (genesis_changes, table_changes) = moved_genesis_image::load();

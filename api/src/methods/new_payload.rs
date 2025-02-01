@@ -259,7 +259,7 @@ mod tests {
 
         let mut memory = SharedMemory::new();
         let mut repository = InMemoryBlockRepository::new();
-        repository.add(&mut memory, genesis_block);
+        repository.add(&mut memory, genesis_block).unwrap();
 
         let mut state = InMemoryState::new();
         let (changes, table_changes) = moved_genesis_image::load();

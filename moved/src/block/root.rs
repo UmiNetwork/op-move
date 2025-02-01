@@ -8,7 +8,8 @@ use {
 
 pub trait BlockQueries: Debug {
     /// The associated error type for the backing storage access operation.
-    type Err;
+    type Err: Debug;
+    /// The backing storage access handle type.
     type Storage;
 
     fn by_hash(
@@ -27,9 +28,18 @@ pub trait BlockQueries: Debug {
 }
 
 pub trait BlockRepository: Debug {
+    /// The associated error type for the backing storage access operation.
+    type Err: Debug;
+    /// The backing storage access handle type.
     type Storage;
-    fn add(&mut self, storage: &mut Self::Storage, block: ExtendedBlock);
-    fn by_hash(&self, storage: &Self::Storage, hash: B256) -> Option<ExtendedBlock>;
+
+    fn add(&mut self, storage: &mut Self::Storage, block: ExtendedBlock) -> Result<(), Self::Err>;
+
+    fn by_hash(
+        &self,
+        storage: &Self::Storage,
+        hash: B256,
+    ) -> Result<Option<ExtendedBlock>, Self::Err>;
 }
 
 pub type Header = alloy::consensus::Header;
