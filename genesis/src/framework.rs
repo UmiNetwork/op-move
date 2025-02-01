@@ -2,7 +2,7 @@ use {
     alloy::primitives::address,
     aptos_framework::ReleaseBundle,
     aptos_table_natives::{NativeTableContext, TableChange, TableChangeSet},
-    move_binary_format::errors::{Location, PartialVMError, VMError},
+    move_binary_format::errors::{Location, VMError},
     move_core_types::{
         account_address::AccountAddress,
         effects::{ChangeSet, Op},
@@ -89,7 +89,7 @@ pub fn load_sui_framework_snapshot() -> &'static BTreeMap<ObjectID, SystemPackag
 /// Initializes the blockchain state with Aptos and Sui frameworks.
 pub fn init_state(
     vm: &impl CreateMoveVm,
-    state: &impl State<Err = PartialVMError>,
+    state: &impl State,
 ) -> (ChangeSet, move_table_extension::TableChangeSet) {
     let (change_set, table_change_set) =
         deploy_framework(vm, state).expect("All bundle modules should be valid");
@@ -131,7 +131,7 @@ pub trait CreateMoveVm {
 
 fn deploy_framework(
     vm: &impl CreateMoveVm,
-    state: &impl State<Err = PartialVMError>,
+    state: &impl State,
 ) -> Result<(ChangeSet, TableChangeSet), VMError> {
     let vm = vm.create_move_vm()?;
     let mut extensions = NativeContextExtensions::default();

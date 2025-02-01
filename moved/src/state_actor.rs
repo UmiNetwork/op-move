@@ -2,7 +2,7 @@ use {alloy::primitives::TxKind, op_alloy::consensus::OpTxEnvelope};
 pub use {
     payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId},
     queries::{
-        Balance, BlockHeight, HistoricResolver, InMemoryStateQueries, Nonce, StateMemory,
+        Balance, BlockHeight, EthTrieResolver, InMemoryStateQueries, Nonce, StateMemory,
         StateQueries, Version,
     },
 };
@@ -41,7 +41,6 @@ use {
         rlp::{Decodable, Encodable},
         rpc::types::FeeHistory,
     },
-    move_binary_format::errors::PartialVMError,
     move_core_types::effects::ChangeSet,
     moved_evm_ext::HeaderForExecution,
     moved_genesis::config::GenesisConfig,
@@ -113,7 +112,7 @@ pub struct StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ> {
 }
 
 impl<
-        S: State<Err = PartialVMError> + Send + Sync + 'static,
+        S: State + Send + Sync + 'static,
         P: NewPayloadId + Send + Sync + 'static,
         H: BlockHash + Send + Sync + 'static,
         R: BlockRepository<Storage = M> + Send + Sync + 'static,
@@ -144,7 +143,7 @@ impl<
 }
 
 impl<
-        S: State<Err = PartialVMError>,
+        S: State,
         P: NewPayloadId,
         H: BlockHash,
         R: BlockRepository<Storage = M>,
@@ -661,7 +660,7 @@ impl<
 }
 
 impl<
-        S: State<Err = PartialVMError>,
+        S: State,
         P: NewPayloadId,
         H: BlockHash,
         R: BlockRepository,
@@ -862,7 +861,7 @@ mod tests {
         state_queries: SQ,
     ) -> (
         StateActor<
-            impl State<Err = PartialVMError>,
+            impl State,
             impl NewPayloadId,
             impl BlockHash,
             impl BlockRepository<Storage = SharedMemory>,
@@ -924,11 +923,7 @@ mod tests {
         (state, state_channel)
     }
 
-    fn mint_eth(
-        state: &impl State<Err = PartialVMError>,
-        addr: AccountAddress,
-        amount: U256,
-    ) -> ChangeSet {
+    fn mint_eth(state: &impl State, addr: AccountAddress, amount: U256) -> ChangeSet {
         let move_vm = create_move_vm().unwrap();
         let mut session = create_vm_session(&move_vm, state.resolver(), SessionId::default());
         let traversal_storage = TraversalStorage::new();
@@ -952,7 +947,7 @@ mod tests {
         initial_balance: U256,
     ) -> (
         StateActor<
-            impl State<Err = PartialVMError>,
+            impl State,
             impl NewPayloadId,
             impl BlockHash,
             impl BlockRepository<Storage = SharedMemory>,

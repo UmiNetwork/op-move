@@ -87,7 +87,7 @@ impl BlockQueries for RocksDbBlockQueries {
         include_transactions: bool,
     ) -> Result<Option<BlockResponse>, Self::Err> {
         db.get_pinned_cf(&height_cf(db), height.to_key())?
-            .map(|hash| B256::from_slice(hash.as_ref()))
+            .map(|hash| B256::new(hash.as_ref().try_into().unwrap()))
             .map(|hash| self.by_hash(db, hash, include_transactions))
             .unwrap_or(Ok(None))
     }

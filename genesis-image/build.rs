@@ -1,5 +1,4 @@
 use {
-    move_binary_format::errors::PartialVMError,
     move_core_types::effects::ChangeSet,
     move_table_extension::TableChangeSet,
     moved_genesis::{
@@ -21,7 +20,7 @@ fn main() {
 pub fn save(
     vm: &impl CreateMoveVm,
     config: &GenesisConfig,
-    state: &impl State<Err = PartialVMError>,
+    state: &impl State,
 ) -> (ChangeSet, TableChangeSet) {
     let path = std::env::var("OUT_DIR").unwrap() + "/genesis.bin";
     let (changes, tables) = build(vm, config, state);

@@ -1,5 +1,4 @@
 use {
-    move_binary_format::errors::PartialVMError,
     moved::{
         block::{BlockHash, BlockQueries, BlockRepository, MovedBlockHash},
         move_execution::{BaseTokenAccounts, MovedBaseTokenAccounts},
@@ -55,7 +54,7 @@ pub fn block_repository() -> impl BlockRepository<Storage = SharedStorage> + Sen
     }
 }
 
-pub fn state() -> impl State<Err = PartialVMError> + Send + Sync + 'static {
+pub fn state() -> impl State + Send + Sync + 'static {
     #[cfg(feature = "storage")]
     {
         moved_storage::RocksDbState::new(std::sync::Arc::new(moved_storage::RocksEthTrieDb::new(

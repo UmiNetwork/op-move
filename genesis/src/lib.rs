@@ -8,8 +8,8 @@ pub use {
 };
 
 use {
-    self::config::GenesisConfig, move_binary_format::errors::PartialVMError,
-    move_core_types::effects::ChangeSet, move_table_extension::TableChangeSet, moved_state::State,
+    self::config::GenesisConfig, move_core_types::effects::ChangeSet,
+    move_table_extension::TableChangeSet, moved_state::State,
 };
 
 pub mod config;
@@ -21,7 +21,7 @@ mod vm;
 pub fn build(
     vm: &impl CreateMoveVm,
     config: &GenesisConfig,
-    state: &impl State<Err = PartialVMError>,
+    state: &impl State,
 ) -> (ChangeSet, TableChangeSet) {
     // Read L2 contract data
     let l2_genesis_file = std::fs::File::open(&config.l2_contract_genesis)
@@ -52,7 +52,7 @@ pub fn apply(
     changes: ChangeSet,
     table_changes: TableChangeSet,
     config: &GenesisConfig,
-    state: &mut impl State<Err = PartialVMError>,
+    state: &mut impl State,
 ) {
     state
         .apply_with_tables(changes, table_changes)
@@ -68,11 +68,7 @@ pub fn apply(
     );
 }
 
-pub fn build_and_apply(
-    vm: &impl CreateMoveVm,
-    config: &GenesisConfig,
-    state: &mut impl State<Err = PartialVMError>,
-) {
+pub fn build_and_apply(vm: &impl CreateMoveVm, config: &GenesisConfig, state: &mut impl State) {
     let (changes, table_changes) = build(vm, config, state);
     apply(changes, table_changes, config, state);
 }

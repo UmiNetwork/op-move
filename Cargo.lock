@@ -6922,6 +6922,7 @@ name = "moved-storage"
 version = "0.1.0"
 dependencies = [
  "alloy",
+ "bytes",
  "eth_trie",
  "hex-literal",
  "move-binary-format 0.0.3 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",

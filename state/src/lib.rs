@@ -54,7 +54,7 @@ pub trait State {
 
     /// Returns a reference to a [`MoveResolver`] that can resolve both resources and modules on
     /// the current blockchain state.
-    fn resolver(&self) -> &(impl MoveResolver<Self::Err> + TableResolver);
+    fn resolver(&self) -> &(impl MoveResolver<PartialVMError> + TableResolver);
 
     /// Retrieves the value of the root node of the merkle trie that holds the blockchain state.
     fn state_root(&self) -> B256;

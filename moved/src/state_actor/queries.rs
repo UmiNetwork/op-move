@@ -104,7 +104,10 @@ impl StateMemory {
         db: Arc<impl DB + 'a>,
         height: BlockHeight,
     ) -> Option<impl MoveResolver<PartialVMError> + TableResolver + 'a> {
-        Some(HistoricResolver::new(db, self.get_root_by_height(height)?))
+        Some(EthTrieResolver::new(
+            EthTrie::from(db, self.get_root_by_height(height)?)
+                .expect("State root should be valid"),
+        ))
     }
 }
 
@@ -213,19 +216,21 @@ impl StateQueries for InMemoryStateQueries {
     }
 }
 
-/// This is a [`MoveResolver`] that reads data generated at `version`.
-pub struct HistoricResolver<D> {
-    db: Arc<D>,
-    root: B256,
+/// This is a [`MoveResolver`] that accesses blockchain state via [`EthTrie`].
+///
+/// If you pass it an [`EthTrie`] initialized at state root corresponding to certain older block
+/// height, it will read from the blockchain state version at that block.
+pub struct EthTrieResolver<D: DB> {
+    tree: EthTrie<D>,
 }
 
-impl<D> HistoricResolver<D> {
-    pub fn new(db: Arc<D>, root: B256) -> Self {
-        Self { db, root }
+impl<D: DB> EthTrieResolver<D> {
+    pub fn new(tree: EthTrie<D>) -> Self {
+        Self { tree }
     }
 }
 
-impl<D: DB> ModuleResolver for HistoricResolver<D> {
+impl<D: DB> ModuleResolver for EthTrieResolver<D> {
     type Error = PartialVMError;
 
     fn get_module_metadata(&self, _module_id: &ModuleId) -> Vec<Metadata> {
@@ -233,16 +238,15 @@ impl<D: DB> ModuleResolver for HistoricResolver<D> {
     }
 
     fn get_module(&self, id: &ModuleId) -> Result<Option<Bytes>, Self::Error> {
-        let tree = EthTrie::from(self.db.clone(), self.root).expect(IN_MEMORY_EXPECT_MSG);
         let state_key = StateKey::module(id.address(), id.name());
         let key_hash = TreeKey::StateKey(state_key).key_hash();
-        let value = tree.get(key_hash.0.as_slice()).map_err(trie_err)?;
+        let value = self.tree.get(key_hash.0.as_slice()).map_err(trie_err)?;
 
         Ok(deserialize_state_value(value))
     }
 }
 
-impl<D: DB> ResourceResolver for HistoricResolver<D> {
+impl<D: DB> ResourceResolver for EthTrieResolver<D> {
     type Error = PartialVMError;
 
     fn get_resource_bytes_with_metadata_and_layout(
@@ -252,7 +256,6 @@ impl<D: DB> ResourceResolver for HistoricResolver<D> {
         _metadata: &[Metadata],
         _layout: Option<&MoveTypeLayout>,
     ) -> Result<(Option<Bytes>, usize), Self::Error> {
-        let tree = EthTrie::from(self.db.clone(), self.root).expect(IN_MEMORY_EXPECT_MSG);
         let tree_key = if let Some(address) = evm_key_address(struct_tag) {
             TreeKey::Evm(address)
         } else {
@@ -262,7 +265,7 @@ impl<D: DB> ResourceResolver for HistoricResolver<D> {
             TreeKey::StateKey(state_key)
         };
         let key_hash = tree_key.key_hash();
-        let value = tree.get(key_hash.0.as_slice()).map_err(trie_err)?;
+        let value = self.tree.get(key_hash.0.as_slice()).map_err(trie_err)?;
         let value = if is_evm_storage_or_account_key(struct_tag) {
             // In the case of EVM there is no additional serialization
             value.map(Into::into)
@@ -275,7 +278,7 @@ impl<D: DB> ResourceResolver for HistoricResolver<D> {
     }
 }
 
-impl<D: DB> TableResolver for HistoricResolver<D> {
+impl<D: DB> TableResolver for EthTrieResolver<D> {
     fn resolve_table_entry_bytes_with_layout(
         &self,
         _handle: &TableHandle,
@@ -346,10 +349,7 @@ mod tests {
         }
     }
 
-    fn mint_one_eth(
-        state: &mut impl State<Err = PartialVMError>,
-        addr: AccountAddress,
-    ) -> ChangeSet {
+    fn mint_one_eth(state: &mut impl State, addr: AccountAddress) -> ChangeSet {
         let move_vm = create_move_vm().unwrap();
         let mut session = create_vm_session(&move_vm, state.resolver(), SessionId::default());
         let traversal_storage = TraversalStorage::new();
@@ -495,11 +495,7 @@ mod tests {
         assert_eq!(actual_balance, expected_balance);
     }
 
-    fn inc_one_nonce(
-        old_nonce: u64,
-        state: &mut impl State<Err = PartialVMError>,
-        addr: AccountAddress,
-    ) -> ChangeSet {
+    fn inc_one_nonce(old_nonce: u64, state: &mut impl State, addr: AccountAddress) -> ChangeSet {
         let move_vm = create_move_vm().unwrap();
         let mut session = create_vm_session(&move_vm, state.resolver(), SessionId::default());
         let traversal_storage = TraversalStorage::new();

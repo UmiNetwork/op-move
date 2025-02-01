@@ -1,7 +1,8 @@
 use {
-    eth_trie::DB,
+    eth_trie::{EthTrie, TrieError, DB},
     moved_shared::primitives::B256,
     rocksdb::{AsColumnFamilyRef, DB as RocksDb},
+    std::sync::Arc,
 };
 
 pub const TRIE_COLUMN_FAMILY: &str = "trie";
@@ -21,7 +22,7 @@ impl<'db> RocksEthTrieDb<'db> {
         Ok(self
             .db
             .get_cf(self.root_cf(), ROOT_KEY)?
-            .map(|v| B256::from_slice(v.as_slice())))
+            .map(|v| B256::new(v.try_into().unwrap())))
     }
 
     pub fn put_root(&self, root: B256) -> Result<(), rocksdb::Error> {
@@ -58,5 +59,32 @@ impl<'db> DB for RocksEthTrieDb<'db> {
 
     fn flush(&self) -> Result<(), Self::Error> {
         self.db.flush_cf(self.cf())
+    }
+}
+
+pub trait TryFromOptRoot<D> {
+    fn try_from_opt_root(db: Arc<D>, root: Option<B256>) -> Result<Self, TrieError>
+    where
+        Self: Sized;
+}
+
+impl<D: DB> TryFromOptRoot<D> for EthTrie<D> {
+    fn try_from_opt_root(db: Arc<D>, root: Option<B256>) -> Result<EthTrie<D>, TrieError> {
+        match root {
+            None => Ok(EthTrie::new(db)),
+            Some(root) => EthTrie::from(db, root),
+        }
+    }
+}
+
+pub trait FromOptRoot<D> {
+    fn from_opt_root(db: Arc<D>, root: Option<B256>) -> Self
+    where
+        Self: Sized;
+}
+
+impl<D, T: TryFromOptRoot<D>> FromOptRoot<D> for T {
+    fn from_opt_root(db: Arc<D>, root: Option<B256>) -> Self {
+        Self::try_from_opt_root(db, root).expect("Root node should exist")
     }
 }

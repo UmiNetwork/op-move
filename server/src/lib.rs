@@ -3,7 +3,6 @@ use {
     clap::Parser,
     flate2::read::GzDecoder,
     jsonwebtoken::{DecodingKey, Validation},
-    move_binary_format::errors::PartialVMError,
     moved::{
         block::{
             BaseGasFee, Block, BlockHash, BlockQueries, BlockRepository, Eip1559GasFee,
@@ -133,7 +132,7 @@ pub fn initialize_state_actor(
     genesis_config: GenesisConfig,
     rx: mpsc::Receiver<StateMessage>,
 ) -> StateActor<
-    impl State<Err = PartialVMError> + Send + Sync + 'static,
+    impl State + Send + Sync + 'static,
     impl NewPayloadId + Send + Sync + 'static,
     impl BlockHash + Send + Sync + 'static,
     impl BlockRepository<Storage = dependency::SharedStorage> + Send + Sync + 'static,
