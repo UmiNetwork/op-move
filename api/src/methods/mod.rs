@@ -4,6 +4,7 @@ pub mod chain_id;
 pub mod estimate_gas;
 pub mod fee_history;
 pub mod forkchoice_updated;
+pub mod gas_price;
 pub mod get_balance;
 pub mod get_block_by_hash;
 pub mod get_block_by_number;

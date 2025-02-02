@@ -65,5 +65,6 @@ async fn inner_handle_request(
         Call => call::execute(request, state_channel).await,
         TransactionReceipt => get_transaction_receipt::execute(request, state_channel).await,
         GetProof => get_proof::execute(request, state_channel).await,
+        GasPrice => gas_price::execute().await,
     }
 }
