@@ -53,8 +53,9 @@ impl<'db> DB for RocksEthTrieDb<'db> {
         self.db.put_cf(self.cf(), key, value)
     }
 
-    fn remove(&self, key: &[u8]) -> Result<(), Self::Error> {
-        self.db.delete_cf(self.cf(), key)
+    fn remove(&self, _key: &[u8]) -> Result<(), Self::Error> {
+        // Intentionally ignored to not remove historical trie nodes
+        Ok(())
     }
 
     fn flush(&self) -> Result<(), Self::Error> {
