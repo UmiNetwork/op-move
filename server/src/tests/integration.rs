@@ -188,6 +188,7 @@ fn deploy_l1_contracts() {
             &var("L1_RPC_URL").expect("Missing Ethereum L1 RPC URL"),
             "--slow",
             "--legacy",
+            "--non-interactive",
         ])
         .spawn()
         .unwrap();
