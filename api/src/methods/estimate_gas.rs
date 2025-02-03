@@ -9,12 +9,17 @@ use {
     tokio::sync::{mpsc, oneshot},
 };
 
+const BASE_FEE: u64 = 21_000;
+
 pub async fn execute(
     request: serde_json::Value,
     state_channel: mpsc::Sender<StateMessage>,
 ) -> Result<serde_json::Value, JsonRpcError> {
     let (transaction, block_number) = parse_params(request)?;
-    let response = inner_execute(transaction, block_number, state_channel).await?;
+    let response = std::cmp::max(
+        inner_execute(transaction, block_number, state_channel).await?,
+        BASE_FEE,
+    );
 
     // Format the gas estimate as a hex string
     Ok(serde_json::to_value(format!("0x{:x}", response))
@@ -145,7 +150,7 @@ mod tests {
             "id": 1
         });
 
-        let expected_response: serde_json::Value = serde_json::from_str(r#""0xbb8""#).unwrap();
+        let expected_response: serde_json::Value = serde_json::from_str(r#""0x5208""#).unwrap();
         let response = execute(request, state_channel).await.unwrap();
 
         assert_eq!(response, expected_response);
