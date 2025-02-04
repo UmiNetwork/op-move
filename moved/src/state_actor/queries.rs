@@ -21,7 +21,7 @@ use {
     },
     move_table_extension::{TableHandle, TableResolver},
     moved_evm_ext::ResolverBackedDB,
-    moved_shared::primitives::{KeyHashable, ToEthAddress, B256, U256},
+    moved_shared::primitives::{Address, KeyHashable, ToEthAddress, B256, U256},
     moved_state::{
         evm_key_address, is_evm_storage_or_account_key, nodes::TreeKey, IN_MEMORY_EXPECT_MSG,
     },
@@ -69,7 +69,7 @@ pub trait StateQueries {
         height: BlockHeight,
     ) -> Option<Nonce>;
 
-    fn get_proof(
+    fn proof_at(
         &self,
         db: Arc<impl DB>,
         account: AccountAddress,
@@ -95,7 +95,7 @@ impl StateMemory {
         self.state_roots.push(root);
     }
 
-    fn get_root_by_height(&self, height: BlockHeight) -> Option<B256> {
+    fn root_by_height(&self, height: BlockHeight) -> Option<B256> {
         self.state_roots.get(height as usize).copied()
     }
 
@@ -105,8 +105,7 @@ impl StateMemory {
         height: BlockHeight,
     ) -> Option<impl MoveResolver<PartialVMError> + TableResolver + 'a> {
         Some(EthTrieResolver::new(
-            EthTrie::from(db, self.get_root_by_height(height)?)
-                .expect("State root should be valid"),
+            EthTrie::from(db, self.root_by_height(height)?).expect("State root should be valid"),
         ))
     }
 }
@@ -134,6 +133,58 @@ impl InMemoryStateQueries {
     }
 }
 
+pub fn proof_from_trie_and_resolver(
+    address: Address,
+    storage_slots: &[U256],
+    tree: &mut EthTrie<impl DB>,
+    resolver: &impl MoveResolver<PartialVMError>,
+) -> Option<ProofResponse> {
+    let evm_db = ResolverBackedDB::new(resolver);
+
+    // All L2 contract account data is part of the EVM state
+    let account_info = evm_db.get_account(&address).ok()??;
+
+    let account_key = TreeKey::Evm(address);
+    let account_proof = tree
+        .get_proof(account_key.key_hash().0.as_slice())
+        .ok()?
+        .into_iter()
+        .map(Into::into)
+        .collect();
+
+    let storage_proof = if storage_slots.is_empty() {
+        Vec::new()
+    } else {
+        let mut storage = evm_db.storage_for(&address).ok()?;
+
+        storage_slots
+            .iter()
+            .filter_map(|&index| {
+                let key = keccak256::<[u8; 32]>(index.to_be_bytes());
+                storage.trie.get_proof(key.as_slice()).ok().map(|proof| {
+                    let value = storage.get(index);
+
+                    StorageProof {
+                        key: index.into(),
+                        value,
+                        proof: proof.into_iter().map(Into::into).collect(),
+                    }
+                })
+            })
+            .collect()
+    };
+
+    Some(ProofResponse {
+        address,
+        balance: account_info.inner.balance,
+        code_hash: account_info.inner.code_hash,
+        nonce: account_info.inner.nonce,
+        storage_hash: account_info.inner.storage_root,
+        account_proof,
+        storage_proof,
+    })
+}
+
 impl StateQueries for InMemoryStateQueries {
     fn balance_at(
         &self,
@@ -157,7 +208,7 @@ impl StateQueries for InMemoryStateQueries {
         Some(quick_get_nonce(&account, &resolver))
     }
 
-    fn get_proof(
+    fn proof_at(
         &self,
         db: Arc<impl DB>,
         account: AccountAddress,
@@ -171,48 +222,11 @@ impl StateQueries for InMemoryStateQueries {
             return None;
         }
 
-        // All L2 contract account data is part of the EVM state
+        let root = self.storage.root_by_height(height)?;
         let resolver = self.storage.resolver(db.clone(), height)?;
-        let evm_db = ResolverBackedDB::new(&resolver);
-        let account_info = evm_db.get_account(&address).ok()??;
-
-        let root = self.storage.get_root_by_height(height)?;
         let mut tree = EthTrie::from(db, root).expect(IN_MEMORY_EXPECT_MSG);
-        let account_key = TreeKey::Evm(address);
-        let account_proof = tree
-            .get_proof(account_key.key_hash().0.as_slice())
-            .ok()?
-            .into_iter()
-            .map(Into::into)
-            .collect();
 
-        let storage_proof = if storage_slots.is_empty() {
-            Vec::new()
-        } else {
-            let mut storage_proof = Vec::new();
-            let mut storage = evm_db.storage_for(&address).ok()?;
-            for &index in storage_slots {
-                let key = keccak256::<[u8; 32]>(index.to_be_bytes());
-                let value = storage.get(index);
-                let proof = storage.trie.get_proof(key.as_slice()).ok()?;
-                storage_proof.push(StorageProof {
-                    key: index.into(),
-                    value,
-                    proof: proof.into_iter().map(Into::into).collect(),
-                });
-            }
-            storage_proof
-        };
-
-        Some(ProofResponse {
-            address,
-            balance: account_info.inner.balance,
-            code_hash: account_info.inner.code_hash,
-            nonce: account_info.inner.nonce,
-            storage_hash: account_info.inner.storage_root,
-            account_proof,
-            storage_proof,
-        })
+        proof_from_trie_and_resolver(address, storage_slots, &mut tree, &resolver)
     }
 }
 

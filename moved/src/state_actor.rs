@@ -1,9 +1,8 @@
-use {alloy::primitives::TxKind, op_alloy::consensus::OpTxEnvelope};
 pub use {
     payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId},
     queries::{
-        Balance, BlockHeight, EthTrieResolver, InMemoryStateQueries, Nonce, StateMemory,
-        StateQueries, Version,
+        proof_from_trie_and_resolver, Balance, BlockHeight, EthTrieResolver, InMemoryStateQueries,
+        Nonce, StateMemory, StateQueries, Version,
     },
 };
 
@@ -37,7 +36,7 @@ use {
             BlockId,
             BlockNumberOrTag::{self, *},
         },
-        primitives::{keccak256, Bloom},
+        primitives::{keccak256, Bloom, TxKind},
         rlp::{Decodable, Encodable},
         rpc::types::FeeHistory,
     },
@@ -48,6 +47,7 @@ use {
         Address, ToEthAddress, ToMoveAddress, ToSaturatedU64, B256, U256, U64,
     },
     moved_state::State,
+    op_alloy::consensus::OpTxEnvelope,
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
 };
@@ -76,11 +76,11 @@ pub type InMemStateActor = StateActor<
 >;
 
 /// A function invoked on a completion of new transaction execution batch.
-type OnTxBatch<S> =
+pub type OnTxBatch<S> =
     Box<dyn Fn() -> Box<dyn Fn(&mut S) + Send + Sync + 'static> + Send + Sync + 'static>;
 
 /// A function invoked on an execution of a new transaction.
-type OnTx<S> =
+pub type OnTx<S> =
     Box<dyn Fn() -> Box<dyn Fn(&mut S, ChangeSet) + Send + Sync + 'static> + Send + Sync + 'static>;
 
 pub struct StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ> {
@@ -94,14 +94,14 @@ pub struct StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ> {
     execution_payloads: HashMap<B256, PayloadResponse>,
     pending_payload: Option<(PayloadId, PayloadResponse)>,
     mem_pool: HashMap<B256, (ExtendedTxEnvelope, L1GasFeeInput)>,
-    state: S,
+    pub state: S,
     block_repository: R,
     block_queries: Q,
     l1_fee: L1G,
     l2_fee: L2G,
     base_token: B,
     storage: M,
-    state_queries: SQ,
+    pub state_queries: SQ,
     transaction_repository: T,
     transaction_queries: TQ,
     receipt_memory: N,
@@ -326,7 +326,7 @@ impl<
                     .number
             }
         };
-        self.state_queries.get_proof(
+        self.state_queries.proof_at(
             self.state.db(),
             address.to_move_address(),
             &storage_slots,
@@ -729,7 +729,7 @@ mod test_doubles {
             Some(3)
         }
 
-        fn get_proof(
+        fn proof_at(
             &self,
             _db: Arc<impl DB>,
             _account: AccountAddress,

@@ -1,8 +1,11 @@
 use {
     moved::{
-        block::{BlockHash, BlockQueries, BlockRepository, MovedBlockHash},
-        move_execution::{BaseTokenAccounts, MovedBaseTokenAccounts},
+        block::{BaseGasFee, BlockHash, BlockQueries, BlockRepository, MovedBlockHash},
+        move_execution::{
+            BaseTokenAccounts, CreateL1GasFee, CreateL2GasFee, MovedBaseTokenAccounts,
+        },
         receipt::{ReceiptQueries, ReceiptRepository},
+        state_actor::{NewPayloadId, OnTx, OnTxBatch, StateActor},
         transaction::{TransactionQueries, TransactionRepository},
     },
     moved_genesis::config::GenesisConfig,
@@ -18,7 +21,7 @@ pub type ReceiptStorage = &'static moved_storage::RocksDb;
 #[cfg(not(feature = "storage"))]
 pub type ReceiptStorage = moved::receipt::ReceiptMemory;
 #[cfg(feature = "storage")]
-pub type StateQueries = moved::state_actor::InMemoryStateQueries;
+pub type StateQueries = moved_storage::RocksDbStateQueries<'static>;
 #[cfg(not(feature = "storage"))]
 pub type StateQueries = moved::state_actor::InMemoryStateQueries;
 
@@ -70,11 +73,72 @@ pub fn state() -> impl State + Send + Sync + 'static {
 pub fn state_query(genesis_config: &GenesisConfig) -> StateQueries {
     #[cfg(feature = "storage")]
     {
-        moved::state_actor::InMemoryStateQueries::from_genesis(genesis_config.initial_state_root)
+        moved_storage::RocksDbStateQueries::from_genesis(db(), genesis_config.initial_state_root)
     }
     #[cfg(not(feature = "storage"))]
     {
         moved::state_actor::InMemoryStateQueries::from_genesis(genesis_config.initial_state_root)
+    }
+}
+
+pub fn on_tx_batch<
+    A: State,
+    B: NewPayloadId,
+    C: BlockHash,
+    D: BlockRepository<Storage = SharedStorage>,
+    E: BaseGasFee,
+    F: CreateL1GasFee,
+    G: CreateL2GasFee,
+    H: BaseTokenAccounts,
+    I: BlockQueries<Storage = SharedStorage>,
+    J: TransactionRepository<Storage = SharedStorage>,
+    K: TransactionQueries<Storage = SharedStorage>,
+    L: ReceiptRepository<Storage = ReceiptStorage>,
+    M: ReceiptQueries<Storage = ReceiptStorage>,
+>() -> OnTxBatch<
+    StateActor<A, B, C, D, E, F, G, H, I, SharedStorage, StateQueries, J, K, ReceiptStorage, L, M>,
+> {
+    #[cfg(feature = "storage")]
+    {
+        Box::new(|| {
+            Box::new(|state| {
+                state
+                    .state_queries
+                    .push_state_root(state.state.state_root())
+                    .unwrap()
+            })
+        })
+    }
+    #[cfg(not(feature = "storage"))]
+    {
+        StateActor::on_tx_batch_in_memory()
+    }
+}
+
+pub fn on_tx<
+    A: State,
+    B: NewPayloadId,
+    C: BlockHash,
+    D: BlockRepository<Storage = SharedStorage>,
+    E: BaseGasFee,
+    F: CreateL1GasFee,
+    G: CreateL2GasFee,
+    H: BaseTokenAccounts,
+    I: BlockQueries<Storage = SharedStorage>,
+    J: TransactionRepository<Storage = SharedStorage>,
+    K: TransactionQueries<Storage = SharedStorage>,
+    L: ReceiptRepository<Storage = ReceiptStorage>,
+    M: ReceiptQueries<Storage = ReceiptStorage>,
+>() -> OnTx<
+    StateActor<A, B, C, D, E, F, G, H, I, SharedStorage, StateQueries, J, K, ReceiptStorage, L, M>,
+> {
+    #[cfg(feature = "storage")]
+    {
+        StateActor::on_tx_noop()
+    }
+    #[cfg(not(feature = "storage"))]
+    {
+        StateActor::on_tx_in_memory()
     }
 }
 

@@ -1,8 +1,10 @@
-use crate::{block, receipt, transaction, trie};
+use crate::{block, receipt, state, transaction, trie};
 
-pub const COLUMN_FAMILIES: [&str; 6] = [
+pub const COLUMN_FAMILIES: [&str; 8] = [
     block::BLOCK_COLUMN_FAMILY,
     block::HEIGHT_COLUMN_FAMILY,
+    state::COLUMN_FAMILY,
+    state::HEIGHT_COLUMN_FAMILY,
     trie::TRIE_COLUMN_FAMILY,
     trie::ROOT_COLUMN_FAMILY,
     transaction::COLUMN_FAMILY,
