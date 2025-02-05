@@ -2,7 +2,9 @@ use {
     super::tag_validation::{validate_entry_type_tag, validate_entry_value},
     crate::{
         error::Error,
-        move_execution::{eth_token::burn_eth, ADDRESS_LAYOUT, U256_LAYOUT},
+        move_execution::{
+            eth_token::burn_eth, layout::has_value_invariants, ADDRESS_LAYOUT, U256_LAYOUT,
+        },
         Error::User,
         InvalidTransactionCause, ScriptTransaction, UserError,
     },
@@ -48,16 +50,16 @@ pub(super) fn execute_entry_function<G: GasMeter>(
         let tag = session.get_type_tag(ty)?;
         validate_entry_type_tag(&tag)?;
         let layout = session.get_type_layout(&tag)?;
-        // TODO: Potential optimization -- could check layout for Signer type
-        // and only deserialize if necessary. The tricky part here is we would need
-        // to keep track of the recursive path through the type.
-        let arg = Value::simple_deserialize(bytes, &layout)
-            .ok_or(InvalidTransactionCause::FailedArgumentDeserialization)?
-            .as_move_value(&layout);
-        // Note: no recursion limit is needed in this function because we have already
-        // constructed the recursive types `Type`, `TypeTag`, `MoveTypeLayout` and `MoveValue` so
-        // the values must have respected whatever recursion limit is present in MoveVM.
-        validate_entry_value(&tag, &arg, signer, session)?;
+        // Check layout for value-based invariants and only deserialize if necessary.
+        if has_value_invariants(&layout) {
+            let arg = Value::simple_deserialize(bytes, &layout)
+                .ok_or(InvalidTransactionCause::FailedArgumentDeserialization)?
+                .as_move_value(&layout);
+            // Note: no recursion limit is needed in this function because we have already
+            // constructed the recursive types `Type`, `TypeTag`, `MoveTypeLayout` and `MoveValue` so
+            // the values must have respected whatever recursion limit is present in MoveVM.
+            validate_entry_value(&tag, &arg, signer, session)?;
+        }
     }
 
     // TODO: is this the right way to be using the VM?
