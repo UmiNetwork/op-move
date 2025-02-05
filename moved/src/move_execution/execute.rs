@@ -182,8 +182,8 @@ fn strip_reference(t: &Type) -> crate::Result<&Type> {
         Type::Reference(inner) | Type::MutableReference(inner) => {
             match inner.as_ref() {
                 Type::Reference(_) | Type::MutableReference(_) => {
-                    // Based on Aptos code, it looks like references are not allowed to be nested.
-                    // TODO: check this assumption.
+                    // References to references are not allowed and will not compile
+                    // https://move-language.github.io/move/references.html#reference-operators
                     Err(InvalidTransactionCause::UnsupportedNestedReference)?
                 }
                 other => Ok(other),
