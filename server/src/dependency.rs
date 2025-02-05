@@ -136,8 +136,8 @@ pub fn on_tx_batch<
         Box::new(|| {
             Box::new(|state| {
                 state
-                    .state_queries
-                    .push_state_root(state.state.state_root())
+                    .state_queries()
+                    .push_state_root(state.state().state_root())
                     .unwrap()
             })
         })
