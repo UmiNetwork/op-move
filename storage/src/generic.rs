@@ -7,6 +7,10 @@ pub trait ToKey {
     fn to_key(&self) -> impl AsRef<[u8]>;
 }
 
+pub trait FromKey<'de> {
+    fn from_key(slice: &'de [u8]) -> Self;
+}
+
 pub trait ToValue {
     fn to_value(&self) -> Vec<u8>;
 }
@@ -25,6 +29,11 @@ macro_rules! int_impl {
         impl ToKey for $int {
             fn to_key(&self) -> impl AsRef<[u8]> {
                 self.to_be_bytes()
+            }
+        }
+        impl<'de> FromKey<'de> for $int {
+            fn from_key(slice: &'de [u8]) -> Self {
+                $int::from_be_bytes(slice.try_into().unwrap())
             }
         }
     };

@@ -1,9 +1,8 @@
-use {alloy::primitives::TxKind, op_alloy::consensus::OpTxEnvelope};
 pub use {
     payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId},
     queries::{
-        Balance, BlockHeight, EthTrieResolver, InMemoryStateQueries, Nonce, StateMemory,
-        StateQueries, Version,
+        proof_from_trie_and_resolver, Balance, BlockHeight, EthTrieResolver, InMemoryStateQueries,
+        Nonce, StateMemory, StateQueries, Version,
     },
 };
 
@@ -21,7 +20,6 @@ use {
         receipt::{ExtendedReceipt, ReceiptQueries, ReceiptRepository},
         transaction::{ExtendedTransaction, TransactionQueries, TransactionRepository},
         types::{
-            queries::ProofResponse,
             state::{
                 Command, ExecutionOutcome, Payload, PayloadId, PayloadResponse, Query,
                 StateMessage, ToPayloadIdInput, WithExecutionOutcome, WithPayloadAttributes,
@@ -37,17 +35,16 @@ use {
             BlockId,
             BlockNumberOrTag::{self, *},
         },
-        primitives::{keccak256, Bloom},
+        primitives::{keccak256, Bloom, TxKind},
         rlp::{Decodable, Encodable},
         rpc::types::FeeHistory,
     },
     move_core_types::effects::ChangeSet,
     moved_evm_ext::HeaderForExecution,
     moved_genesis::config::GenesisConfig,
-    moved_shared::primitives::{
-        Address, ToEthAddress, ToMoveAddress, ToSaturatedU64, B256, U256, U64,
-    },
+    moved_shared::primitives::{ToEthAddress, ToMoveAddress, ToSaturatedU64, B256, U256, U64},
     moved_state::State,
+    op_alloy::consensus::OpTxEnvelope,
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
 };
@@ -76,11 +73,11 @@ pub type InMemStateActor = StateActor<
 >;
 
 /// A function invoked on a completion of new transaction execution batch.
-type OnTxBatch<S> =
+pub type OnTxBatch<S> =
     Box<dyn Fn() -> Box<dyn Fn(&mut S) + Send + Sync + 'static> + Send + Sync + 'static>;
 
 /// A function invoked on an execution of a new transaction.
-type OnTx<S> =
+pub type OnTx<S> =
     Box<dyn Fn() -> Box<dyn Fn(&mut S, ChangeSet) + Send + Sync + 'static> + Send + Sync + 'static>;
 
 pub struct StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ> {
@@ -94,7 +91,7 @@ pub struct StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ> {
     execution_payloads: HashMap<B256, PayloadResponse>,
     pending_payload: Option<(PayloadId, PayloadResponse)>,
     mem_pool: HashMap<B256, (ExtendedTxEnvelope, L1GasFeeInput)>,
-    state: S,
+    pub state: S,
     block_repository: R,
     block_queries: Q,
     l1_fee: L1G,
@@ -215,12 +212,34 @@ impl<
         }
     }
 
+    pub fn state(&self) -> &S {
+        &self.state
+    }
+
+    pub fn state_queries(&self) -> &SQ {
+        &self.state_queries
+    }
+
     pub fn resolve_height(&self, height: BlockNumberOrTag) -> u64 {
         match height {
             Number(height) => height,
             Finalized | Pending | Latest | Safe => self.height,
             Earliest => 0,
         }
+    }
+
+    pub fn height_from_block_id(&self, id: BlockId) -> Option<u64> {
+        Some(match id {
+            BlockId::Number(height) => self.resolve_height(height),
+            BlockId::Hash(h) => {
+                self.block_queries
+                    .by_hash(&self.storage, h.block_hash, false)
+                    .ok()??
+                    .0
+                    .header
+                    .number
+            }
+        })
     }
 
     pub fn handle_query(&self, msg: Query) {
@@ -299,39 +318,17 @@ impl<
                 .ok(),
             Query::GetProof { address, storage_slots, height, response_channel } => {
                 response_channel.send(
-                    self.get_proof(
-                        address,
-                        storage_slots,
-                        height,
-                    )
+                    self.height_from_block_id(height).and_then(|height| {
+                        self.state_queries.proof_at(
+                            self.state.db(),
+                            address.to_move_address(),
+                            &storage_slots,
+                            height,
+                        )
+                    })
                 ).ok()
             }
         };
-    }
-
-    fn get_proof(
-        &self,
-        address: Address,
-        storage_slots: Vec<U256>,
-        height: BlockId,
-    ) -> Option<ProofResponse> {
-        let height = match height {
-            BlockId::Number(n) => self.resolve_height(n),
-            BlockId::Hash(h) => {
-                self.block_queries
-                    .by_hash(&self.storage, h.block_hash, false)
-                    .ok()??
-                    .0
-                    .header
-                    .number
-            }
-        };
-        self.state_queries.get_proof(
-            self.state.db(),
-            address.to_move_address(),
-            &storage_slots,
-            height,
-        )
     }
 
     pub fn handle_command(&mut self, msg: Command) {
@@ -729,7 +726,7 @@ mod test_doubles {
             Some(3)
         }
 
-        fn get_proof(
+        fn proof_at(
             &self,
             _db: Arc<impl DB>,
             _account: AccountAddress,
@@ -847,6 +844,7 @@ mod tests {
         move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
         move_vm_types::gas::UnmeteredGasMeter,
         moved_genesis::config::{GenesisConfig, CHAIN_ID},
+        moved_shared::primitives::Address,
         moved_state::InMemoryState,
         std::convert::Infallible,
         test_case::test_case,

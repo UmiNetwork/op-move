@@ -204,8 +204,8 @@ pub fn initialize_state_actor(
         receipt_storage,
         receipt_repository,
         receipt_queries,
-        moved::state_actor::StateActor::on_tx_in_memory(),
-        moved::state_actor::StateActor::on_tx_batch_in_memory(),
+        dependency::on_tx(),
+        dependency::on_tx_batch(),
     )
 }
 
