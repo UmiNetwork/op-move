@@ -1,0 +1,53 @@
+FROM moved-foundry:latest AS foundry
+FROM alpine:3.21.2 AS build
+WORKDIR /volume
+
+RUN \
+# Install build dependencies
+    apk upgrade --no-cache \
+    && apk add --no-cache git make \
+# Clean up
+    && rm -rf /tmp/* \
+# Clone geth sources
+    && git clone https://github.com/ethereum/go-ethereum . \
+    && git checkout v1.14.5
+
+# Install go
+COPY --from=golang:1.22-alpine /usr/local/go/ /usr/local/go/
+
+# Add go to path
+ENV PATH="/usr/local/go/bin:${PATH}"
+
+# Build geth
+RUN make geth
+
+# Switch to clean container
+FROM alpine:3.21.2
+WORKDIR /volume
+ENV L1_RPC_ADDR="127.0.0.1"
+ENV L1_RPC_PORT="58138"
+ENV L1_RPC_URL="http://${L1_RPC_ADDR}:${L1_RPC_PORT}"
+ENV SIGNED_L1_CONTRACT_TX="0xf8a58085174876e800830186a08080b853604580600e600039806000f350fe7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf31ba02222222222222222222222222222222222222222222222222222222222222222a02222222222222222222222222222222222222222222222222222222222222222"
+ENV FACTORY_DEPLOYER_ADDRESS="0x3fAB184622Dc19b6109349B94811493BF2a45362"
+
+RUN \
+# Install build dependencies
+    apk upgrade --no-cache \
+    && apk add --no-cache bash curl jq \
+# Clean up
+    && rm -rf /tmp/*
+
+# Copy built binary from build image
+COPY --from=build /volume/build/bin/geth /usr/local/bin/geth
+COPY --from=foundry /opt/foundry/out/cast /usr/local/bin/cast
+COPY --from=foundry /opt/foundry/out/forge /usr/local/bin/forge
+COPY docker/wait-for-it.sh /usr/local/bin/wait-for-it
+COPY docker/prefund.sh prefund.sh
+COPY .env .env
+COPY docker/geth.sh entrypoint.sh
+COPY docker/geth-init.sh geth-init.sh
+
+# Set entrypoint to geth binary
+RUN chmod +x entrypoint.sh /usr/local/bin/wait-for-it prefund.sh geth-init.sh
+
+ENTRYPOINT [ "/volume/entrypoint.sh" ]

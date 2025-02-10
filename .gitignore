@@ -18,3 +18,6 @@ Move.lock
 
 # Log files from integration tests
 server/*.log
+
+# Docker mounted volumes
+docker/volumes

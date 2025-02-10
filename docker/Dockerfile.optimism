@@ -1,0 +1,34 @@
+FROM moved-foundry:latest AS foundry
+FROM alpine:3.21.2
+WORKDIR /volume
+
+# Add go to path
+ENV PATH="/usr/local/go/bin:${PATH}"
+
+# Install foundry
+COPY --from=foundry /opt/foundry/out/forge /usr/local/bin/forge
+COPY --from=foundry /opt/foundry/out/cast /usr/local/bin/cast
+COPY --from=foundry /opt/foundry/out/anvil /usr/local/bin/anvil
+COPY --from=foundry /opt/foundry/out/chisel /usr/local/bin/chisel
+
+# Install go
+COPY --from=golang:1.22-alpine /usr/local/go/ /usr/local/go/
+
+RUN \
+# Install build dependencies
+    apk upgrade --no-cache \
+    && apk add --no-cache git make bash \
+# Clean up
+    && rm -rf /tmp/* \
+# Clone optimism sources
+    && git clone https://github.com/ethereum-optimism/optimism . \
+    && git checkout f2e5a7a5 \
+# Build cannon prestate dump, op-node, op-batcher and op-proposer
+    && make cannon-prestate op-node op-batcher op-proposer \
+    && cd /volume/packages/contracts-bedrock \
+    && forge install
+
+# Install Solidity compiler used by forge in Optimism
+COPY --from=ethereum/solc:0.8.15 /usr/bin/solc /root/.svm/0.8.15/solc-0.8.15
+COPY --from=ethereum/solc:0.8.19 /usr/bin/solc /root/.svm/0.8.19/solc-0.8.19
+COPY --from=ethereum/solc:0.8.25 /usr/bin/solc /root/.svm/0.8.25/solc-0.8.25

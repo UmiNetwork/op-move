@@ -1,0 +1,105 @@
+name: moved
+
+services:
+  foundry:
+    image: moved-foundry:latest
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile.foundry
+    deploy:
+      replicas: 0
+
+  optimism:
+    image: moved-optimism:latest
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile.optimism
+    depends_on:
+      - foundry
+    deploy:
+      replicas: 0
+    networks:
+      - localnet
+
+  op-node:
+    image: moved-op-node:latest
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile.op-node
+    environment:
+      JWT_SECRET: "f3099a1d969c4f5aba1a94434c368a84f8d950121feb4a398a67f78453853d1d"
+    networks:
+      - localnet
+    depends_on:
+      - optimism
+      - foundry
+    volumes:
+      - ./docker/volumes/shared:/volume/shared
+
+  op-batcher:
+    image: moved-op-batcher:latest
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile.op-batcher
+    networks:
+      - localnet
+    depends_on:
+      - optimism
+      - foundry
+    volumes:
+      - ./docker/volumes/shared:/volume/shared
+
+  op-proposer:
+    image: moved-op-proposer:latest
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile.op-proposer
+    networks:
+      - localnet
+    depends_on:
+      - optimism
+      - foundry
+    volumes:
+      - ./docker/volumes/shared:/volume/shared
+
+  op-geth:
+    image: moved-op-geth:latest
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile.op-geth
+    environment:
+      JWT_SECRET: "f3099a1d969c4f5aba1a94434c368a84f8d950121feb4a398a67f78453853d1d"
+    networks:
+      - localnet
+    depends_on:
+      - optimism
+      - foundry
+    volumes:
+      - ./docker/volumes/shared:/volume/shared
+
+  op-move:
+    image: moved-op-move:latest
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile.op-move
+    environment:
+      JWT_SECRET: "f3099a1d969c4f5aba1a94434c368a84f8d950121feb4a398a67f78453853d1d"
+      OP_GETH_ADDR: "op-geth"
+    networks:
+      - localnet
+    volumes:
+      - ./docker/volumes/shared:/volume/shared
+
+  geth:
+    image: moved-geth:latest
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile.geth
+    networks:
+      - localnet
+    depends_on:
+      - foundry
+
+networks:
+  localnet:
+    driver: bridge

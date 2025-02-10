@@ -1,0 +1,57 @@
+FROM alpine:3.21.2 AS build
+
+WORKDIR /volume
+
+RUN \
+# Install build dependencies
+    apk upgrade --no-cache \
+    && apk add --no-cache clang clang-dev lld curl build-base linux-headers git openssl-dev \
+# Install rust toolchain manager
+    && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup.sh \
+    && chmod +x ./rustup.sh \
+# Install default rust toolchain
+    && ./rustup.sh -y --default-toolchain 1.82.0
+
+# Add `cargo` to `PATH`
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Copy sources over to the image
+COPY . .
+
+# RocksDB breaks the build with libclang.so not found, point its location explicitly
+ENV LIBCLANG_PATH="/usr/lib/llvm19/lib/libclang.so.19.1.4"
+
+# Build release binary
+RUN --mount=type=cache,target=/root/.cargo/registry \
+    --mount=type=cache,target=/root/.cargo/git \
+    --mount=type=cache,target=/volume/target \
+# RocksDB breaks the build with libclang.so not found https://github.com/apache/skywalking/issues/10439
+# Aptos-core breaks the build with `disable_lifo_slot` not found https://github.com/aptos-labs/aptos-core/issues/5655 \
+    RUSTFLAGS="-C target-feature=-crt-static --cfg tokio_unstable" \
+    cargo build --bin op-move --release --features storage \
+    && mv target/release/op-move /volume/op-move
+
+# Switch to clean image
+FROM alpine:3.21.2
+WORKDIR /volume
+
+RUN \
+# Install run dependencies
+    apk upgrade --no-cache \
+    && apk add --no-cache clang lld curl build-base linux-headers git openssl-dev \
+# Clean up
+    && rm -rf /tmp/* \
+# Create directory that is used in relative paths to Move framework snapshot files
+    && mkdir genesis
+
+# Copy Move framework snapshot files into expected paths
+COPY moved/aptos.mrb moved/aptos.mrb
+COPY moved/sui.mrb moved/sui.mrb
+
+# Copy L2 genesis config into expected path
+COPY moved/src/tests/res/l2_genesis_tests.json src/tests/optimism/packages/contracts-bedrock/deployments/genesis.json
+
+# Copy built binary
+COPY --from=build /volume/op-move /volume/op-move
+
+ENTRYPOINT [ "/volume/op-move" ]

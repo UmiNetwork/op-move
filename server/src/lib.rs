@@ -331,9 +331,10 @@ async fn proxy(
     headers: Headers,
     body: Bytes,
     port: &str,
-) -> std::result::Result<Response<Body>, Rejection> {
+) -> Result<Response<Body>, Rejection> {
+    let addr = std::env::var("OP_GETH_ADDR").unwrap_or("0.0.0.0".to_owned());
     proxy_to_and_forward_response(
-        format!("http://0.0.0.0:{}", port),
+        format!("http://{addr}:{port}"),
         "".to_string(),
         path,
         query,

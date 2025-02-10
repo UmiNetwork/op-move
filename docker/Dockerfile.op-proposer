@@ -1,0 +1,26 @@
+# Add build image
+FROM moved-optimism:latest AS build
+
+# Switch to clean image
+FROM alpine:3.21.2
+WORKDIR /volume
+
+RUN \
+# Install system dependencies
+    apk upgrade --no-cache \
+# bash required by wait-for-it
+# jq required by entrypoint to parse L2_ORACLE_PROXY
+    && apk add --no-cache bash jq \
+# Clean up
+    && rm -rf /tmp/*
+
+# Copy built binary from build image
+COPY --from=build /volume/op-proposer/bin/op-proposer /usr/local/bin/op-proposer
+
+# Copy entrypoint
+COPY docker/op-proposer.sh entrypoint.sh
+COPY .env .env
+COPY docker/wait-for-it.sh /usr/local/bin/wait-for-it
+RUN chmod +x entrypoint.sh /usr/local/bin/wait-for-it
+
+ENTRYPOINT [ "/volume/entrypoint.sh" ]

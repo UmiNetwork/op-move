@@ -1,0 +1,43 @@
+FROM moved-foundry:latest AS foundry
+# Add build image
+FROM moved-optimism:latest AS optimism
+
+# Switch to clean image
+FROM alpine:3.21.2
+WORKDIR /volume
+
+RUN \
+# Install system dependencies for foundry and other scripts
+    apk upgrade --no-cache \
+# jq required at least by optimism deploy script
+    && apk add --no-cache clang lld curl build-base linux-headers git bash jq \
+# Clean up
+    && rm -rf /tmp/*
+
+# Copy entrypoint
+COPY docker/op-node.sh entrypoint.sh
+
+# Copy genesis config generator
+COPY server/src/tests/config.sh config.sh
+
+# Copy ENV file that include Optimism wallet addresses
+COPY .env .env
+COPY docker/wait-for-it.sh /usr/local/bin/wait-for-it
+
+# Grant run privileges to copied scripts
+RUN chmod +x entrypoint.sh config.sh /usr/local/bin/wait-for-it
+
+# Copy built binary from build image and other dependencies
+COPY --from=optimism /volume/op-node/bin/op-node /usr/local/bin/op-node
+COPY --from=optimism /volume/packages/contracts-bedrock /volume/packages/contracts-bedrock
+COPY --from=optimism /volume/.git /volume/.git
+COPY --from=optimism /root/.svm/0.8.15/solc-0.8.15 /root/.svm/0.8.15/solc-0.8.15
+COPY --from=optimism /root/.svm/0.8.19/solc-0.8.19 /root/.svm/0.8.19/solc-0.8.19
+COPY --from=optimism /root/.svm/0.8.25/solc-0.8.25 /root/.svm/0.8.25/solc-0.8.25
+COPY --from=optimism /volume/op-program/bin/prestate.json /volume/op-program/bin/prestate.json
+COPY --from=optimism /volume/op-program/bin/meta.json /volume/op-program/bin/meta.json
+COPY --from=optimism /volume/op-program/bin/prestate-proof.json /volume/op-program/bin/prestate-proof.json
+COPY --from=foundry /opt/foundry/out/cast /usr/local/bin/cast
+COPY --from=foundry /opt/foundry/out/forge /usr/local/bin/forge
+
+ENTRYPOINT [ "/volume/entrypoint.sh" ]

@@ -1,0 +1,25 @@
+# Add build image
+FROM moved-optimism:latest AS build
+
+# Switch to clean image
+FROM alpine:3.21.2
+WORKDIR /volume
+
+RUN \
+# Install system dependencies
+    apk upgrade --no-cache \
+# bash required by wait-for-it
+    && apk add --no-cache bash \
+# Clean up
+    && rm -rf /tmp/*
+
+# Copy built binary from build image
+COPY --from=build /volume/op-batcher/bin/op-batcher /usr/local/bin/op-batcher
+
+# Copy entrypoint
+COPY docker/op-batcher.sh entrypoint.sh
+COPY .env .env
+COPY docker/wait-for-it.sh /usr/local/bin/wait-for-it
+RUN chmod +x entrypoint.sh /usr/local/bin/wait-for-it
+
+ENTRYPOINT [ "/volume/entrypoint.sh" ]
