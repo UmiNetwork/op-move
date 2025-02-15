@@ -89,6 +89,8 @@ services:
       - localnet
     volumes:
       - ./docker/volumes/shared:/volume/shared
+    ports:
+      - "8545:8545"
 
   geth:
     image: moved-geth:latest
@@ -99,6 +101,8 @@ services:
       - localnet
     depends_on:
       - foundry
+    ports:
+      - "58138:58138"
 
 networks:
   localnet:
