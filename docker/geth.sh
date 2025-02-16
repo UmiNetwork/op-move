@@ -17,6 +17,7 @@ rm -rf "${L1_DATADIR}" && mkdir -p "${L1_DATADIR}"
 # with automatic mining when there are pending transactions.
 geth \
     --dev \
+    --dev.period 3 \
     --datadir "${L1_DATADIR}" \
     --rpc.allow-unprotected-txs \
     --http \

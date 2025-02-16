@@ -7,7 +7,7 @@ SHARED="/volume/shared"
 L1_RPC_URL="http://geth:58138"
 ROLLUP_RPC_URL="http://op-node:8547"
 L1_DEPLOYMENT="${SHARED}/1337-deploy.json"
-TIMEOUT_SECS=300
+TIMEOUT_SECS=1500
 
 wait-for-it -t "${TIMEOUT_SECS}" "$(echo ${L1_RPC_URL} | cut -c 8-)"
 wait-for-it -t "${TIMEOUT_SECS}" "$(echo ${ROLLUP_RPC_URL} | cut -c 8-)"

@@ -14,7 +14,7 @@ L1_RPC_URL="http://geth:58138"
 L2_ALLOCS="${WORKDIR}/state-dump-42069.json"
 DEPLOY_CONFIG="${WORKDIR}/deploy-config/moved.json"
 DATA_DIR="${WORKDIR}/../../datadir"
-TIMEOUT_SECS=300
+TIMEOUT_SECS=1500
 
 wait-for-it -t "${TIMEOUT_SECS}" "$(echo ${L1_RPC_URL} | cut -c 8-)"
 
@@ -22,7 +22,7 @@ export DEPLOY_CONFIG_PATH="${DEPLOY_CONFIG}"
 
 # 3. Generate deploy config file
 if [ ! -f "${DEPLOY_CONFIG_PATH}" ]; then
-    sleep 10
+    sleep 160
     /volume/config.sh
     cd "${WORKDIR}"
 fi

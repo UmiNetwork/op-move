@@ -16,13 +16,15 @@ L2_RPC_URL="http://op-move:8551"
 OP_GETH_ADDR="op-geth"
 OP_GETH_PORT="9551"
 L2_ALLOCS="${WORKDIR}/state-dump-42069.json"
-TIMEOUT_SECS=300
+TIMEOUT_SECS=1500
 
 export DEPLOY_CONFIG_PATH="${DEPLOY_CONFIG}"
 
 # 3. Generate deploy config file
 if [ ! -f "${DEPLOY_CONFIG_PATH}" ]; then
-    sleep 10
+    rm -f "${SHARED}/1337-deploy.json"
+
+    sleep 160
     /volume/config.sh
     cd "${WORKDIR}"
 

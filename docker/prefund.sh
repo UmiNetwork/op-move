@@ -52,3 +52,5 @@ for _ in $(seq 10) ; do
   echo "${TX_HASH}"
   NONCE=$((NONCE + 1))
 done
+
+sleep 12
