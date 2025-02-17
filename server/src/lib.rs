@@ -12,8 +12,9 @@ use {
             BaseTokenAccounts, CreateEcotoneL1GasFee, CreateL1GasFee, CreateL2GasFee,
             CreateMovedL2GasFee,
         },
+        payload::{NewPayloadId, PayloadQueries, StatePayloadId},
         receipt::{ReceiptQueries, ReceiptRepository},
-        state_actor::{NewPayloadId, StateActor, StatePayloadId, StateQueries},
+        state_actor::{StateActor, StateQueries},
         transaction::{TransactionQueries, TransactionRepository},
         types::state::{Command, StateMessage},
     },
@@ -148,6 +149,7 @@ pub fn initialize_state_actor(
     dependency::ReceiptStorage,
     impl ReceiptRepository<Storage = dependency::ReceiptStorage> + Send + Sync + 'static,
     impl ReceiptQueries<Storage = dependency::ReceiptStorage> + Send + Sync + 'static,
+    impl PayloadQueries<Storage = dependency::SharedStorage> + Send + Sync + 'static,
 > {
     let block_hash = dependency::block_hash();
     let base_token = dependency::base_token(&genesis_config);
@@ -161,6 +163,7 @@ pub fn initialize_state_actor(
     let receipt_storage = dependency::receipt_memory();
     let receipt_repository = dependency::receipt_repository();
     let receipt_queries = dependency::receipt_queries();
+    let payload_queries = dependency::payload_queries();
 
     let (genesis_changes, table_changes) = {
         #[cfg(test)]
@@ -204,8 +207,10 @@ pub fn initialize_state_actor(
         receipt_storage,
         receipt_repository,
         receipt_queries,
+        payload_queries,
         dependency::on_tx(),
         dependency::on_tx_batch(),
+        dependency::on_payload(),
     )
 }
 

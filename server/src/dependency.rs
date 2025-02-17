@@ -4,7 +4,7 @@ use {
         move_execution::{
             BaseTokenAccounts, CreateL1GasFee, CreateL2GasFee, MovedBaseTokenAccounts,
         },
-        state_actor::NewPayloadId,
+        payload::NewPayloadId,
     },
     moved_genesis::config::GenesisConfig,
     moved_state::State,
@@ -30,6 +30,10 @@ pub type ReceiptRepository = moved::receipt::InMemoryReceiptRepository;
 pub type ReceiptQueries = moved_storage::receipt::RocksDbReceiptQueries;
 #[cfg(not(feature = "storage"))]
 pub type ReceiptQueries = moved::receipt::InMemoryReceiptQueries;
+#[cfg(feature = "storage")]
+pub type PayloadQueries = moved_storage::payload::RocksDbPayloadQueries;
+#[cfg(not(feature = "storage"))]
+pub type PayloadQueries = moved::payload::InMemoryPayloadQueries;
 #[cfg(feature = "storage")]
 pub type TransactionRepository = moved_storage::transaction::RocksDbTransactionRepository;
 #[cfg(not(feature = "storage"))]
@@ -60,10 +64,13 @@ type StateActor<A, B, C, D, E, F, G, H> = moved::state_actor::StateActor<
     ReceiptStorage,
     ReceiptRepository,
     ReceiptQueries,
+    PayloadQueries,
 >;
 type OnTxBatch<A, B, C, D, E, F, G, H> =
     moved::state_actor::OnTxBatch<StateActor<A, B, C, D, E, F, G, H>>;
 type OnTx<A, B, C, D, E, F, G, H> = moved::state_actor::OnTx<StateActor<A, B, C, D, E, F, G, H>>;
+type OnPayload<A, B, C, D, E, F, G, H> =
+    moved::state_actor::OnPayload<StateActor<A, B, C, D, E, F, G, H>>;
 
 pub fn block_hash() -> impl BlockHash + Send + Sync + 'static {
     MovedBlockHash
@@ -168,6 +175,28 @@ pub fn on_tx<
     }
 }
 
+pub fn on_payload<
+    A: State,
+    B: NewPayloadId,
+    C: BlockHash,
+    D: BlockRepository<Storage = SharedStorage>,
+    E: BaseGasFee,
+    F: CreateL1GasFee,
+    G: CreateL2GasFee,
+    H: BaseTokenAccounts,
+>() -> OnPayload<A, B, C, D, E, F, G, H> {
+    #[cfg(feature = "storage")]
+    {
+        Box::new(|| {
+            Box::new(|state, id, hash| state.payload_queries().add_block_hash(id, hash).unwrap())
+        })
+    }
+    #[cfg(not(feature = "storage"))]
+    {
+        moved::state_actor::StateActor::on_payload_in_memory()
+    }
+}
+
 pub fn transaction_repository() -> TransactionRepository {
     #[cfg(feature = "storage")]
     {
@@ -231,6 +260,17 @@ pub fn block_queries() -> BlockQueries {
     #[cfg(not(feature = "storage"))]
     {
         moved::block::InMemoryBlockQueries
+    }
+}
+
+pub fn payload_queries() -> PayloadQueries {
+    #[cfg(feature = "storage")]
+    {
+        moved_storage::payload::RocksDbPayloadQueries::new(db())
+    }
+    #[cfg(not(feature = "storage"))]
+    {
+        moved::payload::InMemoryPayloadQueries::new()
     }
 }
 

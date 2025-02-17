@@ -38,13 +38,12 @@ pub mod tests {
             move_execution::{
                 BaseTokenAccounts, CreateL1GasFee, CreateL2GasFee, MovedBaseTokenAccounts,
             },
+            payload::{InMemoryPayloadQueries, NewPayloadId, PayloadQueries},
             receipt::{
                 InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory, ReceiptQueries,
                 ReceiptRepository,
             },
-            state_actor::{
-                InMemoryStateQueries, MockStateQueries, NewPayloadId, StateActor, StateQueries,
-            },
+            state_actor::{InMemoryStateQueries, MockStateQueries, StateActor, StateQueries},
             transaction::{
                 InMemoryTransactionQueries, InMemoryTransactionRepository, TransactionQueries,
                 TransactionRepository,
@@ -57,7 +56,6 @@ pub mod tests {
         moved_genesis::config::{GenesisConfig, CHAIN_ID},
         moved_shared::primitives::{Address, B256, U256, U64},
         moved_state::InMemoryState,
-        std::convert::Infallible,
         tokio::sync::{
             mpsc::{self, Sender},
             oneshot,
@@ -106,8 +104,10 @@ pub mod tests {
             ReceiptMemory::new(),
             InMemoryReceiptRepository::new(),
             InMemoryReceiptQueries::new(),
+            InMemoryPayloadQueries::new(),
             StateActor::on_tx_noop(),
             StateActor::on_tx_batch_noop(),
+            StateActor::on_payload_in_memory(),
         );
         (state, state_channel)
     }
@@ -186,14 +186,15 @@ pub mod tests {
             impl CreateL1GasFee,
             impl CreateL2GasFee,
             impl BaseTokenAccounts,
-            impl BlockQueries<Storage = (), Err = Infallible>,
+            impl BlockQueries<Storage = ()>,
             (),
             impl StateQueries,
             impl TransactionRepository<Storage = ()>,
             impl TransactionQueries<Storage = ()>,
             (),
             impl ReceiptRepository<Storage = ()>,
-            impl ReceiptQueries<Storage = (), Err = Infallible>,
+            impl ReceiptQueries<Storage = ()>,
+            impl PayloadQueries<Storage = ()>,
         >,
         Sender<StateMessage>,
     ) {
@@ -221,8 +222,10 @@ pub mod tests {
             (),
             (),
             (),
+            (),
             StateActor::on_tx_noop(),
             StateActor::on_tx_batch_noop(),
+            StateActor::on_payload_noop(),
         );
         (state, state_channel)
     }

@@ -1,10 +1,9 @@
-pub use {
-    payload::{NewPayloadId, NewPayloadIdInput, StatePayloadId},
-    queries::{
-        proof_from_trie_and_resolver, Balance, BlockHeight, EthTrieResolver, InMemoryStateQueries,
-        Nonce, StateMemory, StateQueries, Version,
-    },
+pub use queries::{
+    proof_from_trie_and_resolver, Balance, BlockHeight, EthTrieResolver, InMemoryStateQueries,
+    Nonce, StateMemory, StateQueries, Version,
 };
+#[cfg(any(feature = "test-doubles", test))]
+pub use test_doubles::*;
 
 use {
     crate::{
@@ -17,12 +16,13 @@ use {
             BaseTokenAccounts, CanonicalExecutionInput, CreateL1GasFee, CreateL2GasFee,
             DepositExecutionInput, L1GasFee, L1GasFeeInput, L2GasFeeInput, LogsBloom,
         },
+        payload::{InMemoryPayloadQueries, NewPayloadId, PayloadQueries},
         receipt::{ExtendedReceipt, ReceiptQueries, ReceiptRepository},
         transaction::{ExtendedTransaction, TransactionQueries, TransactionRepository},
         types::{
             state::{
-                Command, ExecutionOutcome, Payload, PayloadId, PayloadResponse, Query,
-                StateMessage, ToPayloadIdInput, WithExecutionOutcome, WithPayloadAttributes,
+                Command, ExecutionOutcome, Payload, PayloadId, Query, StateMessage,
+                ToPayloadIdInput, WithExecutionOutcome, WithPayloadAttributes,
             },
             transactions::{ExtendedTxEnvelope, NormalizedExtendedTxEnvelope},
         },
@@ -49,7 +49,6 @@ use {
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
 };
 
-mod payload;
 mod queries;
 
 #[cfg(any(feature = "test-doubles", test))]
@@ -70,6 +69,7 @@ pub type InMemStateActor = StateActor<
     crate::receipt::ReceiptMemory,
     crate::receipt::InMemoryReceiptRepository,
     crate::receipt::InMemoryReceiptQueries,
+    crate::payload::InMemoryPayloadQueries,
 >;
 
 /// A function invoked on a completion of new transaction execution batch.
@@ -80,7 +80,15 @@ pub type OnTxBatch<S> =
 pub type OnTx<S> =
     Box<dyn Fn() -> Box<dyn Fn(&mut S, ChangeSet) + Send + Sync + 'static> + Send + Sync + 'static>;
 
-pub struct StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ> {
+/// A function invoked on an execution of a new payload.
+pub type OnPayload<S> = Box<
+    dyn Fn() -> Box<dyn Fn(&mut S, PayloadId, B256) + Send + Sync + 'static>
+        + Send
+        + Sync
+        + 'static,
+>;
+
+pub struct StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ, PQ> {
     genesis_config: GenesisConfig,
     rx: Receiver<StateMessage>,
     head: B256,
@@ -88,10 +96,9 @@ pub struct StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ> {
     payload_id: P,
     block_hash: H,
     gas_fee: G,
-    execution_payloads: HashMap<B256, PayloadResponse>,
-    pending_payload: Option<(PayloadId, PayloadResponse)>,
+    payload_queries: PQ,
     mem_pool: HashMap<B256, (ExtendedTxEnvelope, L1GasFeeInput)>,
-    pub state: S,
+    state: S,
     block_repository: R,
     block_queries: Q,
     l1_fee: L1G,
@@ -106,6 +113,7 @@ pub struct StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ> {
     receipt_queries: RQ,
     on_tx_batch: OnTxBatch<Self>,
     on_tx: OnTx<Self>,
+    on_payload: OnPayload<Self>,
 }
 
 impl<
@@ -125,7 +133,8 @@ impl<
         N: Send + Sync + 'static,
         RR: ReceiptRepository<Storage = N> + Send + Sync + 'static,
         RQ: ReceiptQueries<Storage = N> + Send + Sync + 'static,
-    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ>
+        PQ: PayloadQueries<Storage = M> + Send + Sync + 'static,
+    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ, PQ>
 {
     pub fn spawn(mut self) -> JoinHandle<()> {
         tokio::spawn(async move {
@@ -156,7 +165,8 @@ impl<
         N,
         RR: ReceiptRepository<Storage = N>,
         RQ: ReceiptQueries<Storage = N>,
-    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ>
+        PQ: PayloadQueries<Storage = M>,
+    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ, PQ>
 {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -180,8 +190,10 @@ impl<
         receipt_memory: N,
         receipt_repository: RR,
         receipt_queries: RQ,
+        payload_queries: PQ,
         on_tx: OnTx<Self>,
         on_tx_batch: OnTxBatch<Self>,
+        on_payload: OnPayload<Self>,
     ) -> Self {
         Self {
             genesis_config,
@@ -189,8 +201,7 @@ impl<
             head,
             height,
             payload_id,
-            execution_payloads: HashMap::new(),
-            pending_payload: None,
+            payload_queries,
             mem_pool: HashMap::new(),
             state,
             block_hash,
@@ -209,6 +220,7 @@ impl<
             receipt_memory,
             receipt_repository,
             receipt_queries,
+            on_payload,
         }
     }
 
@@ -218,6 +230,10 @@ impl<
 
     pub fn state_queries(&self) -> &SQ {
         &self.state_queries
+    }
+
+    pub fn payload_queries(&self) -> &PQ {
+        &self.payload_queries
     }
 
     pub fn resolve_height(&self, height: BlockNumberOrTag) -> u64 {
@@ -328,6 +344,18 @@ impl<
                     })
                 ).ok()
             }
+            Query::GetPayload {
+                id: payload_id,
+                response_channel,
+            } => response_channel
+                .send(self.payload_queries.by_id(&self.storage, payload_id).ok().flatten())
+                .ok(),
+            Query::GetPayloadByBlockHash {
+                block_hash,
+                response_channel,
+            } => response_channel
+                .send(self.payload_queries.by_hash(&self.storage, block_hash).ok().flatten())
+                .ok(),
         };
     }
 
@@ -370,35 +398,9 @@ impl<
                             }),
                     )
                     .unwrap();
-                self.height += 1;
-                self.pending_payload
-                    .replace((id, PayloadResponse::from_block(block)));
-            }
-            Command::GetPayload {
-                id: request_id,
-                response_channel,
-            } => match self.pending_payload.take() {
-                Some((id, payload)) => {
-                    if request_id == id {
-                        response_channel.send(Some(payload.clone())).ok();
-                        self.execution_payloads
-                            .insert(payload.execution_payload.block_hash, payload);
-                    } else {
-                        println!("WARN: unexpected PayloadId: {request_id}");
-                        response_channel.send(None).ok();
-                        self.pending_payload.replace((id, payload));
-                    }
-                }
-                None => {
-                    response_channel.send(None).ok();
-                }
-            },
-            Command::GetPayloadByBlockHash {
-                block_hash,
-                response_channel,
-            } => {
-                let response = self.execution_payloads.get(&block_hash).cloned();
-                response_channel.send(response).ok();
+                self.height = self.height.max(block_number);
+                let on_payload = (self.on_payload)();
+                on_payload(self, id, block_hash);
             }
             Command::AddTransaction { tx } => {
                 let tx_hash = tx.tx_hash().0.into();
@@ -654,6 +656,10 @@ impl<
     pub fn on_tx_noop() -> OnTx<Self> {
         Box::new(|| Box::new(|_, _| {}))
     }
+
+    pub fn on_payload_noop() -> OnPayload<Self> {
+        Box::new(|| Box::new(|_, _, _| {}))
+    }
 }
 
 impl<
@@ -672,7 +678,8 @@ impl<
         N,
         RR: ReceiptRepository<Storage = N>,
         RQ: ReceiptQueries<Storage = N>,
-    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, InMemoryStateQueries, T, TQ, N, RR, RQ>
+        PQ: PayloadQueries,
+    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, InMemoryStateQueries, T, TQ, N, RR, RQ, PQ>
 {
     pub fn on_tx_in_memory() -> OnTx<Self> {
         Box::new(|| Box::new(|_state, _changes| ()))
@@ -689,8 +696,33 @@ impl<
     }
 }
 
-#[cfg(any(feature = "test-doubles", test))]
-pub use test_doubles::*;
+impl<
+        S: State,
+        P: NewPayloadId,
+        H: BlockHash,
+        R: BlockRepository,
+        G: BaseGasFee,
+        L1G: CreateL1GasFee,
+        L2G: CreateL2GasFee,
+        B: BaseTokenAccounts,
+        Q: BlockQueries,
+        M,
+        T: TransactionRepository,
+        TQ: TransactionQueries,
+        N,
+        RR: ReceiptRepository<Storage = N>,
+        RQ: ReceiptQueries<Storage = N>,
+        SQ: StateQueries,
+    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ, InMemoryPayloadQueries>
+{
+    pub fn on_payload_in_memory() -> OnPayload<Self> {
+        Box::new(|| {
+            Box::new(|state, payload_id, block_hash| {
+                state.payload_queries.add_block_hash(payload_id, block_hash)
+            })
+        })
+    }
+}
 
 #[cfg(any(feature = "test-doubles", test))]
 mod test_doubles {
@@ -829,6 +861,7 @@ mod tests {
             block::{Eip1559GasFee, InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash},
             in_memory::SharedMemory,
             move_execution::{create_move_vm, create_vm_session, MovedBaseTokenAccounts},
+            payload::InMemoryPayloadQueries,
             receipt::{InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory},
             tests::{signer::Signer, EVM_ADDRESS, PRIVATE_KEY},
             transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
@@ -875,6 +908,7 @@ mod tests {
             ReceiptMemory,
             impl ReceiptRepository<Storage = ReceiptMemory>,
             impl ReceiptQueries<Storage = ReceiptMemory, Err = Infallible>,
+            impl PayloadQueries<Storage = SharedMemory>,
         >,
         Sender<StateMessage>,
     ) {
@@ -915,8 +949,10 @@ mod tests {
             ReceiptMemory::new(),
             InMemoryReceiptRepository::new(),
             InMemoryReceiptQueries::new(),
+            InMemoryPayloadQueries::new(),
             StateActor::on_tx_noop(),
             StateActor::on_tx_batch_noop(),
+            StateActor::on_payload_noop(),
         );
         (state, state_channel)
     }
@@ -961,6 +997,7 @@ mod tests {
             ReceiptMemory,
             impl ReceiptRepository<Storage = ReceiptMemory>,
             impl ReceiptQueries<Storage = ReceiptMemory, Err = Infallible>,
+            impl PayloadQueries<Storage = SharedMemory>,
         >,
         Sender<StateMessage>,
     ) {
@@ -1008,8 +1045,10 @@ mod tests {
             ReceiptMemory::new(),
             InMemoryReceiptRepository::new(),
             InMemoryReceiptQueries::new(),
+            InMemoryPayloadQueries::new(),
             StateActor::on_tx_in_memory(),
             StateActor::on_tx_batch_in_memory(),
+            StateActor::on_payload_in_memory(),
         );
         (state, state_channel)
     }

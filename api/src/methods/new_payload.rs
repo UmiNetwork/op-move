@@ -4,7 +4,7 @@ use {
         jsonrpc::JsonRpcError,
         schema::{ExecutionPayloadV3, GetPayloadResponseV3, PayloadStatusV1, Status},
     },
-    moved::types::state::{Command, StateMessage},
+    moved::types::state::{Query, StateMessage},
     moved_shared::primitives::B256,
     tokio::sync::{mpsc, oneshot},
 };
@@ -34,7 +34,7 @@ async fn inner_execute_v3(
     // Spec: https://github.com/ethereum/execution-apis/blob/main/src/engine/cancun.md#specification
 
     let (tx, rx) = oneshot::channel();
-    let msg = Command::GetPayloadByBlockHash {
+    let msg = Query::GetPayloadByBlockHash {
         block_hash: execution_payload.block_hash,
         response_channel: tx,
     }
@@ -169,6 +169,7 @@ mod tests {
                 InMemoryBlockRepository,
             },
             in_memory::SharedMemory,
+            payload::InMemoryPayloadQueries,
             receipt::{InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory},
             state_actor::InMemoryStateQueries,
             transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
@@ -289,8 +290,10 @@ mod tests {
             ReceiptMemory::new(),
             InMemoryReceiptRepository::new(),
             InMemoryReceiptQueries::new(),
+            InMemoryPayloadQueries::new(),
             moved::state_actor::StateActor::on_tx_noop(),
             moved::state_actor::StateActor::on_tx_batch_noop(),
+            moved::state_actor::StateActor::on_payload_in_memory(),
         );
         let state_handle = state.spawn();
 

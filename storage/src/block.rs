@@ -93,7 +93,7 @@ impl BlockQueries for RocksDbBlockQueries {
     }
 }
 
-fn block_cf(db: &RocksDb) -> impl AsColumnFamilyRef + use<'_> {
+pub(crate) fn block_cf(db: &RocksDb) -> impl AsColumnFamilyRef + use<'_> {
     db.cf_handle(BLOCK_COLUMN_FAMILY)
         .expect("Column family should exist")
 }

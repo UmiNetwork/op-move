@@ -7,8 +7,8 @@ use {
     super::queries::ProofResponse,
     crate::{
         block::{ExtendedBlock, Header},
+        payload::NewPayloadIdInput,
         receipt::TransactionReceipt,
-        state_actor::NewPayloadIdInput,
         transaction::{ExtendedTransaction, TransactionResponse},
     },
     alloy::{
@@ -141,14 +141,6 @@ pub enum Command {
         payload_attributes: Payload,
         response_channel: oneshot::Sender<PayloadId>,
     },
-    GetPayload {
-        id: PayloadId,
-        response_channel: oneshot::Sender<Option<PayloadResponse>>,
-    },
-    GetPayloadByBlockHash {
-        block_hash: B256,
-        response_channel: oneshot::Sender<Option<PayloadResponse>>,
-    },
     AddTransaction {
         tx: TxEnvelope,
     },
@@ -220,6 +212,14 @@ pub enum Query {
         storage_slots: Vec<U256>,
         height: BlockId,
         response_channel: oneshot::Sender<Option<ProofResponse>>,
+    },
+    GetPayload {
+        id: PayloadId,
+        response_channel: oneshot::Sender<Option<PayloadResponse>>,
+    },
+    GetPayloadByBlockHash {
+        block_hash: B256,
+        response_channel: oneshot::Sender<Option<PayloadResponse>>,
     },
 }
 

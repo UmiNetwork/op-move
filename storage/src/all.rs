@@ -1,6 +1,6 @@
-use crate::{block, receipt, state, transaction, trie};
+use crate::{block, payload, receipt, state, transaction, trie};
 
-pub const COLUMN_FAMILIES: [&str; 8] = [
+pub const COLUMN_FAMILIES: [&str; 9] = [
     block::BLOCK_COLUMN_FAMILY,
     block::HEIGHT_COLUMN_FAMILY,
     state::COLUMN_FAMILY,
@@ -9,6 +9,7 @@ pub const COLUMN_FAMILIES: [&str; 8] = [
     trie::ROOT_COLUMN_FAMILY,
     transaction::COLUMN_FAMILY,
     receipt::COLUMN_FAMILY,
+    payload::COLUMN_FAMILY,
 ];
 
 #[cfg(test)]
