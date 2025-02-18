@@ -1227,4 +1227,58 @@ mod tests {
 
         assert_eq!(actual_sender_balance, expected_sender_balance);
     }
+
+    #[test]
+    fn test_one_payload_can_be_fetched_repeatedly() {
+        let to = Address::new(hex!("44223344556677889900ffeeaabbccddee111111"));
+        let initial_balance = U256::from(5);
+        let amount = U256::from(4);
+        let (mut state_actor, _) =
+            create_state_actor_with_fake_queries(EVM_ADDRESS.to_move_address(), initial_balance);
+
+        let signer = Signer::new(&PRIVATE_KEY);
+        let mut tx = TxEip1559 {
+            chain_id: CHAIN_ID,
+            nonce: signer.nonce,
+            gas_limit: u64::MAX,
+            max_fee_per_gas: 0,
+            max_priority_fee_per_gas: 0,
+            to: TxKind::Call(to),
+            value: amount,
+            access_list: Default::default(),
+            input: Default::default(),
+        };
+        let signature = signer.inner.sign_transaction_sync(&mut tx).unwrap();
+        let tx = TxEnvelope::Eip1559(tx.into_signed(signature));
+
+        state_actor.handle_command(Command::AddTransaction { tx });
+
+        let (tx, rx) = oneshot::channel();
+
+        state_actor.handle_command(Command::StartBlockBuild {
+            payload_attributes: Default::default(),
+            response_channel: tx,
+        });
+
+        let payload_id = rx.blocking_recv().unwrap();
+        let (tx, rx) = oneshot::channel();
+
+        state_actor.handle_query(Query::GetPayload {
+            id: payload_id,
+            response_channel: tx,
+        });
+
+        let expected_payload = rx.blocking_recv().unwrap();
+
+        let (tx, rx) = oneshot::channel();
+
+        state_actor.handle_query(Query::GetPayload {
+            id: payload_id,
+            response_channel: tx,
+        });
+
+        let actual_payload = rx.blocking_recv().unwrap();
+
+        assert_eq!(expected_payload, actual_payload);
+    }
 }
