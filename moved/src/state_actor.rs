@@ -1114,6 +1114,26 @@ mod tests {
         assert_eq!(actual_balance, expected_balance);
     }
 
+    fn create_transaction(nonce: u64) -> TxEnvelope {
+        let to = Address::new(hex!("44223344556677889900ffeeaabbccddee111111"));
+        let amount = U256::from(4);
+        let signer = Signer::new(&PRIVATE_KEY);
+        let mut tx = TxEip1559 {
+            chain_id: CHAIN_ID,
+            nonce: signer.nonce + nonce,
+            gas_limit: u64::MAX,
+            max_fee_per_gas: 0,
+            max_priority_fee_per_gas: 0,
+            to: TxKind::Call(to),
+            value: amount,
+            access_list: Default::default(),
+            input: Default::default(),
+        };
+        let signature = signer.inner.sign_transaction_sync(&mut tx).unwrap();
+
+        TxEnvelope::Eip1559(tx.into_signed(signature))
+    }
+
     #[test]
     fn test_fetched_balances_are_updated_after_transfer_of_funds() {
         let to = Address::new(hex!("44223344556677889900ffeeaabbccddee111111"));
@@ -1125,20 +1145,7 @@ mod tests {
             0x03421ee50df45cacu64,
         );
 
-        let signer = Signer::new(&PRIVATE_KEY);
-        let mut tx = TxEip1559 {
-            chain_id: CHAIN_ID,
-            nonce: signer.nonce,
-            gas_limit: u64::MAX,
-            max_fee_per_gas: 0,
-            max_priority_fee_per_gas: 0,
-            to: TxKind::Call(to),
-            value: amount,
-            access_list: Default::default(),
-            input: Default::default(),
-        };
-        let signature = signer.inner.sign_transaction_sync(&mut tx).unwrap();
-        let tx = TxEnvelope::Eip1559(tx.into_signed(signature));
+        let tx = create_transaction(0);
 
         state_actor.handle_command(Command::AddTransaction { tx: tx.clone() });
         state_actor.handle_command(Command::StartBlockBuild {
@@ -1177,27 +1184,13 @@ mod tests {
     fn test_fetched_nonces_are_updated_after_executing_transaction() {
         let to = Address::new(hex!("44223344556677889900ffeeaabbccddee111111"));
         let initial_balance = U256::from(5);
-        let amount = U256::from(4);
         let (mut state_actor, _) = create_state_actor_with_fake_queries(
             EVM_ADDRESS.to_move_address(),
             initial_balance,
             0x03421ee50df45cacu64,
         );
 
-        let signer = Signer::new(&PRIVATE_KEY);
-        let mut tx = TxEip1559 {
-            chain_id: CHAIN_ID,
-            nonce: signer.nonce,
-            gas_limit: u64::MAX,
-            max_fee_per_gas: 0,
-            max_priority_fee_per_gas: 0,
-            to: TxKind::Call(to),
-            value: amount,
-            access_list: Default::default(),
-            input: Default::default(),
-        };
-        let signature = signer.inner.sign_transaction_sync(&mut tx).unwrap();
-        let tx = TxEnvelope::Eip1559(tx.into_signed(signature));
+        let tx = create_transaction(0);
 
         state_actor.handle_command(Command::AddTransaction { tx });
 
@@ -1237,29 +1230,14 @@ mod tests {
 
     #[test]
     fn test_one_payload_can_be_fetched_repeatedly() {
-        let to = Address::new(hex!("44223344556677889900ffeeaabbccddee111111"));
         let initial_balance = U256::from(5);
-        let amount = U256::from(4);
         let (mut state_actor, _) = create_state_actor_with_fake_queries(
             EVM_ADDRESS.to_move_address(),
             initial_balance,
             0x03421ee50df45cacu64,
         );
 
-        let signer = Signer::new(&PRIVATE_KEY);
-        let mut tx = TxEip1559 {
-            chain_id: CHAIN_ID,
-            nonce: signer.nonce,
-            gas_limit: u64::MAX,
-            max_fee_per_gas: 0,
-            max_priority_fee_per_gas: 0,
-            to: TxKind::Call(to),
-            value: amount,
-            access_list: Default::default(),
-            input: Default::default(),
-        };
-        let signature = signer.inner.sign_transaction_sync(&mut tx).unwrap();
-        let tx = TxEnvelope::Eip1559(tx.into_signed(signature));
+        let tx = create_transaction(0);
 
         state_actor.handle_command(Command::AddTransaction { tx });
 
@@ -1294,29 +1272,14 @@ mod tests {
 
     #[test]
     fn test_older_payload_can_be_fetched_again_successfully() {
-        let to = Address::new(hex!("44223344556677889900ffeeaabbccddee111111"));
         let initial_balance = U256::from(15);
-        let amount = U256::from(4);
         let (mut state_actor, _) = create_state_actor_with_fake_queries(
             EVM_ADDRESS.to_move_address(),
             initial_balance,
             StatePayloadId,
         );
 
-        let signer = Signer::new(&PRIVATE_KEY);
-        let mut tx = TxEip1559 {
-            chain_id: CHAIN_ID,
-            nonce: signer.nonce,
-            gas_limit: u64::MAX,
-            max_fee_per_gas: 0,
-            max_priority_fee_per_gas: 0,
-            to: TxKind::Call(to),
-            value: amount,
-            access_list: Default::default(),
-            input: Default::default(),
-        };
-        let signature = signer.inner.sign_transaction_sync(&mut tx).unwrap();
-        let tx = TxEnvelope::Eip1559(tx.into_signed(signature));
+        let tx = create_transaction(0);
 
         state_actor.handle_command(Command::AddTransaction { tx });
 
@@ -1337,19 +1300,7 @@ mod tests {
 
         let expected_payload = rx.blocking_recv().unwrap();
 
-        let mut tx = TxEip1559 {
-            chain_id: CHAIN_ID,
-            nonce: signer.nonce + 1,
-            gas_limit: u64::MAX,
-            max_fee_per_gas: 0,
-            max_priority_fee_per_gas: 0,
-            to: TxKind::Call(to),
-            value: amount,
-            access_list: Default::default(),
-            input: Default::default(),
-        };
-        let signature = signer.inner.sign_transaction_sync(&mut tx).unwrap();
-        let tx = TxEnvelope::Eip1559(tx.into_signed(signature));
+        let tx = create_transaction(1);
 
         state_actor.handle_command(Command::AddTransaction { tx });
 
