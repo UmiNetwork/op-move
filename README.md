@@ -6,17 +6,17 @@ A Move VM execution layer for OP Stack.
 
 Make sure you have `go` installed on your system. Other dependencies include [foundry](http://getfoundry.sh/) for smart contract interaction and [jq](https://jqlang.github.io/jq/) being called indirectly by Optimism itself.
 
-Optimism monorepo is pulled in as a submodule of this repo. The submodule is used to compile and deploy Optimism contracts.
-If you don't see it inside the test folder, try bringing in the Optimism submodule manually
+First, clone the Optimism monorepo. The repo is used to compile and deploy Optimism contracts.
 
 ```bash
-git submodule update --init --recursive
+git clone https://github.com/ethereum-optimism/optimism server/src/tests/optimism
 ```
 
 Make sure the Optimism binaries are built and are in the PATH, i.e. under the `go` path.
 
 ```bash
 cd server/src/tests/optimism
+git checkout f2e5a7a5
 make op-node op-batcher op-proposer
 mv op-node/bin/op-node ~/go/bin/
 mv op-batcher/bin/op-batcher ~/go/bin/
@@ -28,6 +28,7 @@ Similarly, clone the [`op-geth` project](https://github.com/ethereum-optimism/op
 ```bash
 git clone https://github.com/ethereum-optimism/op-geth.git
 cd op-geth
+git checkout f2e69450
 make geth
 mv build/bin/geth ~/go/bin/op-geth # make sure it's saved as op-geth instead of geth
 ```
