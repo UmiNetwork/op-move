@@ -3,7 +3,7 @@ use {
         json_utils::{access_state_error, parse_params_0},
         jsonrpc::JsonRpcError,
     },
-    moved::types::state::{Query, StateMessage},
+    moved_app::{Query, StateMessage},
     tokio::sync::{mpsc, oneshot},
 };
 

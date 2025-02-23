@@ -1,5 +1,5 @@
 use {
-    crate::{types::session_id::SessionId, EthToken},
+    crate::move_execution::session_id::SessionId,
     alloy::primitives::U256,
     aptos_table_natives::TableResolver,
     move_binary_format::errors::PartialVMError,
@@ -16,7 +16,10 @@ use {
         values::Value,
     },
     moved_genesis::FRAMEWORK_ADDRESS,
-    moved_shared::primitives::{ToMoveU256, ToU256},
+    moved_shared::{
+        error::EthToken,
+        primitives::{ToMoveU256, ToU256},
+    },
 };
 
 const TOKEN_ADMIN: AccountAddress = FRAMEWORK_ADDRESS;
@@ -41,7 +44,7 @@ pub trait BaseTokenAccounts {
         session: &mut Session,
         traversal_context: &mut TraversalContext,
         gas_meter: &mut G,
-    ) -> Result<(), crate::Error>;
+    ) -> Result<(), moved_shared::error::Error>;
 
     fn refund_gas_cost(
         &self,
@@ -49,7 +52,7 @@ pub trait BaseTokenAccounts {
         amount: u64,
         session: &mut Session,
         traversal_context: &mut TraversalContext,
-    ) -> Result<(), crate::Error>;
+    ) -> Result<(), moved_shared::error::Error>;
 
     fn transfer<G: GasMeter>(
         &self,
@@ -57,7 +60,7 @@ pub trait BaseTokenAccounts {
         session: &mut Session,
         traversal_context: &mut TraversalContext,
         gas_meter: &mut G,
-    ) -> Result<(), crate::Error>;
+    ) -> Result<(), moved_shared::error::Error>;
 }
 
 #[derive(Debug)]
@@ -79,7 +82,7 @@ impl BaseTokenAccounts for MovedBaseTokenAccounts {
         session: &mut Session,
         traversal_context: &mut TraversalContext,
         gas_meter: &mut G,
-    ) -> Result<(), crate::Error> {
+    ) -> Result<(), moved_shared::error::Error> {
         transfer_eth(
             TransferArgs {
                 from,
@@ -98,7 +101,7 @@ impl BaseTokenAccounts for MovedBaseTokenAccounts {
         amount: u64,
         session: &mut Session,
         traversal_context: &mut TraversalContext,
-    ) -> Result<(), crate::Error> {
+    ) -> Result<(), moved_shared::error::Error> {
         let mut gas_meter = UnmeteredGasMeter;
         transfer_eth(
             TransferArgs {
@@ -118,7 +121,7 @@ impl BaseTokenAccounts for MovedBaseTokenAccounts {
         session: &mut Session,
         traversal_context: &mut TraversalContext,
         gas_meter: &mut G,
-    ) -> Result<(), crate::Error> {
+    ) -> Result<(), moved_shared::error::Error> {
         transfer_eth(args, session, traversal_context, gas_meter)
     }
 }
@@ -129,7 +132,7 @@ pub fn mint_eth<G: GasMeter>(
     session: &mut Session,
     traversal_context: &mut TraversalContext,
     gas_meter: &mut G,
-) -> Result<(), crate::Error> {
+) -> Result<(), moved_shared::error::Error> {
     if amount.is_zero() {
         return Ok(());
     }
@@ -154,7 +157,7 @@ pub fn mint_eth<G: GasMeter>(
         )
         .map_err(|e| {
             println!("{e:?}");
-            crate::Error::eth_token_invariant_violation(EthToken::MintAlwaysSucceeds)
+            moved_shared::error::Error::eth_token_invariant_violation(EthToken::MintAlwaysSucceeds)
         })?;
 
     Ok(())
@@ -166,7 +169,7 @@ pub fn burn_eth<G: GasMeter>(
     session: &mut Session,
     traversal_context: &mut TraversalContext,
     gas_meter: &mut G,
-) -> Result<(), crate::Error> {
+) -> Result<(), moved_shared::error::Error> {
     if amount.is_zero() {
         return Ok(());
     }
@@ -197,7 +200,7 @@ pub fn transfer_eth<G: GasMeter>(
     session: &mut Session,
     traversal_context: &mut TraversalContext,
     gas_meter: &mut G,
-) -> Result<(), crate::Error> {
+) -> Result<(), moved_shared::error::Error> {
     if args.amount.is_zero() {
         return Ok(());
     }
@@ -232,7 +235,7 @@ pub fn get_eth_balance<G: GasMeter>(
     session: &mut Session,
     traversal_context: &mut TraversalContext,
     gas_meter: &mut G,
-) -> Result<U256, crate::Error> {
+) -> Result<U256, moved_shared::error::Error> {
     let addr_arg = bcs::to_bytes(account).expect("address can serialize");
     let token_module_id = ModuleId::new(FRAMEWORK_ADDRESS, TOKEN_MODULE_NAME.into());
 
@@ -246,26 +249,28 @@ pub fn get_eth_balance<G: GasMeter>(
             traversal_context,
         )
         .map_err(|_| {
-            crate::Error::eth_token_invariant_violation(EthToken::GetBalanceAlwaysSucceeds)
+            moved_shared::error::Error::eth_token_invariant_violation(
+                EthToken::GetBalanceAlwaysSucceeds,
+            )
         })?
         .return_values;
 
     let (raw_output, layout) =
         return_values
             .first()
-            .ok_or(crate::Error::eth_token_invariant_violation(
+            .ok_or(moved_shared::error::Error::eth_token_invariant_violation(
                 EthToken::GetBalanceReturnsAValue,
             ))?;
 
     let value = Value::simple_deserialize(raw_output, layout)
-        .ok_or(crate::Error::eth_token_invariant_violation(
+        .ok_or(moved_shared::error::Error::eth_token_invariant_violation(
             EthToken::GetBalanceReturnDeserializes,
         ))?
         .as_move_value(layout);
 
     match value {
         MoveValue::U256(balance) => Ok(balance.to_u256()),
-        _ => Err(crate::Error::eth_token_invariant_violation(
+        _ => Err(moved_shared::error::Error::eth_token_invariant_violation(
             EthToken::GetBalanceReturnsU256,
         )),
     }
@@ -293,7 +298,7 @@ pub fn quick_get_eth_balance(
 
 #[cfg(any(feature = "test-doubles", test))]
 mod tests {
-    use {super::*, crate::Error};
+    use {super::*, moved_shared::error::Error};
 
     impl BaseTokenAccounts for () {
         fn charge_gas_cost<G: GasMeter>(
@@ -323,7 +328,7 @@ mod tests {
             _amount: u64,
             _session: &mut Session,
             _traversal_context: &mut TraversalContext,
-        ) -> Result<(), crate::Error> {
+        ) -> Result<(), Error> {
             Ok(())
         }
     }

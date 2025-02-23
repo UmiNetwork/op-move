@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "api",
+    "app",
     "evm-ext",
     "genesis",
     "genesis-builder",
@@ -23,17 +24,17 @@ alloy = { version = "0.6", features = ["full", "genesis", "getrandom", "rlp", "s
 alloy-rlp = { version = "0.3", features = ["derive"] }
 alloy-trie = "0.7"
 anyhow = "1"
+aptos-crypto = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 aptos-framework = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 aptos-gas-algebra = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 aptos-gas-meter = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 aptos-gas-schedule = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
+aptos-native-interface = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
+aptos-storage-interface = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 aptos-table-natives = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 aptos-types = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 aptos-vm = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 aptos-vm-types = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
-aptos-crypto = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
-aptos-native-interface = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
-aptos-storage-interface = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 bcs = { git = "https://github.com/aptos-labs/bcs" }
 better_any = "0.1.1"
 bytes = "1.6"
@@ -57,10 +58,11 @@ move-vm-runtime = { git = "https://github.com/aptos-labs/aptos-core", tag = "apt
 move-vm-test-utils = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0", features = ["table-extension"] }
 move-vm-types = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 moved = { path = "moved" }
+moved-api = { path = "api" }
+moved-app = { path = "app" }
 moved-evm-ext = { path = "evm-ext" }
 moved-genesis = { path = "genesis" }
 moved-genesis-image = { path = "genesis-image" }
-moved-api = { path = "api" }
 moved-shared = { path = "shared" }
 moved-state = { path = "state" }
 moved-storage = { path = "storage" }

@@ -102,7 +102,9 @@ fn test_very_low_gas_limit_makes_tx_invalid() {
     );
     assert!(matches!(
         outcome.unwrap_err(),
-        crate::Error::InvalidTransaction(crate::InvalidTransactionCause::FailedToPayL2Fee)
+        moved_shared::error::Error::InvalidTransaction(
+            moved_shared::error::InvalidTransactionCause::FailedToPayL2Fee
+        )
     ));
 
     let sender_balance = ctx.get_balance(sender);

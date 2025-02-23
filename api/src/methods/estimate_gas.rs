@@ -5,7 +5,7 @@ use {
         jsonrpc::JsonRpcError,
     },
     alloy::{eips::BlockNumberOrTag, rpc::types::TransactionRequest},
-    moved::types::state::{Query, StateMessage},
+    moved_app::{Query, StateMessage},
     tokio::sync::{mpsc, oneshot},
 };
 

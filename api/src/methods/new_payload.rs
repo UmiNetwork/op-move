@@ -4,7 +4,7 @@ use {
         jsonrpc::JsonRpcError,
         schema::{ExecutionPayloadV3, GetPayloadResponseV3, PayloadStatusV1, Status},
     },
-    moved::types::state::{Query, StateMessage},
+    moved_app::{Query, StateMessage},
     moved_shared::primitives::B256,
     tokio::sync::{mpsc, oneshot},
 };
@@ -171,7 +171,7 @@ mod tests {
             in_memory::SharedMemory,
             payload::InMemoryPayloadQueries,
             receipt::{InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory},
-            state_actor::InMemoryStateQueries,
+            state::InMemoryStateQueries,
             transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
         },
         moved_genesis::config::GenesisConfig,
@@ -267,7 +267,7 @@ mod tests {
         moved_genesis::apply(changes.clone(), table_changes, &genesis_config, &mut state);
         let initial_state_root = genesis_config.initial_state_root;
 
-        let state = moved::state_actor::StateActor::new(
+        let state = moved_app::StateActor::new(
             rx,
             state,
             head_hash,
@@ -291,9 +291,9 @@ mod tests {
             InMemoryReceiptRepository::new(),
             InMemoryReceiptQueries::new(),
             InMemoryPayloadQueries::new(),
-            moved::state_actor::StateActor::on_tx_noop(),
-            moved::state_actor::StateActor::on_tx_batch_noop(),
-            moved::state_actor::StateActor::on_payload_in_memory(),
+            moved_app::StateActor::on_tx_noop(),
+            moved_app::StateActor::on_tx_batch_noop(),
+            moved_app::StateActor::on_payload_in_memory(),
         );
         let state_handle = state.spawn();
 

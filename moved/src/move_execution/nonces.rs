@@ -1,5 +1,5 @@
 use {
-    crate::{types::session_id::SessionId, Error, InvalidTransactionCause, NonceChecking},
+    crate::move_execution::session_id::SessionId,
     aptos_table_natives::TableResolver,
     move_binary_format::errors::PartialVMError,
     move_core_types::{
@@ -15,6 +15,7 @@ use {
         values::Value,
     },
     moved_genesis::FRAMEWORK_ADDRESS,
+    moved_shared::error::{Error, InvalidTransactionCause, NonceChecking},
 };
 
 const ACCOUNT_MODULE_NAME: &IdentStr = ident_str!("account");

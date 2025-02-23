@@ -3,7 +3,7 @@ mod in_memory;
 mod read;
 
 pub use {
-    id::{NewPayloadId, NewPayloadIdInput, StatePayloadId},
+    id::{NewPayloadId, NewPayloadIdInput, PayloadId, StatePayloadId},
     in_memory::InMemoryPayloadQueries,
-    read::PayloadQueries,
+    read::{BlobsBundle, ExecutionPayload, PayloadQueries, PayloadResponse, Withdrawal},
 };

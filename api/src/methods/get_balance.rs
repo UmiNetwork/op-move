@@ -7,7 +7,7 @@ use {
         eips::BlockNumberOrTag,
         primitives::{Address, U256},
     },
-    moved::types::state::{Query, StateMessage},
+    moved_app::{Query, StateMessage},
     tokio::sync::{mpsc, oneshot},
 };
 

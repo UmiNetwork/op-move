@@ -3,12 +3,14 @@ pub use utils::*;
 use {
     super::*,
     crate::{
-        move_execution::eth_token::quick_get_eth_balance,
-        tests::{signer::Signer, ALT_EVM_ADDRESS, ALT_PRIVATE_KEY, EVM_ADDRESS, PRIVATE_KEY},
-        types::transactions::{
-            DepositedTx, ExtendedTxEnvelope, NormalizedExtendedTxEnvelope, ScriptOrModule,
-            TransactionData,
+        move_execution::{
+            eth_token::quick_get_eth_balance,
+            transaction::{
+                DepositedTx, ExtendedTxEnvelope, NormalizedExtendedTxEnvelope, ScriptOrModule,
+                TransactionData,
+            },
         },
+        tests::{signer::Signer, ALT_EVM_ADDRESS, ALT_PRIVATE_KEY, EVM_ADDRESS, PRIVATE_KEY},
     },
     alloy::{
         consensus::{transaction::TxEip1559, SignableTransaction, TxEnvelope},

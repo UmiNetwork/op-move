@@ -11,14 +11,13 @@ use {
     },
     move_table_extension::{TableChangeSet, TableResolver},
     moved::{
-        move_execution::{quick_get_eth_balance, quick_get_nonce},
-        state_actor::{
-            proof_from_trie_and_resolver, Balance, BlockHeight, EthTrieResolver, Nonce,
-            StateQueries,
+        move_execution::{
+            quick_get_eth_balance, quick_get_nonce,
+            transaction::{L2_HIGHEST_ADDRESS, L2_LOWEST_ADDRESS},
         },
-        types::{
-            queries::ProofResponse,
-            transactions::{L2_HIGHEST_ADDRESS, L2_LOWEST_ADDRESS},
+        state::{
+            proof_from_trie_and_resolver, Balance, BlockHeight, EthTrieResolver, Nonce,
+            ProofResponse, StateQueries,
         },
     },
     moved_shared::primitives::{ToEthAddress, B256, U256},

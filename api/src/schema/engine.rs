@@ -2,7 +2,8 @@
 //! for specification of types.
 
 use {
-    moved::types::state::{BlobsBundle, ExecutionPayload, Payload, PayloadResponse, Withdrawal},
+    moved::payload::{BlobsBundle, ExecutionPayload, PayloadResponse, Withdrawal},
+    moved_app::Payload,
     moved_shared::primitives::{Address, Bytes, B2048, B256, U256, U64},
     serde::{Deserialize, Serialize},
     std::str::FromStr,

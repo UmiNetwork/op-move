@@ -1,5 +1,5 @@
 use {
-    crate::types::state::BlockResponse,
+    crate::block::BlockResponse,
     alloy::eips::eip2718::Encodable2718,
     moved_shared::primitives::{B256, U256},
     op_alloy::consensus::OpTxEnvelope,

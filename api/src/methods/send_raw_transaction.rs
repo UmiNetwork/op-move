@@ -4,7 +4,7 @@ use {
         jsonrpc::JsonRpcError,
     },
     alloy::{consensus::transaction::TxEnvelope, rlp::Decodable},
-    moved::types::state::{Command, StateMessage},
+    moved_app::{Command, StateMessage},
     moved_shared::primitives::{Bytes, B256},
     tokio::sync::mpsc,
 };

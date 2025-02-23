@@ -4,9 +4,8 @@ use {
         transaction,
     },
     moved::{
-        block::{BlockQueries, BlockRepository, ExtendedBlock},
+        block::{BlockQueries, BlockRepository, BlockResponse, ExtendedBlock},
         transaction::ExtendedTransaction,
-        types::state::BlockResponse,
     },
     moved_shared::primitives::B256,
     rocksdb::{AsColumnFamilyRef, WriteBatchWithTransaction, DB as RocksDb},

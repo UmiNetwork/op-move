@@ -22,6 +22,7 @@ move-binary-format.workspace = true
 move-core-types.workspace = true
 moved.workspace = true
 moved-api.workspace = true
+moved-app.workspace = true
 moved-genesis.workspace = true
 moved-shared.workspace = true
 moved-state.workspace = true
@@ -44,5 +45,5 @@ moved-genesis-image.workspace = true
 openssl.workspace = true
 
 [[bin]]
-path = "src/main.rs"
 name = "op-move"
+path = "src/main.rs"

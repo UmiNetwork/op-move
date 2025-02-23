@@ -1,12 +1,10 @@
 use {
-    crate::{
-        error::UserError,
-        move_execution::{
-            create_move_vm, create_vm_session, eth_token,
-            gas::{new_gas_meter, total_gas_used},
-            DepositExecutionInput, ADDRESS_LAYOUT, U256_LAYOUT,
-        },
-        types::{session_id::SessionId, transactions::TransactionExecutionOutcome},
+    crate::move_execution::{
+        create_move_vm, create_vm_session, eth_token,
+        gas::{new_gas_meter, total_gas_used},
+        session_id::SessionId,
+        transaction::TransactionExecutionOutcome,
+        DepositExecutionInput, ADDRESS_LAYOUT, U256_LAYOUT,
     },
     alloy::{hex, primitives::U256},
     aptos_table_natives::TableResolver,
@@ -20,12 +18,15 @@ use {
         self, extract_evm_changes, extract_evm_result, EvmNativeOutcome, CODE_LAYOUT,
         EVM_CALL_FN_NAME, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
     },
-    moved_shared::primitives::{ToMoveAddress, ToMoveU256, B256},
+    moved_shared::{
+        error::UserError,
+        primitives::{ToMoveAddress, ToMoveU256, B256},
+    },
 };
 
 #[cfg(any(feature = "test-doubles", test))]
 use {
-    crate::types::transactions::DepositedTx, moved_evm_ext::HeaderForExecution,
+    crate::move_execution::transaction::DepositedTx, moved_evm_ext::HeaderForExecution,
     moved_genesis::config::GenesisConfig,
 };
 
@@ -37,7 +38,7 @@ const ETH_BRIDGE_FINALIZED: B256 = B256::new(hex!(
 
 pub(super) fn execute_deposited_transaction<S: MoveResolver<PartialVMError> + TableResolver>(
     input: DepositExecutionInput<S>,
-) -> crate::Result<TransactionExecutionOutcome> {
+) -> moved_shared::error::Result<TransactionExecutionOutcome> {
     #[cfg(any(feature = "test-doubles", test))]
     if input.tx.data.is_empty() {
         return direct_mint(
@@ -172,7 +173,7 @@ fn direct_mint(
     state: &(impl MoveResolver<PartialVMError> + TableResolver),
     genesis_config: &GenesisConfig,
     block_header: HeaderForExecution,
-) -> crate::Result<TransactionExecutionOutcome> {
+) -> moved_shared::error::Result<TransactionExecutionOutcome> {
     use crate::move_execution::Logs;
 
     let amount = tx.mint.saturating_add(tx.value);

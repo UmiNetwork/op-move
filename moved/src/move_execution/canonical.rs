@@ -1,23 +1,16 @@
 use {
     super::{L2GasFee, L2GasFeeInput},
-    crate::{
-        move_execution::{
-            create_move_vm, create_vm_session,
-            eth_token::{BaseTokenAccounts, TransferArgs},
-            execute::{deploy_module, execute_entry_function, execute_l2_contract, execute_script},
-            gas::{new_gas_meter, total_gas_used},
-            nonces::check_nonce,
-            CanonicalExecutionInput, Logs,
+    crate::move_execution::{
+        create_move_vm, create_vm_session,
+        eth_token::{BaseTokenAccounts, TransferArgs},
+        execute::{deploy_module, execute_entry_function, execute_l2_contract, execute_script},
+        gas::{new_gas_meter, total_gas_used},
+        nonces::check_nonce,
+        session_id::SessionId,
+        transaction::{
+            NormalizedEthTransaction, ScriptOrModule, TransactionData, TransactionExecutionOutcome,
         },
-        types::{
-            session_id::SessionId,
-            transactions::{
-                NormalizedEthTransaction, ScriptOrModule, TransactionData,
-                TransactionExecutionOutcome,
-            },
-        },
-        Error::{InvalidTransaction, User},
-        EthToken, InvalidTransactionCause, InvariantViolation,
+        CanonicalExecutionInput, Logs,
     },
     aptos_gas_meter::{AptosGasMeter, StandardGasAlgebra, StandardGasMeter},
     aptos_table_natives::TableResolver,
@@ -28,7 +21,13 @@ use {
         session::Session,
     },
     moved_genesis::config::GenesisConfig,
-    moved_shared::primitives::{ToMoveAddress, ToSaturatedU64},
+    moved_shared::{
+        error::{
+            Error::{InvalidTransaction, User},
+            EthToken, InvalidTransactionCause, InvariantViolation,
+        },
+        primitives::{ToMoveAddress, ToSaturatedU64},
+    },
 };
 
 pub struct CanonicalVerificationInput<'input, 'r, 'l, B> {
@@ -44,7 +43,7 @@ pub struct CanonicalVerificationInput<'input, 'r, 'l, B> {
 
 pub(super) fn verify_transaction<B: BaseTokenAccounts>(
     input: &mut CanonicalVerificationInput<B>,
-) -> crate::Result<()> {
+) -> moved_shared::error::Result<()> {
     if let Some(chain_id) = input.tx.chain_id {
         if chain_id != input.genesis_config.chain_id {
             return Err(InvalidTransactionCause::IncorrectChainId.into());
@@ -105,7 +104,7 @@ pub(super) fn execute_canonical_transaction<
     B: BaseTokenAccounts,
 >(
     input: CanonicalExecutionInput<S, F, B>,
-) -> crate::Result<TransactionExecutionOutcome> {
+) -> moved_shared::error::Result<TransactionExecutionOutcome> {
     let sender_move_address = input.tx.signer.to_move_address();
 
     let tx_data = TransactionData::parse_from(input.tx)?;
@@ -213,7 +212,7 @@ pub(super) fn execute_canonical_transaction<
             verify_input.traversal_context,
         )
         .map_err(|_| {
-            crate::Error::InvariantViolation(InvariantViolation::EthToken(
+            moved_shared::error::Error::InvariantViolation(InvariantViolation::EthToken(
                 EthToken::RefundAlwaysSucceeds,
             ))
         })?;

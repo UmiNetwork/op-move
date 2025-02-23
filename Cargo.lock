@@ -6784,6 +6784,7 @@ dependencies = [
  "alloy",
  "move-core-types 0.0.4 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
  "moved",
+ "moved-app",
  "moved-genesis",
  "moved-genesis-image",
  "moved-shared",
@@ -6791,6 +6792,44 @@ dependencies = [
  "serde",
  "serde_json",
  "test-case",
+ "tokio",
+]
+
+[[package]]
+name = "moved-app"
+version = "0.1.0"
+dependencies = [
+ "alloy",
+ "alloy-rlp",
+ "alloy-trie",
+ "anyhow",
+ "aptos-framework",
+ "aptos-gas-meter",
+ "aptos-table-natives",
+ "aptos-types",
+ "aptos-vm",
+ "bcs 0.1.3",
+ "bytes",
+ "eth_trie",
+ "move-binary-format 0.0.3 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
+ "move-compiler 0.0.1 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
+ "move-core-types 0.0.4 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
+ "move-table-extension",
+ "move-vm-runtime",
+ "move-vm-types 0.1.0 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
+ "moved",
+ "moved-evm-ext",
+ "moved-genesis",
+ "moved-genesis-image",
+ "moved-shared",
+ "moved-state",
+ "op-alloy",
+ "regex",
+ "revm",
+ "serde",
+ "sha2 0.10.8",
+ "test-case",
+ "thiserror 1.0.69",
  "tokio",
 ]
 
@@ -6875,6 +6914,7 @@ dependencies = [
  "move-core-types 0.0.4 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
  "moved",
  "moved-api",
+ "moved-app",
  "moved-evm-ext",
  "moved-genesis",
  "moved-genesis-image",
@@ -6895,9 +6935,12 @@ name = "moved-shared"
 version = "0.1.0"
 dependencies = [
  "alloy",
+ "bcs 0.1.3",
+ "move-binary-format 0.0.3 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
  "move-core-types 0.0.4 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
  "op-alloy",
  "test-case",
+ "thiserror 1.0.69",
 ]
 
 [[package]]

@@ -159,7 +159,7 @@ impl TestContext {
         l1_cost: u64,
         l2_gas_limit: u64,
         l2_gas_price: U256,
-    ) -> crate::Result<TransactionExecutionOutcome> {
+    ) -> moved_shared::error::Result<TransactionExecutionOutcome> {
         let (tx_hash, tx) = create_transaction_with_value(
             &mut self.signer,
             TxKind::Call(to),
@@ -227,7 +227,7 @@ impl TestContext {
         module_id: &ModuleId,
         function: &str,
         args: impl IntoIterator<Item = &'a MoveValue>,
-    ) -> crate::Error {
+    ) -> moved_shared::error::Error {
         let args = args
             .into_iter()
             .map(|arg| bcs::to_bytes(arg).unwrap())
@@ -250,7 +250,7 @@ impl TestContext {
     pub(crate) fn execute_tx(
         &mut self,
         tx: &TestTransaction,
-    ) -> crate::Result<TransactionExecutionOutcome> {
+    ) -> moved_shared::error::Result<TransactionExecutionOutcome> {
         let l2_fee = CreateMovedL2GasFee.with_default_gas_fee_multiplier();
         let l2_gas_input = L2GasFeeInput::new(tx.l2_gas_limit, tx.l2_gas_price);
         let tx_hash = tx.tx_hash;
