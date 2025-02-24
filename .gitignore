@@ -21,3 +21,6 @@ server/*.log
 
 # Docker mounted volumes
 docker/volumes
+
+# Optimism cloned repository
+server/src/tests/optimism
