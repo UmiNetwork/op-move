@@ -32,6 +32,7 @@ use {
     },
     tokio::sync::mpsc,
     warp::{
+        http::StatusCode,
         hyper::{body::Bytes, Body, Response},
         path::FullPath,
         Filter, Rejection, Reply,
@@ -262,7 +263,7 @@ async fn mirror(
 
     // Handle load balancer health check with a simple response
     if method == Method::GET {
-        return Ok("healthy".into_response());
+        return Ok(StatusCode::OK.into_response());
     }
 
     let is_zipped = headers
