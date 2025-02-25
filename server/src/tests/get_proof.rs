@@ -1,11 +1,12 @@
 use {
     crate::initialize_state_actor,
     eth_trie::{EthTrie, MemoryDB, Trie},
-    moved::types::{queries::ProofResponse, state::StateMessage},
+    moved::state::ProofResponse,
     moved_api::schema::{
         ForkchoiceUpdatedResponseV1, GetBlockResponse, GetPayloadResponseV3, PayloadStatusV1,
         Status,
     },
+    moved_app::StateMessage,
     moved_evm_ext::trie_types,
     moved_genesis::config::GenesisConfig,
     serde::de::DeserializeOwned,

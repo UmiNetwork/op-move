@@ -1,10 +1,8 @@
 pub use alloy::eips::BlockNumberOrTag;
 
 use {
-    moved::{
-        transaction::TransactionResponse,
-        types::state::{BlockResponse, RpcBlock, RpcTransaction},
-    },
+    moved::{block::BlockResponse, transaction::TransactionResponse},
+    moved_app::{RpcBlock, RpcTransaction},
     serde::{Deserialize, Serialize},
 };
 

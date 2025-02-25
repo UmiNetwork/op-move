@@ -7,6 +7,7 @@ edition.workspace = true
 [dependencies]
 alloy.workspace = true
 moved.workspace = true
+moved-app.workspace = true
 moved-shared.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -14,7 +15,10 @@ tokio.workspace = true
 
 [dev-dependencies]
 move-core-types.workspace = true
-moved = { workspace = true, features = ["test-doubles"] }
+moved.features = ["test-doubles"]
+moved.workspace = true
+moved-app.features = ["test-doubles"]
+moved-app.workspace = true
 moved-genesis.workspace = true
 moved-genesis-image.workspace = true
 moved-state.workspace = true

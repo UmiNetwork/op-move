@@ -4,7 +4,7 @@ use {
         jsonrpc::{JsonRpcError, JsonRpcResponse},
         method_name::MethodName,
     },
-    moved::types::state::StateMessage,
+    moved_app::StateMessage,
     tokio::sync::mpsc,
 };
 

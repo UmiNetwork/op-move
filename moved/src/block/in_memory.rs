@@ -2,10 +2,9 @@ use {
     crate::{
         block::{
             root::{BlockQueries, BlockRepository},
-            ExtendedBlock,
+            BlockResponse, ExtendedBlock,
         },
         in_memory::SharedMemory,
-        types::state::BlockResponse,
     },
     moved_shared::primitives::B256,
     std::{collections::HashMap, convert::Infallible},

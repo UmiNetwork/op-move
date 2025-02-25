@@ -1,12 +1,12 @@
 use {
-    crate::{
-        move_execution::{quick_get_eth_balance, quick_get_nonce},
-        types::{
-            queries::{ProofResponse, StorageProof},
-            transactions::{L2_HIGHEST_ADDRESS, L2_LOWEST_ADDRESS},
-        },
+    crate::move_execution::{
+        quick_get_eth_balance, quick_get_nonce,
+        transaction::{L2_HIGHEST_ADDRESS, L2_LOWEST_ADDRESS},
     },
-    alloy::primitives::keccak256,
+    alloy::{
+        primitives::keccak256,
+        rpc::types::{EIP1186AccountProofResponse, EIP1186StorageProof},
+    },
     aptos_types::state_store::{state_key::StateKey, state_value::StateValue},
     bytes::Bytes,
     eth_trie::{EthTrie, Trie, TrieError, DB},
@@ -27,6 +27,9 @@ use {
     },
     std::{fmt::Debug, sync::Arc},
 };
+
+pub type ProofResponse = EIP1186AccountProofResponse;
+pub type StorageProof = EIP1186StorageProof;
 
 /// A non-negative integer for indicating the amount of base token on an account.
 pub type Balance = U256;
@@ -313,13 +316,62 @@ fn trie_err(e: TrieError) -> PartialVMError {
     PartialVMError::new(StatusCode::STORAGE_ERROR).with_message(format!("{e:?}"))
 }
 
+#[cfg(any(feature = "test-doubles", test))]
+pub mod test_doubles {
+    use {
+        super::*,
+        crate::state::{Balance, BlockHeight, Nonce, ProofResponse},
+        eth_trie::DB,
+        move_core_types::account_address::AccountAddress,
+        moved_shared::primitives::U256,
+        std::sync::Arc,
+    };
+
+    pub struct MockStateQueries(pub AccountAddress, pub BlockHeight);
+
+    impl StateQueries for MockStateQueries {
+        fn balance_at(
+            &self,
+            _db: Arc<impl DB>,
+            account: AccountAddress,
+            height: BlockHeight,
+        ) -> Option<Balance> {
+            assert_eq!(account, self.0);
+            assert_eq!(height, self.1);
+
+            Some(U256::from(5))
+        }
+
+        fn nonce_at(
+            &self,
+            _db: Arc<impl DB>,
+            account: AccountAddress,
+            height: BlockHeight,
+        ) -> Option<Nonce> {
+            assert_eq!(account, self.0);
+            assert_eq!(height, self.1);
+
+            Some(3)
+        }
+
+        fn proof_at(
+            &self,
+            _db: Arc<impl DB>,
+            _account: AccountAddress,
+            _storage_slots: &[U256],
+            _height: BlockHeight,
+        ) -> Option<ProofResponse> {
+            None
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use {
         super::*,
-        crate::{
-            move_execution::{check_nonce, create_move_vm, create_vm_session, mint_eth},
-            types::session_id::SessionId,
+        crate::move_execution::{
+            check_nonce, create_move_vm, create_vm_session, mint_eth, session_id::SessionId,
         },
         alloy::hex,
         move_core_types::effects::ChangeSet,

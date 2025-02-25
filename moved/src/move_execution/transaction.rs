@@ -1,5 +1,4 @@
 use {
-    crate::{Error, InvalidTransactionCause, UserError},
     alloy::{
         consensus::{
             Receipt, ReceiptWithBloom, Signed, Transaction, TxEip1559, TxEip2930, TxEnvelope,
@@ -14,7 +13,10 @@ use {
     move_core_types::{
         account_address::AccountAddress, effects::ChangeSet, language_storage::ModuleId,
     },
-    moved_shared::primitives::ToMoveAddress,
+    moved_shared::{
+        error::{Error, InvalidTransactionCause, UserError},
+        primitives::ToMoveAddress,
+    },
     op_alloy::consensus::{
         OpDepositReceipt, OpDepositReceiptWithBloom, OpReceiptEnvelope, OpTxEnvelope,
     },
@@ -398,7 +400,7 @@ pub enum TransactionData {
 }
 
 impl TransactionData {
-    pub fn parse_from(tx: &NormalizedEthTransaction) -> crate::Result<Self> {
+    pub fn parse_from(tx: &NormalizedEthTransaction) -> moved_shared::error::Result<Self> {
         match tx.to {
             TxKind::Call(to) => {
                 if to.ge(&L2_LOWEST_ADDRESS) && to.le(&L2_HIGHEST_ADDRESS) {

@@ -4,7 +4,7 @@ use {
         jsonrpc::JsonRpcError,
         schema::{BlockNumberOrTag, GetBlockResponse},
     },
-    moved::types::state::{Query, StateMessage},
+    moved_app::{Query, StateMessage},
     tokio::sync::{mpsc, oneshot},
 };
 
@@ -39,7 +39,7 @@ async fn inner_execute(
 mod tests {
     use {
         super::*, crate::methods::tests::create_state_actor, alloy::eips::BlockNumberOrTag::*,
-        moved::types::state::Command, test_case::test_case,
+        moved_app::Command, test_case::test_case,
     };
 
     pub fn example_request(tag: BlockNumberOrTag) -> serde_json::Value {

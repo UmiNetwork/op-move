@@ -36,6 +36,7 @@ pub mod tests {
             },
             in_memory::SharedMemory,
             move_execution::{
+                transaction::{DepositedTx, ExtendedTxEnvelope},
                 BaseTokenAccounts, CreateL1GasFee, CreateL2GasFee, MovedBaseTokenAccounts,
             },
             payload::{InMemoryPayloadQueries, NewPayloadId, PayloadQueries},
@@ -43,16 +44,13 @@ pub mod tests {
                 InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory, ReceiptQueries,
                 ReceiptRepository,
             },
-            state_actor::{InMemoryStateQueries, MockStateQueries, StateActor, StateQueries},
+            state::{InMemoryStateQueries, MockStateQueries, StateQueries},
             transaction::{
                 InMemoryTransactionQueries, InMemoryTransactionRepository, TransactionQueries,
                 TransactionRepository,
             },
-            types::{
-                state::{Command, Payload, StateMessage},
-                transactions::{DepositedTx, ExtendedTxEnvelope},
-            },
         },
+        moved_app::{Command, Payload, StateActor, StateMessage},
         moved_genesis::config::{GenesisConfig, CHAIN_ID},
         moved_shared::primitives::{Address, B256, U256, U64},
         moved_state::InMemoryState,
@@ -65,7 +63,7 @@ pub mod tests {
     /// The address corresponding to this private key is 0x8fd379246834eac74B8419FfdA202CF8051F7A03
     pub const PRIVATE_KEY: [u8; 32] = [0xaa; 32];
 
-    pub fn create_state_actor() -> (moved::state_actor::InMemStateActor, Sender<StateMessage>) {
+    pub fn create_state_actor() -> (moved_app::InMemStateActor, Sender<StateMessage>) {
         let genesis_config = GenesisConfig::default();
         let (state_channel, rx) = mpsc::channel(10);
 

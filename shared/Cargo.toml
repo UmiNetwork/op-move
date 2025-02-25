@@ -10,8 +10,11 @@ test-doubles = []
 
 [dependencies]
 alloy.workspace = true
+bcs.workspace = true
+move-binary-format.workspace = true
 move-core-types.workspace = true
 op-alloy.workspace = true
+thiserror.workspace = true
 
 [dev-dependencies]
 test-case.workspace = true

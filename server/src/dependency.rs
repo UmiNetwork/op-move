@@ -21,7 +21,7 @@ pub type ReceiptStorage = moved::receipt::ReceiptMemory;
 #[cfg(feature = "storage")]
 pub type StateQueries = moved_storage::RocksDbStateQueries<'static>;
 #[cfg(not(feature = "storage"))]
-pub type StateQueries = moved::state_actor::InMemoryStateQueries;
+pub type StateQueries = moved::state::InMemoryStateQueries;
 #[cfg(feature = "storage")]
 pub type ReceiptRepository = moved_storage::receipt::RocksDbReceiptRepository;
 #[cfg(not(feature = "storage"))]
@@ -47,7 +47,7 @@ pub type BlockQueries = moved_storage::block::RocksDbBlockQueries;
 #[cfg(not(feature = "storage"))]
 pub type BlockQueries = moved::block::InMemoryBlockQueries;
 
-type StateActor<A, B, C, D, E, F, G, H> = moved::state_actor::StateActor<
+type StateActor<A, B, C, D, E, F, G, H> = moved_app::StateActor<
     A,
     B,
     C,
@@ -66,11 +66,9 @@ type StateActor<A, B, C, D, E, F, G, H> = moved::state_actor::StateActor<
     ReceiptQueries,
     PayloadQueries,
 >;
-type OnTxBatch<A, B, C, D, E, F, G, H> =
-    moved::state_actor::OnTxBatch<StateActor<A, B, C, D, E, F, G, H>>;
-type OnTx<A, B, C, D, E, F, G, H> = moved::state_actor::OnTx<StateActor<A, B, C, D, E, F, G, H>>;
-type OnPayload<A, B, C, D, E, F, G, H> =
-    moved::state_actor::OnPayload<StateActor<A, B, C, D, E, F, G, H>>;
+type OnTxBatch<A, B, C, D, E, F, G, H> = moved_app::OnTxBatch<StateActor<A, B, C, D, E, F, G, H>>;
+type OnTx<A, B, C, D, E, F, G, H> = moved_app::OnTx<StateActor<A, B, C, D, E, F, G, H>>;
+type OnPayload<A, B, C, D, E, F, G, H> = moved_app::OnPayload<StateActor<A, B, C, D, E, F, G, H>>;
 
 pub fn block_hash() -> impl BlockHash + Send + Sync + 'static {
     MovedBlockHash
@@ -124,7 +122,7 @@ pub fn state_query(genesis_config: &GenesisConfig) -> StateQueries {
     }
     #[cfg(not(feature = "storage"))]
     {
-        moved::state_actor::InMemoryStateQueries::from_genesis(genesis_config.initial_state_root)
+        moved::state::InMemoryStateQueries::from_genesis(genesis_config.initial_state_root)
     }
 }
 
@@ -151,7 +149,7 @@ pub fn on_tx_batch<
     }
     #[cfg(not(feature = "storage"))]
     {
-        moved::state_actor::StateActor::on_tx_batch_in_memory()
+        moved_app::StateActor::on_tx_batch_in_memory()
     }
 }
 
@@ -167,11 +165,11 @@ pub fn on_tx<
 >() -> OnTx<A, B, C, D, E, F, G, H> {
     #[cfg(feature = "storage")]
     {
-        moved::state_actor::StateActor::on_tx_noop()
+        moved_app::StateActor::on_tx_noop()
     }
     #[cfg(not(feature = "storage"))]
     {
-        moved::state_actor::StateActor::on_tx_in_memory()
+        moved_app::StateActor::on_tx_in_memory()
     }
 }
 
@@ -193,7 +191,7 @@ pub fn on_payload<
     }
     #[cfg(not(feature = "storage"))]
     {
-        moved::state_actor::StateActor::on_payload_in_memory()
+        moved_app::StateActor::on_payload_in_memory()
     }
 }
 

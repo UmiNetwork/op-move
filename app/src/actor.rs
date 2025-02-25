@@ -1,32 +1,7 @@
-pub use queries::{
-    proof_from_trie_and_resolver, Balance, BlockHeight, EthTrieResolver, InMemoryStateQueries,
-    Nonce, StateMemory, StateQueries, Version,
-};
-#[cfg(any(feature = "test-doubles", test))]
-pub use test_doubles::*;
-
 use {
-    crate::{
-        block::{
-            BaseGasFee, Block, BlockHash, BlockQueries, BlockRepository, ExtendedBlock, Header,
-        },
-        move_execution::{
-            execute_transaction,
-            simulate::{call_transaction, simulate_transaction},
-            BaseTokenAccounts, CanonicalExecutionInput, CreateL1GasFee, CreateL2GasFee,
-            DepositExecutionInput, L1GasFee, L1GasFeeInput, L2GasFeeInput, LogsBloom,
-        },
-        payload::{InMemoryPayloadQueries, NewPayloadId, PayloadQueries},
-        receipt::{ExtendedReceipt, ReceiptQueries, ReceiptRepository},
-        transaction::{ExtendedTransaction, TransactionQueries, TransactionRepository},
-        types::{
-            state::{
-                Command, ExecutionOutcome, Payload, PayloadId, Query, StateMessage,
-                ToPayloadIdInput, WithExecutionOutcome, WithPayloadAttributes,
-            },
-            transactions::{ExtendedTxEnvelope, NormalizedExtendedTxEnvelope},
-        },
-        Error::{InvalidTransaction, InvariantViolation, User},
+    crate::input::{
+        Command, ExecutionOutcome, Payload, Query, StateMessage, ToPayloadIdInput,
+        WithExecutionOutcome, WithPayloadAttributes,
     },
     alloy::{
         consensus::{Receipt, Transaction},
@@ -40,36 +15,53 @@ use {
         rpc::types::FeeHistory,
     },
     move_core_types::effects::ChangeSet,
+    moved::{
+        block::{
+            BaseGasFee, Block, BlockHash, BlockQueries, BlockRepository, ExtendedBlock, Header,
+        },
+        move_execution::{
+            execute_transaction,
+            simulate::{call_transaction, simulate_transaction},
+            transaction::{ExtendedTxEnvelope, NormalizedExtendedTxEnvelope},
+            BaseTokenAccounts, CanonicalExecutionInput, CreateL1GasFee, CreateL2GasFee,
+            DepositExecutionInput, L1GasFee, L1GasFeeInput, L2GasFeeInput, LogsBloom,
+        },
+        payload::{InMemoryPayloadQueries, NewPayloadId, PayloadId, PayloadQueries},
+        receipt::{ExtendedReceipt, ReceiptQueries, ReceiptRepository},
+        state::{InMemoryStateQueries, StateQueries},
+        transaction::{ExtendedTransaction, TransactionQueries, TransactionRepository},
+    },
     moved_evm_ext::HeaderForExecution,
     moved_genesis::config::GenesisConfig,
-    moved_shared::primitives::{ToEthAddress, ToMoveAddress, ToSaturatedU64, B256, U256, U64},
+    moved_shared::{
+        error::Error::{InvalidTransaction, InvariantViolation, User},
+        primitives::{ToEthAddress, ToMoveAddress, ToSaturatedU64, B256, U256, U64},
+    },
     moved_state::State,
     op_alloy::consensus::OpTxEnvelope,
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
 };
 
-mod queries;
-
 #[cfg(any(feature = "test-doubles", test))]
 pub type InMemStateActor = StateActor<
     moved_state::InMemoryState,
     u64,
-    crate::block::MovedBlockHash,
-    crate::block::InMemoryBlockRepository,
-    crate::block::Eip1559GasFee,
+    moved::block::MovedBlockHash,
+    moved::block::InMemoryBlockRepository,
+    moved::block::Eip1559GasFee,
     U256,
     U256,
-    crate::move_execution::MovedBaseTokenAccounts,
-    crate::block::InMemoryBlockQueries,
-    crate::in_memory::SharedMemory,
-    InMemoryStateQueries,
-    crate::transaction::InMemoryTransactionRepository,
-    crate::transaction::InMemoryTransactionQueries,
-    crate::receipt::ReceiptMemory,
-    crate::receipt::InMemoryReceiptRepository,
-    crate::receipt::InMemoryReceiptQueries,
-    crate::payload::InMemoryPayloadQueries,
+    moved::move_execution::MovedBaseTokenAccounts,
+    moved::block::InMemoryBlockQueries,
+    moved::in_memory::SharedMemory,
+    moved::state::InMemoryStateQueries,
+    moved::transaction::InMemoryTransactionRepository,
+    moved::transaction::InMemoryTransactionQueries,
+    moved::receipt::ReceiptMemory,
+    moved::receipt::InMemoryReceiptRepository,
+    moved::receipt::InMemoryReceiptQueries,
+    moved::payload::InMemoryPayloadQueries,
 >;
 
 /// A function invoked on a completion of new transaction execution batch.
@@ -724,52 +716,6 @@ impl<
     }
 }
 
-#[cfg(any(feature = "test-doubles", test))]
-mod test_doubles {
-    use {
-        super::*, eth_trie::DB, move_core_types::account_address::AccountAddress,
-        moved_shared::primitives::U256, std::sync::Arc,
-    };
-
-    pub struct MockStateQueries(pub AccountAddress, pub BlockHeight);
-
-    impl StateQueries for MockStateQueries {
-        fn balance_at(
-            &self,
-            _db: Arc<impl DB>,
-            account: AccountAddress,
-            height: BlockHeight,
-        ) -> Option<Balance> {
-            assert_eq!(account, self.0);
-            assert_eq!(height, self.1);
-
-            Some(U256::from(5))
-        }
-
-        fn nonce_at(
-            &self,
-            _db: Arc<impl DB>,
-            account: AccountAddress,
-            height: BlockHeight,
-        ) -> Option<Nonce> {
-            assert_eq!(account, self.0);
-            assert_eq!(height, self.1);
-
-            Some(3)
-        }
-
-        fn proof_at(
-            &self,
-            _db: Arc<impl DB>,
-            _account: AccountAddress,
-            _storage_slots: &[U256],
-            _height: BlockHeight,
-        ) -> Option<crate::types::queries::ProofResponse> {
-            None
-        }
-    }
-}
-
 #[test]
 fn test_compute_transactions_root() {
     use alloy::{hex, primitives::address};
@@ -844,7 +790,7 @@ fn test_build_block_hash() {
     .with_payload_attributes(payload_attributes)
     .with_execution_outcome(execution_outcome);
 
-    let hash = crate::block::MovedBlockHash.block_hash(&header);
+    let hash = moved::block::MovedBlockHash.block_hash(&header);
     assert_eq!(
         hash,
         B256::new(hex!(
@@ -857,25 +803,26 @@ fn test_build_block_hash() {
 mod tests {
     use {
         super::*,
-        crate::{
-            block::{Eip1559GasFee, InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash},
-            in_memory::SharedMemory,
-            move_execution::{create_move_vm, create_vm_session, MovedBaseTokenAccounts},
-            payload::{InMemoryPayloadQueries, StatePayloadId},
-            receipt::{InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory},
-            tests::{signer::Signer, EVM_ADDRESS, PRIVATE_KEY},
-            transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
-            types::session_id::SessionId,
-        },
         alloy::{
             consensus::{SignableTransaction, TxEip1559, TxEnvelope},
             hex,
             network::TxSignerSync,
-            primitives::TxKind,
+            primitives::{address, TxKind},
         },
         move_core_types::{account_address::AccountAddress, effects::ChangeSet},
         move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
         move_vm_types::gas::UnmeteredGasMeter,
+        moved::{
+            block::{Eip1559GasFee, InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash},
+            in_memory::SharedMemory,
+            move_execution::{
+                create_move_vm, create_vm_session, session_id::SessionId, MovedBaseTokenAccounts,
+            },
+            payload::{InMemoryPayloadQueries, StatePayloadId},
+            receipt::{InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory},
+            state::MockStateQueries,
+            transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
+        },
         moved_genesis::config::{GenesisConfig, CHAIN_ID},
         moved_shared::primitives::Address,
         moved_state::InMemoryState,
@@ -886,6 +833,28 @@ mod tests {
             oneshot,
         },
     };
+
+    /// The address corresponding to this private key is 0x8fd379246834eac74B8419FfdA202CF8051F7A03
+    pub const PRIVATE_KEY: [u8; 32] = [0xaa; 32];
+
+    pub const EVM_ADDRESS: Address = address!("8fd379246834eac74b8419ffda202cf8051f7a03");
+
+    use {alloy::signers::local::PrivateKeySigner, moved::state::BlockHeight};
+
+    #[derive(Debug)]
+    pub struct Signer {
+        pub inner: PrivateKeySigner,
+        pub nonce: u64,
+    }
+
+    impl Signer {
+        pub fn new(key_bytes: &[u8; 32]) -> Self {
+            Self {
+                inner: PrivateKeySigner::from_bytes(&key_bytes.into()).unwrap(),
+                nonce: 0,
+            }
+        }
+    }
 
     fn create_state_actor_with_given_queries<SQ: StateQueries>(
         height: u64,
@@ -964,7 +933,7 @@ mod tests {
         let mut traversal_context = TraversalContext::new(&traversal_storage);
         let mut gas_meter = UnmeteredGasMeter;
 
-        crate::move_execution::mint_eth(
+        moved::move_execution::mint_eth(
             &addr,
             amount,
             &mut session,

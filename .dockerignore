@@ -19,6 +19,7 @@ server/*.log
 !storage
 !moved
 !api
+!app
 !Cargo.lock
 !Cargo.toml
 !rust-toolchain

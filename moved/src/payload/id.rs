@@ -1,9 +1,10 @@
 use {
-    crate::types::state::PayloadId,
     alloy::eips::eip4895::Withdrawal,
-    moved_shared::primitives::{Address, B256},
+    moved_shared::primitives::{Address, B256, U64},
     sha2::{Digest, Sha256},
 };
+
+pub type PayloadId = U64;
 
 /// The payload ID algorithm arguments.
 ///

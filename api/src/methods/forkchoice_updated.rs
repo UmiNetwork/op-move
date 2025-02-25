@@ -8,7 +8,7 @@ use {
             PayloadStatusV1, Status,
         },
     },
-    moved::types::state::{Command, StateMessage},
+    moved_app::{Command, StateMessage},
     tokio::sync::{mpsc, oneshot},
 };
 

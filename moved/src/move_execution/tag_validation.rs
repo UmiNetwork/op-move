@@ -1,5 +1,4 @@
 use {
-    crate::{EntryFunctionValue, Error, InvalidTransactionCause},
     core::str,
     move_core_types::{
         account_address::AccountAddress,
@@ -10,6 +9,7 @@ use {
     },
     move_vm_runtime::session::Session,
     move_vm_types::loaded_data::runtime_types::Type,
+    moved_shared::error::{EntryFunctionValue, Error, InvalidTransactionCause},
 };
 
 const ALLOWED_STRUCTS: [MoveStructInfo<'static>; 5] = [
@@ -45,7 +45,7 @@ const ALLOWED_STRUCTS: [MoveStructInfo<'static>; 5] = [
 /// The reason for this restriction is to respect the invariants that Move contracts
 /// may have around their types. For example token types and capability types should
 /// only be created under specific conditions, not directly deserialized from raw bytes.
-pub fn validate_entry_type_tag(tag: &TypeTag) -> crate::Result<()> {
+pub fn validate_entry_type_tag(tag: &TypeTag) -> moved_shared::error::Result<()> {
     let mut current_tag = tag;
     loop {
         match current_tag {
@@ -108,7 +108,7 @@ pub fn validate_entry_value(
     value: &MoveValue,
     expected_signer: &AccountAddress,
     session: &mut Session,
-) -> crate::Result<()> {
+) -> moved_shared::error::Result<()> {
     let mut stack = Vec::with_capacity(10);
     stack.push((tag, value));
 
@@ -177,7 +177,7 @@ pub fn validate_entry_value(
 }
 
 /// String must be utf-8 encoded bytes.
-fn validate_string(value: &MoveStruct) -> crate::Result<()> {
+fn validate_string(value: &MoveStruct) -> moved_shared::error::Result<()> {
     let inner = value
         .fields()
         .first()
@@ -215,7 +215,7 @@ fn validate_string(value: &MoveStruct) -> crate::Result<()> {
 }
 
 /// Option must be a vector with 0 or 1 values
-fn validate_option(value: &MoveStruct) -> crate::Result<Option<&MoveValue>> {
+fn validate_option(value: &MoveStruct) -> moved_shared::error::Result<Option<&MoveValue>> {
     let inner = value
         .fields()
         .first()
@@ -246,7 +246,7 @@ fn validate_object(
     value: &MoveStruct,
     inner_type: &TypeTag,
     session: &mut Session,
-) -> crate::Result<()> {
+) -> moved_shared::error::Result<()> {
     let inner = value
         .fields()
         .first()
@@ -285,7 +285,7 @@ fn resource_exists(session: &mut Session, addr: AccountAddress, ty: &Type) -> bo
 }
 
 #[inline]
-fn get_object_core_type(session: &mut Session) -> crate::Result<Type> {
+fn get_object_core_type(session: &mut Session) -> moved_shared::error::Result<Type> {
     let type_tag = TypeTag::Struct(Box::new(StructTag {
         address: ALLOWED_STRUCTS[1].address,
         module: ALLOWED_STRUCTS[1].module.into(),
@@ -319,9 +319,8 @@ mod tests {
     use {
         super::*,
         crate::{
-            move_execution::{create_move_vm, create_vm_session},
+            move_execution::{create_move_vm, create_vm_session, session_id::SessionId},
             tests::EVM_ADDRESS,
-            types::session_id::SessionId,
         },
         alloy::primitives::address,
         move_core_types::value::MoveStruct,

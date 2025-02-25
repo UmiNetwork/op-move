@@ -1,8 +1,7 @@
 use {
     crate::{
         in_memory::SharedMemory,
-        payload::PayloadQueries,
-        types::state::{PayloadId, PayloadResponse},
+        payload::{PayloadId, PayloadQueries, PayloadResponse},
     },
     moved_shared::primitives::B256,
     std::{collections::HashMap, convert::Infallible},

@@ -1,12 +1,7 @@
 use {
     super::tag_validation::{validate_entry_type_tag, validate_entry_value},
-    crate::{
-        error::Error,
-        move_execution::{
-            eth_token::burn_eth, layout::has_value_invariants, ADDRESS_LAYOUT, U256_LAYOUT,
-        },
-        Error::User,
-        InvalidTransactionCause, ScriptTransaction, UserError,
+    crate::move_execution::{
+        eth_token::burn_eth, layout::has_value_invariants, ADDRESS_LAYOUT, U256_LAYOUT,
     },
     alloy::primitives::{Log, LogData},
     aptos_types::transaction::{EntryFunction, Module, Script},
@@ -21,7 +16,10 @@ use {
     moved_evm_ext::{
         extract_evm_result, CODE_LAYOUT, EVM_CALL_FN_NAME, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
     },
-    moved_shared::primitives::{ToMoveU256, U256},
+    moved_shared::{
+        error::{Error, Error::User, InvalidTransactionCause, ScriptTransaction, UserError},
+        primitives::{ToMoveU256, U256},
+    },
 };
 
 pub(super) fn execute_entry_function<G: GasMeter>(
@@ -30,7 +28,7 @@ pub(super) fn execute_entry_function<G: GasMeter>(
     session: &mut Session,
     traversal_context: &mut TraversalContext,
     gas_meter: &mut G,
-) -> crate::Result<()> {
+) -> moved_shared::error::Result<()> {
     let (module_id, function_name, ty_args, args) = entry_fn.into_inner();
 
     // Validate signer params match the actual signer
@@ -81,7 +79,7 @@ pub(super) fn execute_script<G: GasMeter>(
     session: &mut Session,
     traversal_context: &mut TraversalContext,
     gas_meter: &mut G,
-) -> crate::Result<()> {
+) -> moved_shared::error::Result<()> {
     let function = session.load_script(script.code(), script.ty_args().to_vec())?;
     let serialized_signer = MoveValue::Signer(*signer).simple_serialize().ok_or(
         Error::script_tx_invariant_violation(ScriptTransaction::ArgsMustSerialize),
@@ -135,7 +133,7 @@ pub(super) fn execute_l2_contract<G: GasMeter>(
     session: &mut Session,
     traversal_context: &mut TraversalContext,
     gas_meter: &mut G,
-) -> crate::Result<Vec<Log<LogData>>> {
+) -> moved_shared::error::Result<Vec<Log<LogData>>> {
     let module = ModuleId::new(EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE.into());
     let function_name = EVM_CALL_FN_NAME;
     // Unwraps in serialization are safe because the layouts match the types.
@@ -179,7 +177,7 @@ pub(super) fn execute_l2_contract<G: GasMeter>(
 
 // If `t` is wrapped in `Type::Reference` or `Type::MutableReference`,
 // return the inner type
-fn strip_reference(t: &Type) -> crate::Result<&Type> {
+fn strip_reference(t: &Type) -> moved_shared::error::Result<&Type> {
     match t {
         Type::Reference(inner) | Type::MutableReference(inner) => {
             match inner.as_ref() {
@@ -200,7 +198,7 @@ pub(super) fn deploy_module<G: GasMeter>(
     address: AccountAddress,
     session: &mut Session,
     gas_meter: &mut G,
-) -> crate::Result<ModuleId> {
+) -> moved_shared::error::Result<ModuleId> {
     let code = code.into_inner();
     let module = CompiledModule::deserialize(&code)?;
     session.publish_module(code, address, gas_meter)?;

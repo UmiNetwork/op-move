@@ -1,11 +1,10 @@
 use {
     crate::{
         move_execution::{
-            create_move_vm, create_vm_session, execute_transaction, tests::*,
-            CanonicalExecutionInput,
+            create_move_vm, create_vm_session, execute_transaction, session_id::SessionId,
+            tests::*, transaction::TransactionData, CanonicalExecutionInput,
         },
         tests::{ALT_EVM_ADDRESS, EVM_ADDRESS},
-        types::{session_id::SessionId, transactions::TransactionData},
     },
     alloy::{
         primitives::utils::parse_ether,

@@ -5,8 +5,7 @@ use {
     },
     moved::{
         block::ExtendedBlock,
-        payload::PayloadQueries,
-        types::state::{PayloadId, PayloadResponse},
+        payload::{PayloadId, PayloadQueries, PayloadResponse},
     },
     moved_shared::primitives::B256,
     rocksdb::{AsColumnFamilyRef, DB as RocksDb},

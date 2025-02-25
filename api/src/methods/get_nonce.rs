@@ -1,7 +1,7 @@
 use {
     crate::{json_utils, json_utils::access_state_error, jsonrpc::JsonRpcError},
     alloy::{eips::BlockNumberOrTag, primitives::Address},
-    moved::types::state::{Query, StateMessage},
+    moved_app::{Query, StateMessage},
     tokio::sync::{mpsc, oneshot},
 };
 

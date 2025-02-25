@@ -1,4 +1,4 @@
-use {super::*, crate::types::transactions::NormalizedExtendedTxEnvelope};
+use {super::*, crate::move_execution::transaction::NormalizedExtendedTxEnvelope};
 
 /// Deposits can be made to the L2.
 #[test]

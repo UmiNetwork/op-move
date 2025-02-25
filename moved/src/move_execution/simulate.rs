@@ -1,21 +1,15 @@
 use {
     super::{CreateL2GasFee, CreateMovedL2GasFee, L2GasFeeInput},
-    crate::{
-        move_execution::{
-            canonical::{verify_transaction, CanonicalVerificationInput},
-            create_move_vm, create_vm_session, execute_transaction,
-            gas::new_gas_meter,
-            quick_get_nonce, BaseTokenAccounts, CanonicalExecutionInput,
+    crate::move_execution::{
+        canonical::{verify_transaction, CanonicalVerificationInput},
+        create_move_vm, create_vm_session, execute_transaction,
+        gas::new_gas_meter,
+        quick_get_nonce,
+        session_id::SessionId,
+        transaction::{
+            NormalizedEthTransaction, ScriptOrModule, TransactionData, TransactionExecutionOutcome,
         },
-        types::{
-            session_id::SessionId,
-            transactions::{
-                NormalizedEthTransaction, ScriptOrModule, TransactionData,
-                TransactionExecutionOutcome,
-            },
-        },
-        Error::InvalidTransaction,
-        InvalidTransactionCause,
+        BaseTokenAccounts, CanonicalExecutionInput,
     },
     alloy::rpc::types::TransactionRequest,
     move_binary_format::errors::PartialVMError,
@@ -24,7 +18,10 @@ use {
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
     moved_evm_ext::HeaderForExecution,
     moved_genesis::config::GenesisConfig,
-    moved_shared::primitives::{ToMoveAddress, B256, U256},
+    moved_shared::{
+        error::{Error::InvalidTransaction, InvalidTransactionCause},
+        primitives::{ToMoveAddress, B256, U256},
+    },
     std::time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -34,7 +31,7 @@ pub fn simulate_transaction(
     genesis_config: &GenesisConfig,
     base_token: &impl BaseTokenAccounts,
     block_height: u64,
-) -> crate::Result<TransactionExecutionOutcome> {
+) -> moved_shared::error::Result<TransactionExecutionOutcome> {
     let mut tx = NormalizedEthTransaction::from(request.clone());
     if request.from.is_some() && request.nonce.is_none() {
         tx.nonce = quick_get_nonce(&tx.signer.to_move_address(), state);
@@ -71,7 +68,7 @@ pub fn call_transaction(
     state: &(impl MoveResolver<PartialVMError> + TableResolver),
     genesis_config: &GenesisConfig,
     base_token: &impl BaseTokenAccounts,
-) -> crate::Result<Vec<u8>> {
+) -> moved_shared::error::Result<Vec<u8>> {
     let mut tx = NormalizedEthTransaction::from(request.clone());
     if request.from.is_some() && request.nonce.is_none() {
         tx.nonce = quick_get_nonce(&tx.signer.to_move_address(), state);

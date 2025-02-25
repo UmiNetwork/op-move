@@ -8,10 +8,6 @@ pub use {
 };
 
 use {
-    crate::types::{
-        session_id::SessionId,
-        transactions::{DepositedTx, NormalizedEthTransaction, TransactionExecutionOutcome},
-    },
     alloy::primitives::{Bloom, Keccak256, Log, LogData},
     aptos_framework::natives::{
         event::NativeEventContext, object::NativeObjectContext,
@@ -36,8 +32,14 @@ use {
     },
     moved_genesis::{config::GenesisConfig, CreateMoveVm, MovedVm},
     moved_shared::primitives::{ToEthAddress, B256},
+    session_id::SessionId,
     std::ops::Deref,
+    transaction::{DepositedTx, NormalizedEthTransaction, TransactionExecutionOutcome},
 };
+
+pub mod session_id;
+pub mod simulate;
+pub mod transaction;
 
 mod canonical;
 mod deposited;
@@ -46,16 +48,14 @@ mod execute;
 mod gas;
 mod layout;
 mod nonces;
-pub(crate) mod simulate;
 mod tag_validation;
-
 #[cfg(test)]
 mod tests;
 
 const ADDRESS_LAYOUT: MoveTypeLayout = MoveTypeLayout::Address;
 const U256_LAYOUT: MoveTypeLayout = MoveTypeLayout::U256;
 
-pub fn create_move_vm() -> crate::Result<MoveVM> {
+pub fn create_move_vm() -> moved_shared::error::Result<MoveVM> {
     Ok(MovedVm.create_move_vm()?)
 }
 
@@ -149,7 +149,7 @@ pub fn execute_transaction<
     B: BaseTokenAccounts,
 >(
     input: TransactionExecutionInput<S, F, B>,
-) -> crate::Result<TransactionExecutionOutcome> {
+) -> moved_shared::error::Result<TransactionExecutionOutcome> {
     match input {
         TransactionExecutionInput::Deposit(input) => execute_deposited_transaction(input),
         TransactionExecutionInput::Canonical(input) => execute_canonical_transaction(input),
