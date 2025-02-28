@@ -5,6 +5,7 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+eth_trie.workspace = true
+heed.workspace = true
 moved-blockchain.workspace = true
 moved-shared.workspace = true
-heed.workspace = true

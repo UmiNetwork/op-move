@@ -1,5 +1,9 @@
 use {
-    heed::{byteorder::LittleEndian, types::U64, BoxedError, BytesDecode, BytesEncode},
+    heed::{
+        byteorder::LittleEndian,
+        types::{Bytes, U64},
+        BoxedError, BytesDecode, BytesEncode,
+    },
     moved_shared::primitives::B256,
     std::borrow::Cow,
 };
@@ -24,3 +28,4 @@ impl<'item> BytesDecode<'item> for EncodableB256 {
 }
 
 pub type EncodableU64 = U64<LittleEndian>;
+pub type EncodableBytes = Bytes;

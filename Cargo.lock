@@ -7028,6 +7028,7 @@ dependencies = [
 name = "moved-storage-heed"
 version = "0.1.0"
 dependencies = [
+ "eth_trie",
  "heed",
  "moved-blockchain",
  "moved-shared",
