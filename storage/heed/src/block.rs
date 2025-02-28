@@ -22,13 +22,13 @@ impl BlockRepository for HeedBlockRepository {
 
         let db: heed::Database<EncodableB256, EncodableBlock> = env
             .open_database(&transaction, Some(BLOCK_DB))?
-            .expect("Database should exist");
+            .expect("Block database should exist");
 
         db.put(&mut transaction, &block.hash, &block)?;
 
         let db: heed::Database<EncodableU64, EncodableB256> = env
             .open_database(&transaction, Some(HEIGHT_DB))?
-            .expect("Database should exist");
+            .expect("Block height database should exist");
 
         db.put(&mut transaction, &block.block.header.number, &block.hash)
     }
@@ -38,7 +38,7 @@ impl BlockRepository for HeedBlockRepository {
 
         let db: heed::Database<EncodableB256, EncodableBlock> = env
             .open_database(&transaction, Some(BLOCK_DB))?
-            .expect("Database should exist");
+            .expect("Block database should exist");
 
         db.get(&transaction, &hash)
     }
