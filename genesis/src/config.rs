@@ -1,13 +1,14 @@
 use {
-    alloy::primitives::hex,
+    alloy::{genesis::Genesis, primitives::hex},
     aptos_gas_schedule::{InitialGasSchedule, VMGasParameters},
     aptos_vm_types::storage::StorageGasParameters,
     move_core_types::account_address::AccountAddress,
     moved_shared::primitives::B256,
-    std::path::{Path, PathBuf},
 };
 
 pub const CHAIN_ID: u64 = 404;
+const DEFAULT_L2_CONTRACT_GENESIS: &str =
+    include_str!("../../moved/src/tests/res/l2_genesis_tests.json");
 
 #[derive(Debug, Clone)]
 pub struct GasCosts {
@@ -22,8 +23,7 @@ pub struct GenesisConfig {
     pub initial_state_root: B256,
     pub gas_costs: GasCosts,
     pub treasury: AccountAddress,
-    // TODO: the genesis config should be self-contained instead of referring to an external file.
-    pub l2_contract_genesis: PathBuf,
+    pub l2_contract_genesis: Genesis,
 }
 
 impl Default for GasCosts {
@@ -45,7 +45,8 @@ impl Default for GenesisConfig {
             )),
             gas_costs: GasCosts::default(),
             treasury: AccountAddress::ONE, // todo: fill in the real address
-            l2_contract_genesis: Path::new("../moved/src/tests/res/l2_genesis_tests.json").into(),
+            l2_contract_genesis: serde_json::from_str(DEFAULT_L2_CONTRACT_GENESIS)
+                .expect("Default L2 contract genesis should be JSON encoded `Genesis` struct"),
         }
     }
 }
