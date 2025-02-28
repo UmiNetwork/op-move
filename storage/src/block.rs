@@ -3,7 +3,7 @@ use {
         generic::{FromValue, ToKey, ToValue},
         transaction,
     },
-    moved::{
+    moved_blockchain::{
         block::{BlockQueries, BlockRepository, BlockResponse, ExtendedBlock},
         transaction::ExtendedTransaction,
     },

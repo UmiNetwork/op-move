@@ -45,7 +45,8 @@ mod tests {
         super::*,
         crate::methods::forkchoice_updated,
         alloy::primitives::hex,
-        moved::{
+        moved_app::Command,
+        moved_blockchain::{
             block::{
                 Block, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
                 InMemoryBlockRepository,
@@ -56,7 +57,6 @@ mod tests {
             state::InMemoryStateQueries,
             transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
         },
-        moved_app::Command,
         moved_genesis::config::GenesisConfig,
         moved_shared::primitives::{B256, U256},
         moved_state::InMemoryState,

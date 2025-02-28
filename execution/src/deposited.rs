@@ -1,5 +1,5 @@
 use {
-    crate::move_execution::{
+    crate::{
         create_move_vm, create_vm_session, eth_token,
         gas::{new_gas_meter, total_gas_used},
         session_id::SessionId,
@@ -26,7 +26,7 @@ use {
 
 #[cfg(any(feature = "test-doubles", test))]
 use {
-    crate::move_execution::transaction::DepositedTx, moved_evm_ext::HeaderForExecution,
+    crate::transaction::DepositedTx, moved_evm_ext::HeaderForExecution,
     moved_genesis::config::GenesisConfig,
 };
 
@@ -174,7 +174,7 @@ fn direct_mint(
     genesis_config: &GenesisConfig,
     block_header: HeaderForExecution,
 ) -> moved_shared::error::Result<TransactionExecutionOutcome> {
-    use crate::move_execution::Logs;
+    use crate::Logs;
 
     let amount = tx.mint.saturating_add(tx.value);
     let to = tx.to.to_move_address();

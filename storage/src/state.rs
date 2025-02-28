@@ -10,15 +10,13 @@ use {
         account_address::AccountAddress, effects::ChangeSet, resolver::MoveResolver,
     },
     move_table_extension::{TableChangeSet, TableResolver},
-    moved::{
-        move_execution::{
-            quick_get_eth_balance, quick_get_nonce,
-            transaction::{L2_HIGHEST_ADDRESS, L2_LOWEST_ADDRESS},
-        },
-        state::{
-            proof_from_trie_and_resolver, Balance, BlockHeight, EthTrieResolver, Nonce,
-            ProofResponse, StateQueries,
-        },
+    moved_blockchain::state::{
+        proof_from_trie_and_resolver, Balance, BlockHeight, EthTrieResolver, Nonce, ProofResponse,
+        StateQueries,
+    },
+    moved_execution::{
+        quick_get_eth_balance, quick_get_nonce,
+        transaction::{L2_HIGHEST_ADDRESS, L2_LOWEST_ADDRESS},
     },
     moved_shared::primitives::{ToEthAddress, B256, U256},
     moved_state::{InsertChangeSetIntoMerkleTrie, State},

@@ -1,13 +1,14 @@
 [package]
-name = "moved-api"
 description = "Moved execution Ethereum JSON-RPC API"
-version.workspace = true
 edition.workspace = true
+name = "moved-api"
+version.workspace = true
 
 [dependencies]
 alloy.workspace = true
-moved.workspace = true
 moved-app.workspace = true
+moved-blockchain.workspace = true
+moved-execution.workspace = true
 moved-shared.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -15,10 +16,10 @@ tokio.workspace = true
 
 [dev-dependencies]
 move-core-types.workspace = true
-moved.features = ["test-doubles"]
-moved.workspace = true
 moved-app.features = ["test-doubles"]
 moved-app.workspace = true
+moved-blockchain.features = ["test-doubles"]
+moved-blockchain.workspace = true
 moved-genesis.workspace = true
 moved-genesis-image.workspace = true
 moved-state.workspace = true

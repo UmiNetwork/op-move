@@ -1,6 +1,6 @@
 use {
     super::{L2GasFee, L2GasFeeInput},
-    crate::move_execution::{
+    crate::{
         create_move_vm, create_vm_session,
         eth_token::{BaseTokenAccounts, TransferArgs},
         execute::{deploy_module, execute_entry_function, execute_l2_contract, execute_script},

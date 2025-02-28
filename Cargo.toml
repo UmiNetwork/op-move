@@ -3,11 +3,12 @@ resolver = "2"
 members = [
     "api",
     "app",
+    "blockchain",
     "evm-ext",
+    "execution",
     "genesis",
     "genesis-builder",
     "genesis-image",
-    "moved",
     "server",
     "shared",
     "state",
@@ -57,10 +58,11 @@ move-table-extension = { git = "https://github.com/aptos-labs/aptos-core", tag =
 move-vm-runtime = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
 move-vm-test-utils = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0", features = ["table-extension"] }
 move-vm-types = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.14.0" }
-moved = { path = "moved" }
 moved-api = { path = "api" }
 moved-app = { path = "app" }
+moved-blockchain = { path = "blockchain" }
 moved-evm-ext = { path = "evm-ext" }
+moved-execution = { path = "execution" }
 moved-genesis = { path = "genesis" }
 moved-genesis-image = { path = "genesis-image" }
 moved-shared = { path = "shared" }

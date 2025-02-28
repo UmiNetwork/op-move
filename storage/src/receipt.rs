@@ -1,6 +1,8 @@
 use {
     crate::generic::{FromValue, ToValue},
-    moved::receipt::{ExtendedReceipt, ReceiptQueries, ReceiptRepository, TransactionReceipt},
+    moved_blockchain::receipt::{
+        ExtendedReceipt, ReceiptQueries, ReceiptRepository, TransactionReceipt,
+    },
     moved_shared::primitives::B256,
     rocksdb::{AsColumnFamilyRef, WriteBatchWithTransaction, DB as RocksDb},
 };

@@ -1,5 +1,5 @@
 use {
-    crate::move_execution::transaction::{DepositedTx, NormalizedEthTransaction},
+    crate::transaction::{DepositedTx, NormalizedEthTransaction},
     alloy::primitives::U256,
     aptos_types::transaction::EntryFunction,
     aptos_vm::move_vm_ext::UserTransactionContext,

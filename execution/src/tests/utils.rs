@@ -563,7 +563,7 @@ impl ModuleCompileJob {
         .chain(aptos_framework::named_addresses().clone())
         .collect();
 
-        let base_dir = format!("src/tests/res/{package_name}").replace('_', "-");
+        let base_dir = format!("../execution/src/tests/res/{package_name}").replace('_', "-");
         let targets = vec![format!("{base_dir}/sources/{package_name}.move")];
 
         Self {
@@ -603,11 +603,11 @@ pub struct ScriptCompileJob {
 
 impl ScriptCompileJob {
     pub fn new(script_name: &str, local_deps: &[&str]) -> Self {
-        let base_dir = format!("src/tests/res/{script_name}").replace('_', "-");
+        let base_dir = format!("../execution/src/tests/res/{script_name}").replace('_', "-");
         let targets = vec![format!("{base_dir}/sources/{script_name}.move")];
 
         let local_deps = local_deps.iter().map(|package_name| {
-            let base_dir = format!("src/tests/res/{package_name}").replace('_', "-");
+            let base_dir = format!("../execution/src/tests/res/{package_name}").replace('_', "-");
             format!("{base_dir}/sources/{package_name}.move")
         });
         let deps = {

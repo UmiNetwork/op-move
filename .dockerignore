@@ -10,17 +10,17 @@ server/db
 server/*.log
 
 !.env
-
-!shared
-!state
-!genesis-builder
-!genesis
-!genesis-image
-!evm-ext
-!storage
-!moved
 !api
 !app
+!blockchain
+!evm-ext
+!execution
+!genesis
+!genesis-builder
+!genesis-image
+!shared
+!state
+!storage
 !Cargo.lock
 !Cargo.toml
 !rust-toolchain

@@ -1,6 +1,6 @@
 use {
     crate::generic::{FromValue, ToValue},
-    moved::transaction::{
+    moved_blockchain::transaction::{
         ExtendedTransaction, TransactionQueries, TransactionRepository, TransactionResponse,
     },
     moved_shared::primitives::B256,

@@ -1,8 +1,4 @@
 use {
-    crate::move_execution::{
-        quick_get_eth_balance, quick_get_nonce,
-        transaction::{L2_HIGHEST_ADDRESS, L2_LOWEST_ADDRESS},
-    },
     alloy::{
         primitives::keccak256,
         rpc::types::{EIP1186AccountProofResponse, EIP1186StorageProof},
@@ -21,6 +17,10 @@ use {
     },
     move_table_extension::{TableHandle, TableResolver},
     moved_evm_ext::ResolverBackedDB,
+    moved_execution::{
+        quick_get_eth_balance, quick_get_nonce,
+        transaction::{L2_HIGHEST_ADDRESS, L2_LOWEST_ADDRESS},
+    },
     moved_shared::primitives::{Address, KeyHashable, ToEthAddress, B256, U256},
     moved_state::{
         evm_key_address, is_evm_storage_or_account_key, nodes::TreeKey, IN_MEMORY_EXPECT_MSG,
@@ -370,14 +370,14 @@ pub mod test_doubles {
 mod tests {
     use {
         super::*,
-        crate::move_execution::{
-            check_nonce, create_move_vm, create_vm_session, mint_eth, session_id::SessionId,
-        },
         alloy::hex,
         move_core_types::effects::ChangeSet,
         move_table_extension::TableChangeSet,
         move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
         move_vm_types::gas::UnmeteredGasMeter,
+        moved_execution::{
+            check_nonce, create_move_vm, create_vm_session, mint_eth, session_id::SessionId,
+        },
         moved_genesis::config::GenesisConfig,
         moved_shared::primitives::B256,
         moved_state::{InMemoryState, State},
