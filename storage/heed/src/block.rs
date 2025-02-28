@@ -64,7 +64,7 @@ impl BlockQueries for HeedBlockQueries {
 
         let db: heed::Database<EncodableB256, EncodableBlock> = env
             .open_database(&transaction, Some(BLOCK_DB))?
-            .expect("Database should exist");
+            .expect("Block database should exist");
 
         let block = db.get(&transaction, &hash)?;
 
@@ -74,7 +74,7 @@ impl BlockQueries for HeedBlockQueries {
 
                 let db: heed::Database<EncodableB256, EncodableTransaction> = env
                     .open_database(&db_transaction, Some(TRANSACTION_DB))?
-                    .expect("Database should exist");
+                    .expect("Transaction database should exist");
 
                 let transactions = block
                     .transaction_hashes()
@@ -98,7 +98,7 @@ impl BlockQueries for HeedBlockQueries {
 
         let db: heed::Database<EncodableU64, EncodableB256> = env
             .open_database(&transaction, Some(HEIGHT_DB))?
-            .expect("Database should exist");
+            .expect("Block height database should exist");
 
         db.get(&transaction, &height)?
             .map(|hash| self.by_hash(env, hash, include_transactions))

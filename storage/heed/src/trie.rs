@@ -24,7 +24,7 @@ impl<'db> HeedEthTrieDb<'db> {
         let db: heed::Database<EncodableU64, EncodableB256> = self
             .env
             .open_database(&transaction, Some(ROOT_DB))?
-            .expect("Database should exist");
+            .expect("Trie root database should exist");
 
         db.get(&transaction, &ROOT_KEY)
     }
@@ -35,7 +35,7 @@ impl<'db> HeedEthTrieDb<'db> {
         let db: heed::Database<EncodableU64, EncodableB256> = self
             .env
             .open_database(&transaction, Some(ROOT_DB))?
-            .expect("Database should exist");
+            .expect("Trie root database should exist");
 
         db.put(&mut transaction, &ROOT_KEY, &root)
     }
@@ -49,8 +49,8 @@ impl<'db> DB for HeedEthTrieDb<'db> {
 
         let db: heed::Database<EncodableBytes, EncodableBytes> = self
             .env
-            .open_database(&transaction, Some(ROOT_DB))?
-            .expect("Database should exist");
+            .open_database(&transaction, Some(TRIE_DB))?
+            .expect("Trie root database should exist");
 
         Ok(db.get(&transaction, key)?.map(<[u8]>::to_vec))
     }
@@ -60,8 +60,8 @@ impl<'db> DB for HeedEthTrieDb<'db> {
 
         let db: heed::Database<EncodableBytes, EncodableBytes> = self
             .env
-            .open_database(&transaction, Some(ROOT_DB))?
-            .expect("Database should exist");
+            .open_database(&transaction, Some(TRIE_DB))?
+            .expect("Trie root database should exist");
 
         db.put(&mut transaction, key, value.as_slice())
     }

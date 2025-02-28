@@ -27,7 +27,7 @@ impl TransactionRepository for HeedTransactionRepository {
 
         let db: heed::Database<EncodableB256, EncodableTransaction> = env
             .open_database(&db_transaction, Some(TRANSACTION_DB))?
-            .expect("Database should exist");
+            .expect("Transaction database should exist");
 
         transactions.into_iter().try_for_each(|transaction| {
             db.put(&mut db_transaction, &transaction.hash(), &transaction)
@@ -51,7 +51,7 @@ impl TransactionQueries for HeedTransactionQueries {
 
         let db: heed::Database<EncodableB256, EncodableTransaction> = env
             .open_database(&transaction, Some(TRANSACTION_DB))?
-            .expect("Database should exist");
+            .expect("Transaction database should exist");
 
         Ok(db.get(&transaction, &hash)?.map(TransactionResponse::from))
     }

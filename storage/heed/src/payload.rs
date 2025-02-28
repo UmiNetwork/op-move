@@ -25,7 +25,7 @@ impl HeedPayloadQueries {
         let db: heed::Database<EncodableU64, EncodableB256> = self
             .env
             .open_database(&transaction, Some(PAYLOAD_DB))?
-            .expect("Database should exist");
+            .expect("Payload database should exist");
 
         db.put(&mut transaction, &id.to_u64(), &block_hash)
     }
@@ -44,7 +44,7 @@ impl PayloadQueries for HeedPayloadQueries {
 
         let db: heed::Database<EncodableB256, EncodableBlock> = env
             .open_database(&transaction, Some(BLOCK_DB))?
-            .expect("Database should exist");
+            .expect("Block database should exist");
 
         Ok(db
             .get(&transaction, &hash)?
@@ -60,7 +60,7 @@ impl PayloadQueries for HeedPayloadQueries {
 
         let db: heed::Database<EncodableU64, EncodableB256> = env
             .open_database(&transaction, Some(PAYLOAD_DB))?
-            .expect("Database should exist");
+            .expect("Payload database should exist");
 
         db.get(&transaction, &id.to_u64())?
             .map(|hash| self.by_hash(env, hash))
