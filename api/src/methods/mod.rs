@@ -29,16 +29,13 @@ pub mod tests {
             signers::local::PrivateKeySigner,
         },
         move_core_types::account_address::AccountAddress,
-        moved::{
+        moved_app::{Command, Payload, StateActor, StateMessage},
+        moved_blockchain::{
             block::{
                 BaseGasFee, Block, BlockHash, BlockQueries, BlockRepository, Eip1559GasFee,
                 InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash,
             },
             in_memory::SharedMemory,
-            move_execution::{
-                transaction::{DepositedTx, ExtendedTxEnvelope},
-                BaseTokenAccounts, CreateL1GasFee, CreateL2GasFee, MovedBaseTokenAccounts,
-            },
             payload::{InMemoryPayloadQueries, NewPayloadId, PayloadQueries},
             receipt::{
                 InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory, ReceiptQueries,
@@ -50,7 +47,10 @@ pub mod tests {
                 TransactionRepository,
             },
         },
-        moved_app::{Command, Payload, StateActor, StateMessage},
+        moved_execution::{
+            transaction::{DepositedTx, ExtendedTxEnvelope},
+            BaseTokenAccounts, CreateL1GasFee, CreateL2GasFee, MovedBaseTokenAccounts,
+        },
         moved_genesis::config::{GenesisConfig, CHAIN_ID},
         moved_shared::primitives::{Address, B256, U256, U64},
         moved_state::InMemoryState,

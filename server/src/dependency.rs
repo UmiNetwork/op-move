@@ -1,11 +1,9 @@
 use {
-    moved::{
+    moved_blockchain::{
         block::{BaseGasFee, BlockHash, BlockRepository, MovedBlockHash},
-        move_execution::{
-            BaseTokenAccounts, CreateL1GasFee, CreateL2GasFee, MovedBaseTokenAccounts,
-        },
         payload::NewPayloadId,
     },
+    moved_execution::{BaseTokenAccounts, CreateL1GasFee, CreateL2GasFee, MovedBaseTokenAccounts},
     moved_genesis::config::GenesisConfig,
     moved_state::State,
 };
@@ -13,39 +11,39 @@ use {
 #[cfg(feature = "storage")]
 pub type SharedStorage = &'static moved_storage::RocksDb;
 #[cfg(not(feature = "storage"))]
-pub type SharedStorage = moved::in_memory::SharedMemory;
+pub type SharedStorage = moved_blockchain::in_memory::SharedMemory;
 #[cfg(feature = "storage")]
 pub type ReceiptStorage = &'static moved_storage::RocksDb;
 #[cfg(not(feature = "storage"))]
-pub type ReceiptStorage = moved::receipt::ReceiptMemory;
+pub type ReceiptStorage = moved_blockchain::receipt::ReceiptMemory;
 #[cfg(feature = "storage")]
 pub type StateQueries = moved_storage::RocksDbStateQueries<'static>;
 #[cfg(not(feature = "storage"))]
-pub type StateQueries = moved::state::InMemoryStateQueries;
+pub type StateQueries = moved_blockchain::state::InMemoryStateQueries;
 #[cfg(feature = "storage")]
 pub type ReceiptRepository = moved_storage::receipt::RocksDbReceiptRepository;
 #[cfg(not(feature = "storage"))]
-pub type ReceiptRepository = moved::receipt::InMemoryReceiptRepository;
+pub type ReceiptRepository = moved_blockchain::receipt::InMemoryReceiptRepository;
 #[cfg(feature = "storage")]
 pub type ReceiptQueries = moved_storage::receipt::RocksDbReceiptQueries;
 #[cfg(not(feature = "storage"))]
-pub type ReceiptQueries = moved::receipt::InMemoryReceiptQueries;
+pub type ReceiptQueries = moved_blockchain::receipt::InMemoryReceiptQueries;
 #[cfg(feature = "storage")]
 pub type PayloadQueries = moved_storage::payload::RocksDbPayloadQueries;
 #[cfg(not(feature = "storage"))]
-pub type PayloadQueries = moved::payload::InMemoryPayloadQueries;
+pub type PayloadQueries = moved_blockchain::payload::InMemoryPayloadQueries;
 #[cfg(feature = "storage")]
 pub type TransactionRepository = moved_storage::transaction::RocksDbTransactionRepository;
 #[cfg(not(feature = "storage"))]
-pub type TransactionRepository = moved::transaction::InMemoryTransactionRepository;
+pub type TransactionRepository = moved_blockchain::transaction::InMemoryTransactionRepository;
 #[cfg(feature = "storage")]
 pub type TransactionQueries = moved_storage::transaction::RocksDbTransactionQueries;
 #[cfg(not(feature = "storage"))]
-pub type TransactionQueries = moved::transaction::InMemoryTransactionQueries;
+pub type TransactionQueries = moved_blockchain::transaction::InMemoryTransactionQueries;
 #[cfg(feature = "storage")]
 pub type BlockQueries = moved_storage::block::RocksDbBlockQueries;
 #[cfg(not(feature = "storage"))]
-pub type BlockQueries = moved::block::InMemoryBlockQueries;
+pub type BlockQueries = moved_blockchain::block::InMemoryBlockQueries;
 
 type StateActor<A, B, C, D, E, F, G, H> = moved_app::StateActor<
     A,
@@ -87,7 +85,7 @@ pub fn memory() -> SharedStorage {
     }
     #[cfg(not(feature = "storage"))]
     {
-        moved::in_memory::SharedMemory::new()
+        moved_blockchain::in_memory::SharedMemory::new()
     }
 }
 
@@ -98,7 +96,7 @@ pub fn block_repository() -> impl BlockRepository<Storage = SharedStorage> + Sen
     }
     #[cfg(not(feature = "storage"))]
     {
-        moved::block::InMemoryBlockRepository::new()
+        moved_blockchain::block::InMemoryBlockRepository::new()
     }
 }
 
@@ -122,7 +120,9 @@ pub fn state_query(genesis_config: &GenesisConfig) -> StateQueries {
     }
     #[cfg(not(feature = "storage"))]
     {
-        moved::state::InMemoryStateQueries::from_genesis(genesis_config.initial_state_root)
+        moved_blockchain::state::InMemoryStateQueries::from_genesis(
+            genesis_config.initial_state_root,
+        )
     }
 }
 
@@ -202,7 +202,7 @@ pub fn transaction_repository() -> TransactionRepository {
     }
     #[cfg(not(feature = "storage"))]
     {
-        moved::transaction::InMemoryTransactionRepository::new()
+        moved_blockchain::transaction::InMemoryTransactionRepository::new()
     }
 }
 
@@ -213,7 +213,7 @@ pub fn transaction_queries() -> TransactionQueries {
     }
     #[cfg(not(feature = "storage"))]
     {
-        moved::transaction::InMemoryTransactionQueries::new()
+        moved_blockchain::transaction::InMemoryTransactionQueries::new()
     }
 }
 
@@ -224,7 +224,7 @@ pub fn receipt_repository() -> ReceiptRepository {
     }
     #[cfg(not(feature = "storage"))]
     {
-        moved::receipt::InMemoryReceiptRepository::new()
+        moved_blockchain::receipt::InMemoryReceiptRepository::new()
     }
 }
 
@@ -235,7 +235,7 @@ pub fn receipt_queries() -> ReceiptQueries {
     }
     #[cfg(not(feature = "storage"))]
     {
-        moved::receipt::InMemoryReceiptQueries::new()
+        moved_blockchain::receipt::InMemoryReceiptQueries::new()
     }
 }
 
@@ -246,7 +246,7 @@ pub fn receipt_memory() -> ReceiptStorage {
     }
     #[cfg(not(feature = "storage"))]
     {
-        moved::receipt::ReceiptMemory::new()
+        moved_blockchain::receipt::ReceiptMemory::new()
     }
 }
 
@@ -257,7 +257,7 @@ pub fn block_queries() -> BlockQueries {
     }
     #[cfg(not(feature = "storage"))]
     {
-        moved::block::InMemoryBlockQueries
+        moved_blockchain::block::InMemoryBlockQueries
     }
 }
 
@@ -268,7 +268,7 @@ pub fn payload_queries() -> PayloadQueries {
     }
     #[cfg(not(feature = "storage"))]
     {
-        moved::payload::InMemoryPayloadQueries::new()
+        moved_blockchain::payload::InMemoryPayloadQueries::new()
     }
 }
 

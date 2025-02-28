@@ -15,16 +15,9 @@ use {
         rpc::types::FeeHistory,
     },
     move_core_types::effects::ChangeSet,
-    moved::{
+    moved_blockchain::{
         block::{
             BaseGasFee, Block, BlockHash, BlockQueries, BlockRepository, ExtendedBlock, Header,
-        },
-        move_execution::{
-            execute_transaction,
-            simulate::{call_transaction, simulate_transaction},
-            transaction::{ExtendedTxEnvelope, NormalizedExtendedTxEnvelope},
-            BaseTokenAccounts, CanonicalExecutionInput, CreateL1GasFee, CreateL2GasFee,
-            DepositExecutionInput, L1GasFee, L1GasFeeInput, L2GasFeeInput, LogsBloom,
         },
         payload::{InMemoryPayloadQueries, NewPayloadId, PayloadId, PayloadQueries},
         receipt::{ExtendedReceipt, ReceiptQueries, ReceiptRepository},
@@ -32,6 +25,13 @@ use {
         transaction::{ExtendedTransaction, TransactionQueries, TransactionRepository},
     },
     moved_evm_ext::HeaderForExecution,
+    moved_execution::{
+        execute_transaction,
+        simulate::{call_transaction, simulate_transaction},
+        transaction::{ExtendedTxEnvelope, NormalizedExtendedTxEnvelope},
+        BaseTokenAccounts, CanonicalExecutionInput, CreateL1GasFee, CreateL2GasFee,
+        DepositExecutionInput, L1GasFee, L1GasFeeInput, L2GasFeeInput, LogsBloom,
+    },
     moved_genesis::config::GenesisConfig,
     moved_shared::{
         error::Error::{InvalidTransaction, InvariantViolation, User},
@@ -47,21 +47,21 @@ use {
 pub type InMemStateActor = StateActor<
     moved_state::InMemoryState,
     u64,
-    moved::block::MovedBlockHash,
-    moved::block::InMemoryBlockRepository,
-    moved::block::Eip1559GasFee,
+    moved_blockchain::block::MovedBlockHash,
+    moved_blockchain::block::InMemoryBlockRepository,
+    moved_blockchain::block::Eip1559GasFee,
     U256,
     U256,
-    moved::move_execution::MovedBaseTokenAccounts,
-    moved::block::InMemoryBlockQueries,
-    moved::in_memory::SharedMemory,
-    moved::state::InMemoryStateQueries,
-    moved::transaction::InMemoryTransactionRepository,
-    moved::transaction::InMemoryTransactionQueries,
-    moved::receipt::ReceiptMemory,
-    moved::receipt::InMemoryReceiptRepository,
-    moved::receipt::InMemoryReceiptQueries,
-    moved::payload::InMemoryPayloadQueries,
+    moved_execution::MovedBaseTokenAccounts,
+    moved_blockchain::block::InMemoryBlockQueries,
+    moved_blockchain::in_memory::SharedMemory,
+    moved_blockchain::state::InMemoryStateQueries,
+    moved_blockchain::transaction::InMemoryTransactionRepository,
+    moved_blockchain::transaction::InMemoryTransactionQueries,
+    moved_blockchain::receipt::ReceiptMemory,
+    moved_blockchain::receipt::InMemoryReceiptRepository,
+    moved_blockchain::receipt::InMemoryReceiptQueries,
+    moved_blockchain::payload::InMemoryPayloadQueries,
 >;
 
 /// A function invoked on a completion of new transaction execution batch.
@@ -790,7 +790,7 @@ fn test_build_block_hash() {
     .with_payload_attributes(payload_attributes)
     .with_execution_outcome(execution_outcome);
 
-    let hash = moved::block::MovedBlockHash.block_hash(&header);
+    let hash = moved_blockchain::block::MovedBlockHash.block_hash(&header);
     assert_eq!(
         hash,
         B256::new(hex!(
@@ -812,16 +812,16 @@ mod tests {
         move_core_types::{account_address::AccountAddress, effects::ChangeSet},
         move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
         move_vm_types::gas::UnmeteredGasMeter,
-        moved::{
+        moved_blockchain::{
             block::{Eip1559GasFee, InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash},
             in_memory::SharedMemory,
-            move_execution::{
-                create_move_vm, create_vm_session, session_id::SessionId, MovedBaseTokenAccounts,
-            },
             payload::{InMemoryPayloadQueries, StatePayloadId},
             receipt::{InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory},
             state::MockStateQueries,
             transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
+        },
+        moved_execution::{
+            create_move_vm, create_vm_session, session_id::SessionId, MovedBaseTokenAccounts,
         },
         moved_genesis::config::{GenesisConfig, CHAIN_ID},
         moved_shared::primitives::Address,
@@ -839,7 +839,7 @@ mod tests {
 
     pub const EVM_ADDRESS: Address = address!("8fd379246834eac74b8419ffda202cf8051f7a03");
 
-    use {alloy::signers::local::PrivateKeySigner, moved::state::BlockHeight};
+    use {alloy::signers::local::PrivateKeySigner, moved_blockchain::state::BlockHeight};
 
     #[derive(Debug)]
     pub struct Signer {
@@ -933,7 +933,7 @@ mod tests {
         let mut traversal_context = TraversalContext::new(&traversal_storage);
         let mut gas_meter = UnmeteredGasMeter;
 
-        moved::move_execution::mint_eth(
+        moved_execution::mint_eth(
             &addr,
             amount,
             &mut session,

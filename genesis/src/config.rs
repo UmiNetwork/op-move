@@ -8,7 +8,7 @@ use {
 
 pub const CHAIN_ID: u64 = 404;
 const DEFAULT_L2_CONTRACT_GENESIS: &str =
-    include_str!("../../moved/src/tests/res/l2_genesis_tests.json");
+    include_str!("../../execution/src/tests/res/l2_genesis_tests.json");
 
 #[derive(Debug, Clone)]
 pub struct GasCosts {

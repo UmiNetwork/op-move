@@ -163,7 +163,7 @@ mod tests {
         super::*,
         crate::methods::{forkchoice_updated, get_payload},
         alloy::primitives::hex,
-        moved::{
+        moved_blockchain::{
             block::{
                 Block, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
                 InMemoryBlockRepository,

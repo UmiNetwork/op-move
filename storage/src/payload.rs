@@ -3,7 +3,7 @@ use {
         block::block_cf,
         generic::{FromValue, ToKey},
     },
-    moved::{
+    moved_blockchain::{
         block::ExtendedBlock,
         payload::{PayloadId, PayloadQueries, PayloadResponse},
     },

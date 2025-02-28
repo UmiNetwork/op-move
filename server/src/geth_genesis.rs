@@ -3,8 +3,8 @@
 //! by op-node ourselves.
 
 use {
-    moved::block::{Block, ExtendedBlock, Header},
     moved_app::RpcBlock,
+    moved_blockchain::block::{Block, ExtendedBlock, Header},
 };
 
 pub fn is_genesis_block_request(request: &serde_json::Value) -> Option<bool> {

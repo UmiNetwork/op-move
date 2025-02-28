@@ -3,8 +3,8 @@ use {
         json_utils::{access_state_error, parse_params_1},
         jsonrpc::JsonRpcError,
     },
-    moved::receipt::TransactionReceipt,
     moved_app::{Query, StateMessage},
+    moved_blockchain::receipt::TransactionReceipt,
     moved_shared::primitives::B256,
     tokio::sync::{mpsc, oneshot},
 };

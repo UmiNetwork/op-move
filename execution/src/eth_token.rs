@@ -1,5 +1,5 @@
 use {
-    crate::move_execution::session_id::SessionId,
+    crate::session_id::SessionId,
     alloy::primitives::U256,
     aptos_table_natives::TableResolver,
     move_binary_format::errors::PartialVMError,

@@ -5,7 +5,7 @@ use {
         primitives::Bloom,
         rpc::types::{FeeHistory, TransactionRequest},
     },
-    moved::{
+    moved_blockchain::{
         block::{BlockResponse, ExtendedBlock, Header},
         payload::{NewPayloadIdInput, PayloadId, PayloadResponse},
         receipt::TransactionReceipt,

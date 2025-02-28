@@ -24,7 +24,7 @@ use {
     sui_types::base_types::ObjectID,
 };
 
-pub const CRATE_ROOT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../moved");
+pub const CRATE_ROOT: &str = env!("CARGO_MANIFEST_DIR");
 pub const APTOS_SNAPSHOT_NAME: &str = "aptos.mrb";
 pub const SUI_SNAPSHOT_NAME: &str = "sui.mrb";
 pub const L2_PACKAGE_NAME: &str = "L2";

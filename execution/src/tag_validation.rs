@@ -93,7 +93,7 @@ pub fn validate_entry_type_tag(tag: &TypeTag) -> moved_shared::error::Result<()>
             | TypeTag::U8 => {
                 // Primitive types are allowed.
                 // Note that signer is an allowed type because
-                // the value is checked in `crate::move_execution::signer`.
+                // the value is checked in `crate::signer`.
                 return Ok(());
             }
         }
@@ -318,10 +318,7 @@ impl<'a> MoveStructInfo<'a> {
 mod tests {
     use {
         super::*,
-        crate::{
-            move_execution::{create_move_vm, create_vm_session, session_id::SessionId},
-            tests::EVM_ADDRESS,
-        },
+        crate::{create_move_vm, create_vm_session, session_id::SessionId, tests::EVM_ADDRESS},
         alloy::primitives::address,
         move_core_types::value::MoveStruct,
         moved_shared::primitives::ToMoveAddress,

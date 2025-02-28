@@ -45,11 +45,11 @@ RUN \
     && mkdir genesis
 
 # Copy Move framework snapshot files into expected paths
-COPY moved/aptos.mrb moved/aptos.mrb
-COPY moved/sui.mrb moved/sui.mrb
+COPY genesis/aptos.mrb genesis/aptos.mrb
+COPY genesis/sui.mrb genesis/sui.mrb
 
 # Copy L2 genesis config into expected path
-COPY moved/src/tests/res/l2_genesis_tests.json src/tests/optimism/packages/contracts-bedrock/deployments/genesis.json
+COPY execution/src/tests/res/l2_genesis_tests.json src/tests/optimism/packages/contracts-bedrock/deployments/genesis.json
 
 # Copy built binary
 COPY --from=build /volume/op-move /volume/op-move

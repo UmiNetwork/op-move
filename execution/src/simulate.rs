@@ -1,6 +1,6 @@
 use {
     super::{CreateL2GasFee, CreateMovedL2GasFee, L2GasFeeInput},
-    crate::move_execution::{
+    crate::{
         canonical::{verify_transaction, CanonicalVerificationInput},
         create_move_vm, create_vm_session, execute_transaction,
         gas::new_gas_meter,
@@ -107,7 +107,7 @@ pub fn call_transaction(
             Ok(bcs::to_bytes(&outcome.return_values)?)
         }
         TransactionData::ScriptOrModule(ScriptOrModule::Script(script)) => {
-            crate::move_execution::execute::execute_script(
+            crate::execute::execute_script(
                 script,
                 &tx.signer.to_move_address(),
                 verify_input.session,

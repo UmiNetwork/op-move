@@ -1,8 +1,6 @@
 use {
     super::tag_validation::{validate_entry_type_tag, validate_entry_value},
-    crate::move_execution::{
-        eth_token::burn_eth, layout::has_value_invariants, ADDRESS_LAYOUT, U256_LAYOUT,
-    },
+    crate::{eth_token::burn_eth, layout::has_value_invariants, ADDRESS_LAYOUT, U256_LAYOUT},
     alloy::primitives::{Log, LogData},
     aptos_types::transaction::{EntryFunction, Module, Script},
     move_binary_format::CompiledModule,

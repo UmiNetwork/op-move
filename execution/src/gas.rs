@@ -1,5 +1,5 @@
 use {
-    crate::move_execution::transaction::NormalizedEthTransaction,
+    crate::transaction::NormalizedEthTransaction,
     aptos_gas_meter::{AptosGasMeter, GasAlgebra, StandardGasAlgebra, StandardGasMeter},
     moved_genesis::config::GenesisConfig,
     moved_shared::primitives::U256,
