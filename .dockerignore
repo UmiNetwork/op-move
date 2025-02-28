@@ -2,6 +2,7 @@
 .*
 
 !docker
+docker/volumes
 
 !server
 server/src/tests/optimism
