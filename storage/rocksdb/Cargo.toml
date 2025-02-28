@@ -1,5 +1,5 @@
 [package]
-name = "moved-storage"
+name = "moved-storage-rocksdb"
 description = "Moved node integration with RocksDB persistent storage engine"
 version.workspace = true
 edition.workspace = true

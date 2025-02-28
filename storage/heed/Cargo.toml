@@ -1,0 +1,10 @@
+[package]
+name = "moved-storage-heed"
+description = "Moved node integration with LMDB persistent storage engine via Heed bindings"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+moved-blockchain.workspace = true
+moved-shared.workspace = true
+heed.workspace = true
