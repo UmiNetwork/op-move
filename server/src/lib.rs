@@ -27,7 +27,6 @@ use {
         fs,
         io::Read,
         net::{Ipv4Addr, SocketAddr, SocketAddrV4},
-        path::Path,
         time::SystemTime,
     },
     tokio::sync::mpsc,
@@ -81,10 +80,13 @@ pub async fn run() {
     // TODO: genesis should come from a file (path specified by CLI)
     let genesis_config = GenesisConfig {
         chain_id: 42069,
-        l2_contract_genesis: Path::new(
-            "src/tests/optimism/packages/contracts-bedrock/deployments/genesis.json",
+        l2_contract_genesis: serde_json::from_reader(
+            &fs::File::open(
+                "src/tests/optimism/packages/contracts-bedrock/deployments/genesis.json",
+            )
+            .expect("L2 contract genesis file should exist and be readable"),
         )
-        .into(),
+        .expect("Path should point to JSON encoded L2 contract `Genesis` struct"),
         ..Default::default()
     };
 

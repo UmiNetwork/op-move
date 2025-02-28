@@ -23,19 +23,13 @@ pub fn build(
     config: &GenesisConfig,
     state: &impl State,
 ) -> (ChangeSet, TableChangeSet) {
-    // Read L2 contract data
-    let l2_genesis_file = std::fs::File::open(&config.l2_contract_genesis)
-        .expect("L2 contracts genesis file must exist");
-    let l2_contract_genesis =
-        serde_json::from_reader(l2_genesis_file).expect("L2 genesis file must parse successfully");
-
-    let mut changes = ChangeSet::new();
-
     // Deploy Move/Aptos/Sui frameworks
     let (changes_framework, table_changes) = framework::init_state(vm, state);
 
     // Deploy OP stack L2 contracts
-    let changes_l2 = l2_contracts::init_state(l2_contract_genesis, state);
+    let changes_l2 = l2_contracts::init_state(config.l2_contract_genesis.clone(), state);
+
+    let mut changes = ChangeSet::new();
 
     changes
         .squash(changes_framework)
