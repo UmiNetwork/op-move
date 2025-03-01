@@ -565,9 +565,9 @@ impl<
 
             on_tx(self, outcome.changes.clone());
 
-            self.state
-                .apply(outcome.changes)
-                .unwrap_or_else(|_| panic!("ERROR: state update failed for transaction {tx:?}"));
+            self.state.apply(outcome.changes).unwrap_or_else(|e| {
+                panic!("ERROR: state update failed for transaction {tx:?}\n{e:?}")
+            });
 
             cumulative_gas_used = cumulative_gas_used.saturating_add(outcome.gas_used as u128);
 

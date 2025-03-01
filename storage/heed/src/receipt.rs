@@ -1,15 +1,15 @@
 use {
-    crate::generic::EncodableB256,
-    heed::types::{LazyDecode, SerdeBincode},
+    crate::generic::{EncodableB256, SerdeJson},
     moved_blockchain::receipt::{
         ExtendedReceipt, ReceiptQueries, ReceiptRepository, TransactionReceipt,
     },
     moved_shared::primitives::B256,
 };
 
-pub type EncodableReceipt = SerdeBincode<ExtendedReceipt>;
+pub type Db = heed::Database<EncodableB256, EncodableReceipt>;
+pub type EncodableReceipt = SerdeJson<ExtendedReceipt>;
 
-pub const RECEIPT_DB: &str = "receipt";
+pub const DB: &str = "receipt";
 
 #[derive(Debug)]
 pub struct HeedReceiptRepository;
@@ -21,12 +21,16 @@ impl ReceiptRepository for HeedReceiptRepository {
     fn contains(&self, env: &Self::Storage, transaction_hash: B256) -> Result<bool, Self::Err> {
         let transaction = env.read_txn()?;
 
-        let db: heed::Database<EncodableB256, LazyDecode<EncodableReceipt>> = env
-            .open_database(&transaction, Some(RECEIPT_DB))?
-            .expect("Receipt database should exist")
-            .lazily_decode_data();
+        let db: Db = env
+            .open_database(&transaction, Some(DB))?
+            .expect("Receipt database should exist");
+        let db = db.lazily_decode_data();
 
-        db.get(&transaction, &transaction_hash).map(|v| v.is_some())
+        let response = db.get(&transaction, &transaction_hash).map(|v| v.is_some());
+
+        transaction.commit()?;
+
+        response
     }
 
     fn extend(
@@ -36,13 +40,15 @@ impl ReceiptRepository for HeedReceiptRepository {
     ) -> Result<(), Self::Err> {
         let mut transaction = env.write_txn()?;
 
-        let db: heed::Database<EncodableB256, EncodableReceipt> = env
-            .open_database(&transaction, Some(RECEIPT_DB))?
+        let db: Db = env
+            .open_database(&transaction, Some(DB))?
             .expect("Receipt database should exist");
 
-        receipts
-            .into_iter()
-            .try_for_each(|receipt| db.put(&mut transaction, &receipt.transaction_hash, &receipt))
+        receipts.into_iter().try_for_each(|receipt| {
+            db.put(&mut transaction, &receipt.transaction_hash, &receipt)
+        })?;
+
+        transaction.commit()
     }
 }
 
@@ -60,12 +66,14 @@ impl ReceiptQueries for HeedReceiptQueries {
     ) -> Result<Option<TransactionReceipt>, Self::Err> {
         let transaction = env.read_txn()?;
 
-        let db: heed::Database<EncodableB256, EncodableReceipt> = env
-            .open_database(&transaction, Some(RECEIPT_DB))?
+        let db: Db = env
+            .open_database(&transaction, Some(DB))?
             .expect("Receipt database should exist");
 
-        Ok(db
-            .get(&transaction, &transaction_hash)?
-            .map(TransactionReceipt::from))
+        let response = db.get(&transaction, &transaction_hash);
+
+        transaction.commit()?;
+
+        Ok(response?.map(TransactionReceipt::from))
     }
 }

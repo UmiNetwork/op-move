@@ -1,5 +1,11 @@
+pub use {
+    all::DATABASES,
+    heed::{self, Env},
+};
+
+mod all;
 pub mod block;
-mod generic;
+pub mod generic;
 pub mod payload;
 pub mod receipt;
 pub mod state;

@@ -5,7 +5,9 @@ use {
     std::sync::Arc,
 };
 
-pub const TRIE_DB: &str = "trie";
+pub type Db = heed::Database<EncodableBytes, EncodableBytes>;
+pub type RootDb = heed::Database<EncodableU64, EncodableB256>;
+pub const DB: &str = "trie";
 pub const ROOT_DB: &str = "trie_root";
 pub const ROOT_KEY: u64 = 0u64;
 
@@ -21,23 +23,29 @@ impl<'db> HeedEthTrieDb<'db> {
     pub fn root(&self) -> Result<Option<B256>, heed::Error> {
         let transaction = self.env.read_txn()?;
 
-        let db: heed::Database<EncodableU64, EncodableB256> = self
+        let db: RootDb = self
             .env
             .open_database(&transaction, Some(ROOT_DB))?
             .expect("Trie root database should exist");
 
-        db.get(&transaction, &ROOT_KEY)
+        let root = db.get(&transaction, &ROOT_KEY)?;
+
+        transaction.commit()?;
+
+        Ok(root)
     }
 
     pub fn put_root(&self, root: B256) -> Result<(), heed::Error> {
         let mut transaction = self.env.write_txn()?;
 
-        let db: heed::Database<EncodableU64, EncodableB256> = self
+        let db: RootDb = self
             .env
             .open_database(&transaction, Some(ROOT_DB))?
             .expect("Trie root database should exist");
 
-        db.put(&mut transaction, &ROOT_KEY, &root)
+        db.put(&mut transaction, &ROOT_KEY, &root)?;
+
+        transaction.commit()
     }
 }
 
@@ -47,23 +55,29 @@ impl<'db> DB for HeedEthTrieDb<'db> {
     fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>, Self::Error> {
         let transaction = self.env.read_txn()?;
 
-        let db: heed::Database<EncodableBytes, EncodableBytes> = self
+        let db: Db = self
             .env
-            .open_database(&transaction, Some(TRIE_DB))?
+            .open_database(&transaction, Some(DB))?
             .expect("Trie root database should exist");
 
-        Ok(db.get(&transaction, key)?.map(<[u8]>::to_vec))
+        let value = db.get(&transaction, key)?.map(<[u8]>::to_vec);
+
+        transaction.commit()?;
+
+        Ok(value)
     }
 
     fn insert(&self, key: &[u8], value: Vec<u8>) -> Result<(), Self::Error> {
         let mut transaction = self.env.write_txn()?;
 
-        let db: heed::Database<EncodableBytes, EncodableBytes> = self
+        let db: Db = self
             .env
-            .open_database(&transaction, Some(TRIE_DB))?
+            .open_database(&transaction, Some(DB))?
             .expect("Trie root database should exist");
 
-        db.put(&mut transaction, key, value.as_slice())
+        db.put(&mut transaction, key, value.as_slice())?;
+
+        transaction.commit()
     }
 
     fn remove(&self, _key: &[u8]) -> Result<(), Self::Error> {

@@ -6984,6 +6984,7 @@ dependencies = [
  "moved-genesis-image",
  "moved-shared",
  "moved-state",
+ "moved-storage-heed",
  "moved-storage-rocksdb",
  "once_cell",
  "openssl",
@@ -7037,6 +7038,8 @@ dependencies = [
  "moved-execution",
  "moved-shared",
  "moved-state",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

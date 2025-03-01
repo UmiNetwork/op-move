@@ -24,3 +24,7 @@ docker/volumes
 
 # Optimism cloned repository
 server/src/tests/optimism
+
+# Persistent storage directory
+server/db/
+

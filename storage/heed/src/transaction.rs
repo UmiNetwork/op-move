@@ -1,15 +1,15 @@
 use {
-    crate::generic::EncodableB256,
-    heed::types::SerdeBincode,
+    crate::generic::{EncodableB256, SerdeJson},
     moved_blockchain::transaction::{
         ExtendedTransaction, TransactionQueries, TransactionRepository, TransactionResponse,
     },
     moved_shared::primitives::B256,
 };
 
-pub type EncodableTransaction = SerdeBincode<ExtendedTransaction>;
+pub type Db = heed::Database<EncodableB256, EncodableTransaction>;
+pub type EncodableTransaction = SerdeJson<ExtendedTransaction>;
 
-pub const TRANSACTION_DB: &str = "transaction";
+pub const DB: &str = "transaction";
 
 #[derive(Debug)]
 pub struct HeedTransactionRepository;
@@ -25,13 +25,15 @@ impl TransactionRepository for HeedTransactionRepository {
     ) -> Result<(), Self::Err> {
         let mut db_transaction = env.write_txn()?;
 
-        let db: heed::Database<EncodableB256, EncodableTransaction> = env
-            .open_database(&db_transaction, Some(TRANSACTION_DB))?
+        let db: Db = env
+            .open_database(&db_transaction, Some(DB))?
             .expect("Transaction database should exist");
 
         transactions.into_iter().try_for_each(|transaction| {
             db.put(&mut db_transaction, &transaction.hash(), &transaction)
-        })
+        })?;
+
+        db_transaction.commit()
     }
 }
 
@@ -49,10 +51,14 @@ impl TransactionQueries for HeedTransactionQueries {
     ) -> Result<Option<TransactionResponse>, Self::Err> {
         let transaction = env.read_txn()?;
 
-        let db: heed::Database<EncodableB256, EncodableTransaction> = env
-            .open_database(&transaction, Some(TRANSACTION_DB))?
+        let db: Db = env
+            .open_database(&transaction, Some(DB))?
             .expect("Transaction database should exist");
 
-        Ok(db.get(&transaction, &hash)?.map(TransactionResponse::from))
+        let response = db.get(&transaction, &hash)?.map(TransactionResponse::from);
+
+        transaction.commit()?;
+
+        Ok(response)
     }
 }

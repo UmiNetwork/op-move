@@ -22,7 +22,10 @@ use {
     std::sync::Arc,
 };
 
-pub const STATE_DB: &str = "state";
+pub type Db = heed::Database<EncodableU64, EncodableB256>;
+pub type HeightDb = heed::Database<EncodableU64, EncodableU64>;
+
+pub const DB: &str = "state";
 pub const HEIGHT_DB: &str = "state_height";
 pub const HEIGHT_KEY: u64 = 0;
 
@@ -110,41 +113,51 @@ impl<'db> HeedStateQueries<'db> {
         let height = self.height()?;
         let mut transaction = self.env.write_txn()?;
 
-        let db: heed::Database<EncodableU64, EncodableB256> = self
+        let db: Db = self
             .env
-            .open_database(&transaction, Some(STATE_DB))?
+            .open_database(&transaction, Some(DB))?
             .expect("State root database should exist");
 
         db.put(&mut transaction, &height, &state_root)?;
 
-        let db: heed::Database<EncodableU64, EncodableU64> = self
+        let db: HeightDb = self
             .env
             .open_database(&transaction, Some(HEIGHT_DB))?
             .expect("State height database should exist");
 
-        db.put(&mut transaction, &HEIGHT_KEY, &(height + 1))
+        db.put(&mut transaction, &HEIGHT_KEY, &(height + 1))?;
+
+        transaction.commit()
     }
 
     fn height(&self) -> Result<u64, heed::Error> {
         let transaction = self.env.read_txn()?;
 
-        let db: heed::Database<EncodableU64, EncodableU64> = self
+        let db: HeightDb = self
             .env
             .open_database(&transaction, Some(HEIGHT_DB))?
             .expect("State height database should exist");
 
-        Ok(db.get(&transaction, &HEIGHT_KEY)?.unwrap_or(0))
+        let height = db.get(&transaction, &HEIGHT_KEY);
+
+        transaction.commit()?;
+
+        Ok(height?.unwrap_or(0))
     }
 
     fn root_by_height(&self, height: u64) -> Result<Option<B256>, heed::Error> {
         let transaction = self.env.read_txn()?;
 
-        let db: heed::Database<EncodableU64, EncodableB256> = self
+        let db: Db = self
             .env
-            .open_database(&transaction, Some(STATE_DB))?
+            .open_database(&transaction, Some(DB))?
             .expect("State root database should exist");
 
-        db.get(&transaction, &height)
+        let root = db.get(&transaction, &height);
+
+        transaction.commit()?;
+
+        root
     }
 
     fn tree<D: DB>(&self, db: Arc<D>, height: u64) -> Result<EthTrie<D>, heed::Error> {
