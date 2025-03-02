@@ -14,3 +14,5 @@ moved-blockchain.workspace = true
 moved-execution.workspace = true
 moved-shared.workspace = true
 moved-state.workspace = true
+serde.workspace = true
+serde_json.workspace = true

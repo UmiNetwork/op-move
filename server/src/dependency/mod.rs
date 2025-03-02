@@ -1,10 +1,14 @@
-#[cfg(not(feature = "storage"))]
+#[cfg(feature = "storage-lmdb")]
+pub use heed::*;
+#[cfg(all(not(feature = "storage"), not(feature = "storage-lmdb")))]
 pub use in_memory::*;
-#[cfg(feature = "storage")]
+#[cfg(all(feature = "storage", not(feature = "storage-lmdb")))]
 pub use rocksdb::*;
 
-#[cfg(not(feature = "storage"))]
+#[cfg(feature = "storage-lmdb")]
+mod heed;
+#[cfg(all(not(feature = "storage"), not(feature = "storage-lmdb")))]
 mod in_memory;
-#[cfg(feature = "storage")]
+#[cfg(all(feature = "storage", not(feature = "storage-lmdb")))]
 mod rocksdb;
 mod shared;

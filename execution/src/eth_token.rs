@@ -248,7 +248,9 @@ pub fn get_eth_balance<G: GasMeter>(
             gas_meter,
             traversal_context,
         )
-        .map_err(|_| {
+        .map_err(|e| {
+            println!("{e:?}");
+
             moved_shared::error::Error::eth_token_invariant_violation(
                 EthToken::GetBalanceAlwaysSucceeds,
             )
