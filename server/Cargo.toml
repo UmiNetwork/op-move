@@ -6,8 +6,9 @@ edition = "2021"
 
 [features]
 default = []
-storage = ["moved-storage"]
+storage = ["storage-lmdb"]
 storage-lmdb = ["moved-storage-heed"]
+storage-rocksdb = ["moved-storage-rocksdb"]
 
 [dependencies]
 anyhow.workspace = true
@@ -28,10 +29,10 @@ moved-execution.workspace = true
 moved-genesis.workspace = true
 moved-shared.workspace = true
 moved-state.workspace = true
-moved-storage.optional = true
-moved-storage.workspace = true
 moved-storage-heed.optional = true
 moved-storage-heed.workspace = true
+moved-storage-rocksdb.optional = true
+moved-storage-rocksdb.workspace = true
 once_cell.workspace = true
 serde.workspace = true
 serde_json.workspace = true

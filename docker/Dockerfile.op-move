@@ -28,7 +28,7 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
 # RocksDB breaks the build with libclang.so not found https://github.com/apache/skywalking/issues/10439
 # Aptos-core breaks the build with `disable_lifo_slot` not found https://github.com/aptos-labs/aptos-core/issues/5655 \
     RUSTFLAGS="-C target-feature=-crt-static --cfg tokio_unstable" \
-    cargo build --bin op-move --release --features storage-lmdb \
+    cargo build --bin op-move --release --features storage \
     && mv target/release/op-move /volume/op-move
 
 # Switch to clean image

@@ -9,15 +9,15 @@ use {
     moved_state::State,
 };
 
-pub type SharedStorage = &'static moved_storage::RocksDb;
-pub type ReceiptStorage = &'static moved_storage::RocksDb;
-pub type StateQueries = moved_storage::RocksDbStateQueries<'static>;
-pub type ReceiptRepository = moved_storage::receipt::RocksDbReceiptRepository;
-pub type ReceiptQueries = moved_storage::receipt::RocksDbReceiptQueries;
-pub type PayloadQueries = moved_storage::payload::RocksDbPayloadQueries;
-pub type TransactionRepository = moved_storage::transaction::RocksDbTransactionRepository;
-pub type TransactionQueries = moved_storage::transaction::RocksDbTransactionQueries;
-pub type BlockQueries = moved_storage::block::RocksDbBlockQueries;
+pub type SharedStorage = &'static moved_storage_rocksdb::RocksDb;
+pub type ReceiptStorage = &'static moved_storage_rocksdb::RocksDb;
+pub type StateQueries = moved_storage_rocksdb::RocksDbStateQueries<'static>;
+pub type ReceiptRepository = moved_storage_rocksdb::receipt::RocksDbReceiptRepository;
+pub type ReceiptQueries = moved_storage_rocksdb::receipt::RocksDbReceiptQueries;
+pub type PayloadQueries = moved_storage_rocksdb::payload::RocksDbPayloadQueries;
+pub type TransactionRepository = moved_storage_rocksdb::transaction::RocksDbTransactionRepository;
+pub type TransactionQueries = moved_storage_rocksdb::transaction::RocksDbTransactionQueries;
+pub type BlockQueries = moved_storage_rocksdb::block::RocksDbBlockQueries;
 
 pub fn block_hash() -> impl BlockHash + Send + Sync + 'static {
     MovedBlockHash
@@ -34,17 +34,20 @@ pub fn memory() -> SharedStorage {
 }
 
 pub fn block_repository() -> impl BlockRepository<Storage = SharedStorage> + Send + Sync + 'static {
-    moved_storage::block::RocksDbBlockRepository
+    moved_storage_rocksdb::block::RocksDbBlockRepository
 }
 
 pub fn state() -> impl State + Send + Sync + 'static {
-    moved_storage::RocksDbState::new(std::sync::Arc::new(
-        moved_storage::RocksEthTrieDb::new(db()),
+    moved_storage_rocksdb::RocksDbState::new(std::sync::Arc::new(
+        moved_storage_rocksdb::RocksEthTrieDb::new(db()),
     ))
 }
 
 pub fn state_query(genesis_config: &GenesisConfig) -> StateQueries {
-    moved_storage::RocksDbStateQueries::from_genesis(db(), genesis_config.initial_state_root)
+    moved_storage_rocksdb::RocksDbStateQueries::from_genesis(
+        db(),
+        genesis_config.initial_state_root,
+    )
 }
 
 pub fn on_tx_batch<
@@ -96,19 +99,19 @@ pub fn on_payload<
 }
 
 pub fn transaction_repository() -> TransactionRepository {
-    moved_storage::transaction::RocksDbTransactionRepository
+    moved_storage_rocksdb::transaction::RocksDbTransactionRepository
 }
 
 pub fn transaction_queries() -> TransactionQueries {
-    moved_storage::transaction::RocksDbTransactionQueries
+    moved_storage_rocksdb::transaction::RocksDbTransactionQueries
 }
 
 pub fn receipt_repository() -> ReceiptRepository {
-    moved_storage::receipt::RocksDbReceiptRepository
+    moved_storage_rocksdb::receipt::RocksDbReceiptRepository
 }
 
 pub fn receipt_queries() -> ReceiptQueries {
-    moved_storage::receipt::RocksDbReceiptQueries
+    moved_storage_rocksdb::receipt::RocksDbReceiptQueries
 }
 
 pub fn receipt_memory() -> ReceiptStorage {
@@ -116,24 +119,24 @@ pub fn receipt_memory() -> ReceiptStorage {
 }
 
 pub fn block_queries() -> BlockQueries {
-    moved_storage::block::RocksDbBlockQueries
+    moved_storage_rocksdb::block::RocksDbBlockQueries
 }
 
 pub fn payload_queries() -> PayloadQueries {
-    moved_storage::payload::RocksDbPayloadQueries::new(db())
+    moved_storage_rocksdb::payload::RocksDbPayloadQueries::new(db())
 }
 
 lazy_static::lazy_static! {
-    static ref Database: moved_storage::RocksDb = {
+    static ref Database: moved_storage_rocksdb::RocksDb = {
         create_db()
     };
 }
 
-fn db() -> &'static moved_storage::RocksDb {
+fn db() -> &'static moved_storage_rocksdb::RocksDb {
     &Database
 }
 
-fn create_db() -> moved_storage::RocksDb {
+fn create_db() -> moved_storage_rocksdb::RocksDb {
     let path = "db";
 
     if std::fs::exists(path).unwrap() {
@@ -141,10 +144,10 @@ fn create_db() -> moved_storage::RocksDb {
             .expect("Removing non-empty database directory should succeed");
     }
 
-    let mut options = moved_storage::rocksdb::Options::default();
+    let mut options = moved_storage_rocksdb::rocksdb::Options::default();
     options.create_if_missing(true);
     options.create_missing_column_families(true);
 
-    moved_storage::RocksDb::open_cf(&options, path, moved_storage::COLUMN_FAMILIES)
+    moved_storage_rocksdb::RocksDb::open_cf(&options, path, moved_storage_rocksdb::COLUMN_FAMILIES)
         .expect("Database should open in db dir")
 }
