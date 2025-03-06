@@ -45,9 +45,10 @@ COPY docker/wait-for-it.sh /usr/local/bin/wait-for-it
 COPY docker/prefund.sh prefund.sh
 COPY .env .env
 COPY docker/geth.sh entrypoint.sh
+COPY docker/keystore.sh keystore.sh
 COPY docker/geth-init.sh geth-init.sh
 
 # Set entrypoint to geth binary
-RUN chmod +x entrypoint.sh /usr/local/bin/wait-for-it prefund.sh geth-init.sh
+RUN chmod +x entrypoint.sh /usr/local/bin/wait-for-it prefund.sh keystore.sh geth-init.sh
 
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
