@@ -295,10 +295,7 @@ async fn mirror(
                 match serde_json::from_slice::<serde_json::Value>(&bytes) {
                     Ok(parsed_response) => (parts, raw_bytes, parsed_response),
                     Err(_) => {
-                        println!(
-                            "Request: {}",
-                            serde_json::to_string_pretty(&request.unwrap()).unwrap()
-                        );
+                        println!("Request: {:?}", &request);
                         println!("headers: {headers:?}");
                         println!("WARN: op-geth non-json response: {:?}", bytes);
                         let body = hyper::Body::from(bytes);
@@ -318,7 +315,7 @@ async fn mirror(
         op_move_response: &op_move_response,
         port,
     };
-    println!("{}", serde_json::to_string_pretty(&log).unwrap());
+    println!("{}", serde_json::to_string(&log).unwrap());
 
     // TODO: this is a hack because we currently can't compute the genesis
     // hash expected by op-node.

@@ -463,7 +463,7 @@ impl From<TransactionRequest> for NormalizedEthTransaction {
                 value.max_priority_fee_per_gas.unwrap_or_default(),
             ),
             max_fee_per_gas: U256::from(value.max_fee_per_gas.unwrap_or_default()),
-            data: value.input.input.unwrap_or_default(),
+            data: value.input.into_input().unwrap_or_default(),
             access_list: value.access_list.unwrap_or_default(),
         }
     }

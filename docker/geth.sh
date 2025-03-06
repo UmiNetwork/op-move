@@ -11,7 +11,7 @@ L1_DATADIR="./l1_datadir"
 # Wipe it to avoid an attempt to restore the state which is not persisted in `--dev` mode
 rm -rf "${L1_DATADIR}" && mkdir -p "${L1_DATADIR}"
 
-./geth-init.sh &
+./keystore.sh & ./geth-init.sh &
 
 # Ephemeral proof-of-authority network with a pre-funded developer account,
 # with automatic mining when there are pending transactions.
