@@ -38,6 +38,7 @@ const OP_BRIDGE_POLL_IN_SECS: u64 = 5;
 const OP_START_IN_SECS: u64 = 20;
 const TXN_RECEIPT_WAIT_IN_MILLIS: u64 = 100;
 
+mod erc20;
 mod heartbeat;
 mod withdrawal;
 
@@ -78,6 +79,7 @@ async fn test_on_ethereum() -> Result<()> {
     // 8. Start op-move to accept requests from the sequencer
     let op_move_runtime = Runtime::new()?;
     op_move_runtime.spawn(crate::run());
+    pause(Some(Duration::from_secs(60)));
 
     // 9. In separate threads run op-node, op-batcher, op-proposer
     let (op_node, op_batcher, op_proposer) = run_op()?;
@@ -374,6 +376,7 @@ fn run_op() -> Result<(Child, Child, Child)> {
         ])
         .stdout(op_node_logs)
         .spawn()?;
+    pause(Some(Duration::from_secs(30)));
 
     let op_batcher_logs = File::create("op_batcher.log").unwrap();
     let op_batcher_process = Command::new("op-batcher")
@@ -435,13 +438,32 @@ fn run_op() -> Result<(Child, Child, Child)> {
 async fn use_optimism_bridge() -> Result<()> {
     pause(Some(Duration::from_secs(OP_START_IN_SECS)));
 
-    deposit_to_l2().await?;
+    deposit_eth_to_l2().await?;
+
+    deposit_erc20_to_l2().await?;
+
     withdrawal::withdraw_to_l1().await?;
 
     Ok(())
 }
 
-async fn deposit_to_l2() -> Result<()> {
+async fn deposit_erc20_to_l2() -> Result<()> {
+    let l1_rpc = var("L1_RPC_URL").unwrap();
+    let from_wallet = get_prefunded_wallet().await?;
+
+    // Deploy ERC-20 token to bridge
+    let l1_address = erc20::deploy_l1_token(&from_wallet, &l1_rpc).await?;
+    // Create corresponding token on L2
+    let l2_address = erc20::deploy_l2_token(&from_wallet, l1_address, L2_RPC_URL).await?;
+    // Perform deposit
+    erc20::deposit_l1_token(&from_wallet, l1_address, l2_address, &l1_rpc).await?;
+
+    // TODO: loop to check that the tokens are eventually deposited on the L2.
+
+    Ok(())
+}
+
+async fn deposit_eth_to_l2() -> Result<()> {
     let amount = "100";
 
     let bridge_address = Address::from_str(&get_deployed_address("L1StandardBridgeProxy")?)?;
