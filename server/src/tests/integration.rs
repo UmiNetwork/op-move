@@ -89,7 +89,7 @@ async fn test_on_ethereum() -> Result<()> {
     deploy_move_counter().await?;
 
     // 12. Cleanup generated files and folders
-    hb.shutdown().await;
+    hb.shutdown();
     cleanup_files();
     op_move_runtime.shutdown_background();
     cleanup_processes(vec![geth, op_geth, op_node, op_batcher, op_proposer])
