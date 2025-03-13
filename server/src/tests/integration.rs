@@ -445,37 +445,6 @@ async fn use_optimism_bridge() -> Result<()> {
     Ok(())
 }
 
-async fn deposit_erc20_to_l2() -> Result<()> {
-    let l1_rpc = var("L1_RPC_URL").unwrap();
-    let from_wallet = get_prefunded_wallet().await?;
-    let receiver = from_wallet.address();
-    let deposit_amount = U256::from(1234);
-
-    // Deploy ERC-20 token to bridge
-    let l1_address = erc20::deploy_l1_token(&from_wallet, &l1_rpc).await?;
-    // Create corresponding token on L2
-    let l2_address = erc20::deploy_l2_token(&from_wallet, l1_address, L2_RPC_URL).await?;
-    // Perform deposit
-    erc20::deposit_l1_token(
-        &from_wallet,
-        l1_address,
-        l2_address,
-        deposit_amount,
-        &l1_rpc,
-    )
-    .await?;
-
-    let poll_start = Instant::now();
-    while erc20::l2_erc20_balance_of(l2_address, receiver, L2_RPC_URL).await? != deposit_amount {
-        if poll_start.elapsed().as_secs() > OP_BRIDGE_IN_SECS {
-            anyhow::bail!("Failed to receive ERC-20 tokens to L2");
-        }
-        tokio::time::sleep(Duration::from_secs(OP_BRIDGE_POLL_IN_SECS)).await;
-    }
-
-    Ok(())
-}
-
 async fn deposit_eth_to_l2() -> Result<()> {
     let amount = "100";
 
@@ -495,6 +464,30 @@ async fn deposit_eth_to_l2() -> Result<()> {
         }
         tokio::time::sleep(Duration::from_secs(OP_BRIDGE_POLL_IN_SECS)).await;
     }
+    Ok(())
+}
+
+async fn deposit_erc20_to_l2() -> Result<()> {
+    let l1_rpc = var("L1_RPC_URL").unwrap();
+    let from_wallet = get_prefunded_wallet().await?;
+    let receiver = from_wallet.address();
+    let amount = U256::from(1234);
+
+    // Deploy ERC-20 token to bridge
+    let l1_address = erc20::deploy_l1_token(&from_wallet, &l1_rpc).await?;
+    // Create corresponding token on L2
+    let l2_address = erc20::deploy_l2_token(&from_wallet, l1_address, L2_RPC_URL).await?;
+    // Perform deposit
+    erc20::deposit_l1_token(&from_wallet, l1_address, l2_address, amount, &l1_rpc).await?;
+
+    let poll_start = Instant::now();
+    while erc20::l2_erc20_balance_of(l2_address, receiver, L2_RPC_URL).await? != amount {
+        if poll_start.elapsed().as_secs() > OP_BRIDGE_IN_SECS {
+            anyhow::bail!("Failed to receive ERC-20 tokens to L2");
+        }
+        tokio::time::sleep(Duration::from_secs(OP_BRIDGE_POLL_IN_SECS)).await;
+    }
+
     Ok(())
 }
 
