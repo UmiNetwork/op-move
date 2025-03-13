@@ -108,7 +108,7 @@ pub async fn run() {
                 MethodName::is_non_engine_api,
             )
         })
-        // .with(warp::reply::with::headers(content_type))
+        .with(warp::reply::with::headers(content_type))
         .with(warp::cors().allow_any_origin());
 
     let auth_state_channel = state_channel;
