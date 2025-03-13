@@ -55,6 +55,7 @@ static APTOS_PACKAGE_PATHS: Lazy<Vec<PathBuf>> = Lazy::new(|| {
         MOVED_FRAMEWORK_DIR.join("eth-token"),
         MOVED_FRAMEWORK_DIR.join("evm"),
         MOVED_FRAMEWORK_DIR.join("l2"),
+        MOVED_FRAMEWORK_DIR.join("erc20-api"),
     ]
 });
 static APTOS_ADDRESS_MAPPING: Lazy<BTreeMap<&str, &str>> = Lazy::new(|| {

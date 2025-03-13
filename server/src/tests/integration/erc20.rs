@@ -1,4 +1,9 @@
-use super::*;
+use {
+    super::*,
+    move_vm_runtime::session::SerializedReturnValues,
+    moved_evm_ext::{extract_evm_result, EVM_NATIVE_ADDRESS},
+    moved_shared::primitives::ToEthAddress,
+};
 
 alloy::sol!(
     #[sol(rpc)]
@@ -96,6 +101,7 @@ pub async fn deposit_l1_token(
     from_wallet: &PrivateKeySigner,
     l1_address: Address,
     l2_address: Address,
+    amount: U256,
     rpc_url: &str,
 ) -> Result<()> {
     let provider = ProviderBuilder::new()
@@ -106,13 +112,7 @@ pub async fn deposit_l1_token(
     let bridge_address = Address::from_str(&get_deployed_address("L1StandardBridgeProxy")?)?;
     let bridge_contract = bridge::L1StandardBridge::new(bridge_address, provider);
     let receipt = bridge_contract
-        .depositERC20(
-            l1_address,
-            l2_address,
-            U256::from(1234),
-            21_000,
-            Default::default(),
-        )
+        .depositERC20(l1_address, l2_address, amount, 21_000, Default::default())
         .send()
         .await
         .unwrap()
@@ -121,4 +121,44 @@ pub async fn deposit_l1_token(
         .unwrap();
     assert!(receipt.inner.is_success(), "ERC-20 deposit should succeed");
     Ok(())
+}
+
+pub async fn l2_erc20_balance_of(token: Address, account: Address, rpc_url: &str) -> Result<U256> {
+    let provider = ProviderBuilder::new()
+        .with_recommended_fillers()
+        .on_http(Url::parse(rpc_url)?);
+
+    let args = vec![
+        // The caller here does not matter because it is a view call.
+        MoveValue::Address(EVM_NATIVE_ADDRESS)
+            .simple_serialize()
+            .unwrap(),
+        MoveValue::Address(token.to_move_address())
+            .simple_serialize()
+            .unwrap(),
+        MoveValue::Address(account.to_move_address())
+            .simple_serialize()
+            .unwrap(),
+    ];
+    let function_call = EntryFunction::new(
+        ModuleId::new(EVM_NATIVE_ADDRESS, ident_str!("erc20").into()),
+        ident_str!("balance_of").into(),
+        Vec::new(),
+        args,
+    );
+    let tx_data = TransactionData::EntryFunction(function_call);
+    let data = bcs::to_bytes(&tx_data).unwrap();
+    let eth_call_result = CallBuilder::new_raw(provider, data.into())
+        .to(EVM_NATIVE_ADDRESS.to_eth_address())
+        .call()
+        .await
+        .unwrap();
+
+    let return_values = SerializedReturnValues {
+        mutable_reference_outputs: Vec::new(),
+        return_values: bcs::from_bytes(&eth_call_result).unwrap(),
+    };
+    let evm_result = extract_evm_result(return_values);
+
+    Ok(U256::from_be_slice(&evm_result.output))
 }
