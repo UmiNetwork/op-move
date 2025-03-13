@@ -1,4 +1,4 @@
-module Erc20Api::erc20 {
+module Erc20::erc20 {
     use aptos_framework::fungible_asset_u256::zero;
     use EthToken::eth_token::get_metadata;
     use Evm::evm::{abi_encode_params, evm_call, is_result_success, EvmResult};
