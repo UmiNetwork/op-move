@@ -31,7 +31,7 @@ use {
     },
     tokio::sync::mpsc,
     warp::{
-        http::StatusCode,
+        http::{header::CONTENT_TYPE, HeaderMap, HeaderValue, StatusCode},
         hyper::{body::Bytes, Body, Response},
         path::FullPath,
         Filter, Rejection, Reply,
@@ -94,6 +94,8 @@ pub async fn run() {
 
     let http_state_channel = state_channel.clone();
     let http_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8545));
+    let mut content_type = HeaderMap::new();
+    content_type.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
     let http_route = warp::any()
         .map(move || http_state_channel.clone())
         .and(extract_request_data_filter())
@@ -106,6 +108,7 @@ pub async fn run() {
                 MethodName::is_non_engine_api,
             )
         })
+        .with(warp::reply::with::headers(content_type))
         .with(warp::cors().allow_any_origin());
 
     let auth_state_channel = state_channel;
