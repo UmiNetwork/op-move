@@ -252,9 +252,6 @@ mod tests {
 
         let state = InMemoryState::new();
         let (change_set, _) = deploy_framework(&MovedVm, &state).unwrap();
-        for (address, name, _) in change_set.modules() {
-            println!("{address} {name}");
-        }
         assert_eq!(change_set.modules().count(), TOTAL_MODULES_LEN);
     }
 }
