@@ -1,5 +1,7 @@
 use {
+    self::erc20_factory::OptimismMintableERC20Factory::OptimismMintableERC20Created,
     super::*,
+    alloy::sol_types::SolEvent,
     move_vm_runtime::session::SerializedReturnValues,
     moved_evm_ext::{extract_evm_result, EVM_NATIVE_ADDRESS},
     moved_shared::primitives::ToEthAddress,
@@ -80,15 +82,20 @@ pub async fn deploy_l2_token(
         .await?
         .get_receipt()
         .await?;
+    let event_signature = OptimismMintableERC20Created::SIGNATURE_HASH;
     let event = receipt
         .inner
         .logs()
         .iter()
-        .find(|log| log.address() == factory_address)
+        .find(|log| {
+            log.topic0()
+                .map(|topic| topic == &event_signature)
+                .unwrap_or(false)
+        })
         .expect("OptimismMintableERC20Factory emits log");
     let event = event
-        .log_decode::<erc20_factory::OptimismMintableERC20Factory::StandardL2TokenCreated>()
-        .expect("Event is type StandardL2TokenCreated");
+        .log_decode::<OptimismMintableERC20Created>()
+        .expect("Event is type OptimismMintableERC20Created");
     let l2_token_address = event.data().localToken;
     Ok(l2_token_address)
 }
