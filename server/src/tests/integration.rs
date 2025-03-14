@@ -468,7 +468,7 @@ async fn deposit_eth_to_l2() -> Result<()> {
 }
 
 async fn deposit_erc20_to_l2() -> Result<()> {
-    let l1_rpc = var("L1_RPC_URL").unwrap();
+    let l1_rpc = var("L1_RPC_URL").expect("Missing Ethereum L1 RPC URL");
     let from_wallet = get_prefunded_wallet().await?;
     let receiver = from_wallet.address();
     let amount = U256::from(1234);

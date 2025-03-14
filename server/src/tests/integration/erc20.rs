@@ -77,11 +77,9 @@ pub async fn deploy_l2_token(
     let receipt = contract
         .createOptimismMintableERC20(l1_address, NAME.into(), SYMBOL.into())
         .send()
-        .await
-        .unwrap()
+        .await?
         .get_receipt()
-        .await
-        .unwrap();
+        .await?;
     let event = receipt
         .inner
         .logs()
@@ -114,11 +112,9 @@ pub async fn deposit_l1_token(
     let receipt = bridge_contract
         .depositERC20(l1_address, l2_address, amount, 21_000, Default::default())
         .send()
-        .await
-        .unwrap()
+        .await?
         .get_receipt()
-        .await
-        .unwrap();
+        .await?;
     assert!(receipt.inner.is_success(), "ERC-20 deposit should succeed");
     Ok(())
 }
@@ -147,16 +143,15 @@ pub async fn l2_erc20_balance_of(token: Address, account: Address, rpc_url: &str
         args,
     );
     let tx_data = TransactionData::EntryFunction(function_call);
-    let data = bcs::to_bytes(&tx_data).unwrap();
+    let data = bcs::to_bytes(&tx_data)?;
     let eth_call_result = CallBuilder::new_raw(provider, data.into())
         .to(EVM_NATIVE_ADDRESS.to_eth_address())
         .call()
-        .await
-        .unwrap();
+        .await?;
 
     let return_values = SerializedReturnValues {
         mutable_reference_outputs: Vec::new(),
-        return_values: bcs::from_bytes(&eth_call_result).unwrap(),
+        return_values: bcs::from_bytes(&eth_call_result)?,
     };
     let evm_result = extract_evm_result(return_values);
 
