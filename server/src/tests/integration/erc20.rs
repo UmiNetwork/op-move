@@ -30,6 +30,10 @@ mod bridge {
 
 const NAME: &str = "Gold";
 const SYMBOL: &str = "AU";
+// We didn't spend much time thinking about this. This value is probably too high.
+// But it shouldn't really matter because it is used as part of a deposit-type transaction
+// which has lots of gas to work with.
+const L2_MINT_ERC20_GAS_LIMIT: u32 = 100_000;
 
 /// Create a new ERC-20 token on the L1 chain, returning its address.
 /// For convenience, this function also calls `approve` on the new
@@ -117,7 +121,13 @@ pub async fn deposit_l1_token(
     let bridge_address = Address::from_str(&get_deployed_address("L1StandardBridgeProxy")?)?;
     let bridge_contract = bridge::L1StandardBridge::new(bridge_address, provider);
     let receipt = bridge_contract
-        .depositERC20(l1_address, l2_address, amount, 21_000, Default::default())
+        .depositERC20(
+            l1_address,
+            l2_address,
+            amount,
+            L2_MINT_ERC20_GAS_LIMIT,
+            Default::default(),
+        )
         .send()
         .await?
         .get_receipt()
