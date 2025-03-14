@@ -1,0 +1,12 @@
+[package]
+name = "Erc20"
+version = "1.0.0"
+
+[addresses]
+aptos_framework = "0x1"
+Evm = "0x1"
+Erc20 = "0x1"
+
+[dependencies]
+AptosFramework = { local = "../../../target/aptos-core/aptos-move/framework/aptos-framework/" }
+Evm = { local = "../evm/" }

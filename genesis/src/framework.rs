@@ -233,8 +233,8 @@ fn deploy_sui_framework(session: &mut Session) -> Result<(), VMError> {
 mod tests {
     use {super::*, crate::vm::MovedVm, moved_state::InMemoryState};
 
-    // Aptos framework has 133 modules and Sui has 69. They are kept mutually exclusive.
-    const APTOS_MODULES_LEN: usize = 133;
+    // Aptos framework has 134 modules and Sui has 69. They are kept mutually exclusive.
+    const APTOS_MODULES_LEN: usize = 134;
     const SUI_MODULES_LEN: usize = 69;
     const TOTAL_MODULES_LEN: usize = APTOS_MODULES_LEN + SUI_MODULES_LEN;
 
