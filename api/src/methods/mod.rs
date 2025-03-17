@@ -36,7 +36,7 @@ pub mod tests {
                 InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash,
             },
             in_memory::SharedMemory,
-            payload::{InMemoryPayloadQueries, NewPayloadId, PayloadQueries},
+            payload::{InMemoryPayloadQueries, PayloadQueries},
             receipt::{
                 InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory, ReceiptQueries,
                 ReceiptRepository,
@@ -55,10 +55,7 @@ pub mod tests {
         moved_genesis::config::{GenesisConfig, CHAIN_ID},
         moved_shared::primitives::{Address, B256, U256, U64},
         moved_state::InMemoryState,
-        tokio::sync::{
-            mpsc::{self, Sender},
-            oneshot,
-        },
+        tokio::sync::mpsc::{self, Sender},
     };
 
     /// The address corresponding to this private key is 0x8fd379246834eac74B8419FfdA202CF8051F7A03
@@ -96,7 +93,6 @@ pub mod tests {
             head_hash,
             0,
             genesis_config,
-            0x03421ee50df45cacu64,
             MovedBlockHash,
             repository,
             Eip1559GasFee::default(),
@@ -138,14 +134,12 @@ pub mod tests {
         let mut payload_attributes = Payload::default();
         payload_attributes.transactions.push(encoded.into());
 
-        let (sender, receiver) = oneshot::channel();
         let msg = Command::StartBlockBuild {
             payload_attributes,
-            response_channel: sender,
+            payload_id: U64::from(0x03421ee50df45cacu64),
         }
         .into();
         channel.send(msg).await.map_err(access_state_error).unwrap();
-        receiver.await.map_err(access_state_error).unwrap();
     }
 
     pub async fn deploy_contract(contract_bytes: Bytes, channel: &Sender<StateMessage>) {
@@ -171,14 +165,12 @@ pub mod tests {
         let mut payload_attributes = Payload::default();
         payload_attributes.transactions.push(encoded.into());
 
-        let (sender, receiver) = oneshot::channel();
         let msg = Command::StartBlockBuild {
             payload_attributes,
-            response_channel: sender,
+            payload_id: U64::from(0x03421ee50df45cacu64),
         }
         .into();
         channel.send(msg).await.map_err(access_state_error).unwrap();
-        receiver.await.map_err(access_state_error).unwrap();
     }
 
     pub fn create_state_actor_with_mock_state_queries(
@@ -187,7 +179,6 @@ pub mod tests {
     ) -> (
         StateActor<
             InMemoryState,
-            impl NewPayloadId,
             impl BlockHash,
             impl BlockRepository<Storage = ()>,
             impl BaseGasFee,
@@ -216,7 +207,6 @@ pub mod tests {
             )),
             height,
             GenesisConfig::default(),
-            0x03421ee50df45cacu64,
             MovedBlockHash,
             (),
             Eip1559GasFee::default(),

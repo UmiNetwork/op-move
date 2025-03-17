@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) type StateActor<A, B, C, D, E, F, G, H> = moved_app::StateActor<
+pub(super) type StateActor<A, B, C, D, E, F, G> = moved_app::StateActor<
     A,
     B,
     C,
@@ -8,7 +8,6 @@ pub(super) type StateActor<A, B, C, D, E, F, G, H> = moved_app::StateActor<
     E,
     F,
     G,
-    H,
     BlockQueries,
     SharedStorage,
     StateQueries,
@@ -20,8 +19,8 @@ pub(super) type StateActor<A, B, C, D, E, F, G, H> = moved_app::StateActor<
     PayloadQueries,
     StorageTrieRepository,
 >;
-pub(super) type OnTxBatch<A, B, C, D, E, F, G, H> =
-    moved_app::OnTxBatch<StateActor<A, B, C, D, E, F, G, H>>;
-pub(super) type OnTx<A, B, C, D, E, F, G, H> = moved_app::OnTx<StateActor<A, B, C, D, E, F, G, H>>;
-pub(super) type OnPayload<A, B, C, D, E, F, G, H> =
-    moved_app::OnPayload<StateActor<A, B, C, D, E, F, G, H>>;
+pub(super) type OnTxBatch<A, B, C, D, E, F, G> =
+    moved_app::OnTxBatch<StateActor<A, B, C, D, E, F, G>>;
+pub(super) type OnTx<A, B, C, D, E, F, G> = moved_app::OnTx<StateActor<A, B, C, D, E, F, G>>;
+pub(super) type OnPayload<A, B, C, D, E, F, G> =
+    moved_app::OnPayload<StateActor<A, B, C, D, E, F, G>>;

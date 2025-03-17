@@ -42,7 +42,7 @@ pub enum Command {
     },
     StartBlockBuild {
         payload_attributes: Payload,
-        response_channel: oneshot::Sender<PayloadId>,
+        payload_id: PayloadId,
     },
     AddTransaction {
         tx: TxEnvelope,
@@ -160,7 +160,7 @@ impl WithExecutionOutcome for Header {
     }
 }
 
-pub(crate) trait ToPayloadIdInput<'a> {
+pub trait ToPayloadIdInput<'a> {
     fn to_payload_id_input(&'a self, head: &'a B256) -> NewPayloadIdInput<'a>;
 }
 

@@ -107,6 +107,7 @@ pub async fn run() {
                 "9545",
                 // Limit engine API access to only authenticated endpoint
                 MethodName::is_non_engine_api,
+                &StatePayloadId,
             )
         })
         .with(warp::reply::with::headers(content_type))
@@ -124,6 +125,7 @@ pub async fn run() {
                 (path, query, method, headers, body),
                 "9551",
                 |_| true,
+                &StatePayloadId,
             )
         })
         .with(warp::cors().allow_any_origin());
@@ -141,7 +143,6 @@ pub fn initialize_state_actor(
     rx: mpsc::Receiver<StateMessage>,
 ) -> StateActor<
     impl State + Send + Sync + 'static,
-    impl NewPayloadId + Send + Sync + 'static,
     impl BlockHash + Send + Sync + 'static,
     impl BlockRepository<Storage = dependency::SharedStorage> + Send + Sync + 'static,
     impl BaseGasFee + Send + Sync + 'static,
@@ -210,7 +211,6 @@ pub fn initialize_state_actor(
         head,
         0,
         genesis_config,
-        StatePayloadId,
         block_hash,
         block_repository,
         Eip1559GasFee::new(
@@ -279,6 +279,7 @@ async fn mirror(
     request: Request,
     port: &str,
     is_allowed: impl Fn(&MethodName) -> bool,
+    payload_id: &impl NewPayloadId,
 ) -> Result<warp::reply::Response, Rejection> {
     let (path, query, method, headers, body) = request;
 
@@ -326,8 +327,13 @@ async fn mirror(
         };
 
     let request = request.expect("geth responded, so body must have been JSON");
-    let op_move_response =
-        moved_api::request::handle(request.clone(), state_channel.clone(), is_allowed).await;
+    let op_move_response = moved_api::request::handle(
+        request.clone(),
+        state_channel.clone(),
+        is_allowed,
+        payload_id,
+    )
+    .await;
     let log = MirrorLog {
         request: &request,
         geth_response: &parsed_geth_response,

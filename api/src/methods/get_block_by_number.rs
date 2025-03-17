@@ -39,7 +39,7 @@ async fn inner_execute(
 mod tests {
     use {
         super::*, crate::methods::tests::create_state_actor, alloy::eips::BlockNumberOrTag::*,
-        moved_app::Command, test_case::test_case,
+        moved_app::Command, moved_shared::primitives::U64, test_case::test_case,
     };
 
     pub fn example_request(tag: BlockNumberOrTag) -> serde_json::Value {
@@ -107,10 +107,9 @@ mod tests {
         assert_eq!(get_block_number_from_response(response), "0x0");
 
         // Create a block, so the block height becomes 1
-        let (tx, _) = oneshot::channel();
         let msg = Command::StartBlockBuild {
             payload_attributes: Default::default(),
-            response_channel: tx,
+            payload_id: U64::from(0x03421ee50df45cacu64),
         }
         .into();
         state_channel.send(msg).await.unwrap();
@@ -129,10 +128,9 @@ mod tests {
         let (state, state_channel) = create_state_actor();
         let state_handle = state.spawn();
 
-        let (tx, _) = oneshot::channel();
         let msg = Command::StartBlockBuild {
             payload_attributes: Default::default(),
-            response_channel: tx,
+            payload_id: U64::from(0x03421ee50df45cacu64),
         }
         .into();
         state_channel.send(msg).await.unwrap();
