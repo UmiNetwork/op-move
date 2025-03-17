@@ -4,12 +4,19 @@ A Move VM execution layer for OP Stack.
 
 # Integration testing
 
-Make sure you have `go` installed on your system. Other dependencies include [foundry](http://getfoundry.sh/) for smart contract interaction and [jq](https://jqlang.github.io/jq/) being called indirectly by Optimism itself.
+Make sure you have `go` installed on your system. Due to the pinned versions being based around August 2024, a version not older than 1.22 is required. Other dependencies include [foundry](http://getfoundry.sh/) for smart contract interaction and [jq](https://jqlang.github.io/jq/) being called indirectly by Optimism itself.
 
 First, clone the Optimism monorepo. The repo is used to compile and deploy Optimism contracts.
 
 ```bash
 git clone https://github.com/ethereum-optimism/optimism server/src/tests/optimism
+```
+
+To pull in the libraries required by Optimism, run the following inside that repo:
+
+```bash
+cd server/src/tests/optimism
+make submodules
 ```
 
 Make sure the Optimism binaries are built and are in the PATH, i.e. under the `go` path.
