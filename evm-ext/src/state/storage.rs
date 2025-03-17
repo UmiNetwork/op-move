@@ -344,8 +344,45 @@ where
     }
 }
 
-impl StorageTrieDb for () {
-    fn db(&self, _: Address) -> Arc<BoxedTrieDb> {
-        todo!()
+#[cfg(any(feature = "test-doubles", test))]
+mod test_doubles {
+    use super::*;
+
+    struct NoopEthTrieDb;
+
+    impl DB for NoopEthTrieDb {
+        type Error = Error;
+
+        fn get(&self, _: &[u8]) -> result::Result<Option<Vec<u8>>, Self::Error> {
+            Ok(None)
+        }
+
+        fn insert(&self, _: &[u8], _: Vec<u8>) -> result::Result<(), Self::Error> {
+            Ok(())
+        }
+
+        fn remove(&self, _: &[u8]) -> result::Result<(), Self::Error> {
+            Ok(())
+        }
+
+        fn flush(&self) -> result::Result<(), Self::Error> {
+            Ok(())
+        }
+    }
+
+    impl DbWithRoot for NoopEthTrieDb {
+        fn root(&self) -> result::Result<Option<B256>, Self::Error> {
+            Ok(None)
+        }
+
+        fn put_root(&self, _: B256) -> result::Result<(), Self::Error> {
+            Ok(())
+        }
+    }
+
+    impl StorageTrieDb for () {
+        fn db(&self, _: Address) -> Arc<BoxedTrieDb> {
+            Arc::new(BoxedTrieDb::new(NoopEthTrieDb))
+        }
     }
 }
