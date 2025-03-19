@@ -438,9 +438,24 @@ async fn use_optimism_bridge() -> Result<()> {
 
     deposit_eth_to_l2().await?;
 
-    deposit_erc20_to_l2().await?;
+    let erc20_deposit_amount = U256::from(1234);
+    let erc20::Erc20AddressPair {
+        l1_address,
+        l2_address,
+    } = deposit_erc20_to_l2(erc20_deposit_amount).await?;
 
-    withdrawal::withdraw_to_l1().await?;
+    withdrawal::withdraw_eth_to_l1().await?;
+
+    let erc20_withdrawal_amount = erc20_deposit_amount;
+    erc20::withdraw_erc20_token_from_l2_to_l1(
+        &get_prefunded_wallet().await?,
+        l1_address,
+        l2_address,
+        erc20_withdrawal_amount,
+        &var("L1_RPC_URL").expect("Missing Ethereum L1 RPC URL"),
+        L2_RPC_URL,
+    )
+    .await?;
 
     Ok(())
 }
@@ -467,11 +482,10 @@ async fn deposit_eth_to_l2() -> Result<()> {
     Ok(())
 }
 
-async fn deposit_erc20_to_l2() -> Result<()> {
+async fn deposit_erc20_to_l2(amount: U256) -> Result<erc20::Erc20AddressPair> {
     let l1_rpc = var("L1_RPC_URL").expect("Missing Ethereum L1 RPC URL");
     let from_wallet = get_prefunded_wallet().await?;
     let receiver = from_wallet.address();
-    let amount = U256::from(1234);
 
     // Deploy ERC-20 token to bridge
     let l1_address = erc20::deploy_l1_token(&from_wallet, &l1_rpc).await?;
@@ -488,7 +502,10 @@ async fn deposit_erc20_to_l2() -> Result<()> {
         tokio::time::sleep(Duration::from_secs(OP_BRIDGE_POLL_IN_SECS)).await;
     }
 
-    Ok(())
+    Ok(erc20::Erc20AddressPair {
+        l1_address,
+        l2_address,
+    })
 }
 
 async fn deploy_move_counter() -> Result<()> {

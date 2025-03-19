@@ -4,7 +4,7 @@ use {
     alloy::sol_types::SolEvent,
     move_vm_runtime::session::SerializedReturnValues,
     moved_evm_ext::{extract_evm_result, EVM_NATIVE_ADDRESS},
-    moved_shared::primitives::ToEthAddress,
+    moved_shared::primitives::{ToEthAddress, ToMoveU256},
 };
 
 alloy::sol!(
@@ -20,11 +20,19 @@ mod erc20_factory {
     );
 }
 
-mod bridge {
+mod bridge_l1 {
     alloy::sol!(
         #[sol(rpc)]
         L1StandardBridge,
         "src/tests/res/L1StandardBridge.json"
+    );
+}
+
+mod bridge_l2 {
+    alloy::sol!(
+        #[sol(rpc)]
+        L2StandardBridge,
+        "src/tests/res/L2StandardBridge.json"
     );
 }
 
@@ -34,6 +42,13 @@ const SYMBOL: &str = "AU";
 // But it shouldn't really matter because it is used as part of a deposit-type transaction
 // which has lots of gas to work with.
 const L2_MINT_ERC20_GAS_LIMIT: u32 = 100_000;
+
+const L2_STANDARD_BRIDGE_ADDRESS: Address = address!("4200000000000000000000000000000000000010");
+
+pub struct Erc20AddressPair {
+    pub l1_address: Address,
+    pub l2_address: Address,
+}
 
 /// Create a new ERC-20 token on the L1 chain, returning its address.
 /// For convenience, this function also calls `approve` on the new
@@ -119,7 +134,7 @@ pub async fn deposit_l1_token(
         .on_http(Url::parse(rpc_url)?);
 
     let bridge_address = Address::from_str(&get_deployed_address("L1StandardBridgeProxy")?)?;
-    let bridge_contract = bridge::L1StandardBridge::new(bridge_address, provider);
+    let bridge_contract = bridge_l1::L1StandardBridge::new(bridge_address, provider);
     let receipt = bridge_contract
         .depositERC20(
             l1_address,
@@ -133,6 +148,71 @@ pub async fn deposit_l1_token(
         .get_receipt()
         .await?;
     assert!(receipt.inner.is_success(), "ERC-20 deposit should succeed");
+    Ok(())
+}
+
+pub async fn withdraw_erc20_token_from_l2_to_l1(
+    wallet: &PrivateKeySigner,
+    l1_address: Address,
+    l2_address: Address,
+    amount: U256,
+    l1_rpc_url: &str,
+    l2_rpc_url: &str,
+) -> Result<()> {
+    let owner_address = wallet.address();
+
+    // Approve bridge to spend tokens
+    let spender = L2_STANDARD_BRIDGE_ADDRESS;
+    let initial_allowance = l2_erc20_allowance(l2_address, owner_address, spender, l2_rpc_url)
+        .await
+        .unwrap();
+    assert_eq!(initial_allowance, U256::ZERO);
+
+    erc20::l2_erc20_approve(wallet, l2_address, spender, amount, l2_rpc_url)
+        .await
+        .unwrap();
+    let allowance = erc20::l2_erc20_allowance(l2_address, owner_address, spender, l2_rpc_url)
+        .await
+        .unwrap();
+    assert_eq!(allowance, amount);
+
+    // Initiate bridging
+    let l2_provider = ProviderBuilder::new()
+        .with_recommended_fillers()
+        .wallet(EthereumWallet::from(wallet.to_owned()))
+        .on_http(Url::parse(l2_rpc_url)?);
+    let bridge_contract = bridge_l2::L2StandardBridge::new(L2_STANDARD_BRIDGE_ADDRESS, l2_provider);
+    let receipt = bridge_contract
+        .bridgeERC20(l2_address, l1_address, amount, 100_000, Default::default())
+        .send()
+        .await?
+        .get_receipt()
+        .await?;
+    assert!(
+        receipt.inner.is_success(),
+        "ERC-20 L2 deposit should succeed"
+    );
+
+    // Get initial balance
+    let l1_provider = ProviderBuilder::new()
+        .with_recommended_fillers()
+        .wallet(EthereumWallet::from(wallet.to_owned()))
+        .on_http(Url::parse(l1_rpc_url)?);
+    let l1_token = Erc20::new(l1_address, l1_provider);
+    let initial_balance = l1_token.balanceOf(owner_address).call().await?._0;
+
+    // Prove withdraw on L1
+    let withdraw_tx_hash = receipt.transaction_hash;
+    super::withdrawal::withdraw_to_l1(withdraw_tx_hash, wallet.clone()).await?;
+
+    // Check final balance
+    let final_balance = l1_token.balanceOf(owner_address).call().await?._0;
+    assert_eq!(
+        initial_balance + amount,
+        final_balance,
+        "L1 balance should increase"
+    );
+
     Ok(())
 }
 
@@ -173,4 +253,98 @@ pub async fn l2_erc20_balance_of(token: Address, account: Address, rpc_url: &str
     let evm_result = extract_evm_result(return_values);
 
     Ok(U256::from_be_slice(&evm_result.output))
+}
+
+pub async fn l2_erc20_allowance(
+    token: Address,
+    owner: Address,
+    spender: Address,
+    rpc_url: &str,
+) -> Result<U256> {
+    let provider = ProviderBuilder::new()
+        .with_recommended_fillers()
+        .on_http(Url::parse(rpc_url)?);
+
+    let args = vec![
+        // The caller here does not matter because it is a view call.
+        MoveValue::Address(EVM_NATIVE_ADDRESS)
+            .simple_serialize()
+            .unwrap(),
+        MoveValue::Address(token.to_move_address())
+            .simple_serialize()
+            .unwrap(),
+        MoveValue::Address(owner.to_move_address())
+            .simple_serialize()
+            .unwrap(),
+        MoveValue::Address(spender.to_move_address())
+            .simple_serialize()
+            .unwrap(),
+    ];
+    let function_call = EntryFunction::new(
+        ModuleId::new(EVM_NATIVE_ADDRESS, ident_str!("erc20").into()),
+        ident_str!("allowance").into(),
+        Vec::new(),
+        args,
+    );
+    let tx_data = TransactionData::EntryFunction(function_call);
+    let data = bcs::to_bytes(&tx_data)?;
+    let eth_call_result = CallBuilder::new_raw(provider, data.into())
+        .to(EVM_NATIVE_ADDRESS.to_eth_address())
+        .call()
+        .await?;
+
+    let return_values = SerializedReturnValues {
+        mutable_reference_outputs: Vec::new(),
+        return_values: bcs::from_bytes(&eth_call_result)?,
+    };
+    let evm_result = extract_evm_result(return_values);
+
+    Ok(U256::from_be_slice(&evm_result.output))
+}
+
+pub async fn l2_erc20_approve(
+    from_wallet: &PrivateKeySigner,
+    token: Address,
+    spender: Address,
+    amount: U256,
+    rpc_url: &str,
+) -> Result<()> {
+    let from_address = from_wallet.address();
+    let provider = ProviderBuilder::new()
+        .with_recommended_fillers()
+        .wallet(EthereumWallet::from(from_wallet.to_owned()))
+        .on_http(Url::parse(rpc_url)?);
+
+    let args = vec![
+        MoveValue::Address(from_address.to_move_address())
+            .simple_serialize()
+            .unwrap(),
+        MoveValue::Address(token.to_move_address())
+            .simple_serialize()
+            .unwrap(),
+        MoveValue::Address(spender.to_move_address())
+            .simple_serialize()
+            .unwrap(),
+        MoveValue::U256(amount.to_move_u256())
+            .simple_serialize()
+            .unwrap(),
+    ];
+    let function_call = EntryFunction::new(
+        ModuleId::new(EVM_NATIVE_ADDRESS, ident_str!("erc20").into()),
+        ident_str!("approve_entry").into(),
+        Vec::new(),
+        args,
+    );
+    let tx_data = TransactionData::EntryFunction(function_call);
+    let data = bcs::to_bytes(&tx_data)?;
+    let receipt = CallBuilder::new_raw(provider, data.into())
+        .to(EVM_NATIVE_ADDRESS.to_eth_address())
+        .send()
+        .await?
+        .get_receipt()
+        .await?;
+
+    println!("APPROVE RECEIPT {receipt:#?}");
+    assert!(receipt.inner.is_success(), "ERC-20 approve should succeed");
+    Ok(())
 }

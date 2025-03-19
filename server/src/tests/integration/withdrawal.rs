@@ -24,7 +24,7 @@ const MAX_WITHDRAWAL_TIMEOUT: u64 = 10 * 60;
 const WITHDRAW_ADDRESS: Address =
     alloy::primitives::address!("4200000000000000000000000000000000000016");
 
-pub async fn withdraw_to_l1() -> Result<()> {
+pub async fn withdraw_eth_to_l1() -> Result<()> {
     let amount = "1";
     let prefunded_wallet = get_prefunded_wallet().await?;
     let prefunded_address = prefunded_wallet.address();
@@ -33,6 +33,25 @@ pub async fn withdraw_to_l1() -> Result<()> {
     let withdraw_tx_hash =
         l2_send_ethers(&prefunded_wallet, WITHDRAW_ADDRESS, amount, false).await?;
 
+    let l1_provider = ProviderBuilder::new()
+        .with_recommended_fillers()
+        .wallet(EthereumWallet::from(prefunded_wallet.clone()))
+        .on_http(Url::parse(&var("L1_RPC_URL")?)?);
+
+    let pre_finalize_balance = l1_provider.get_balance(prefunded_address).await?;
+
+    withdraw_to_l1(withdraw_tx_hash, prefunded_wallet).await?;
+
+    let post_finalize_balance = l1_provider.get_balance(prefunded_address).await?;
+    assert!(
+        pre_finalize_balance < post_finalize_balance,
+        "Withdraw should increase funds"
+    );
+
+    Ok(())
+}
+
+pub async fn withdraw_to_l1(withdraw_tx_hash: B256, l1_wallet: PrivateKeySigner) -> Result<()> {
     let l2_provider = ProviderBuilder::new().on_http(Url::parse(L2_RPC_URL)?);
     let rx = l2_provider
         .get_transaction_receipt(withdraw_tx_hash)
@@ -56,7 +75,7 @@ pub async fn withdraw_to_l1() -> Result<()> {
 
     let l1_provider = ProviderBuilder::new()
         .with_recommended_fillers()
-        .wallet(EthereumWallet::from(prefunded_wallet))
+        .wallet(EthereumWallet::from(l1_wallet))
         .on_http(Url::parse(&var("L1_RPC_URL")?)?);
 
     // Contract used on the L1 for withdrawals
@@ -87,7 +106,7 @@ pub async fn withdraw_to_l1() -> Result<()> {
         }
 
         // If the latest L2 block number that the L1 knows about
-        // is largr than the block where the withdraw happened then we
+        // is larger than the block where the withdraw happened then we
         // can move on to the next step. Otherwise we wait before
         // checking again.
         if l2_block_number >= withdraw_block_number {
@@ -165,8 +184,6 @@ pub async fn withdraw_to_l1() -> Result<()> {
     // Wait for finalization
     tokio::time::sleep(Duration::from_secs(OP_BRIDGE_IN_SECS)).await;
 
-    let pre_finalize_balance = l1_provider.get_balance(prefunded_address).await?;
-
     // Finalize withdrawal
     let pending = portal_contract
         .finalizeWithdrawalTransaction(withdraw_tx)
@@ -176,18 +193,12 @@ pub async fn withdraw_to_l1() -> Result<()> {
     let finalize_tx_hash = pending
         .watch()
         .await
-        .inspect_err(|e| println!("Prove Err {e:?}"))?;
+        .inspect_err(|e| println!("Finalize Err {e:?}"))?;
     let finalize_rx = l1_provider
         .get_transaction_receipt(finalize_tx_hash)
         .await?
         .unwrap();
     assert!(finalize_rx.status(), "Finalize Tx failed");
-
-    let post_finalize_balance = l1_provider.get_balance(prefunded_address).await?;
-    assert!(
-        pre_finalize_balance < post_finalize_balance,
-        "Withdraw should increase funds"
-    );
 
     Ok(())
 }
