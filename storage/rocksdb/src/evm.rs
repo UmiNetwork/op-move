@@ -89,6 +89,10 @@ where
         Ok(self.0.insert(key, value)?)
     }
 
+    fn insert_batch(&self, keys: Vec<Vec<u8>>, values: Vec<Vec<u8>>) -> Result<(), Self::Error> {
+        Ok(self.0.insert_batch(keys, values)?)
+    }
+
     fn remove(&self, key: &[u8]) -> Result<(), Self::Error> {
         Ok(self.0.remove(key)?)
     }

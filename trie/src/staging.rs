@@ -1,5 +1,7 @@
 use eth_trie::{MemoryDB, DB};
 
+const INFALLIBLE: &str = "Memory DB should be infallible";
+
 /// A [`DB`] implementation that wraps another [`DB`] and uses it only for reading.
 ///
 /// Every write is made into an in-memory buffer. The in-memory buffer serves as a "staging area"
@@ -23,7 +25,7 @@ impl<D: DB> DB for StagingEthTrieDb<D> {
     type Error = D::Error;
 
     fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>, Self::Error> {
-        if let Some(value) = self.memory.get(key).unwrap() {
+        if let Some(value) = self.memory.get(key).expect(INFALLIBLE) {
             Ok(Some(value))
         } else {
             self.inner.get(key)
@@ -31,12 +33,17 @@ impl<D: DB> DB for StagingEthTrieDb<D> {
     }
 
     fn insert(&self, key: &[u8], value: Vec<u8>) -> Result<(), Self::Error> {
-        self.memory.insert(key, value).unwrap();
+        self.memory.insert(key, value).expect(INFALLIBLE);
+        Ok(())
+    }
+
+    fn insert_batch(&self, keys: Vec<Vec<u8>>, values: Vec<Vec<u8>>) -> Result<(), Self::Error> {
+        self.memory.insert_batch(keys, values).expect(INFALLIBLE);
         Ok(())
     }
 
     fn remove(&self, key: &[u8]) -> Result<(), Self::Error> {
-        self.memory.remove(key).unwrap();
+        self.memory.remove(key).expect(INFALLIBLE);
         Ok(())
     }
 

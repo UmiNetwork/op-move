@@ -2,7 +2,7 @@ use {
     eth_trie::DB,
     moved_evm_ext::state::DbWithRoot,
     moved_shared::primitives::{Address, B256},
-    rocksdb::{AsColumnFamilyRef, DB as RocksDb},
+    rocksdb::{AsColumnFamilyRef, WriteBatchWithTransaction, DB as RocksDb},
 };
 
 pub const TRIE_COLUMN_FAMILY: &str = "evm_storage_trie";
@@ -60,6 +60,19 @@ impl<'db> DB for RocksEthStorageTrieDb<'db> {
     fn insert(&self, key: &[u8], value: Vec<u8>) -> Result<(), Self::Error> {
         let key = self.unique_key(key);
         self.db.put_cf(self.cf(), key, value)
+    }
+
+    fn insert_batch(&self, keys: Vec<Vec<u8>>, values: Vec<Vec<u8>>) -> Result<(), Self::Error> {
+        let cf = self.cf();
+
+        self.db.write(keys.into_iter().zip(values).fold(
+            WriteBatchWithTransaction::<false>::default(),
+            |mut batch, (key, value)| {
+                let key = self.unique_key(key.as_slice());
+                batch.put_cf(cf, key, value);
+                batch
+            },
+        ))
     }
 
     fn remove(&self, _key: &[u8]) -> Result<(), Self::Error> {

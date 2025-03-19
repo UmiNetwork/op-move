@@ -1,7 +1,7 @@
 use {
     eth_trie::{EthTrie, TrieError, DB},
     moved_shared::primitives::B256,
-    rocksdb::{AsColumnFamilyRef, DB as RocksDb},
+    rocksdb::{AsColumnFamilyRef, WriteBatchWithTransaction, DB as RocksDb},
     std::sync::Arc,
 };
 
@@ -51,6 +51,18 @@ impl<'db> DB for RocksEthTrieDb<'db> {
 
     fn insert(&self, key: &[u8], value: Vec<u8>) -> Result<(), Self::Error> {
         self.db.put_cf(self.cf(), key, value)
+    }
+
+    fn insert_batch(&self, keys: Vec<Vec<u8>>, values: Vec<Vec<u8>>) -> Result<(), Self::Error> {
+        let cf = self.cf();
+
+        self.db.write(keys.into_iter().zip(values).fold(
+            WriteBatchWithTransaction::<false>::default(),
+            |mut batch, (key, value)| {
+                batch.put_cf(cf, key, value);
+                batch
+            },
+        ))
     }
 
     fn remove(&self, _key: &[u8]) -> Result<(), Self::Error> {

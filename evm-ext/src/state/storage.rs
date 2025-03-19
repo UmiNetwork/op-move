@@ -107,6 +107,14 @@ impl DB for BoxedTrieDb {
         self.0.insert(key, value)
     }
 
+    fn insert_batch(
+        &self,
+        keys: Vec<Vec<u8>>,
+        values: Vec<Vec<u8>>,
+    ) -> result::Result<(), Self::Error> {
+        self.0.insert_batch(keys, values)
+    }
+
     fn remove(&self, key: &[u8]) -> result::Result<(), Self::Error> {
         self.0.remove(key)
     }
@@ -357,6 +365,14 @@ where
 
     fn insert(&self, key: &[u8], value: Vec<u8>) -> result::Result<(), Self::Error> {
         Ok(self.0.insert(key, value)?)
+    }
+
+    fn insert_batch(
+        &self,
+        keys: Vec<Vec<u8>>,
+        values: Vec<Vec<u8>>,
+    ) -> result::Result<(), Self::Error> {
+        Ok(self.0.insert_batch(keys, values)?)
     }
 
     fn remove(&self, key: &[u8]) -> result::Result<(), Self::Error> {
