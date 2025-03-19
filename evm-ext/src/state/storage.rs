@@ -3,6 +3,7 @@ use {
     auto_impl::auto_impl,
     eth_trie::{EthTrie, MemDBError, MemoryDB, RootWithTrieDiff, Trie, TrieError, DB},
     moved_shared::primitives::{Address, B256, U256},
+    moved_trie::StagingEthTrieDb,
     std::{
         collections::HashMap,
         fmt::Debug,
@@ -30,11 +31,11 @@ impl From<MemDBError> for Error {
     }
 }
 
-pub struct StorageTrie(pub EthTrie<BoxedTrieDb>);
+pub struct StorageTrie(pub EthTrie<StagingEthTrieDb<BoxedTrieDb>>);
 
 #[auto_impl(Box)]
 pub trait StorageTrieDb {
-    fn db(&self, account: Address) -> Arc<BoxedTrieDb>;
+    fn db(&self, account: Address) -> Arc<StagingEthTrieDb<BoxedTrieDb>>;
 }
 
 pub trait StorageTrieRepository {
@@ -172,11 +173,14 @@ impl From<RootWithTrieDiff> for StorageTrieChanges {
 }
 
 impl StorageTrie {
-    pub fn new(db: Arc<BoxedTrieDb>) -> Self {
+    pub fn new(db: Arc<StagingEthTrieDb<BoxedTrieDb>>) -> Self {
         Self(EthTrie::new(db))
     }
 
-    pub fn from(db: Arc<BoxedTrieDb>, root: B256) -> result::Result<Self, TrieError> {
+    pub fn from(
+        db: Arc<StagingEthTrieDb<BoxedTrieDb>>,
+        root: B256,
+    ) -> result::Result<Self, TrieError> {
         Ok(Self(EthTrie::from(db, root)?))
     }
 
@@ -224,10 +228,11 @@ impl StorageTrie {
 
         self.0
             .db
+            .inner
             .insert_batch(keys, values)
             .map_err(|e| TrieError::DB(e.to_string()))?;
 
-        self.0.db.put_root(changes.root)?;
+        self.0.db.inner.put_root(changes.root)?;
 
         Ok(())
     }
@@ -280,7 +285,7 @@ impl DbWithRoot for InMemoryDb {
 
 #[derive(Default)]
 pub struct InMemoryStorageTrieRepository {
-    accounts: RwLock<HashMap<Address, Arc<BoxedTrieDb>>>,
+    accounts: RwLock<HashMap<Address, Arc<StagingEthTrieDb<BoxedTrieDb>>>>,
 }
 
 impl InMemoryStorageTrieRepository {
@@ -288,15 +293,15 @@ impl InMemoryStorageTrieRepository {
         Self::default()
     }
 
-    pub fn create() -> Arc<BoxedTrieDb> {
-        Arc::new(BoxedTrieDb::new(EthTrieDbWithLocalError(
-            InMemoryDb::empty(),
+    pub fn create() -> Arc<StagingEthTrieDb<BoxedTrieDb>> {
+        Arc::new(StagingEthTrieDb::new(BoxedTrieDb::new(
+            EthTrieDbWithLocalError::new(InMemoryDb::empty()),
         )))
     }
 }
 
 impl StorageTrieDb for InMemoryStorageTrieRepository {
-    fn db(&self, account: Address) -> Arc<BoxedTrieDb> {
+    fn db(&self, account: Address) -> Arc<StagingEthTrieDb<BoxedTrieDb>> {
         self.accounts
             .write()
             .unwrap()
@@ -308,6 +313,12 @@ impl StorageTrieDb for InMemoryStorageTrieRepository {
 
 pub struct EthTrieDbWithLocalError<T>(pub T);
 
+impl<T> EthTrieDbWithLocalError<T> {
+    pub fn new(db: T) -> Self {
+        Self(db)
+    }
+}
+
 impl<E, T: DbWithRoot<Error = E>> DbWithRoot for EthTrieDbWithLocalError<T>
 where
     Error: From<E>,
@@ -318,6 +329,19 @@ where
 
     fn put_root(&self, root: B256) -> result::Result<(), Self::Error> {
         Ok(self.0.put_root(root)?)
+    }
+}
+
+impl<E, T: DbWithRoot<Error = E>> DbWithRoot for StagingEthTrieDb<T>
+where
+    Error: From<E>,
+{
+    fn root(&self) -> result::Result<Option<B256>, Self::Error> {
+        self.inner.root()
+    }
+
+    fn put_root(&self, root: B256) -> result::Result<(), Self::Error> {
+        self.inner.put_root(root)
     }
 }
 
@@ -381,8 +405,8 @@ mod test_doubles {
     }
 
     impl StorageTrieDb for () {
-        fn db(&self, _: Address) -> Arc<BoxedTrieDb> {
-            Arc::new(BoxedTrieDb::new(NoopEthTrieDb))
+        fn db(&self, _: Address) -> Arc<StagingEthTrieDb<BoxedTrieDb>> {
+            Arc::new(StagingEthTrieDb::new(BoxedTrieDb::new(NoopEthTrieDb)))
         }
     }
 }

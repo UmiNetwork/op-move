@@ -3,6 +3,7 @@ use {
     eth_trie::{TrieError, DB},
     moved_evm_ext::state::{self, BoxedTrieDb, DbWithRoot, EthTrieDbWithLocalError, StorageTrieDb},
     moved_shared::primitives::{Address, B256},
+    moved_trie::StagingEthTrieDb,
     std::{
         error,
         fmt::{Display, Formatter},
@@ -45,11 +46,11 @@ impl HeedStorageTrieRepository {
 }
 
 impl StorageTrieDb for HeedStorageTrieRepository {
-    fn db(&self, account: Address) -> Arc<BoxedTrieDb> {
+    fn db(&self, account: Address) -> Arc<StagingEthTrieDb<BoxedTrieDb>> {
         let db = HeedEthStorageTrieDb::new(self.env, account);
 
-        Arc::new(BoxedTrieDb::new(EthTrieDbWithLocalError(
-            EthTrieDbWithHeedError::new(db),
+        Arc::new(StagingEthTrieDb::new(BoxedTrieDb::new(
+            EthTrieDbWithLocalError::new(EthTrieDbWithHeedError::new(db)),
         )))
     }
 }

@@ -6886,6 +6886,7 @@ dependencies = [
  "move-vm-runtime",
  "move-vm-types 0.1.0 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.14.0)",
  "moved-shared",
+ "moved-trie",
  "revm",
  "smallvec",
  "thiserror 1.0.69",
@@ -7045,6 +7046,7 @@ dependencies = [
  "moved-execution",
  "moved-shared",
  "moved-state",
+ "moved-trie",
  "serde",
  "serde_json",
 ]
@@ -7064,10 +7066,18 @@ dependencies = [
  "moved-execution",
  "moved-shared",
  "moved-state",
+ "moved-trie",
  "op-alloy",
  "rocksdb",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "moved-trie"
+version = "0.1.0"
+dependencies = [
+ "eth_trie",
 ]
 
 [[package]]

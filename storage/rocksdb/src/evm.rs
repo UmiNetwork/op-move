@@ -3,6 +3,7 @@ use {
     eth_trie::{TrieError, DB},
     moved_evm_ext::state::{self, BoxedTrieDb, DbWithRoot, EthTrieDbWithLocalError, StorageTrieDb},
     moved_shared::primitives::{Address, B256},
+    moved_trie::StagingEthTrieDb,
     std::{
         error,
         fmt::{Display, Formatter},
@@ -21,11 +22,11 @@ impl RocksDbStorageTrieRepository {
 }
 
 impl StorageTrieDb for RocksDbStorageTrieRepository {
-    fn db(&self, account: Address) -> Arc<BoxedTrieDb> {
+    fn db(&self, account: Address) -> Arc<StagingEthTrieDb<BoxedTrieDb>> {
         let db = RocksEthStorageTrieDb::new(self.db, account);
 
-        Arc::new(BoxedTrieDb::new(EthTrieDbWithLocalError(
-            EthTrieWithRocksDbError::new(db),
+        Arc::new(StagingEthTrieDb::new(BoxedTrieDb::new(
+            EthTrieDbWithLocalError::new(EthTrieWithRocksDbError::new(db)),
         )))
     }
 }
