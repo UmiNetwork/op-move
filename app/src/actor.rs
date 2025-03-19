@@ -572,10 +572,10 @@ impl<
 
             let l1_block_info = l1_fee.as_ref().and_then(|x| x.l1_block_info(l1_cost_input));
 
-            on_tx(self, outcome.changes.r#move.clone());
+            on_tx(self, outcome.changes.move_vm.clone());
 
             self.state
-                .apply(outcome.changes.r#move)
+                .apply(outcome.changes.move_vm)
                 .unwrap_or_else(|e| {
                     panic!("ERROR: state update failed for transaction {tx:?}\n{e:?}")
                 });

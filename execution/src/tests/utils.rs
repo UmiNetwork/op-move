@@ -118,7 +118,7 @@ impl TestContext {
         let (tx_hash, tx) = create_transaction(&mut self.signer, TxKind::Create, module_bytes);
         let transaction = TestTransaction::new(tx, tx_hash);
         let outcome = self.execute_tx(&transaction).unwrap();
-        self.state.apply(outcome.changes.r#move).unwrap();
+        self.state.apply(outcome.changes.move_vm).unwrap();
         self.evm_storage.apply(outcome.changes.evm).unwrap();
 
         let module_id = ModuleId::new(self.move_address, Identifier::new(module_name).unwrap());
@@ -149,7 +149,7 @@ impl TestContext {
         let (tx_hash, tx) = create_transaction(&mut self.signer, TxKind::Create, script_bytes);
         let transaction = TestTransaction::new(tx, tx_hash);
         let outcome = self.execute_tx(&transaction).unwrap();
-        self.state.apply(outcome.changes.r#move).unwrap();
+        self.state.apply(outcome.changes.move_vm).unwrap();
         self.evm_storage.apply(outcome.changes.evm).unwrap();
         // Script transaction should succeed
         outcome.vm_outcome.unwrap();
@@ -187,7 +187,7 @@ impl TestContext {
         let mut transaction = TestTransaction::new(tx, tx_hash);
         transaction.with_cost_and_token(l1_cost, base_token, l2_gas_limit, l2_gas_price);
         let outcome = self.execute_tx(&transaction)?;
-        self.state.apply(outcome.changes.r#move.clone())?;
+        self.state.apply(outcome.changes.move_vm.clone())?;
         self.evm_storage.apply(outcome.changes.evm.clone()).unwrap();
         let l2_gas_fee = CreateMovedL2GasFee.with_default_gas_fee_multiplier();
         let used_gas_input = L2GasFeeInput::new(outcome.gas_used, outcome.l2_price);
@@ -225,7 +225,7 @@ impl TestContext {
         let outcome = self.execute_tx(&transaction).unwrap();
         // Entry function transaction should succeed
         outcome.vm_outcome.unwrap();
-        self.state.apply(outcome.changes.r#move).unwrap();
+        self.state.apply(outcome.changes.move_vm).unwrap();
         self.evm_storage.apply(outcome.changes.evm).unwrap();
     }
 
@@ -350,7 +350,7 @@ impl TestContext {
         let transaction = TestTransaction::new(tx.try_into().unwrap(), tx_hash);
         let outcome = self.execute_tx(&transaction).unwrap();
         outcome.vm_outcome.unwrap();
-        self.state.apply(outcome.changes.r#move).unwrap();
+        self.state.apply(outcome.changes.move_vm).unwrap();
         self.evm_storage.apply(outcome.changes.evm).unwrap();
 
         let balance_after = self.get_balance(to);

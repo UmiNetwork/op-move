@@ -239,13 +239,13 @@ type EvmChanges = moved_evm_ext::state::StorageTriesChanges;
 
 #[derive(Debug, Clone)]
 pub struct Changes {
-    pub r#move: MoveChanges,
+    pub move_vm: MoveChanges,
     pub evm: EvmChanges,
 }
 
 impl Changes {
-    pub fn new(r#move: MoveChanges, evm: EvmChanges) -> Self {
-        Self { r#move, evm }
+    pub fn new(move_vm: MoveChanges, evm: EvmChanges) -> Self {
+        Self { move_vm, evm }
     }
 }
 
