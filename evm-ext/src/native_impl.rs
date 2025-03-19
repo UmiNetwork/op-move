@@ -17,7 +17,7 @@ use {
     move_vm_types::{loaded_data::runtime_types::Type, values::Value},
     moved_shared::primitives::{ToEthAddress, ToU256},
     revm::{
-        db::{CacheDB, DatabaseCommit},
+        db::CacheDB,
         primitives::{Address, BlobExcessGasAndPrice, BlockEnv, EVMError, TxEnv, TxKind, U256},
         Evm,
     },
@@ -168,10 +168,6 @@ fn evm_transact_inner(
     // Capture changes in native context so that they can be
     // converted into Move changes when the session is finalized
     evm_native_ctx.state_changes.push(outcome.state.clone());
-
-    // Commit the changes to the DB so that future Move transactions using
-    // the same session will see them.
-    db.commit(outcome.state);
 
     let gas_used = EvmGasUsed::new(outcome.result.gas_used());
     context.charge(gas_used)?;
