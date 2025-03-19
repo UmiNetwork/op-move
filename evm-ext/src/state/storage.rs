@@ -19,9 +19,9 @@ pub type Result<T> = result::Result<T, Error>;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("{0}")]
+    #[error(transparent)]
     EthTrie(#[from] TrieError),
-    #[error("{0}")]
+    #[error(transparent)]
     Rlp(#[from] rlp::Error),
 }
 

@@ -81,6 +81,12 @@ impl<'a> ResolverBackedDB<'a> {
     }
 }
 
+impl From<state::Error> for PartialVMError {
+    fn from(e: state::Error) -> Self {
+        PartialVMError::new(StatusCode::STORAGE_ERROR).with_message(format!("{e:?}"))
+    }
+}
+
 impl<'a> DatabaseRef for ResolverBackedDB<'a> {
     type Error = PartialVMError;
 
@@ -112,8 +118,8 @@ impl<'a> DatabaseRef for ResolverBackedDB<'a> {
     }
 
     fn storage_ref(&self, address: Address, index: U256) -> Result<U256, Self::Error> {
-        let storage = self.storage_trie.for_account(&address).unwrap();
-        let value = storage.get(&index).unwrap();
+        let storage = self.storage_trie.for_account(&address)?;
+        let value = storage.get(&index)?;
         Ok(value.unwrap_or_default())
     }
 
