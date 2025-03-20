@@ -76,6 +76,18 @@ impl<'db> DB for HeedEthTrieDb<'db> {
         transaction.commit()
     }
 
+    fn insert_batch(&self, keys: Vec<Vec<u8>>, values: Vec<Vec<u8>>) -> Result<(), Self::Error> {
+        let mut transaction = self.env.write_txn()?;
+
+        let db = self.env.trie_database(&transaction)?;
+
+        for (key, value) in keys.into_iter().zip(values) {
+            db.put(&mut transaction, key.as_slice(), value.as_slice())?;
+        }
+
+        transaction.commit()
+    }
+
     fn remove(&self, _key: &[u8]) -> Result<(), Self::Error> {
         // Intentionally ignored to not remove historical trie nodes
         Ok(())
