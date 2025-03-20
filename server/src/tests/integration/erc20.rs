@@ -344,7 +344,6 @@ pub async fn l2_erc20_approve(
         .get_receipt()
         .await?;
 
-    println!("APPROVE RECEIPT {receipt:#?}");
     assert!(receipt.inner.is_success(), "ERC-20 approve should succeed");
     Ok(())
 }
