@@ -120,7 +120,6 @@ mod tests {
             head_hash,
             0,
             genesis_config,
-            0x03421ee50df45cacu64,
             head_hash,
             repository,
             Eip1559GasFee::default(),
@@ -154,6 +153,7 @@ mod tests {
         forkchoice_updated::execute_v3(
             forkchoice_updated::tests::example_request(),
             state_channel.clone(),
+            &0x03421ee50df45cacu64,
         )
         .await
         .unwrap();

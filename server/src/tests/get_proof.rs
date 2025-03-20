@@ -6,7 +6,7 @@ use {
         Status,
     },
     moved_app::StateMessage,
-    moved_blockchain::state::ProofResponse,
+    moved_blockchain::{payload::StatePayloadId, state::ProofResponse},
     moved_evm_ext::state,
     moved_genesis::config::GenesisConfig,
     serde::de::DeserializeOwned,
@@ -156,8 +156,13 @@ async fn handle_request<T: DeserializeOwned>(
     request: serde_json::Value,
     state_channel: &mpsc::Sender<StateMessage>,
 ) -> anyhow::Result<T> {
-    let response =
-        moved_api::request::handle(request.clone(), state_channel.clone(), |_| true).await;
+    let response = moved_api::request::handle(
+        request.clone(),
+        state_channel.clone(),
+        |_| true,
+        &StatePayloadId,
+    )
+    .await;
 
     if let Some(error) = response.error {
         anyhow::bail!("Error response from request {request:?}: {error:?}");

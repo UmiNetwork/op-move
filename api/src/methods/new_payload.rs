@@ -282,7 +282,6 @@ mod tests {
             head_hash,
             0,
             genesis_config,
-            0x0306d51fc5aa1533u64,
             B256::from(hex!(
                 "c013e1ff1b8bca9f0d074618cc9e661983bc91d7677168b156765781aee775d3"
             )),
@@ -384,9 +383,13 @@ mod tests {
         )
         .unwrap();
 
-        forkchoice_updated::execute_v3(fc_updated_request, state_channel.clone())
-            .await
-            .unwrap();
+        forkchoice_updated::execute_v3(
+            fc_updated_request,
+            state_channel.clone(),
+            &0x0306d51fc5aa1533u64,
+        )
+        .await
+        .unwrap();
 
         get_payload::execute_v3(get_payload_request, state_channel.clone())
             .await

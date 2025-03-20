@@ -1,9 +1,6 @@
 use {
     crate::dependency::shared::*,
-    moved_blockchain::{
-        block::{BaseGasFee, BlockHash, BlockRepository, MovedBlockHash},
-        payload::NewPayloadId,
-    },
+    moved_blockchain::block::{BaseGasFee, BlockHash, BlockRepository, MovedBlockHash},
     moved_execution::{BaseTokenAccounts, CreateL1GasFee, CreateL2GasFee, MovedBaseTokenAccounts},
     moved_genesis::config::GenesisConfig,
     moved_state::State,
@@ -52,15 +49,14 @@ pub fn state_query(genesis_config: &GenesisConfig) -> StateQueries {
 }
 
 pub fn on_tx_batch<
-    A: State,
-    B: NewPayloadId,
-    C: BlockHash,
-    D: BlockRepository<Storage = SharedStorage>,
-    E: BaseGasFee,
-    F: CreateL1GasFee,
-    G: CreateL2GasFee,
-    H: BaseTokenAccounts,
->() -> OnTxBatch<A, B, C, D, E, F, G, H> {
+    S: State,
+    BH: BlockHash,
+    BR: BlockRepository<Storage = SharedStorage>,
+    Fee: BaseGasFee,
+    L1F: CreateL1GasFee,
+    L2F: CreateL2GasFee,
+    Token: BaseTokenAccounts,
+>() -> OnTxBatch<S, BH, BR, Fee, L1F, L2F, Token> {
     Box::new(|| {
         Box::new(|state| {
             state
@@ -72,28 +68,26 @@ pub fn on_tx_batch<
 }
 
 pub fn on_tx<
-    A: State,
-    B: NewPayloadId,
-    C: BlockHash,
-    D: BlockRepository<Storage = SharedStorage>,
-    E: BaseGasFee,
-    F: CreateL1GasFee,
-    G: CreateL2GasFee,
-    H: BaseTokenAccounts,
->() -> OnTx<A, B, C, D, E, F, G, H> {
+    S: State,
+    BH: BlockHash,
+    BR: BlockRepository<Storage = SharedStorage>,
+    Fee: BaseGasFee,
+    L1F: CreateL1GasFee,
+    L2F: CreateL2GasFee,
+    Token: BaseTokenAccounts,
+>() -> OnTx<S, BH, BR, Fee, L1F, L2F, Token> {
     moved_app::StateActor::on_tx_noop()
 }
 
 pub fn on_payload<
-    A: State,
-    B: NewPayloadId,
-    C: BlockHash,
-    D: BlockRepository<Storage = SharedStorage>,
-    E: BaseGasFee,
-    F: CreateL1GasFee,
-    G: CreateL2GasFee,
-    H: BaseTokenAccounts,
->() -> OnPayload<A, B, C, D, E, F, G, H> {
+    S: State,
+    BH: BlockHash,
+    BR: BlockRepository<Storage = SharedStorage>,
+    Fee: BaseGasFee,
+    L1F: CreateL1GasFee,
+    L2F: CreateL2GasFee,
+    Token: BaseTokenAccounts,
+>() -> OnPayload<S, BH, BR, Fee, L1F, L2F, Token> {
     Box::new(|| {
         Box::new(|state, id, hash| state.payload_queries().add_block_hash(id, hash).unwrap())
     })

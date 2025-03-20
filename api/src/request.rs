@@ -5,6 +5,7 @@ use {
         method_name::MethodName,
     },
     moved_app::StateMessage,
+    moved_blockchain::payload::NewPayloadId,
     tokio::sync::mpsc,
 };
 
@@ -12,11 +13,12 @@ pub async fn handle(
     request: serde_json::Value,
     state_channel: mpsc::Sender<StateMessage>,
     is_allowed: impl Fn(&MethodName) -> bool,
+    payload_id: &impl NewPayloadId,
 ) -> JsonRpcResponse {
     let id = json_utils::get_field(&request, "id");
     let jsonrpc = json_utils::get_field(&request, "jsonrpc");
 
-    match inner_handle_request(request, state_channel, is_allowed).await {
+    match inner_handle_request(request, state_channel, is_allowed, payload_id).await {
         Ok(r) => JsonRpcResponse {
             id,
             jsonrpc,
@@ -36,6 +38,7 @@ async fn inner_handle_request(
     request: serde_json::Value,
     state_channel: mpsc::Sender<StateMessage>,
     is_allowed: impl Fn(&MethodName) -> bool,
+    payload_id: &impl NewPayloadId,
 ) -> Result<serde_json::Value, JsonRpcError> {
     use {crate::methods::*, MethodName::*};
 
@@ -49,7 +52,9 @@ async fn inner_handle_request(
     }
 
     match method {
-        ForkChoiceUpdatedV3 => forkchoice_updated::execute_v3(request, state_channel).await,
+        ForkChoiceUpdatedV3 => {
+            forkchoice_updated::execute_v3(request, state_channel, payload_id).await
+        }
         GetPayloadV3 => get_payload::execute_v3(request, state_channel).await,
         NewPayloadV3 => new_payload::execute_v3(request, state_channel).await,
         SendRawTransaction => send_raw_transaction::execute(request, state_channel).await,

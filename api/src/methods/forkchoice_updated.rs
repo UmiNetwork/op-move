@@ -8,16 +8,24 @@ use {
             PayloadStatusV1, Status,
         },
     },
-    moved_app::{Command, StateMessage},
-    tokio::sync::{mpsc, oneshot},
+    moved_app::{Command, Payload, StateMessage, ToPayloadIdInput},
+    moved_blockchain::payload::NewPayloadId,
+    tokio::sync::mpsc,
 };
 
 pub async fn execute_v3(
     request: serde_json::Value,
     state_channel: mpsc::Sender<StateMessage>,
+    payload_id: &impl NewPayloadId,
 ) -> Result<serde_json::Value, JsonRpcError> {
     let (forkchoice_state, payload_attributes) = parse_params_v3(request)?;
-    let response = inner_execute_v3(forkchoice_state, payload_attributes, state_channel).await?;
+    let response = inner_execute_v3(
+        forkchoice_state,
+        payload_attributes,
+        state_channel,
+        payload_id,
+    )
+    .await?;
     Ok(serde_json::to_value(response).expect("Must be able to JSON-serialize response"))
 }
 
@@ -52,6 +60,7 @@ async fn inner_execute_v3(
     forkchoice_state: ForkchoiceStateV1,
     payload_attributes: Option<PayloadAttributesV3>,
     state_channel: mpsc::Sender<StateMessage>,
+    payload_id_generator: &impl NewPayloadId,
 ) -> Result<ForkchoiceUpdatedResponseV1, JsonRpcError> {
     // Spec: https://github.com/ethereum/execution-apis/blob/main/src/engine/cancun.md#specification-1
 
@@ -72,14 +81,17 @@ async fn inner_execute_v3(
 
     // If `payload_attributes` are present then tell state to start producing a new block
     let payload_id = if let Some(attrs) = payload_attributes {
-        let (tx, rx) = oneshot::channel();
+        let payload_attributes = Payload::from(attrs);
+        let payload_id = payload_id_generator.new_payload_id(
+            payload_attributes.to_payload_id_input(&forkchoice_state.head_block_hash),
+        );
         let msg = Command::StartBlockBuild {
-            payload_attributes: attrs.into(),
-            response_channel: tx,
+            payload_attributes,
+            payload_id,
         }
         .into();
         state_channel.send(msg).await.map_err(access_state_error)?;
-        Some(PayloadId(rx.await.map_err(access_state_error)?))
+        Some(PayloadId(payload_id))
     } else {
         None
     };
@@ -237,7 +249,9 @@ pub(super) mod tests {
             }
         "#).unwrap();
 
-        let response = execute_v3(request, state_channel).await.unwrap();
+        let response = execute_v3(request, state_channel, &0x03421ee50df45cacu64)
+            .await
+            .unwrap();
 
         assert_eq!(response, expected_response);
         state_handle.await.unwrap();

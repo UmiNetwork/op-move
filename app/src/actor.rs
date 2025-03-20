@@ -1,7 +1,7 @@
 use {
     crate::input::{
-        Command, ExecutionOutcome, Payload, Query, StateMessage, ToPayloadIdInput,
-        WithExecutionOutcome, WithPayloadAttributes,
+        Command, ExecutionOutcome, Payload, Query, StateMessage, WithExecutionOutcome,
+        WithPayloadAttributes,
     },
     alloy::{
         consensus::{Receipt, Transaction},
@@ -19,7 +19,7 @@ use {
         block::{
             BaseGasFee, Block, BlockHash, BlockQueries, BlockRepository, ExtendedBlock, Header,
         },
-        payload::{InMemoryPayloadQueries, NewPayloadId, PayloadId, PayloadQueries},
+        payload::{InMemoryPayloadQueries, PayloadId, PayloadQueries},
         receipt::{ExtendedReceipt, ReceiptQueries, ReceiptRepository},
         state::{InMemoryStateQueries, StateQueries},
         transaction::{ExtendedTransaction, TransactionQueries, TransactionRepository},
@@ -46,7 +46,6 @@ use {
 #[cfg(any(feature = "test-doubles", test))]
 pub type InMemStateActor = StateActor<
     moved_state::InMemoryState,
-    u64,
     moved_blockchain::block::MovedBlockHash,
     moved_blockchain::block::InMemoryBlockRepository,
     moved_blockchain::block::Eip1559GasFee,
@@ -81,12 +80,11 @@ pub type OnPayload<S> = Box<
         + 'static,
 >;
 
-pub struct StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ, PQ, ST> {
+pub struct StateActor<S, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ, PQ, ST> {
     genesis_config: GenesisConfig,
     rx: Receiver<StateMessage>,
     head: B256,
     height: u64,
-    payload_id: P,
     block_hash: H,
     gas_fee: G,
     payload_queries: PQ,
@@ -112,7 +110,6 @@ pub struct StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ, PQ
 
 impl<
         S: State + Send + Sync + 'static,
-        P: NewPayloadId + Send + Sync + 'static,
         H: BlockHash + Send + Sync + 'static,
         R: BlockRepository<Storage = M> + Send + Sync + 'static,
         G: BaseGasFee + Send + Sync + 'static,
@@ -129,7 +126,7 @@ impl<
         RQ: ReceiptQueries<Storage = N> + Send + Sync + 'static,
         PQ: PayloadQueries<Storage = M> + Send + Sync + 'static,
         ST: StorageTrieRepository + Send + Sync + 'static,
-    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ, PQ, ST>
+    > StateActor<S, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ, PQ, ST>
 {
     pub fn spawn(mut self) -> JoinHandle<()> {
         tokio::spawn(async move {
@@ -145,7 +142,6 @@ impl<
 
 impl<
         S: State,
-        P: NewPayloadId,
         H: BlockHash,
         R: BlockRepository<Storage = M>,
         G: BaseGasFee,
@@ -162,7 +158,7 @@ impl<
         RQ: ReceiptQueries<Storage = N>,
         PQ: PayloadQueries<Storage = M>,
         ST: StorageTrieRepository,
-    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ, PQ, ST>
+    > StateActor<S, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ, PQ, ST>
 {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -171,7 +167,6 @@ impl<
         head: B256,
         height: u64,
         genesis_config: GenesisConfig,
-        payload_id: P,
         block_hash: H,
         block_repository: R,
         base_fee_per_gas: G,
@@ -197,7 +192,6 @@ impl<
             rx,
             head,
             height,
-            payload_id,
             payload_queries,
             mem_pool: HashMap::new(),
             state,
@@ -365,11 +359,8 @@ impl<
             }
             Command::StartBlockBuild {
                 payload_attributes,
-                response_channel,
+                payload_id: id,
             } => {
-                let input = payload_attributes.to_payload_id_input(&self.head);
-                let id = self.payload_id.new_payload_id(input);
-                response_channel.send(id).ok();
                 let block = self.create_block(payload_attributes);
                 self.block_repository
                     .add(&mut self.storage, block.clone())
@@ -672,7 +663,6 @@ impl<
 
 impl<
         S: State,
-        P: NewPayloadId,
         H: BlockHash,
         R: BlockRepository,
         G: BaseGasFee,
@@ -688,7 +678,7 @@ impl<
         RQ: ReceiptQueries<Storage = N>,
         PQ: PayloadQueries,
         ST: StorageTrieRepository,
-    > StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, InMemoryStateQueries, T, TQ, N, RR, RQ, PQ, ST>
+    > StateActor<S, H, R, G, L1G, L2G, B, Q, M, InMemoryStateQueries, T, TQ, N, RR, RQ, PQ, ST>
 {
     pub fn on_tx_in_memory() -> OnTx<Self> {
         Box::new(|| Box::new(|_state, _changes| ()))
@@ -707,7 +697,6 @@ impl<
 
 impl<
         S: State,
-        P: NewPayloadId,
         H: BlockHash,
         R: BlockRepository,
         G: BaseGasFee,
@@ -723,8 +712,7 @@ impl<
         RQ: ReceiptQueries<Storage = N>,
         SQ: StateQueries,
         ST: StorageTrieRepository,
-    >
-    StateActor<S, P, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ, InMemoryPayloadQueries, ST>
+    > StateActor<S, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ, InMemoryPayloadQueries, ST>
 {
     pub fn on_payload_in_memory() -> OnPayload<Self> {
         Box::new(|| {
@@ -834,7 +822,7 @@ mod tests {
         moved_blockchain::{
             block::{Eip1559GasFee, InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash},
             in_memory::SharedMemory,
-            payload::{InMemoryPayloadQueries, StatePayloadId},
+            payload::InMemoryPayloadQueries,
             receipt::{InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory},
             state::MockStateQueries,
             transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
@@ -884,7 +872,6 @@ mod tests {
     ) -> (
         StateActor<
             impl State,
-            impl NewPayloadId,
             impl BlockHash,
             impl BlockRepository<Storage = SharedMemory>,
             impl BaseGasFee,
@@ -934,7 +921,6 @@ mod tests {
             head_hash,
             height,
             genesis_config,
-            0x03421ee50df45cacu64,
             MovedBlockHash,
             repository,
             Eip1559GasFee::default(),
@@ -987,14 +973,12 @@ mod tests {
         session.finish().unwrap()
     }
 
-    fn create_state_actor_with_fake_queries<N: NewPayloadId>(
+    fn create_state_actor_with_fake_queries(
         addr: AccountAddress,
         initial_balance: U256,
-        payload_id: N,
     ) -> (
         StateActor<
             impl State,
-            impl NewPayloadId,
             impl BlockHash,
             impl BlockRepository<Storage = SharedMemory>,
             impl BaseGasFee,
@@ -1045,7 +1029,6 @@ mod tests {
             head_hash,
             height,
             genesis_config,
-            payload_id,
             MovedBlockHash,
             repository,
             Eip1559GasFee::default(),
@@ -1154,18 +1137,15 @@ mod tests {
         let to = Address::new(hex!("44223344556677889900ffeeaabbccddee111111"));
         let initial_balance = U256::from(5);
         let amount = U256::from(4);
-        let (mut state_actor, _) = create_state_actor_with_fake_queries(
-            EVM_ADDRESS.to_move_address(),
-            initial_balance,
-            0x03421ee50df45cacu64,
-        );
+        let (mut state_actor, _) =
+            create_state_actor_with_fake_queries(EVM_ADDRESS.to_move_address(), initial_balance);
 
         let tx = create_transaction(0);
 
         state_actor.handle_command(Command::AddTransaction { tx: tx.clone() });
         state_actor.handle_command(Command::StartBlockBuild {
             payload_attributes: Default::default(),
-            response_channel: oneshot::channel().0,
+            payload_id: U64::from(0x03421ee50df45cacu64),
         });
 
         let (tx, rx) = oneshot::channel();
@@ -1199,21 +1179,15 @@ mod tests {
     fn test_fetched_nonces_are_updated_after_executing_transaction() {
         let to = Address::new(hex!("44223344556677889900ffeeaabbccddee111111"));
         let initial_balance = U256::from(5);
-        let (mut state_actor, _) = create_state_actor_with_fake_queries(
-            EVM_ADDRESS.to_move_address(),
-            initial_balance,
-            0x03421ee50df45cacu64,
-        );
+        let (mut state_actor, _) =
+            create_state_actor_with_fake_queries(EVM_ADDRESS.to_move_address(), initial_balance);
 
         let tx = create_transaction(0);
 
         state_actor.handle_command(Command::AddTransaction { tx });
-
-        let (tx, _rx) = oneshot::channel();
-
         state_actor.handle_command(Command::StartBlockBuild {
             payload_attributes: Default::default(),
-            response_channel: tx,
+            payload_id: U64::from(0x03421ee50df45cacu64),
         });
 
         let (tx, rx) = oneshot::channel();
@@ -1246,24 +1220,20 @@ mod tests {
     #[test]
     fn test_one_payload_can_be_fetched_repeatedly() {
         let initial_balance = U256::from(5);
-        let (mut state_actor, _) = create_state_actor_with_fake_queries(
-            EVM_ADDRESS.to_move_address(),
-            initial_balance,
-            0x03421ee50df45cacu64,
-        );
+        let (mut state_actor, _) =
+            create_state_actor_with_fake_queries(EVM_ADDRESS.to_move_address(), initial_balance);
 
         let tx = create_transaction(0);
 
         state_actor.handle_command(Command::AddTransaction { tx });
 
-        let (tx, rx) = oneshot::channel();
+        let payload_id = U64::from(0x03421ee50df45cacu64);
 
         state_actor.handle_command(Command::StartBlockBuild {
             payload_attributes: Default::default(),
-            response_channel: tx,
+            payload_id,
         });
 
-        let payload_id = rx.blocking_recv().unwrap();
         let (tx, rx) = oneshot::channel();
 
         state_actor.handle_query(Query::GetPayload {
@@ -1288,24 +1258,20 @@ mod tests {
     #[test]
     fn test_older_payload_can_be_fetched_again_successfully() {
         let initial_balance = U256::from(15);
-        let (mut state_actor, _) = create_state_actor_with_fake_queries(
-            EVM_ADDRESS.to_move_address(),
-            initial_balance,
-            StatePayloadId,
-        );
+        let (mut state_actor, _) =
+            create_state_actor_with_fake_queries(EVM_ADDRESS.to_move_address(), initial_balance);
 
         let tx = create_transaction(0);
 
         state_actor.handle_command(Command::AddTransaction { tx });
 
-        let (tx, rx) = oneshot::channel();
+        let payload_id = U64::from(0x03421ee50df45cacu64);
 
         state_actor.handle_command(Command::StartBlockBuild {
             payload_attributes: Default::default(),
-            response_channel: tx,
+            payload_id,
         });
 
-        let payload_id = rx.blocking_recv().unwrap();
         let (tx, rx) = oneshot::channel();
 
         state_actor.handle_query(Query::GetPayload {
@@ -1319,23 +1285,17 @@ mod tests {
 
         state_actor.handle_command(Command::AddTransaction { tx });
 
-        let (tx, rx) = oneshot::channel();
+        let payload_2_id = U64::from(0x03421ee50df45dadu64);
 
         state_actor.handle_command(Command::StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from(1u64),
                 ..Default::default()
             },
-            response_channel: tx,
+            payload_id: payload_2_id,
         });
 
-        let payload_2_id = rx.blocking_recv().unwrap();
         let (tx, _rx) = oneshot::channel();
-
-        assert_ne!(
-            payload_id, payload_2_id,
-            "Payload IDs of different blocks should not match"
-        );
 
         state_actor.handle_query(Query::GetPayload {
             id: payload_2_id,
