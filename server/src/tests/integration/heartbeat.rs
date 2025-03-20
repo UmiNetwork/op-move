@@ -38,6 +38,7 @@ impl HeartbeatTask {
                     .wallet(EthereumWallet::from(signer))
                     .on_http(Url::parse(&var("L1_RPC_URL")?)?);
                 let amount = U256::from(100_u64);
+                let mut nonce = 0;
                 loop {
                     if thread_stop.load(Ordering::Relaxed) {
                         return Ok(());
@@ -46,17 +47,24 @@ impl HeartbeatTask {
                         .transaction_request()
                         .to(TARGET)
                         .value(amount)
-                        .gas_limit(21_000);
-                    let pending = provider
+                        .gas_limit(21_000)
+                        .nonce(nonce);
+                    // Intentionally ignore errors in sending to the network
+                    // because a future heartbeat could still go through.
+                    let maybe_pending = provider
                         .send_transaction(tx)
                         .await
-                        .inspect_err(|e| println!("HEARTBEAT ERROR {e:?}"))?;
-                    let _tx_hash = pending
-                        .with_required_confirmations(0)
-                        .with_timeout(Some(HEARTBEAT_INTERVAL / 2))
-                        .watch()
-                        .await
-                        .inspect_err(|e| println!("HEARTBEAT ERROR {e:?}"))?;
+                        .inspect_err(|e| println!("HEARTBEAT ERROR {e:?}"));
+                    if let Ok(pending) = maybe_pending {
+                        let _tx_hash = pending
+                            .with_required_confirmations(0)
+                            .with_timeout(Some(HEARTBEAT_INTERVAL / 2))
+                            .watch()
+                            .await
+                            .inspect_err(|e| println!("HEARTBEAT ERROR {e:?}"))
+                            .ok();
+                    }
+                    nonce += 1;
                     tokio::time::sleep(HEARTBEAT_INTERVAL).await;
                 }
             })
