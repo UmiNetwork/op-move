@@ -1,5 +1,12 @@
 use {
-    super::*, moved_evm_ext::state::InMemoryStorageTrieRepository, moved_genesis::config::CHAIN_ID,
+    super::*,
+    move_binary_format::errors::VMError,
+    move_core_types::effects::ChangeSet,
+    moved_evm_ext::{
+        extract_evm_changes, extract_evm_result, state::InMemoryStorageTrieRepository,
+        EvmNativeOutcome, EVM_NATIVE_ADDRESS,
+    },
+    moved_genesis::config::CHAIN_ID,
 };
 
 /// Represents the base token state for a test transaction
@@ -404,6 +411,174 @@ impl TestContext {
         )
     }
 
+    /// (Even more) low-level MoveVM function calls. Unlike [`Self::execute`]
+    /// or [`Self::execute_tx`], doesn't create a tx and let it go through
+    /// verification / gas metering / visibility checks, instead directly
+    /// calling a specified function with its arguments.
+    ///
+    /// Only intended for view functions, as it doesn't persist changes to the context.
+    ///
+    ///
+    /// # Arguments
+    /// * `args` - The arguments to pass to the function call
+    /// * `module_name` - The module name within the std namespace (i.e. 0x1 address)
+    /// * `fn_name` - The function name to call
+    ///
+    /// # Returns
+    /// The transaction execution outcome, changeset and context extensions
+    pub fn quick_call<'a>(
+        &'a self,
+        args: impl IntoIterator<Item = MoveValue>,
+        module_name: &str,
+        fn_name: &str,
+    ) -> (EvmNativeOutcome, ChangeSet, NativeContextExtensions<'a>) {
+        let move_vm = create_move_vm().unwrap();
+        let session_id = SessionId::default();
+        let mut session = create_vm_session(
+            &move_vm,
+            self.state.resolver(),
+            session_id,
+            &self.evm_storage,
+        );
+        let traversal_storage = TraversalStorage::new();
+        let mut traversal_context = TraversalContext::new(&traversal_storage);
+        let mut gas_meter = UnmeteredGasMeter;
+        let args = args
+            .into_iter()
+            .map(|arg| bcs::to_bytes(&arg).unwrap())
+            .collect();
+        let module_name = Identifier::new(module_name).unwrap();
+        let fn_name = Identifier::new(fn_name).unwrap();
+        let module_id = ModuleId::new(EVM_NATIVE_ADDRESS, module_name);
+
+        let outcome = session
+            .execute_function_bypass_visibility(
+                &module_id,
+                &fn_name,
+                Vec::new(),
+                args,
+                &mut gas_meter,
+                &mut traversal_context,
+            )
+            .unwrap();
+
+        let outcome = extract_evm_result(outcome);
+        let (changes, extensions) = session.finish_with_extensions().unwrap();
+        (outcome, changes, extensions)
+    }
+
+    pub fn quick_call_err(
+        &self,
+        args: impl IntoIterator<Item = MoveValue>,
+        module_name: &str,
+        fn_name: &str,
+    ) -> VMError {
+        let move_vm = create_move_vm().unwrap();
+        let session_id = SessionId::default();
+        let mut session = create_vm_session(
+            &move_vm,
+            self.state.resolver(),
+            session_id,
+            &self.evm_storage,
+        );
+        let traversal_storage = TraversalStorage::new();
+        let mut traversal_context = TraversalContext::new(&traversal_storage);
+        let mut gas_meter = UnmeteredGasMeter;
+        let args = args
+            .into_iter()
+            .map(|arg| bcs::to_bytes(&arg).unwrap())
+            .collect();
+        let module_name = Identifier::new(module_name).unwrap();
+        let fn_name = Identifier::new(fn_name).unwrap();
+        let module_id = ModuleId::new(EVM_NATIVE_ADDRESS, module_name);
+
+        session
+            .execute_function_bypass_visibility(
+                &module_id,
+                &fn_name,
+                Vec::new(),
+                args,
+                &mut gas_meter,
+                &mut traversal_context,
+            )
+            .unwrap_err()
+    }
+
+    /// Same as [`Self::quick_call`], but persist the MoveVM *and* EVM changes
+    /// within its storage and state, thus intended for non-view function calls
+    pub fn quick_send(
+        &mut self,
+        args: impl IntoIterator<Item = MoveValue>,
+        module_name: &str,
+        fn_name: &str,
+    ) -> EvmNativeOutcome {
+        let (outcome, mut changes, extensions) = self.quick_call(args, module_name, fn_name);
+
+        let evm_changes = extract_evm_changes(&extensions);
+        changes.squash(evm_changes.accounts).unwrap();
+        drop(extensions);
+
+        self.state.apply(changes).unwrap();
+        self.evm_storage.apply(evm_changes.storage).unwrap();
+        outcome
+    }
+
+    /// Wrapper for invoking EVM create native, triggering
+    /// contract deployment
+    pub fn evm_quick_create(&mut self, contract_bytecode: Vec<u8>) -> EvmNativeOutcome {
+        // Fungible asset Move type is a struct with two fields:
+        // 1. another struct with a single address field,
+        // 2. a u256 value.
+        let fa_zero = MoveValue::Struct(MoveStruct::Runtime(vec![
+            MoveValue::Struct(MoveStruct::Runtime(vec![MoveValue::Address(
+                AccountAddress::ZERO,
+            )])),
+            MoveValue::U256(U256::ZERO.to_move_u256()),
+        ]));
+        let args = vec![
+            // From
+            MoveValue::Address(EVM_NATIVE_ADDRESS),
+            // Value
+            // serialize_fungible_asset_value(0),
+            fa_zero,
+            // Data (code to deploy)
+            MoveValue::vector_u8(contract_bytecode),
+        ];
+
+        self.quick_send(args, "evm", "evm_create")
+    }
+
+    /// Wrapper for invoking EVM call native. Doesn't persist
+    /// changes just like [`Self::quick_call`]
+    pub fn evm_quick_call(
+        &self,
+        from: AccountAddress,
+        to: AccountAddress,
+        input: Vec<u8>,
+    ) -> EvmNativeOutcome {
+        // Fungible asset Move type is a struct with two fields:
+        // 1. another struct with a single address field,
+        // 2. a u256 value.
+        let fa_zero = MoveValue::Struct(MoveStruct::Runtime(vec![
+            MoveValue::Struct(MoveStruct::Runtime(vec![MoveValue::Address(
+                AccountAddress::ZERO,
+            )])),
+            MoveValue::U256(U256::ZERO.to_move_u256()),
+        ]));
+        let args = vec![
+            // From
+            MoveValue::Address(from),
+            // To
+            MoveValue::Address(to),
+            // Value
+            fa_zero,
+            // Calldata
+            MoveValue::vector_u8(input),
+        ];
+
+        self.quick_call(args, "evm", "evm_call").0
+    }
+
     /// Compiles a Move module
     ///
     /// # Arguments
@@ -687,6 +862,7 @@ fn custom_framework_named_addresses() -> impl Iterator<Item = (String, Numerical
             NumericalAddress::parse_str("0x1").unwrap(),
         ),
         ("Evm".into(), NumericalAddress::parse_str("0x1").unwrap()),
+        ("Erc20".into(), NumericalAddress::parse_str("0x1").unwrap()),
         (
             "evm_admin".to_string(),
             NumericalAddress::parse_str("0x1").unwrap(),
@@ -708,6 +884,7 @@ fn custom_framework_named_addresses() -> impl Iterator<Item = (String, Numerical
 fn add_custom_framework_paths(files: &mut Vec<String>) {
     add_framework_path("eth-token", "EthToken", files);
     add_framework_path("evm", "Evm", files);
+    add_framework_path("erc20", "erc20", files);
     get_l2_contracts().iter().for_each(|(name, _)| {
         add_framework_path("l2", name, files);
     });
@@ -721,13 +898,13 @@ fn add_custom_framework_paths(files: &mut Vec<String>) {
 /// * `files` - Vector to add the path to
 fn add_framework_path(folder_name: &str, source_name: &str, files: &mut Vec<String>) {
     let base_path = Path::new(std::env!("CARGO_MANIFEST_DIR"));
-    let eth_token_path = base_path
+    let framework_path = base_path
         .join(format!(
             "../genesis-builder/framework/{folder_name}/sources/{source_name}.move"
         ))
         .canonicalize()
         .unwrap();
-    files.push(eth_token_path.to_string_lossy().into());
+    files.push(framework_path.to_string_lossy().into());
 }
 
 fn get_l2_contracts() -> Vec<(String, String)> {
