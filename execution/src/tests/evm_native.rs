@@ -1,7 +1,6 @@
 use {
     crate::{
-        create_move_vm, create_vm_session, execute_transaction,
-        session_id::SessionId,
+        execute_transaction,
         tests::{ALT_EVM_ADDRESS, EVM_ADDRESS, *},
         transaction::TransactionData,
         CanonicalExecutionInput,
@@ -11,28 +10,11 @@ use {
         providers::{self, network::AnyNetwork},
         sol,
     },
-    aptos_table_natives::TableResolver,
     aptos_types::transaction::EntryFunction,
-    move_binary_format::errors::PartialVMError,
-    move_core_types::{
-        account_address::AccountAddress,
-        effects::ChangeSet,
-        ident_str,
-        language_storage::ModuleId,
-        resolver::MoveResolver,
-        value::{MoveStructLayout, MoveTypeLayout, MoveValue},
-    },
-    move_vm_runtime::{
-        module_traversal::{TraversalContext, TraversalStorage},
-        native_extensions::NativeContextExtensions,
-    },
-    move_vm_types::{
-        gas::UnmeteredGasMeter,
-        values::{Struct, Value},
-    },
+    move_core_types::{ident_str, language_storage::ModuleId, value::MoveValue},
+    move_vm_types::values::Value,
     moved_evm_ext::{
-        extract_evm_changes, extract_evm_result, state::InMemoryStorageTrieRepository,
-        EvmNativeOutcome, CODE_LAYOUT, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
+        state::InMemoryStorageTrieRepository, CODE_LAYOUT, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
     },
     moved_shared::primitives::{ToEthAddress, ToMoveAddress, ToMoveU256},
     moved_state::{InMemoryState, State},
@@ -67,11 +49,7 @@ fn test_evm() {
     );
 
     // -------- Deploy ERC-20 token
-    let (outcome, mut changes, extensions) = evm_quick_create(
-        deploy.calldata().to_vec(),
-        ctx.state.resolver(),
-        &ctx.evm_storage,
-    );
+    let outcome = ctx.evm_quick_create(deploy.calldata().to_vec());
 
     assert!(outcome.is_success, "Contract deploy must succeed");
 
@@ -80,13 +58,6 @@ fn test_evm() {
     let contract_address = outcome.logs[0].address;
     let deployed_contract = ERC20::new(contract_address, &provider);
     let contract_move_address = contract_address.to_move_address();
-
-    let evm_changes = extract_evm_changes(&extensions);
-    changes.squash(evm_changes.accounts).unwrap();
-    drop(extensions);
-
-    ctx.state.apply(changes).unwrap();
-    ctx.evm_storage.apply(evm_changes.storage).unwrap();
 
     // -------- Transfer ERC-20 tokens
     let transfer_amount = parse_ether("0.35").unwrap();
@@ -118,20 +89,13 @@ fn test_evm() {
     ctx.evm_storage.apply(outcome.changes.evm).unwrap();
 
     // -------- Validate ERC-20 balances
-    let balance_of =
-        |address, state: &InMemoryState, evm_storage: &InMemoryStorageTrieRepository| {
-            let balance_of_call = deployed_contract.balanceOf(address);
-            let (outcome, _, _) = evm_quick_call(
-                EVM_NATIVE_ADDRESS,
-                contract_move_address,
-                balance_of_call.calldata().to_vec(),
-                state.resolver(),
-                evm_storage,
-            );
-            U256::from_be_slice(&outcome.output)
-        };
-    let sender_balance = balance_of(EVM_ADDRESS, &ctx.state, &ctx.evm_storage);
-    let receiver_balance = balance_of(ALT_EVM_ADDRESS, &ctx.state, &ctx.evm_storage);
+    let sender_balance_call = deployed_contract.balanceOf(EVM_ADDRESS).calldata().to_vec();
+    let receiver_balance_call = deployed_contract
+        .balanceOf(ALT_EVM_ADDRESS)
+        .calldata()
+        .to_vec();
+    let sender_balance = balance_of(&ctx, contract_move_address, sender_balance_call.clone());
+    let receiver_balance = balance_of(&ctx, contract_move_address, receiver_balance_call.clone());
 
     assert_eq!(sender_balance, mint_amount - transfer_amount);
     assert_eq!(receiver_balance, transfer_amount);
@@ -147,8 +111,8 @@ fn test_evm() {
     );
 
     // -------- Validate ERC-20 balances (again)
-    let sender_balance = balance_of(EVM_ADDRESS, &ctx.state, &ctx.evm_storage);
-    let receiver_balance = balance_of(ALT_EVM_ADDRESS, &ctx.state, &ctx.evm_storage);
+    let sender_balance = balance_of(&ctx, contract_move_address, sender_balance_call);
+    let receiver_balance = balance_of(&ctx, contract_move_address, receiver_balance_call);
 
     assert_eq!(
         sender_balance,
@@ -213,116 +177,7 @@ fn test_solidity_fixed_bytes() {
     }
 }
 
-/// Create MoveVM instance and invoke EVM create native.
-/// For tests only since it does not use an existing session or charge gas.
-fn evm_quick_create<'a>(
-    contract_bytecode: Vec<u8>,
-    resolver: &'a (impl MoveResolver<PartialVMError> + TableResolver),
-    evm_storage: &'a impl StorageTrieRepository,
-) -> (EvmNativeOutcome, ChangeSet, NativeContextExtensions<'a>) {
-    let move_vm = create_move_vm().unwrap();
-    let session_id = SessionId::default();
-    let mut session = create_vm_session(&move_vm, resolver, session_id, evm_storage);
-    let traversal_storage = TraversalStorage::new();
-    let mut traversal_context = TraversalContext::new(&traversal_storage);
-    let mut gas_meter = UnmeteredGasMeter;
-
-    let module_id = ModuleId::new(EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE.into());
-    let args = vec![
-        // From
-        Value::address(EVM_NATIVE_ADDRESS)
-            .simple_serialize(&MoveTypeLayout::Address)
-            .unwrap(),
-        // Value
-        serialize_fungible_asset_value(0),
-        // Data (code to deploy)
-        Value::vector_u8(contract_bytecode)
-            .simple_serialize(&CODE_LAYOUT)
-            .unwrap(),
-    ];
-
-    let outcome = session
-        .execute_function_bypass_visibility(
-            &module_id,
-            ident_str!("evm_create"),
-            Vec::new(),
-            args,
-            &mut gas_meter,
-            &mut traversal_context,
-        )
-        .unwrap();
-
-    let outcome = extract_evm_result(outcome);
-    let (changes, extensions) = session.finish_with_extensions().unwrap();
-    (outcome, changes, extensions)
-}
-
-/// Create MoveVM instance and invoke EVM call native.
-/// For tests only since it does not use an existing session or charge gas.
-fn evm_quick_call<'a>(
-    from: AccountAddress,
-    to: AccountAddress,
-    data: Vec<u8>,
-    resolver: &'a (impl MoveResolver<PartialVMError> + TableResolver),
-    evm_storage: &'a impl StorageTrieRepository,
-) -> (EvmNativeOutcome, ChangeSet, NativeContextExtensions<'a>) {
-    let move_vm = create_move_vm().unwrap();
-    let session_id = SessionId::default();
-    let mut session = create_vm_session(&move_vm, resolver, session_id, evm_storage);
-    let traversal_storage = TraversalStorage::new();
-    let mut traversal_context = TraversalContext::new(&traversal_storage);
-    let mut gas_meter = UnmeteredGasMeter;
-
-    let module_id = ModuleId::new(EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE.into());
-    let args = vec![
-        // From
-        Value::address(from)
-            .simple_serialize(&MoveTypeLayout::Address)
-            .unwrap(),
-        // to
-        Value::address(to)
-            .simple_serialize(&MoveTypeLayout::Address)
-            .unwrap(),
-        // Value
-        serialize_fungible_asset_value(0),
-        // Data (code to deploy)
-        Value::vector_u8(data)
-            .simple_serialize(&CODE_LAYOUT)
-            .unwrap(),
-    ];
-
-    let outcome = session
-        .execute_function_bypass_visibility(
-            &module_id,
-            ident_str!("evm_call"),
-            Vec::new(),
-            args,
-            &mut gas_meter,
-            &mut traversal_context,
-        )
-        .unwrap();
-
-    let outcome = extract_evm_result(outcome);
-    let (changes, extensions) = session.finish_with_extensions().unwrap();
-    (outcome, changes, extensions)
-}
-
-/// Serialize a number as a Move fungible asset type.
-/// This is needed to directly call the EVM natives which
-/// take `value` as a fungible asset.
-fn serialize_fungible_asset_value(value: u64) -> Vec<u8> {
-    // Fungible asset Move type is a struct with two fields:
-    // 1. another struct with a single address field,
-    // 2. a u256 value.
-    let fungible_asset_layout = MoveTypeLayout::Struct(MoveStructLayout::Runtime(vec![
-        MoveTypeLayout::Struct(MoveStructLayout::Runtime(vec![MoveTypeLayout::Address])),
-        MoveTypeLayout::U256,
-    ]));
-
-    Value::struct_(Struct::pack([
-        Value::struct_(Struct::pack([Value::address(AccountAddress::ZERO)])),
-        Value::u256(value.into()),
-    ]))
-    .simple_serialize(&fungible_asset_layout)
-    .unwrap()
+fn balance_of(ctx: &TestContext, contract_address: AccountAddress, calldata: Vec<u8>) -> U256 {
+    let outcome = ctx.evm_quick_call(EVM_NATIVE_ADDRESS, contract_address, calldata);
+    U256::from_be_slice(&outcome.output)
 }

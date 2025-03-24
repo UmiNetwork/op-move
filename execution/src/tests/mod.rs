@@ -55,6 +55,7 @@ use {
 
 mod counter;
 mod data_type;
+mod erc20;
 mod evm_native;
 mod framework;
 mod gas_cost;
