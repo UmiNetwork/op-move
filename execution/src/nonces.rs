@@ -5,6 +5,7 @@ use {
     move_core_types::{
         account_address::AccountAddress, ident_str, identifier::IdentStr,
         language_storage::ModuleId, resolver::MoveResolver, value::MoveValue,
+        vm_status::StatusCode,
     },
     move_vm_runtime::{
         module_traversal::{TraversalContext, TraversalStorage},
@@ -67,7 +68,13 @@ pub fn check_nonce<G: GasMeter>(
             gas_meter,
             traversal_context,
         )
-        .map_err(|_| Error::nonce_invariant_violation(NonceChecking::AnyAccountCanBeCreated))?;
+        .map_err(|e| {
+            if e.major_status() == StatusCode::OUT_OF_GAS {
+                Error::InvalidTransaction(InvalidTransactionCause::InsufficientIntrinsicGas)
+            } else {
+                Error::nonce_invariant_violation(NonceChecking::AnyAccountCanBeCreated)
+            }
+        })?;
 
     let account_nonce = get_account_nonce(
         &account_module_id,
@@ -96,8 +103,12 @@ pub fn check_nonce<G: GasMeter>(
             gas_meter,
             traversal_context,
         )
-        .map_err(|_| {
-            Error::nonce_invariant_violation(NonceChecking::IncrementNonceAlwaysSucceeds)
+        .map_err(|e| {
+            if e.major_status() == StatusCode::OUT_OF_GAS {
+                Error::InvalidTransaction(InvalidTransactionCause::InsufficientIntrinsicGas)
+            } else {
+                Error::nonce_invariant_violation(NonceChecking::IncrementNonceAlwaysSucceeds)
+            }
         })?;
 
     Ok(())
