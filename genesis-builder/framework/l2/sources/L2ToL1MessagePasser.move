@@ -6,36 +6,26 @@ module L2ToL1MessagePasser::l2_to_l1_message_passer {
 
     const ENOT_SUCCESS: u64 = 1;
 
-    struct MessageVersionArgs {}
 
     public fun message_version(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = MessageVersionArgs {};
+        let data = vector[63, 130, 122, 90];
 
-        let data = abi_encode_params(
-            vector[63, 130, 122, 90],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2ToL1MessagePasser, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct BurnArgs {}
 
     public fun burn(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = BurnArgs {};
+        let data = vector[68, 223, 142, 112];
 
-        let data = abi_encode_params(
-            vector[68, 223, 142, 112],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2ToL1MessagePasser, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -65,24 +55,20 @@ module L2ToL1MessagePasser::l2_to_l1_message_passer {
             vector[194, 179, 229, 172],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2ToL1MessagePasser, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct MessageNonceArgs {}
 
     public fun message_nonce(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = MessageNonceArgs {};
+        let data = vector[236, 199, 4, 40];
 
-        let data = abi_encode_params(
-            vector[236, 199, 4, 40],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2ToL1MessagePasser, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -106,24 +92,20 @@ module L2ToL1MessagePasser::l2_to_l1_message_passer {
             vector[130, 227, 112, 45],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2ToL1MessagePasser, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct VersionArgs {}
 
     public fun version(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = VersionArgs {};
+        let data = vector[84, 253, 77, 80];
 
-        let data = abi_encode_params(
-            vector[84, 253, 77, 80],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2ToL1MessagePasser, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);

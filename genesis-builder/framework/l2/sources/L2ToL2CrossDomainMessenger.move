@@ -6,72 +6,52 @@ module L2ToL2CrossDomainMessenger::l2_to_l2_cross_domain_messenger {
 
     const ENOT_SUCCESS: u64 = 1;
 
-    struct CrossDomainMessageSenderArgs {}
 
     public fun cross_domain_message_sender(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = CrossDomainMessageSenderArgs {};
+        let data = vector[56, 255, 222, 24];
 
-        let data = abi_encode_params(
-            vector[56, 255, 222, 24],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2ToL2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct CrossDomainMessageSourceArgs {}
 
     public fun cross_domain_message_source(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = CrossDomainMessageSourceArgs {};
+        let data = vector[36, 121, 68, 98];
 
-        let data = abi_encode_params(
-            vector[36, 121, 68, 98],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2ToL2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct MessageNonceArgs {}
 
     public fun message_nonce(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = MessageNonceArgs {};
+        let data = vector[236, 199, 4, 40];
 
-        let data = abi_encode_params(
-            vector[236, 199, 4, 40],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2ToL2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct MessageVersionArgs {}
 
     public fun message_version(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = MessageVersionArgs {};
+        let data = vector[82, 97, 127, 60];
 
-        let data = abi_encode_params(
-            vector[82, 97, 127, 60],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2ToL2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -110,6 +90,7 @@ module L2ToL2CrossDomainMessenger::l2_to_l2_cross_domain_messenger {
             vector[30, 205, 38, 242],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2ToL2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -139,6 +120,7 @@ module L2ToL2CrossDomainMessenger::l2_to_l2_cross_domain_messenger {
             vector[112, 86, 244, 31],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2ToL2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -162,24 +144,20 @@ module L2ToL2CrossDomainMessenger::l2_to_l2_cross_domain_messenger {
             vector[177, 177, 178, 9],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2ToL2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct VersionArgs {}
 
     public fun version(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = VersionArgs {};
+        let data = vector[84, 253, 77, 80];
 
-        let data = abi_encode_params(
-            vector[84, 253, 77, 80],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2ToL2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);

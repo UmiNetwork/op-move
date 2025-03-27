@@ -6,36 +6,26 @@ module OptimismMintableERC721Factory::optimism_mintable_erc721_factory {
 
     const ENOT_SUCCESS: u64 = 1;
 
-    struct BridgeArgs {}
 
     public fun bridge(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = BridgeArgs {};
+        let data = vector[238, 154, 49, 162];
 
-        let data = abi_encode_params(
-            vector[238, 154, 49, 162],
-            arg_struct,
-        );
         let result = evm_call(caller, @OptimismMintableERC721Factory, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct RemoteChainIdArgs {}
 
     public fun remote_chain_id(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = RemoteChainIdArgs {};
+        let data = vector[125, 29, 12, 91];
 
-        let data = abi_encode_params(
-            vector[125, 29, 12, 91],
-            arg_struct,
-        );
         let result = evm_call(caller, @OptimismMintableERC721Factory, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -65,6 +55,7 @@ module OptimismMintableERC721Factory::optimism_mintable_erc721_factory {
             vector[217, 125, 246, 82],
             arg_struct,
         );
+
         let result = evm_call(caller, @OptimismMintableERC721Factory, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -88,24 +79,20 @@ module OptimismMintableERC721Factory::optimism_mintable_erc721_factory {
             vector[85, 114, 172, 174],
             arg_struct,
         );
+
         let result = evm_call(caller, @OptimismMintableERC721Factory, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct VersionArgs {}
 
     public fun version(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = VersionArgs {};
+        let data = vector[84, 253, 77, 80];
 
-        let data = abi_encode_params(
-            vector[84, 253, 77, 80],
-            arg_struct,
-        );
         let result = evm_call(caller, @OptimismMintableERC721Factory, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);

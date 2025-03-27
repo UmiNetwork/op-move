@@ -6,36 +6,26 @@ module L2ERC721Bridge::l2_erc721_bridge {
 
     const ENOT_SUCCESS: u64 = 1;
 
-    struct MessengerArgs {}
 
     public fun messenger(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = MessengerArgs {};
+        let data = vector[146, 126, 222, 45];
 
-        let data = abi_encode_params(
-            vector[146, 126, 222, 45],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2ERC721Bridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct OtherBridgeArgs {}
 
     public fun other_bridge(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = OtherBridgeArgs {};
+        let data = vector[127, 70, 221, 178];
 
-        let data = abi_encode_params(
-            vector[127, 70, 221, 178],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2ERC721Bridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -71,6 +61,7 @@ module L2ERC721Bridge::l2_erc721_bridge {
             vector[54, 135, 1, 26],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2ERC721Bridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -109,6 +100,7 @@ module L2ERC721Bridge::l2_erc721_bridge {
             vector[170, 85, 116, 82],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2ERC721Bridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -147,6 +139,7 @@ module L2ERC721Bridge::l2_erc721_bridge {
             vector[118, 31, 68, 147],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2ERC721Bridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -170,42 +163,33 @@ module L2ERC721Bridge::l2_erc721_bridge {
             vector[196, 214, 109, 232],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2ERC721Bridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct PausedArgs {}
 
     public fun paused(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = PausedArgs {};
+        let data = vector[92, 151, 90, 187];
 
-        let data = abi_encode_params(
-            vector[92, 151, 90, 187],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2ERC721Bridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct VersionArgs {}
 
     public fun version(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = VersionArgs {};
+        let data = vector[84, 253, 77, 80];
 
-        let data = abi_encode_params(
-            vector[84, 253, 77, 80],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2ERC721Bridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);

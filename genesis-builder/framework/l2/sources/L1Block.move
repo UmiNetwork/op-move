@@ -6,270 +6,195 @@ module L1Block::l1_block {
 
     const ENOT_SUCCESS: u64 = 1;
 
-    struct DepositorAccountArgs {}
 
     public fun depositor_account(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = DepositorAccountArgs {};
+        let data = vector[229, 145, 178, 130];
 
-        let data = abi_encode_params(
-            vector[229, 145, 178, 130],
-            arg_struct,
-        );
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct BaseFeeScalarArgs {}
 
     public fun base_fee_scalar(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = BaseFeeScalarArgs {};
+        let data = vector[197, 152, 89, 24];
 
-        let data = abi_encode_params(
-            vector[197, 152, 89, 24],
-            arg_struct,
-        );
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct BasefeeArgs {}
 
     public fun basefee(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = BasefeeArgs {};
+        let data = vector[92, 242, 73, 105];
 
-        let data = abi_encode_params(
-            vector[92, 242, 73, 105],
-            arg_struct,
-        );
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct BatcherHashArgs {}
 
     public fun batcher_hash(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = BatcherHashArgs {};
+        let data = vector[232, 27, 44, 109];
 
-        let data = abi_encode_params(
-            vector[232, 27, 44, 109],
-            arg_struct,
-        );
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct BlobBaseFeeArgs {}
 
     public fun blob_base_fee(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = BlobBaseFeeArgs {};
+        let data = vector[248, 32, 97, 64];
 
-        let data = abi_encode_params(
-            vector[248, 32, 97, 64],
-            arg_struct,
-        );
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct BlobBaseFeeScalarArgs {}
 
     public fun blob_base_fee_scalar(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = BlobBaseFeeScalarArgs {};
+        let data = vector[104, 213, 220, 166];
 
-        let data = abi_encode_params(
-            vector[104, 213, 220, 166],
-            arg_struct,
-        );
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct GasPayingTokenArgs {}
 
     public fun gas_paying_token(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = GasPayingTokenArgs {};
+        let data = vector[67, 151, 223, 239];
 
-        let data = abi_encode_params(
-            vector[67, 151, 223, 239],
-            arg_struct,
-        );
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct GasPayingTokenNameArgs {}
 
     public fun gas_paying_token_name(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = GasPayingTokenNameArgs {};
+        let data = vector[216, 68, 71, 21];
 
-        let data = abi_encode_params(
-            vector[216, 68, 71, 21],
-            arg_struct,
-        );
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct GasPayingTokenSymbolArgs {}
 
     public fun gas_paying_token_symbol(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = GasPayingTokenSymbolArgs {};
+        let data = vector[85, 15, 205, 201];
 
-        let data = abi_encode_params(
-            vector[85, 15, 205, 201],
-            arg_struct,
-        );
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct HashArgs {}
 
     public fun hash(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = HashArgs {};
+        let data = vector[9, 189, 90, 96];
 
-        let data = abi_encode_params(
-            vector[9, 189, 90, 96],
-            arg_struct,
-        );
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct IsCustomGasTokenArgs {}
 
     public fun is_custom_gas_token(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = IsCustomGasTokenArgs {};
+        let data = vector[33, 50, 104, 73];
 
-        let data = abi_encode_params(
-            vector[33, 50, 104, 73],
-            arg_struct,
-        );
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct L1FeeOverheadArgs {}
 
     public fun l1_fee_overhead(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = L1FeeOverheadArgs {};
+        let data = vector[139, 35, 159, 115];
 
-        let data = abi_encode_params(
-            vector[139, 35, 159, 115],
-            arg_struct,
-        );
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct L1FeeScalarArgs {}
 
     public fun l1_fee_scalar(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = L1FeeScalarArgs {};
+        let data = vector[158, 140, 73, 102];
 
-        let data = abi_encode_params(
-            vector[158, 140, 73, 102],
-            arg_struct,
-        );
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct NumberArgs {}
 
     public fun number(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = NumberArgs {};
+        let data = vector[131, 129, 245, 138];
 
-        let data = abi_encode_params(
-            vector[131, 129, 245, 138],
-            arg_struct,
-        );
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct SequenceNumberArgs {}
 
     public fun sequence_number(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = SequenceNumberArgs {};
+        let data = vector[100, 202, 35, 239];
 
-        let data = abi_encode_params(
-            vector[100, 202, 35, 239],
-            arg_struct,
-        );
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -302,6 +227,7 @@ module L1Block::l1_block {
             vector[113, 207, 170, 63],
             arg_struct,
         );
+
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -346,60 +272,46 @@ module L1Block::l1_block {
             vector[1, 93, 142, 185],
             arg_struct,
         );
+
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct SetL1BlockValuesEcotoneArgs {}
 
     public fun set_l1_block_values_ecotone(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = SetL1BlockValuesEcotoneArgs {};
+        let data = vector[68, 10, 94, 32];
 
-        let data = abi_encode_params(
-            vector[68, 10, 94, 32],
-            arg_struct,
-        );
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct TimestampArgs {}
 
     public fun timestamp(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = TimestampArgs {};
+        let data = vector[184, 7, 119, 234];
 
-        let data = abi_encode_params(
-            vector[184, 7, 119, 234],
-            arg_struct,
-        );
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct VersionArgs {}
 
     public fun version(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = VersionArgs {};
+        let data = vector[84, 253, 77, 80];
 
-        let data = abi_encode_params(
-            vector[84, 253, 77, 80],
-            arg_struct,
-        );
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
