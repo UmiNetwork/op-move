@@ -1,8 +1,5 @@
 use super::*;
 
-/// Internal MoveVM cost accrued upon a transfer operation
-const TRANSFER_GAS_COST: u64 = 15;
-
 /// How much L1 gas cost charging depletes the gas meter
 const L1_GAS_COST: u64 = 10;
 
@@ -23,18 +20,19 @@ fn test_treasury_charges_l1_and_l2_cost_to_sender_account_on_success() {
     let receiver = ALT_EVM_ADDRESS;
     let transfer_amount = mint_amount.wrapping_shr(2);
 
-    let outcome = ctx.transfer(
-        receiver,
-        transfer_amount,
-        l1_cost,
-        l2_gas_limit,
-        l2_gas_price,
-    );
-    assert!(outcome.unwrap().vm_outcome.is_ok());
+    let outcome = ctx
+        .transfer(
+            receiver,
+            transfer_amount,
+            l1_cost,
+            l2_gas_limit,
+            l2_gas_price,
+        )
+        .expect("Transfer should succeed");
+    assert!(outcome.vm_outcome.is_ok());
 
-    // TODO: why does the transfer cost more in this case?
-    let l2_cost = TRANSFER_GAS_COST
-        .saturating_add(1)
+    let l2_cost = outcome
+        .gas_used
         .saturating_mul(l2_gas_price.saturating_to());
     let expected_sender_balance = mint_amount - transfer_amount - U256::from(l1_cost + l2_cost);
     let sender_balance = ctx.get_balance(sender);
@@ -61,17 +59,21 @@ fn test_treasury_charges_correct_l1_and_l2_cost_to_sender_account_on_user_error(
     let transfer_amount = mint_amount.saturating_add(U256::from(1));
 
     // Transfer to receiver account
-    let outcome = ctx.transfer(
-        receiver,
-        transfer_amount,
-        l1_cost,
-        l2_gas_limit,
-        l2_gas_price,
-    );
-    assert!(outcome.unwrap().vm_outcome.is_err());
+    let outcome = ctx
+        .transfer(
+            receiver,
+            transfer_amount,
+            l1_cost,
+            l2_gas_limit,
+            l2_gas_price,
+        )
+        .unwrap();
+    assert!(outcome.vm_outcome.is_err());
 
     let sender_balance = ctx.get_balance(sender);
-    let l2_cost = TRANSFER_GAS_COST.saturating_mul(l2_gas_price.saturating_to());
+    let l2_cost = outcome
+        .gas_used
+        .saturating_mul(l2_gas_price.saturating_to());
     let expected_sender_balance = mint_amount - U256::from(l1_cost + l2_cost);
     let receiver_balance = ctx.get_balance(receiver);
 
