@@ -17,6 +17,7 @@ struct L2Module {
     functions: Vec<L2Function>,
     structs: BTreeMap<String, Vec<L2Input>>,
     has_fungible_asset: bool,
+    has_non_empty_args: bool,
 }
 
 #[derive(Default, Serialize)]
@@ -62,6 +63,9 @@ pub fn l2_abi_to_move() -> anyhow::Result<()> {
         let mut structs = BTreeMap::new();
         // If `FungibleAsset` should be imported in the Move file
         let mut has_fungible_asset = false;
+
+        // To determine if importing `abi_encode_params` is needed
+        let mut has_non_empty_args = false;
 
         let mut functions = Vec::new();
         let mut unique_function_names = Vec::new();
@@ -129,6 +133,10 @@ pub fn l2_abi_to_move() -> anyhow::Result<()> {
                     function.inputs.push(L2Input { name, ty });
                 });
 
+                if !has_non_empty_args && !function.inputs.is_empty() {
+                    has_non_empty_args = true;
+                }
+
                 functions.push(function);
             }
         }
@@ -143,6 +151,7 @@ pub fn l2_abi_to_move() -> anyhow::Result<()> {
             functions,
             structs,
             has_fungible_asset,
+            has_non_empty_args,
         };
         handlebars.render_to_write("move", &module, &mut output_file)?;
     }

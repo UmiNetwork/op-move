@@ -6,162 +6,117 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
 
     const ENOT_SUCCESS: u64 = 1;
 
-    struct MessageVersionArgs {}
 
     public fun message_version(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = MessageVersionArgs {};
+        let data = vector[63, 130, 122, 90];
 
-        let data = abi_encode_params(
-            vector[63, 130, 122, 90],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct MinGasCalldataOverheadArgs {}
 
     public fun min_gas_calldata_overhead(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = MinGasCalldataOverheadArgs {};
+        let data = vector[2, 143, 133, 247];
 
-        let data = abi_encode_params(
-            vector[2, 143, 133, 247],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct MinGasDynamicOverheadDenominatorArgs {}
 
     public fun min_gas_dynamic_overhead_denominator(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = MinGasDynamicOverheadDenominatorArgs {};
+        let data = vector[12, 86, 132, 152];
 
-        let data = abi_encode_params(
-            vector[12, 86, 132, 152],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct MinGasDynamicOverheadNumeratorArgs {}
 
     public fun min_gas_dynamic_overhead_numerator(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = MinGasDynamicOverheadNumeratorArgs {};
+        let data = vector[40, 40, 215, 232];
 
-        let data = abi_encode_params(
-            vector[40, 40, 215, 232],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct OtherMessengerArgs {}
 
     public fun other_messenger(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = OtherMessengerArgs {};
+        let data = vector[159, 206, 129, 44];
 
-        let data = abi_encode_params(
-            vector[159, 206, 129, 44],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct RelayCallOverheadArgs {}
 
     public fun relay_call_overhead(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = RelayCallOverheadArgs {};
+        let data = vector[76, 29, 106, 105];
 
-        let data = abi_encode_params(
-            vector[76, 29, 106, 105],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct RelayConstantOverheadArgs {}
 
     public fun relay_constant_overhead(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = RelayConstantOverheadArgs {};
+        let data = vector[131, 167, 64, 116];
 
-        let data = abi_encode_params(
-            vector[131, 167, 64, 116],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct RelayGasCheckBufferArgs {}
 
     public fun relay_gas_check_buffer(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = RelayGasCheckBufferArgs {};
+        let data = vector[86, 68, 207, 223];
 
-        let data = abi_encode_params(
-            vector[86, 68, 207, 223],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct RelayReservedGasArgs {}
 
     public fun relay_reserved_gas(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = RelayReservedGasArgs {};
+        let data = vector[140, 190, 238, 242];
 
-        let data = abi_encode_params(
-            vector[140, 190, 238, 242],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -188,6 +143,7 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
             vector[178, 138, 222, 37],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -211,6 +167,7 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
             vector[164, 231, 248, 189],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -234,60 +191,46 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
             vector[196, 214, 109, 232],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct L1CrossDomainMessengerArgs {}
 
     public fun l1_cross_domain_messenger(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = L1CrossDomainMessengerArgs {};
+        let data = vector[167, 17, 152, 105];
 
-        let data = abi_encode_params(
-            vector[167, 17, 152, 105],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct MessageNonceArgs {}
 
     public fun message_nonce(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = MessageNonceArgs {};
+        let data = vector[236, 199, 4, 40];
 
-        let data = abi_encode_params(
-            vector[236, 199, 4, 40],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct PausedArgs {}
 
     public fun paused(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = PausedArgs {};
+        let data = vector[92, 151, 90, 187];
 
-        let data = abi_encode_params(
-            vector[92, 151, 90, 187],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -326,6 +269,7 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
             vector[215, 100, 173, 11],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -355,6 +299,7 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
             vector[61, 187, 32, 43],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -378,42 +323,33 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
             vector[177, 177, 178, 9],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct VersionArgs {}
 
     public fun version(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = VersionArgs {};
+        let data = vector[84, 253, 77, 80];
 
-        let data = abi_encode_params(
-            vector[84, 253, 77, 80],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct XDomainMessageSenderArgs {}
 
     public fun x_domain_message_sender(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = XDomainMessageSenderArgs {};
+        let data = vector[110, 41, 110, 69];
 
-        let data = abi_encode_params(
-            vector[110, 41, 110, 69],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);

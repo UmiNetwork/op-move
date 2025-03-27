@@ -6,18 +6,13 @@ module GovernanceToken::governance_token {
 
     const ENOT_SUCCESS: u64 = 1;
 
-    struct DomainSeparatorArgs {}
 
     public fun domain_separator(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = DomainSeparatorArgs {};
+        let data = vector[54, 68, 229, 21];
 
-        let data = abi_encode_params(
-            vector[54, 68, 229, 21],
-            arg_struct,
-        );
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -44,6 +39,7 @@ module GovernanceToken::governance_token {
             vector[221, 98, 237, 62],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -70,6 +66,7 @@ module GovernanceToken::governance_token {
             vector[9, 94, 167, 179],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -93,6 +90,7 @@ module GovernanceToken::governance_token {
             vector[112, 160, 130, 49],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -116,6 +114,7 @@ module GovernanceToken::governance_token {
             vector[66, 150, 108, 104],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -142,6 +141,7 @@ module GovernanceToken::governance_token {
             vector[121, 204, 103, 144],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -168,24 +168,20 @@ module GovernanceToken::governance_token {
             vector[241, 18, 126, 216],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct DecimalsArgs {}
 
     public fun decimals(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = DecimalsArgs {};
+        let data = vector[49, 60, 229, 103];
 
-        let data = abi_encode_params(
-            vector[49, 60, 229, 103],
-            arg_struct,
-        );
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -212,6 +208,7 @@ module GovernanceToken::governance_token {
             vector[164, 87, 194, 215],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -235,6 +232,7 @@ module GovernanceToken::governance_token {
             vector[92, 25, 169, 92],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -273,6 +271,7 @@ module GovernanceToken::governance_token {
             vector[195, 205, 165, 32],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -296,6 +295,7 @@ module GovernanceToken::governance_token {
             vector[88, 124, 222, 30],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -319,6 +319,7 @@ module GovernanceToken::governance_token {
             vector[142, 83, 158, 140],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -345,6 +346,7 @@ module GovernanceToken::governance_token {
             vector[58, 70, 177, 168],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -368,6 +370,7 @@ module GovernanceToken::governance_token {
             vector[154, 178, 78, 176],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -394,6 +397,7 @@ module GovernanceToken::governance_token {
             vector[57, 80, 147, 81],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -420,24 +424,20 @@ module GovernanceToken::governance_token {
             vector[64, 193, 15, 25],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct NameArgs {}
 
     public fun name(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = NameArgs {};
+        let data = vector[6, 253, 222, 3];
 
-        let data = abi_encode_params(
-            vector[6, 253, 222, 3],
-            arg_struct,
-        );
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -461,6 +461,7 @@ module GovernanceToken::governance_token {
             vector[126, 206, 190, 0],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -484,24 +485,20 @@ module GovernanceToken::governance_token {
             vector[111, 207, 255, 69],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct OwnerArgs {}
 
     public fun owner(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = OwnerArgs {};
+        let data = vector[141, 165, 203, 91];
 
-        let data = abi_encode_params(
-            vector[141, 165, 203, 91],
-            arg_struct,
-        );
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -543,60 +540,46 @@ module GovernanceToken::governance_token {
             vector[213, 5, 172, 207],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct RenounceOwnershipArgs {}
 
     public fun renounce_ownership(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = RenounceOwnershipArgs {};
+        let data = vector[113, 80, 24, 166];
 
-        let data = abi_encode_params(
-            vector[113, 80, 24, 166],
-            arg_struct,
-        );
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct SymbolArgs {}
 
     public fun symbol(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = SymbolArgs {};
+        let data = vector[149, 216, 155, 65];
 
-        let data = abi_encode_params(
-            vector[149, 216, 155, 65],
-            arg_struct,
-        );
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct TotalSupplyArgs {}
 
     public fun total_supply(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = TotalSupplyArgs {};
+        let data = vector[24, 22, 13, 221];
 
-        let data = abi_encode_params(
-            vector[24, 22, 13, 221],
-            arg_struct,
-        );
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -623,6 +606,7 @@ module GovernanceToken::governance_token {
             vector[169, 5, 156, 187],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -652,6 +636,7 @@ module GovernanceToken::governance_token {
             vector[35, 184, 114, 221],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -675,6 +660,7 @@ module GovernanceToken::governance_token {
             vector[242, 253, 227, 139],
             arg_struct,
         );
+
         let result = evm_call(caller, @GovernanceToken, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);

@@ -6,36 +6,26 @@ module L2StandardBridge::l2_standard_bridge {
 
     const ENOT_SUCCESS: u64 = 1;
 
-    struct MessengerArgs {}
 
     public fun messenger(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = MessengerArgs {};
+        let data = vector[146, 126, 222, 45];
 
-        let data = abi_encode_params(
-            vector[146, 126, 222, 45],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2StandardBridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct OtherBridgeArgs {}
 
     public fun other_bridge(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = OtherBridgeArgs {};
+        let data = vector[127, 70, 221, 178];
 
-        let data = abi_encode_params(
-            vector[127, 70, 221, 178],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2StandardBridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -71,6 +61,7 @@ module L2StandardBridge::l2_standard_bridge {
             vector[135, 8, 118, 35],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2StandardBridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -109,6 +100,7 @@ module L2StandardBridge::l2_standard_bridge {
             vector[84, 10, 191, 115],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2StandardBridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -135,6 +127,7 @@ module L2StandardBridge::l2_standard_bridge {
             vector[9, 252, 136, 67],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2StandardBridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -164,6 +157,7 @@ module L2StandardBridge::l2_standard_bridge {
             vector[225, 16, 19, 221],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2StandardBridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -190,6 +184,7 @@ module L2StandardBridge::l2_standard_bridge {
             vector[143, 96, 31, 102],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2StandardBridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -228,6 +223,7 @@ module L2StandardBridge::l2_standard_bridge {
             vector[1, 102, 160, 122],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2StandardBridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -260,6 +256,7 @@ module L2StandardBridge::l2_standard_bridge {
             vector[22, 53, 245, 253],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2StandardBridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -283,60 +280,46 @@ module L2StandardBridge::l2_standard_bridge {
             vector[196, 214, 109, 232],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2StandardBridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct L1TokenBridgeArgs {}
 
     public fun l1_token_bridge(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = L1TokenBridgeArgs {};
+        let data = vector[54, 199, 23, 193];
 
-        let data = abi_encode_params(
-            vector[54, 199, 23, 193],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2StandardBridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct PausedArgs {}
 
     public fun paused(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = PausedArgs {};
+        let data = vector[92, 151, 90, 187];
 
-        let data = abi_encode_params(
-            vector[92, 151, 90, 187],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2StandardBridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
     }
 
-    struct VersionArgs {}
 
     public fun version(
         caller: &signer,
     ): EvmResult {
         let _value = zero(get_metadata());
-        let arg_struct = VersionArgs {};
+        let data = vector[84, 253, 77, 80];
 
-        let data = abi_encode_params(
-            vector[84, 253, 77, 80],
-            arg_struct,
-        );
         let result = evm_call(caller, @L2StandardBridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -369,6 +352,7 @@ module L2StandardBridge::l2_standard_bridge {
             vector[50, 183, 0, 109],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2StandardBridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
@@ -404,6 +388,7 @@ module L2StandardBridge::l2_standard_bridge {
             vector[163, 167, 149, 72],
             arg_struct,
         );
+
         let result = evm_call(caller, @L2StandardBridge, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
