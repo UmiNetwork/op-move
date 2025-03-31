@@ -124,7 +124,7 @@ fn evm_transact_inner(
 
     let evm_native_ctx = context.extensions_mut().get_mut::<NativeEVMContext>();
     evm_native_ctx
-        .transfers_log
+        .transfer_logs
         .add_tx_origin(caller.to_move_address(), value);
     let mut db = CacheDB::new(ResolverBackedDB::new(
         evm_native_ctx.storage_trie,
@@ -213,7 +213,7 @@ fn evm_transact_inner(
     // converted into Move changes when the session is finalized
     evm_native_ctx.state_changes.push(outcome.state.clone());
     evm_native_ctx
-        .transfers_log
+        .transfer_logs
         .append_transfers(transfers_log.into_inner());
 
     let gas_used = EvmGasUsed::new(outcome.result.gas_used());
