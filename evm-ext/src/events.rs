@@ -19,12 +19,19 @@ pub struct EthTransfer {
 }
 
 pub trait EthTransferLog {
-    fn append_transfers(&self, transfers: Vec<EthTransfer>);
+    fn push_transfer(&self, transfer: EthTransfer);
     fn take_transfers(&self) -> Vec<EthTransfer>;
     fn add_tx_origin(&self, address: AccountAddress, amount: U256);
     fn take_origins(&self) -> Vec<(AccountAddress, U256)>;
 }
 
+/// Struct external to the EVM to capture transfer events.
+/// This is used for bookkeeping token balances between Move and EVM.
+///
+/// It needs to use a `RefCell` for interior mutability because the
+/// EVM handler hooks require the closures to be immutable.
+/// The usage of interior mutability is safe because execution of the single
+/// EVM instance is single threaded.
 #[derive(Debug, Default)]
 pub struct EthTransfersLogger {
     transfers: RefCell<Vec<EthTransfer>>,
@@ -32,8 +39,8 @@ pub struct EthTransfersLogger {
 }
 
 impl EthTransferLog for EthTransfersLogger {
-    fn append_transfers(&self, mut transfers: Vec<EthTransfer>) {
-        self.transfers.borrow_mut().append(&mut transfers);
+    fn push_transfer(&self, transfer: EthTransfer) {
+        self.transfers.borrow_mut().push(transfer);
     }
 
     fn take_transfers(&self) -> Vec<EthTransfer> {
@@ -50,7 +57,7 @@ impl EthTransferLog for EthTransfersLogger {
 }
 
 impl EthTransferLog for () {
-    fn append_transfers(&self, _transfers: Vec<EthTransfer>) {}
+    fn push_transfer(&self, _transfer: EthTransfer) {}
 
     fn take_transfers(&self) -> Vec<EthTransfer> {
         Vec::new()

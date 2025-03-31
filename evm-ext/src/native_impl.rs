@@ -23,7 +23,7 @@ use {
         Evm,
     },
     smallvec::SmallVec,
-    std::{cell::RefCell, collections::VecDeque, sync::Arc},
+    std::{collections::VecDeque, sync::Arc},
 };
 
 pub const EVM_CALL_FN_NAME: &IdentStr = ident_str!("system_evm_call");
@@ -113,15 +113,6 @@ fn evm_transact_inner(
     // TODO: does it make sense for EVM gas to be 1:1 with MoveVM gas?
     let gas_limit: u64 = context.gas_balance().into();
 
-    // Struct external to the EVM to capture transfer events.
-    // This is used for bookkeeping token balances between Move and EVM.
-    //
-    // It needs to use a `RefCell` for interior mutability because the
-    // EVM handler hooks require the closures to be immutable.
-    // The usage of interior mutability is safe because execution of the single
-    // EVM instance is single threaded.
-    let transfers_log: RefCell<Vec<EthTransfer>> = RefCell::new(Vec::new());
-
     let evm_native_ctx = context.extensions_mut().get_mut::<NativeEVMContext>();
     evm_native_ctx
         .transfer_logs
@@ -196,7 +187,7 @@ fn evm_transact_inner(
                 })
             });
         for t in transfers {
-            transfers_log.borrow_mut().push(t);
+            evm_native_ctx.transfer_logs.push_transfer(t);
         }
         revm::handler::mainnet::output(evm_ctx, result)
     });
@@ -212,9 +203,6 @@ fn evm_transact_inner(
     // Capture changes in native context so that they can be
     // converted into Move changes when the session is finalized
     evm_native_ctx.state_changes.push(outcome.state.clone());
-    evm_native_ctx
-        .transfer_logs
-        .append_transfers(transfers_log.into_inner());
 
     let gas_used = EvmGasUsed::new(outcome.result.gas_used());
     context.charge(gas_used)?;
