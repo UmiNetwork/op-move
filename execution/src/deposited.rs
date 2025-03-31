@@ -86,7 +86,7 @@ pub(super) fn execute_deposited_transaction<
             // If there is a non-zero mint amount then we start by
             // giving those tokens to the EVM native address.
             // The tokens will then be distributed to the correct
-            // accounts according to the transferred that happened
+            // accounts according to the transfers that happened
             // during EVM execution.
             if !input.tx.mint.is_zero() {
                 eth_token::mint_eth(
