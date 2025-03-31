@@ -242,6 +242,10 @@ pub fn replicate_transfers<G: GasMeter, L: EthTransferLog>(
     // transferring tokens to the EVM native account as part of `evm_call`.
     // We transfer them back to then follow the sequence of transfers that
     // happened in the EVM.
+    // Note: in the case of deposit transactions the new based tokens are
+    // minted to the EVM native account. So this logic is still needed in
+    // that case. The general invariant is that all base tokens used during
+    // EVM execution are held by the EVM native account within the MoveVM.
     for (origin, value) in eth_transfer_logger.take_origins() {
         if !value.is_zero() {
             transfer_eth(
