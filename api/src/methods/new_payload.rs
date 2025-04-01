@@ -163,6 +163,7 @@ mod tests {
         super::*,
         crate::methods::{forkchoice_updated, get_payload},
         alloy::primitives::hex,
+        moved_app::{Application, StateActor, TestDependencies},
         moved_blockchain::{
             block::{
                 Block, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
@@ -276,33 +277,35 @@ mod tests {
         );
         let initial_state_root = genesis_config.initial_state_root;
 
-        let state = moved_app::StateActor::new(
+        let state: StateActor<TestDependencies<_, _, _, _>> = StateActor::new(
             rx,
-            state,
             head_hash,
             0,
             genesis_config,
-            B256::from(hex!(
-                "c013e1ff1b8bca9f0d074618cc9e661983bc91d7677168b156765781aee775d3"
-            )),
-            repository,
-            Eip1559GasFee::default(),
-            U256::ZERO,
-            U256::ZERO,
-            (),
-            InMemoryBlockQueries,
-            memory,
-            InMemoryStateQueries::from_genesis(initial_state_root),
-            InMemoryTransactionRepository::new(),
-            InMemoryTransactionQueries::new(),
-            ReceiptMemory::new(),
-            InMemoryReceiptRepository::new(),
-            InMemoryReceiptQueries::new(),
-            InMemoryPayloadQueries::new(),
-            evm_storage,
-            moved_app::StateActor::on_tx_noop(),
-            moved_app::StateActor::on_tx_batch_noop(),
-            moved_app::StateActor::on_payload_in_memory(),
+            Application {
+                gas_fee: Eip1559GasFee::default(),
+                base_token: (),
+                l1_fee: U256::ZERO,
+                l2_fee: U256::ZERO,
+                block_hash: B256::from(hex!(
+                    "c013e1ff1b8bca9f0d074618cc9e661983bc91d7677168b156765781aee775d3"
+                )),
+                block_queries: InMemoryBlockQueries,
+                block_repository: repository,
+                on_payload: StateActor::on_payload_in_memory(),
+                on_tx: StateActor::on_tx_noop(),
+                on_tx_batch: StateActor::on_tx_batch_noop(),
+                payload_queries: InMemoryPayloadQueries::new(),
+                receipt_queries: InMemoryReceiptQueries::new(),
+                receipt_repository: InMemoryReceiptRepository::new(),
+                receipt_memory: ReceiptMemory::new(),
+                storage: memory,
+                state,
+                evm_storage,
+                transaction_queries: InMemoryTransactionQueries::new(),
+                state_queries: InMemoryStateQueries::from_genesis(initial_state_root),
+                transaction_repository: InMemoryTransactionRepository::new(),
+            },
         );
         let state_handle = state.spawn();
 

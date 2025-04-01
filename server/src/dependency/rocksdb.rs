@@ -1,128 +1,110 @@
 use {
     crate::dependency::shared::*,
-    moved_blockchain::block::{BaseGasFee, BlockHash, BlockRepository, MovedBlockHash},
-    moved_execution::{BaseTokenAccounts, CreateL1GasFee, CreateL2GasFee, MovedBaseTokenAccounts},
+    moved_app::{Application, StateActor},
     moved_genesis::config::GenesisConfig,
     moved_state::State,
 };
 
-pub type SharedStorage = &'static moved_storage_rocksdb::RocksDb;
-pub type ReceiptStorage = &'static moved_storage_rocksdb::RocksDb;
-pub type StateQueries = moved_storage_rocksdb::RocksDbStateQueries<'static>;
-pub type ReceiptRepository = moved_storage_rocksdb::receipt::RocksDbReceiptRepository;
-pub type ReceiptQueries = moved_storage_rocksdb::receipt::RocksDbReceiptQueries;
-pub type PayloadQueries = moved_storage_rocksdb::payload::RocksDbPayloadQueries;
-pub type StorageTrieRepository = moved_storage_rocksdb::evm::RocksDbStorageTrieRepository;
-pub type TransactionRepository = moved_storage_rocksdb::transaction::RocksDbTransactionRepository;
-pub type TransactionQueries = moved_storage_rocksdb::transaction::RocksDbTransactionQueries;
-pub type BlockQueries = moved_storage_rocksdb::block::RocksDbBlockQueries;
+pub type Dependency = RocksDbDependencies;
 
-pub fn block_hash() -> impl BlockHash + Send + Sync + 'static {
-    MovedBlockHash
+pub fn create(genesis_config: &GenesisConfig) -> Application<RocksDbDependencies> {
+    Application::new(RocksDbDependencies, genesis_config)
 }
 
-pub fn base_token(
-    genesis_config: &GenesisConfig,
-) -> impl BaseTokenAccounts + Send + Sync + 'static {
-    MovedBaseTokenAccounts::new(genesis_config.treasury)
-}
+pub struct RocksDbDependencies;
 
-pub fn memory() -> SharedStorage {
-    db()
-}
+impl moved_app::Dependencies for RocksDbDependencies {
+    type BlockQueries = moved_storage_rocksdb::block::RocksDbBlockQueries;
+    type BlockRepository = moved_storage_rocksdb::block::RocksDbBlockRepository;
+    type OnPayload = moved_app::OnPayload<Application<Self>>;
+    type OnTx = moved_app::OnTx<Application<Self>>;
+    type OnTxBatch = moved_app::OnTxBatch<Application<Self>>;
+    type PayloadQueries = moved_storage_rocksdb::payload::RocksDbPayloadQueries;
+    type ReceiptQueries = moved_storage_rocksdb::receipt::RocksDbReceiptQueries;
+    type ReceiptRepository = moved_storage_rocksdb::receipt::RocksDbReceiptRepository;
+    type ReceiptStorage = &'static moved_storage_rocksdb::RocksDb;
+    type SharedStorage = &'static moved_storage_rocksdb::RocksDb;
+    type State = moved_storage_rocksdb::RocksDbState<'static>;
+    type StateQueries = moved_storage_rocksdb::RocksDbStateQueries<'static>;
+    type StorageTrieRepository = moved_storage_rocksdb::evm::RocksDbStorageTrieRepository;
+    type TransactionQueries = moved_storage_rocksdb::transaction::RocksDbTransactionQueries;
+    type TransactionRepository = moved_storage_rocksdb::transaction::RocksDbTransactionRepository;
 
-pub fn block_repository() -> impl BlockRepository<Storage = SharedStorage> + Send + Sync + 'static {
-    moved_storage_rocksdb::block::RocksDbBlockRepository
-}
+    fn block_queries() -> Self::BlockQueries {
+        moved_storage_rocksdb::block::RocksDbBlockQueries
+    }
 
-pub fn state() -> impl State + Send + Sync + 'static {
-    moved_storage_rocksdb::RocksDbState::new(std::sync::Arc::new(
-        moved_storage_rocksdb::RocksEthTrieDb::new(db()),
-    ))
-}
+    fn block_repository() -> Self::BlockRepository {
+        moved_storage_rocksdb::block::RocksDbBlockRepository
+    }
 
-pub fn state_query(genesis_config: &GenesisConfig) -> StateQueries {
-    moved_storage_rocksdb::RocksDbStateQueries::from_genesis(
-        db(),
-        genesis_config.initial_state_root,
-    )
-}
-
-pub fn on_tx_batch<
-    S: State,
-    BH: BlockHash,
-    BR: BlockRepository<Storage = SharedStorage>,
-    Fee: BaseGasFee,
-    L1F: CreateL1GasFee,
-    L2F: CreateL2GasFee,
-    Token: BaseTokenAccounts,
->() -> OnTxBatch<S, BH, BR, Fee, L1F, L2F, Token> {
-    Box::new(|| {
-        Box::new(|state| {
-            state
-                .state_queries()
-                .push_state_root(state.state().state_root())
-                .unwrap()
+    fn on_payload() -> Self::OnPayload {
+        Box::new(|| {
+            Box::new(|state, id, hash| state.payload_queries.add_block_hash(id, hash).unwrap())
         })
-    })
-}
+    }
 
-pub fn on_tx<
-    S: State,
-    BH: BlockHash,
-    BR: BlockRepository<Storage = SharedStorage>,
-    Fee: BaseGasFee,
-    L1F: CreateL1GasFee,
-    L2F: CreateL2GasFee,
-    Token: BaseTokenAccounts,
->() -> OnTx<S, BH, BR, Fee, L1F, L2F, Token> {
-    moved_app::StateActor::on_tx_noop()
-}
+    fn on_tx() -> Self::OnTx {
+        StateActor::on_tx_noop()
+    }
 
-pub fn on_payload<
-    S: State,
-    BH: BlockHash,
-    BR: BlockRepository<Storage = SharedStorage>,
-    Fee: BaseGasFee,
-    L1F: CreateL1GasFee,
-    L2F: CreateL2GasFee,
-    Token: BaseTokenAccounts,
->() -> OnPayload<S, BH, BR, Fee, L1F, L2F, Token> {
-    Box::new(|| {
-        Box::new(|state, id, hash| state.payload_queries().add_block_hash(id, hash).unwrap())
-    })
-}
+    fn on_tx_batch() -> Self::OnTxBatch {
+        Box::new(|| {
+            Box::new(|state| {
+                state
+                    .state_queries
+                    .push_state_root(state.state.state_root())
+                    .unwrap()
+            })
+        })
+    }
 
-pub fn transaction_repository() -> TransactionRepository {
-    moved_storage_rocksdb::transaction::RocksDbTransactionRepository
-}
+    fn payload_queries() -> Self::PayloadQueries {
+        moved_storage_rocksdb::payload::RocksDbPayloadQueries::new(db())
+    }
 
-pub fn transaction_queries() -> TransactionQueries {
-    moved_storage_rocksdb::transaction::RocksDbTransactionQueries
-}
+    fn receipt_queries() -> Self::ReceiptQueries {
+        moved_storage_rocksdb::receipt::RocksDbReceiptQueries
+    }
 
-pub fn receipt_repository() -> ReceiptRepository {
-    moved_storage_rocksdb::receipt::RocksDbReceiptRepository
-}
+    fn receipt_repository() -> Self::ReceiptRepository {
+        moved_storage_rocksdb::receipt::RocksDbReceiptRepository
+    }
 
-pub fn receipt_queries() -> ReceiptQueries {
-    moved_storage_rocksdb::receipt::RocksDbReceiptQueries
-}
+    fn receipt_memory() -> Self::ReceiptStorage {
+        db()
+    }
 
-pub fn receipt_memory() -> ReceiptStorage {
-    db()
-}
+    fn shared_storage() -> Self::SharedStorage {
+        db()
+    }
 
-pub fn block_queries() -> BlockQueries {
-    moved_storage_rocksdb::block::RocksDbBlockQueries
-}
+    fn state() -> Self::State {
+        moved_storage_rocksdb::RocksDbState::new(std::sync::Arc::new(
+            moved_storage_rocksdb::RocksEthTrieDb::new(db()),
+        ))
+    }
 
-pub fn payload_queries() -> PayloadQueries {
-    moved_storage_rocksdb::payload::RocksDbPayloadQueries::new(db())
-}
+    fn state_queries(genesis_config: &GenesisConfig) -> Self::StateQueries {
+        moved_storage_rocksdb::RocksDbStateQueries::from_genesis(
+            db(),
+            genesis_config.initial_state_root,
+        )
+    }
 
-pub fn storage_trie_repository() -> StorageTrieRepository {
-    moved_storage_rocksdb::evm::RocksDbStorageTrieRepository::new(db())
+    fn storage_trie_repository() -> Self::StorageTrieRepository {
+        moved_storage_rocksdb::evm::RocksDbStorageTrieRepository::new(db())
+    }
+
+    fn transaction_queries() -> Self::TransactionQueries {
+        moved_storage_rocksdb::transaction::RocksDbTransactionQueries
+    }
+
+    fn transaction_repository() -> Self::TransactionRepository {
+        moved_storage_rocksdb::transaction::RocksDbTransactionRepository
+    }
+
+    impl_shared!();
 }
 
 lazy_static::lazy_static! {
