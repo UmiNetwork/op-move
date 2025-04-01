@@ -1,7 +1,10 @@
 use {
-    crate::input::{
-        Command, ExecutionOutcome, Payload, Query, StateMessage, WithExecutionOutcome,
-        WithPayloadAttributes,
+    crate::{
+        input::{
+            Command, ExecutionOutcome, Payload, Query, StateMessage, WithExecutionOutcome,
+            WithPayloadAttributes,
+        },
+        Application, Dependencies, DependenciesThreadSafe,
     },
     alloy::{
         consensus::{Receipt, Transaction},
@@ -29,8 +32,8 @@ use {
         execute_transaction,
         simulate::{call_transaction, simulate_transaction},
         transaction::{ExtendedTxEnvelope, NormalizedExtendedTxEnvelope},
-        BaseTokenAccounts, CanonicalExecutionInput, CreateL1GasFee, CreateL2GasFee,
-        DepositExecutionInput, L1GasFee, L1GasFeeInput, L2GasFeeInput, LogsBloom,
+        CanonicalExecutionInput, CreateL1GasFee, CreateL2GasFee, DepositExecutionInput, L1GasFee,
+        L1GasFeeInput, L2GasFeeInput, LogsBloom,
     },
     moved_genesis::config::GenesisConfig,
     moved_shared::{
@@ -42,27 +45,6 @@ use {
     std::collections::HashMap,
     tokio::{sync::mpsc::Receiver, task::JoinHandle},
 };
-
-#[cfg(any(feature = "test-doubles", test))]
-pub type InMemStateActor = StateActor<
-    moved_state::InMemoryState,
-    moved_blockchain::block::MovedBlockHash,
-    moved_blockchain::block::InMemoryBlockRepository,
-    moved_blockchain::block::Eip1559GasFee,
-    U256,
-    U256,
-    moved_execution::MovedBaseTokenAccounts,
-    moved_blockchain::block::InMemoryBlockQueries,
-    moved_blockchain::in_memory::SharedMemory,
-    moved_blockchain::state::InMemoryStateQueries,
-    moved_blockchain::transaction::InMemoryTransactionRepository,
-    moved_blockchain::transaction::InMemoryTransactionQueries,
-    moved_blockchain::receipt::ReceiptMemory,
-    moved_blockchain::receipt::InMemoryReceiptRepository,
-    moved_blockchain::receipt::InMemoryReceiptQueries,
-    moved_blockchain::payload::InMemoryPayloadQueries,
-    moved_evm_ext::state::InMemoryStorageTrieRepository,
->;
 
 /// A function invoked on a completion of new transaction execution batch.
 pub type OnTxBatch<S> =
@@ -80,54 +62,16 @@ pub type OnPayload<S> = Box<
         + 'static,
 >;
 
-pub struct StateActor<S, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ, PQ, ST> {
+pub struct StateActor<D: Dependencies> {
     genesis_config: GenesisConfig,
     rx: Receiver<StateMessage>,
     head: B256,
     height: u64,
-    block_hash: H,
-    gas_fee: G,
-    payload_queries: PQ,
     mem_pool: HashMap<B256, (ExtendedTxEnvelope, L1GasFeeInput)>,
-    state: S,
-    evm_storage: ST,
-    block_repository: R,
-    block_queries: Q,
-    l1_fee: L1G,
-    l2_fee: L2G,
-    base_token: B,
-    storage: M,
-    state_queries: SQ,
-    transaction_repository: T,
-    transaction_queries: TQ,
-    receipt_memory: N,
-    receipt_repository: RR,
-    receipt_queries: RQ,
-    on_tx_batch: OnTxBatch<Self>,
-    on_tx: OnTx<Self>,
-    on_payload: OnPayload<Self>,
+    app: Application<D>,
 }
 
-impl<
-        S: State + Send + Sync + 'static,
-        H: BlockHash + Send + Sync + 'static,
-        R: BlockRepository<Storage = M> + Send + Sync + 'static,
-        G: BaseGasFee + Send + Sync + 'static,
-        L1G: CreateL1GasFee + Send + Sync + 'static,
-        L2G: CreateL2GasFee + Send + Sync + 'static,
-        B: BaseTokenAccounts + Send + Sync + 'static,
-        Q: BlockQueries<Storage = M> + Send + Sync + 'static,
-        M: Send + Sync + 'static,
-        SQ: StateQueries + Send + Sync + 'static,
-        T: TransactionRepository<Storage = M> + Send + Sync + 'static,
-        TQ: TransactionQueries<Storage = M> + Send + Sync + 'static,
-        N: Send + Sync + 'static,
-        RR: ReceiptRepository<Storage = N> + Send + Sync + 'static,
-        RQ: ReceiptQueries<Storage = N> + Send + Sync + 'static,
-        PQ: PayloadQueries<Storage = M> + Send + Sync + 'static,
-        ST: StorageTrieRepository + Send + Sync + 'static,
-    > StateActor<S, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ, PQ, ST>
-{
+impl<D: DependenciesThreadSafe> StateActor<D> {
     pub fn spawn(mut self) -> JoinHandle<()> {
         tokio::spawn(async move {
             while let Some(msg) = self.rx.recv().await {
@@ -140,92 +84,23 @@ impl<
     }
 }
 
-impl<
-        S: State,
-        H: BlockHash,
-        R: BlockRepository<Storage = M>,
-        G: BaseGasFee,
-        L1G: CreateL1GasFee,
-        L2G: CreateL2GasFee,
-        B: BaseTokenAccounts,
-        Q: BlockQueries<Storage = M>,
-        M,
-        SQ: StateQueries,
-        T: TransactionRepository<Storage = M>,
-        TQ: TransactionQueries<Storage = M>,
-        N,
-        RR: ReceiptRepository<Storage = N>,
-        RQ: ReceiptQueries<Storage = N>,
-        PQ: PayloadQueries<Storage = M>,
-        ST: StorageTrieRepository,
-    > StateActor<S, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ, PQ, ST>
-{
+impl<D: Dependencies> StateActor<D> {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         rx: Receiver<StateMessage>,
-        state: S,
         head: B256,
         height: u64,
         genesis_config: GenesisConfig,
-        block_hash: H,
-        block_repository: R,
-        base_fee_per_gas: G,
-        l1_fee: L1G,
-        l2_fee: L2G,
-        base_token: B,
-        block_queries: Q,
-        block_memory: M,
-        state_queries: SQ,
-        transaction_repository: T,
-        transaction_queries: TQ,
-        receipt_memory: N,
-        receipt_repository: RR,
-        receipt_queries: RQ,
-        payload_queries: PQ,
-        evm_storage: ST,
-        on_tx: OnTx<Self>,
-        on_tx_batch: OnTxBatch<Self>,
-        on_payload: OnPayload<Self>,
+        app: Application<D>,
     ) -> Self {
         Self {
             genesis_config,
             rx,
             head,
             height,
-            payload_queries,
             mem_pool: HashMap::new(),
-            state,
-            block_hash,
-            block_repository,
-            gas_fee: base_fee_per_gas,
-            l1_fee,
-            l2_fee,
-            base_token,
-            block_queries,
-            storage: block_memory,
-            state_queries,
-            on_tx,
-            on_tx_batch,
-            transaction_repository,
-            transaction_queries,
-            receipt_memory,
-            receipt_repository,
-            receipt_queries,
-            on_payload,
-            evm_storage,
+            app,
         }
-    }
-
-    pub fn state(&self) -> &S {
-        &self.state
-    }
-
-    pub fn state_queries(&self) -> &SQ {
-        &self.state_queries
-    }
-
-    pub fn payload_queries(&self) -> &PQ {
-        &self.payload_queries
     }
 
     pub fn resolve_height(&self, height: BlockNumberOrTag) -> u64 {
@@ -240,8 +115,9 @@ impl<
         Some(match id {
             BlockId::Number(height) => self.resolve_height(height),
             BlockId::Hash(h) => {
-                self.block_queries
-                    .by_hash(&self.storage, h.block_hash, false)
+                self.app
+                    .block_queries
+                    .by_hash(&self.app.storage, h.block_hash, false)
                     .ok()??
                     .0
                     .header
@@ -258,28 +134,28 @@ impl<
                 response_channel,
                 height,
             } => response_channel
-                .send(self.state_queries.balance_at(self.state.db(), &self.evm_storage, address.to_move_address(), self.resolve_height(height)))
+                .send(self.app.state_queries.balance_at(self.app.state.db(), &self.app.evm_storage, address.to_move_address(), self.resolve_height(height)))
                 .ok(),
             Query::NonceByHeight {
                 address,
                 response_channel,
                 height,
             } => response_channel
-                .send(self.state_queries.nonce_at(self.state.db(), &self.evm_storage, address.to_move_address(), self.resolve_height(height)))
+                .send(self.app.state_queries.nonce_at(self.app.state.db(), &self.app.evm_storage, address.to_move_address(), self.resolve_height(height)))
                 .ok(),
             Query::BlockByHash {
                 hash,
                 response_channel,
                 include_transactions,
             } => response_channel
-                .send(self.block_queries.by_hash(&self.storage, hash, include_transactions).unwrap())
+                .send(self.app.block_queries.by_hash(&self.app.storage, hash, include_transactions).unwrap())
                 .ok(),
             Query::BlockByHeight {
                 height,
                 response_channel,
                 include_transactions,
             } => response_channel
-                .send(self.block_queries.by_height(&self.storage, self.resolve_height(height), include_transactions).unwrap())
+                .send(self.app.block_queries.by_height(&self.app.storage, self.resolve_height(height), include_transactions).unwrap())
                 .ok(),
             Query::BlockNumber {
                 response_channel,
@@ -303,7 +179,7 @@ impl<
                     Earliest => 0,
                 };
                 // TODO: simulation should account for gas from non-zero L1 fee
-                let outcome = simulate_transaction(transaction, self.state.resolver(), &self.evm_storage, &self.genesis_config, &self.base_token, block_height);
+                let outcome = simulate_transaction(transaction, self.app.state.resolver(), &self.app.evm_storage, &self.genesis_config, &self.app.base_token, block_height);
                 match outcome {
                     Ok(outcome) => response_channel.send(Ok(1000 * outcome.gas_used)).ok(),
                     Err(e) => response_channel.send(Err(e)).ok(),
@@ -315,21 +191,21 @@ impl<
                 ..
             } => {
                 // TODO: Support transaction call from arbitrary blocks
-                let outcome = call_transaction(transaction, self.state.resolver(), &self.evm_storage, &self.genesis_config, &self.base_token);
+                let outcome = call_transaction(transaction, self.app.state.resolver(), &self.app.evm_storage, &self.genesis_config, &self.app.base_token);
                 response_channel.send(outcome).ok()
             }
             Query::TransactionReceipt { tx_hash, response_channel } => {
-                response_channel.send(self.receipt_queries.by_transaction_hash(&self.receipt_memory, tx_hash).unwrap()).ok()
+                response_channel.send(self.app.receipt_queries.by_transaction_hash(&self.app.receipt_memory, tx_hash).unwrap()).ok()
             }
             Query::TransactionByHash { tx_hash, response_channel } => response_channel
-                .send(self.transaction_queries.by_hash(&self.storage, tx_hash).ok().flatten())
+                .send(self.app.transaction_queries.by_hash(&self.app.storage, tx_hash).ok().flatten())
                 .ok(),
             Query::GetProof { address, storage_slots, height, response_channel } => {
                 response_channel.send(
                     self.height_from_block_id(height).and_then(|height| {
-                        self.state_queries.proof_at(
-                            self.state.db(),
-                            &self.evm_storage,
+                        self.app.state_queries.proof_at(
+                            self.app.state.db(),
+                            &self.app.evm_storage,
                             address.to_move_address(),
                             &storage_slots,
                             height,
@@ -341,13 +217,13 @@ impl<
                 id: payload_id,
                 response_channel,
             } => response_channel
-                .send(self.payload_queries.by_id(&self.storage, payload_id).ok().flatten())
+                .send(self.app.payload_queries.by_id(&self.app.storage, payload_id).ok().flatten())
                 .ok(),
             Query::GetPayloadByBlockHash {
                 block_hash,
                 response_channel,
             } => response_channel
-                .send(self.payload_queries.by_hash(&self.storage, block_hash).ok().flatten())
+                .send(self.app.payload_queries.by_hash(&self.app.storage, block_hash).ok().flatten())
                 .ok(),
         };
     }
@@ -362,15 +238,17 @@ impl<
                 payload_id: id,
             } => {
                 let block = self.create_block(payload_attributes);
-                self.block_repository
-                    .add(&mut self.storage, block.clone())
+                self.app
+                    .block_repository
+                    .add(&mut self.app.storage, block.clone())
                     .unwrap();
                 let block_number = block.block.header.number;
                 let block_hash = block.hash;
                 let base_fee = block.block.header.base_fee_per_gas;
-                self.transaction_repository
+                self.app
+                    .transaction_repository
                     .extend(
-                        &mut self.storage,
+                        &mut self.app.storage,
                         block
                             .block
                             .transactions
@@ -389,8 +267,8 @@ impl<
                     )
                     .unwrap();
                 self.height = self.height.max(block_number);
-                let on_payload = (self.on_payload)();
-                on_payload(self, id, block_hash);
+                let on_payload = (self.app.on_payload)();
+                on_payload(&mut self.app, id, block_hash);
             }
             Command::AddTransaction { tx } => {
                 let tx_hash = tx.tx_hash().0.into();
@@ -402,7 +280,10 @@ impl<
             }
             Command::GenesisUpdate { block } => {
                 self.head = block.hash;
-                self.block_repository.add(&mut self.storage, block).unwrap();
+                self.app
+                    .block_repository
+                    .add(&mut self.app.storage, block)
+                    .unwrap();
             }
         }
     }
@@ -426,14 +307,15 @@ impl<
             .chain(self.mem_pool.drain())
             .filter(|(tx_hash, _)|
                 // Do not include transactions we have already processed before
-                !self.receipt_repository.contains(&self.receipt_memory, *tx_hash).unwrap())
+                !self.app.receipt_repository.contains(&self.app.receipt_memory, *tx_hash).unwrap())
             .collect::<Vec<_>>();
         let parent = self
+            .app
             .block_repository
-            .by_hash(&self.storage, self.head)
+            .by_hash(&self.app.storage, self.head)
             .unwrap()
             .expect("Parent block should exist");
-        let base_fee = self.gas_fee.base_fee_per_gas(
+        let base_fee = self.app.gas_fee.base_fee_per_gas(
             parent.block.header.gas_limit,
             parent.block.header.gas_used,
             U256::from(parent.block.header.base_fee_per_gas.unwrap_or_default()),
@@ -477,11 +359,12 @@ impl<
         .with_payload_attributes(payload_attributes)
         .with_execution_outcome(execution_outcome);
 
-        let hash = self.block_hash.block_hash(&header);
+        let hash = self.app.block_hash.block_hash(&header);
 
-        self.receipt_repository
+        self.app
+            .receipt_repository
             .extend(
-                &mut self.receipt_memory,
+                &mut self.app.receipt_memory,
                 receipts
                     .into_iter()
                     .map(|receipt| receipt.with_block_hash(hash)),
@@ -499,7 +382,7 @@ impl<
         base_fee: U256,
         block_header: &HeaderForExecution,
     ) -> (ExecutionOutcome, Vec<ExtendedReceipt>) {
-        let on_tx = (self.on_tx)();
+        let on_tx = (self.app.on_tx)();
         let mut total_tip = U256::ZERO;
         let mut receipts = Vec::new();
         let mut transactions = transactions.peekable();
@@ -512,8 +395,8 @@ impl<
         let l1_fee = transactions
             .peek()
             .and_then(|(_, v, _)| v.as_deposited())
-            .map(|tx| self.l1_fee.for_deposit(tx.data.as_ref()));
-        let l2_fee = self.l2_fee.with_gas_fee_multiplier(U256::from(1));
+            .map(|tx| self.app.l1_fee.for_deposit(tx.data.as_ref()));
+        let l2_fee = self.app.l2_fee.with_gas_fee_multiplier(U256::from(1));
 
         // TODO: parallel transaction processing?
         for (tx_hash, tx, l1_cost_input) in transactions {
@@ -531,8 +414,8 @@ impl<
                 NormalizedExtendedTxEnvelope::Canonical(tx) => CanonicalExecutionInput {
                     tx,
                     tx_hash: &tx_hash,
-                    state: self.state.resolver(),
-                    storage_trie: &self.evm_storage,
+                    state: self.app.state.resolver(),
+                    storage_trie: &self.app.evm_storage,
                     genesis_config: &self.genesis_config,
                     l1_cost: l1_fee
                         .as_ref()
@@ -540,15 +423,15 @@ impl<
                         .unwrap_or(0),
                     l2_fee: l2_fee.clone(),
                     l2_input: l2_gas_input,
-                    base_token: &self.base_token,
+                    base_token: &self.app.base_token,
                     block_header: block_header.clone(),
                 }
                 .into(),
                 NormalizedExtendedTxEnvelope::DepositedTx(tx) => DepositExecutionInput {
                     tx,
                     tx_hash: &tx_hash,
-                    state: self.state.resolver(),
-                    storage_trie: &self.evm_storage,
+                    state: self.app.state.resolver(),
+                    storage_trie: &self.app.evm_storage,
                     genesis_config: &self.genesis_config,
                     block_header: block_header.clone(),
                 }
@@ -563,14 +446,16 @@ impl<
 
             let l1_block_info = l1_fee.as_ref().and_then(|x| x.l1_block_info(l1_cost_input));
 
-            on_tx(self, outcome.changes.move_vm.clone());
+            on_tx(&mut self.app, outcome.changes.move_vm.clone());
 
-            self.state
+            self.app
+                .state
                 .apply(outcome.changes.move_vm)
                 .unwrap_or_else(|e| {
                     panic!("ERROR: state update failed for transaction {tx:?}\n{e:?}")
                 });
-            self.evm_storage
+            self.app
+                .evm_storage
                 .apply(outcome.changes.evm)
                 .unwrap_or_else(|e| {
                     panic!("ERROR: EVM storage update failed for transaction {tx:?}\n{e:?}")
@@ -627,8 +512,8 @@ impl<
             tx_index += 1;
         }
 
-        let on_tx_batch = (self.on_tx_batch)();
-        on_tx_batch(self);
+        let on_tx_batch = (self.app.on_tx_batch)();
+        on_tx_batch(&mut self.app);
 
         // Compute the receipts root by RLP-encoding each receipt to be a leaf of
         // a merkle trie.
@@ -639,7 +524,7 @@ impl<
         let logs_bloom = logs_bloom.into();
 
         let outcome = ExecutionOutcome {
-            state_root: self.state.state_root(),
+            state_root: self.app.state.state_root(),
             gas_used: U64::from(cumulative_gas_used),
             receipts_root,
             logs_bloom,
@@ -648,43 +533,25 @@ impl<
         (outcome, receipts)
     }
 
-    pub fn on_tx_batch_noop() -> OnTxBatch<Self> {
+    pub fn on_tx_batch_noop() -> OnTxBatch<Application<D>> {
         Box::new(|| Box::new(|_| {}))
     }
 
-    pub fn on_tx_noop() -> OnTx<Self> {
+    pub fn on_tx_noop() -> OnTx<Application<D>> {
         Box::new(|| Box::new(|_, _| {}))
     }
 
-    pub fn on_payload_noop() -> OnPayload<Self> {
+    pub fn on_payload_noop() -> OnPayload<Application<D>> {
         Box::new(|| Box::new(|_, _, _| {}))
     }
 }
 
-impl<
-        S: State,
-        H: BlockHash,
-        R: BlockRepository,
-        G: BaseGasFee,
-        L1G: CreateL1GasFee,
-        L2G: CreateL2GasFee,
-        B: BaseTokenAccounts,
-        Q: BlockQueries,
-        M,
-        T: TransactionRepository,
-        TQ: TransactionQueries,
-        N,
-        RR: ReceiptRepository<Storage = N>,
-        RQ: ReceiptQueries<Storage = N>,
-        PQ: PayloadQueries,
-        ST: StorageTrieRepository,
-    > StateActor<S, H, R, G, L1G, L2G, B, Q, M, InMemoryStateQueries, T, TQ, N, RR, RQ, PQ, ST>
-{
-    pub fn on_tx_in_memory() -> OnTx<Self> {
+impl<D: Dependencies<StateQueries = InMemoryStateQueries>> StateActor<D> {
+    pub fn on_tx_in_memory() -> OnTx<Application<D>> {
         Box::new(|| Box::new(|_state, _changes| ()))
     }
 
-    pub fn on_tx_batch_in_memory() -> OnTxBatch<Self> {
+    pub fn on_tx_batch_in_memory() -> OnTxBatch<Application<D>> {
         Box::new(|| {
             Box::new(|state| {
                 state
@@ -695,26 +562,8 @@ impl<
     }
 }
 
-impl<
-        S: State,
-        H: BlockHash,
-        R: BlockRepository,
-        G: BaseGasFee,
-        L1G: CreateL1GasFee,
-        L2G: CreateL2GasFee,
-        B: BaseTokenAccounts,
-        Q: BlockQueries,
-        M,
-        T: TransactionRepository,
-        TQ: TransactionQueries,
-        N,
-        RR: ReceiptRepository<Storage = N>,
-        RQ: ReceiptQueries<Storage = N>,
-        SQ: StateQueries,
-        ST: StorageTrieRepository,
-    > StateActor<S, H, R, G, L1G, L2G, B, Q, M, SQ, T, TQ, N, RR, RQ, InMemoryPayloadQueries, ST>
-{
-    pub fn on_payload_in_memory() -> OnPayload<Self> {
+impl<D: Dependencies<PayloadQueries = InMemoryPayloadQueries>> StateActor<D> {
+    pub fn on_payload_in_memory() -> OnPayload<Application<D>> {
         Box::new(|| {
             Box::new(|state, payload_id, block_hash| {
                 state.payload_queries.add_block_hash(payload_id, block_hash)
@@ -847,8 +696,8 @@ mod tests {
     pub const EVM_ADDRESS: Address = address!("8fd379246834eac74b8419ffda202cf8051f7a03");
 
     use {
-        alloy::signers::local::PrivateKeySigner, moved_blockchain::state::BlockHeight,
-        moved_evm_ext::state::InMemoryStorageTrieRepository,
+        crate::TestDependencies, alloy::signers::local::PrivateKeySigner,
+        moved_blockchain::state::BlockHeight, moved_evm_ext::state::InMemoryStorageTrieRepository,
     };
 
     #[derive(Debug)]
@@ -866,28 +715,18 @@ mod tests {
         }
     }
 
-    fn create_state_actor_with_given_queries<SQ: StateQueries>(
+    fn create_state_actor_with_given_queries<SQ: StateQueries + Send + Sync + 'static>(
         height: u64,
         state_queries: SQ,
     ) -> (
         StateActor<
-            impl State,
-            impl BlockHash,
-            impl BlockRepository<Storage = SharedMemory>,
-            impl BaseGasFee,
-            impl CreateL1GasFee,
-            impl CreateL2GasFee,
-            impl BaseTokenAccounts,
-            impl BlockQueries<Storage = SharedMemory, Err = Infallible>,
-            SharedMemory,
-            SQ,
-            impl TransactionRepository<Storage = SharedMemory>,
-            impl TransactionQueries<Storage = SharedMemory>,
-            ReceiptMemory,
-            impl ReceiptRepository<Storage = ReceiptMemory>,
-            impl ReceiptQueries<Storage = ReceiptMemory, Err = Infallible>,
-            impl PayloadQueries<Storage = SharedMemory>,
-            impl StorageTrieRepository,
+            impl DependenciesThreadSafe<
+                SharedStorage = SharedMemory,
+                ReceiptStorage = ReceiptMemory,
+                BlockQueries = impl BlockQueries<Err = Infallible>,
+                PayloadQueries = impl PayloadQueries<Err = Infallible>,
+                StateQueries = SQ,
+            >,
         >,
         Sender<StateMessage>,
     ) {
@@ -915,31 +754,33 @@ mod tests {
             &mut evm_storage,
         );
 
-        let state = StateActor::new(
+        let state: StateActor<TestDependencies<SQ>> = StateActor::new(
             rx,
-            state,
             head_hash,
             height,
             genesis_config,
-            MovedBlockHash,
-            repository,
-            Eip1559GasFee::default(),
-            U256::ZERO,
-            U256::ZERO,
-            MovedBaseTokenAccounts::new(AccountAddress::ONE),
-            InMemoryBlockQueries,
-            memory,
-            state_queries,
-            InMemoryTransactionRepository::new(),
-            InMemoryTransactionQueries::new(),
-            ReceiptMemory::new(),
-            InMemoryReceiptRepository::new(),
-            InMemoryReceiptQueries::new(),
-            InMemoryPayloadQueries::new(),
-            evm_storage,
-            StateActor::on_tx_noop(),
-            StateActor::on_tx_batch_noop(),
-            StateActor::on_payload_noop(),
+            Application {
+                base_token: MovedBaseTokenAccounts::new(AccountAddress::ONE),
+                block_hash: MovedBlockHash,
+                block_queries: InMemoryBlockQueries,
+                block_repository: repository,
+                on_payload: StateActor::on_payload_noop(),
+                on_tx: StateActor::on_tx_noop(),
+                on_tx_batch: StateActor::on_tx_batch_noop(),
+                payload_queries: InMemoryPayloadQueries::new(),
+                receipt_queries: InMemoryReceiptQueries::new(),
+                receipt_repository: InMemoryReceiptRepository::new(),
+                receipt_memory: ReceiptMemory::new(),
+                storage: memory,
+                state,
+                state_queries,
+                evm_storage,
+                transaction_queries: InMemoryTransactionQueries::new(),
+                transaction_repository: InMemoryTransactionRepository::new(),
+                gas_fee: Eip1559GasFee::default(),
+                l1_fee: U256::ZERO,
+                l2_fee: U256::ZERO,
+            },
         );
         (state, state_channel)
     }
@@ -979,23 +820,12 @@ mod tests {
         initial_balance: U256,
     ) -> (
         StateActor<
-            impl State,
-            impl BlockHash,
-            impl BlockRepository<Storage = SharedMemory>,
-            impl BaseGasFee,
-            impl CreateL1GasFee,
-            impl CreateL2GasFee,
-            impl BaseTokenAccounts,
-            impl BlockQueries<Storage = SharedMemory, Err = Infallible>,
-            SharedMemory,
-            impl StateQueries,
-            impl TransactionRepository<Storage = SharedMemory>,
-            impl TransactionQueries<Storage = SharedMemory>,
-            ReceiptMemory,
-            impl ReceiptRepository<Storage = ReceiptMemory>,
-            impl ReceiptQueries<Storage = ReceiptMemory, Err = Infallible>,
-            impl PayloadQueries<Storage = SharedMemory>,
-            impl StorageTrieRepository,
+            impl Dependencies<
+                SharedStorage = SharedMemory,
+                ReceiptStorage = ReceiptMemory,
+                BlockQueries = impl BlockQueries<Err = Infallible>,
+                PayloadQueries = impl PayloadQueries<Err = Infallible>,
+            >,
         >,
         Sender<StateMessage>,
     ) {
@@ -1024,31 +854,33 @@ mod tests {
 
         let state_queries = InMemoryStateQueries::from_genesis(state.state_root());
 
-        let state = StateActor::new(
+        let state: StateActor<TestDependencies> = StateActor::new(
             rx,
-            state,
             head_hash,
             height,
             genesis_config,
-            MovedBlockHash,
-            repository,
-            Eip1559GasFee::default(),
-            U256::ZERO,
-            U256::ZERO,
-            MovedBaseTokenAccounts::new(AccountAddress::ONE),
-            InMemoryBlockQueries,
-            memory,
-            state_queries,
-            InMemoryTransactionRepository::new(),
-            InMemoryTransactionQueries::new(),
-            ReceiptMemory::new(),
-            InMemoryReceiptRepository::new(),
-            InMemoryReceiptQueries::new(),
-            InMemoryPayloadQueries::new(),
-            evm_storage,
-            StateActor::on_tx_in_memory(),
-            StateActor::on_tx_batch_in_memory(),
-            StateActor::on_payload_in_memory(),
+            Application {
+                base_token: MovedBaseTokenAccounts::new(AccountAddress::ONE),
+                block_hash: MovedBlockHash,
+                block_queries: InMemoryBlockQueries,
+                block_repository: repository,
+                on_payload: StateActor::on_payload_in_memory(),
+                on_tx: StateActor::on_tx_in_memory(),
+                on_tx_batch: StateActor::on_tx_batch_in_memory(),
+                payload_queries: InMemoryPayloadQueries::new(),
+                receipt_queries: InMemoryReceiptQueries::new(),
+                receipt_repository: InMemoryReceiptRepository::new(),
+                receipt_memory: ReceiptMemory::new(),
+                storage: memory,
+                state,
+                state_queries,
+                evm_storage,
+                transaction_queries: InMemoryTransactionQueries::new(),
+                transaction_repository: InMemoryTransactionRepository::new(),
+                gas_fee: Eip1559GasFee::default(),
+                l1_fee: U256::ZERO,
+                l2_fee: U256::ZERO,
+            },
         );
         (state, state_channel)
     }

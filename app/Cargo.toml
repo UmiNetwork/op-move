@@ -6,7 +6,10 @@ edition.workspace = true
 
 [features]
 default = []
-test-doubles = []
+test-doubles = [
+    "moved-blockchain/test-doubles",
+    "moved-execution/test-doubles",
+]
 
 [dependencies]
 alloy.workspace = true
@@ -24,8 +27,8 @@ op-alloy.workspace = true
 tokio.workspace = true
 
 [dev-dependencies]
-moved-execution.workspace = true
 moved-execution.features = ["test-doubles"]
+moved-execution.workspace = true
 moved-blockchain.features = ["test-doubles"]
 moved-blockchain.workspace = true
 moved-genesis-image.workspace = true

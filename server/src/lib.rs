@@ -6,23 +6,11 @@ use {
     moved_api::method_name::MethodName,
     moved_app::{Command, StateActor, StateMessage},
     moved_blockchain::{
-        block::{
-            BaseGasFee, Block, BlockHash, BlockQueries, BlockRepository, Eip1559GasFee,
-            ExtendedBlock, Header,
-        },
-        payload::{NewPayloadId, PayloadQueries, StatePayloadId},
-        receipt::{ReceiptQueries, ReceiptRepository},
-        state::StateQueries,
-        transaction::{TransactionQueries, TransactionRepository},
-    },
-    moved_evm_ext::state::StorageTrieRepository,
-    moved_execution::{
-        BaseTokenAccounts, CreateEcotoneL1GasFee, CreateL1GasFee, CreateL2GasFee,
-        CreateMovedL2GasFee,
+        block::{Block, BlockHash, BlockRepository, ExtendedBlock, Header},
+        payload::{NewPayloadId, StatePayloadId},
     },
     moved_genesis::config::GenesisConfig,
     moved_shared::primitives::U256,
-    moved_state::State,
     once_cell::sync::Lazy,
     std::{
         fs,
@@ -141,39 +129,8 @@ pub async fn run() {
 pub fn initialize_state_actor(
     genesis_config: GenesisConfig,
     rx: mpsc::Receiver<StateMessage>,
-) -> StateActor<
-    impl State + Send + Sync + 'static,
-    impl BlockHash + Send + Sync + 'static,
-    impl BlockRepository<Storage = dependency::SharedStorage> + Send + Sync + 'static,
-    impl BaseGasFee + Send + Sync + 'static,
-    impl CreateL1GasFee + Send + Sync + 'static,
-    impl CreateL2GasFee + Send + Sync + 'static,
-    impl BaseTokenAccounts + Send + Sync + 'static,
-    impl BlockQueries<Storage = dependency::SharedStorage> + Send + Sync + 'static,
-    dependency::SharedStorage,
-    impl StateQueries + Send + Sync + 'static,
-    impl TransactionRepository<Storage = dependency::SharedStorage> + Send + Sync + 'static,
-    impl TransactionQueries<Storage = dependency::SharedStorage> + Send + Sync + 'static,
-    dependency::ReceiptStorage,
-    impl ReceiptRepository<Storage = dependency::ReceiptStorage> + Send + Sync + 'static,
-    impl ReceiptQueries<Storage = dependency::ReceiptStorage> + Send + Sync + 'static,
-    impl PayloadQueries<Storage = dependency::SharedStorage> + Send + Sync + 'static,
-    impl StorageTrieRepository + Send + Sync + 'static,
-> {
-    let block_hash = dependency::block_hash();
-    let base_token = dependency::base_token(&genesis_config);
-    let mut state = dependency::state();
-    let state_query = dependency::state_query(&genesis_config);
-    let mut storage = dependency::memory();
-    let mut block_repository = dependency::block_repository();
-    let block_queries = dependency::block_queries();
-    let transaction_repository = dependency::transaction_repository();
-    let transaction_queries = dependency::transaction_queries();
-    let receipt_storage = dependency::receipt_memory();
-    let receipt_repository = dependency::receipt_repository();
-    let receipt_queries = dependency::receipt_queries();
-    let payload_queries = dependency::payload_queries();
-    let mut evm_storage = dependency::storage_trie_repository();
+) -> StateActor<dependency::Dependency> {
+    let mut app = dependency::create(&genesis_config);
 
     let (genesis_changes, table_changes, evm_storage_changes) = {
         #[cfg(test)]
@@ -185,8 +142,8 @@ pub fn initialize_state_actor(
             moved_genesis::build(
                 &moved_genesis::MovedVm,
                 &genesis_config,
-                &state,
-                &evm_storage,
+                &app.state,
+                &app.evm_storage,
             )
         }
     };
@@ -195,45 +152,17 @@ pub fn initialize_state_actor(
         table_changes,
         evm_storage_changes,
         &genesis_config,
-        &mut state,
-        &mut evm_storage,
+        &mut app.state,
+        &mut app.evm_storage,
     );
 
-    let genesis_block = create_genesis_block(&block_hash, &genesis_config);
+    let genesis_block = create_genesis_block(&app.block_hash, &genesis_config);
     let head = genesis_block.hash;
-    block_repository
-        .add(&mut storage, genesis_block)
+    app.block_repository
+        .add(&mut app.storage, genesis_block)
         .expect("Database should be ready");
 
-    StateActor::new(
-        rx,
-        state,
-        head,
-        0,
-        genesis_config,
-        block_hash,
-        block_repository,
-        Eip1559GasFee::new(
-            EIP1559_ELASTICITY_MULTIPLIER,
-            EIP1559_BASE_FEE_MAX_CHANGE_DENOMINATOR,
-        ),
-        CreateEcotoneL1GasFee,
-        CreateMovedL2GasFee,
-        base_token,
-        block_queries,
-        storage,
-        state_query,
-        transaction_repository,
-        transaction_queries,
-        receipt_storage,
-        receipt_repository,
-        receipt_queries,
-        payload_queries,
-        evm_storage,
-        dependency::on_tx(),
-        dependency::on_tx_batch(),
-        dependency::on_payload(),
-    )
+    StateActor::new(rx, head, 0, genesis_config, app)
 }
 
 fn create_genesis_block(

@@ -29,28 +29,25 @@ pub mod tests {
             signers::local::PrivateKeySigner,
         },
         move_core_types::account_address::AccountAddress,
-        moved_app::{Command, Payload, StateActor, StateMessage},
+        moved_app::{
+            Application, Command, DependenciesThreadSafe, Payload, StateActor, StateMessage,
+            TestDependencies,
+        },
         moved_blockchain::{
             block::{
-                BaseGasFee, Block, BlockHash, BlockQueries, BlockRepository, Eip1559GasFee,
-                InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash,
+                Block, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
+                InMemoryBlockRepository, MovedBlockHash,
             },
             in_memory::SharedMemory,
-            payload::{InMemoryPayloadQueries, PayloadQueries},
-            receipt::{
-                InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory, ReceiptQueries,
-                ReceiptRepository,
-            },
-            state::{InMemoryStateQueries, MockStateQueries, StateQueries},
-            transaction::{
-                InMemoryTransactionQueries, InMemoryTransactionRepository, TransactionQueries,
-                TransactionRepository,
-            },
+            payload::InMemoryPayloadQueries,
+            receipt::{InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory},
+            state::{InMemoryStateQueries, MockStateQueries},
+            transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
         },
-        moved_evm_ext::state::{InMemoryStorageTrieRepository, StorageTrieRepository},
+        moved_evm_ext::state::InMemoryStorageTrieRepository,
         moved_execution::{
             transaction::{DepositedTx, ExtendedTxEnvelope},
-            BaseTokenAccounts, CreateL1GasFee, CreateL2GasFee, MovedBaseTokenAccounts,
+            MovedBaseTokenAccounts,
         },
         moved_genesis::config::{GenesisConfig, CHAIN_ID},
         moved_shared::primitives::{Address, B256, U256, U64},
@@ -61,7 +58,10 @@ pub mod tests {
     /// The address corresponding to this private key is 0x8fd379246834eac74B8419FfdA202CF8051F7A03
     pub const PRIVATE_KEY: [u8; 32] = [0xaa; 32];
 
-    pub fn create_state_actor() -> (moved_app::InMemStateActor, Sender<StateMessage>) {
+    pub fn create_state_actor() -> (
+        StateActor<impl DependenciesThreadSafe>,
+        Sender<StateMessage>,
+    ) {
         let genesis_config = GenesisConfig::default();
         let (state_channel, rx) = mpsc::channel(10);
 
@@ -87,31 +87,33 @@ pub mod tests {
         );
         let initial_state_root = genesis_config.initial_state_root;
 
-        let state = StateActor::new(
+        let state: StateActor<TestDependencies> = StateActor::new(
             rx,
-            state,
             head_hash,
             0,
             genesis_config,
-            MovedBlockHash,
-            repository,
-            Eip1559GasFee::default(),
-            U256::ZERO,
-            U256::ZERO,
-            MovedBaseTokenAccounts::new(AccountAddress::ONE),
-            InMemoryBlockQueries,
-            memory,
-            InMemoryStateQueries::from_genesis(initial_state_root),
-            InMemoryTransactionRepository::new(),
-            InMemoryTransactionQueries::new(),
-            ReceiptMemory::new(),
-            InMemoryReceiptRepository::new(),
-            InMemoryReceiptQueries::new(),
-            InMemoryPayloadQueries::new(),
-            evm_storage,
-            StateActor::on_tx_noop(),
-            StateActor::on_tx_batch_noop(),
-            StateActor::on_payload_in_memory(),
+            Application {
+                gas_fee: Eip1559GasFee::default(),
+                base_token: MovedBaseTokenAccounts::new(AccountAddress::ONE),
+                l1_fee: U256::ZERO,
+                l2_fee: U256::ZERO,
+                block_hash: MovedBlockHash,
+                block_queries: InMemoryBlockQueries,
+                block_repository: repository,
+                on_payload: StateActor::on_payload_in_memory(),
+                on_tx: StateActor::on_tx_noop(),
+                on_tx_batch: StateActor::on_tx_batch_noop(),
+                payload_queries: InMemoryPayloadQueries::new(),
+                receipt_queries: InMemoryReceiptQueries::new(),
+                receipt_repository: InMemoryReceiptRepository::new(),
+                receipt_memory: ReceiptMemory::new(),
+                storage: memory,
+                state,
+                state_queries: InMemoryStateQueries::from_genesis(initial_state_root),
+                evm_storage,
+                transaction_queries: InMemoryTransactionQueries::new(),
+                transaction_repository: InMemoryTransactionRepository::new(),
+            },
         );
         (state, state_channel)
     }
@@ -178,56 +180,41 @@ pub mod tests {
         address: AccountAddress,
         height: u64,
     ) -> (
-        StateActor<
-            InMemoryState,
-            impl BlockHash,
-            impl BlockRepository<Storage = ()>,
-            impl BaseGasFee,
-            impl CreateL1GasFee,
-            impl CreateL2GasFee,
-            impl BaseTokenAccounts,
-            impl BlockQueries<Storage = ()>,
-            (),
-            impl StateQueries,
-            impl TransactionRepository<Storage = ()>,
-            impl TransactionQueries<Storage = ()>,
-            (),
-            impl ReceiptRepository<Storage = ()>,
-            impl ReceiptQueries<Storage = ()>,
-            impl PayloadQueries<Storage = ()>,
-            impl StorageTrieRepository,
-        >,
+        StateActor<impl DependenciesThreadSafe<State = InMemoryState>>,
         Sender<StateMessage>,
     ) {
         let (state_channel, rx) = mpsc::channel(10);
-        let state = StateActor::new(
-            rx,
-            InMemoryState::new(),
-            B256::new(hex!(
-                "e56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d"
-            )),
-            height,
-            GenesisConfig::default(),
-            MovedBlockHash,
-            (),
-            Eip1559GasFee::default(),
-            U256::ZERO,
-            U256::ZERO,
-            MovedBaseTokenAccounts::new(AccountAddress::ONE),
-            (),
-            (),
-            MockStateQueries(address, height),
-            (),
-            (),
-            (),
-            (),
-            (),
-            (),
-            (),
-            StateActor::on_tx_noop(),
-            StateActor::on_tx_batch_noop(),
-            StateActor::on_payload_noop(),
-        );
+        let state: StateActor<TestDependencies<_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _>> =
+            StateActor::new(
+                rx,
+                B256::new(hex!(
+                    "e56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d"
+                )),
+                height,
+                GenesisConfig::default(),
+                Application {
+                    gas_fee: Eip1559GasFee::default(),
+                    base_token: MovedBaseTokenAccounts::new(AccountAddress::ONE),
+                    l1_fee: U256::ZERO,
+                    l2_fee: U256::ZERO,
+                    block_hash: MovedBlockHash,
+                    block_queries: (),
+                    block_repository: (),
+                    on_payload: StateActor::on_payload_noop(),
+                    on_tx: StateActor::on_tx_noop(),
+                    on_tx_batch: StateActor::on_tx_batch_noop(),
+                    payload_queries: (),
+                    receipt_queries: (),
+                    receipt_repository: (),
+                    receipt_memory: (),
+                    storage: (),
+                    state: InMemoryState::new(),
+                    state_queries: MockStateQueries(address, height),
+                    evm_storage: (),
+                    transaction_queries: (),
+                    transaction_repository: (),
+                },
+            );
         (state, state_channel)
     }
 }

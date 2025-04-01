@@ -1,7 +1,6 @@
 use {
     crate::dependency::shared::*,
-    moved_blockchain::block::{BaseGasFee, BlockHash, BlockRepository, MovedBlockHash},
-    moved_execution::{BaseTokenAccounts, CreateL1GasFee, CreateL2GasFee, MovedBaseTokenAccounts},
+    moved_app::{Application, StateActor},
     moved_genesis::config::GenesisConfig,
     moved_state::State,
     moved_storage_heed::{
@@ -10,118 +9,101 @@ use {
     },
 };
 
-pub type SharedStorage = &'static moved_storage_heed::Env;
-pub type ReceiptStorage = &'static moved_storage_heed::Env;
-pub type StateQueries = state::HeedStateQueries<'static>;
-pub type ReceiptRepository = receipt::HeedReceiptRepository;
-pub type ReceiptQueries = receipt::HeedReceiptQueries;
-pub type PayloadQueries = payload::HeedPayloadQueries;
-pub type StorageTrieRepository = evm::HeedStorageTrieRepository;
-pub type TransactionRepository = transaction::HeedTransactionRepository;
-pub type TransactionQueries = transaction::HeedTransactionQueries;
-pub type BlockQueries = block::HeedBlockQueries;
+pub type Dependency = HeedDependencies;
 
-pub fn block_hash() -> impl BlockHash + Send + Sync + 'static {
-    MovedBlockHash
+pub fn create(genesis_config: &GenesisConfig) -> Application<HeedDependencies> {
+    Application::new(HeedDependencies, genesis_config)
 }
 
-pub fn base_token(
-    genesis_config: &GenesisConfig,
-) -> impl BaseTokenAccounts + Send + Sync + 'static {
-    MovedBaseTokenAccounts::new(genesis_config.treasury)
-}
+pub struct HeedDependencies;
 
-pub fn memory() -> SharedStorage {
-    db()
-}
+impl moved_app::Dependencies for HeedDependencies {
+    type BlockQueries = block::HeedBlockQueries;
+    type BlockRepository = block::HeedBlockRepository;
+    type OnPayload = moved_app::OnPayload<Application<Self>>;
+    type OnTx = moved_app::OnTx<Application<Self>>;
+    type OnTxBatch = moved_app::OnTxBatch<Application<Self>>;
+    type PayloadQueries = payload::HeedPayloadQueries;
+    type ReceiptQueries = receipt::HeedReceiptQueries;
+    type ReceiptRepository = receipt::HeedReceiptRepository;
+    type ReceiptStorage = &'static moved_storage_heed::Env;
+    type SharedStorage = &'static moved_storage_heed::Env;
+    type State = state::HeedState<'static>;
+    type StateQueries = state::HeedStateQueries<'static>;
+    type StorageTrieRepository = evm::HeedStorageTrieRepository;
+    type TransactionQueries = transaction::HeedTransactionQueries;
+    type TransactionRepository = transaction::HeedTransactionRepository;
 
-pub fn block_repository() -> impl BlockRepository<Storage = SharedStorage> + Send + Sync + 'static {
-    block::HeedBlockRepository
-}
+    fn block_queries() -> Self::BlockQueries {
+        block::HeedBlockQueries
+    }
 
-pub fn state() -> impl State + Send + Sync + 'static {
-    state::HeedState::new(std::sync::Arc::new(trie::HeedEthTrieDb::new(db())))
-}
+    fn block_repository() -> Self::BlockRepository {
+        block::HeedBlockRepository
+    }
 
-pub fn state_query(genesis_config: &GenesisConfig) -> StateQueries {
-    state::HeedStateQueries::from_genesis(db(), genesis_config.initial_state_root)
-}
-
-pub fn on_tx_batch<
-    S: State,
-    BH: BlockHash,
-    BR: BlockRepository<Storage = SharedStorage>,
-    Fee: BaseGasFee,
-    L1F: CreateL1GasFee,
-    L2F: CreateL2GasFee,
-    Token: BaseTokenAccounts,
->() -> OnTxBatch<S, BH, BR, Fee, L1F, L2F, Token> {
-    Box::new(|| {
-        Box::new(|state| {
-            state
-                .state_queries()
-                .push_state_root(state.state().state_root())
-                .unwrap()
+    fn on_payload() -> Self::OnPayload {
+        Box::new(|| {
+            Box::new(|state, id, hash| state.payload_queries.add_block_hash(id, hash).unwrap())
         })
-    })
-}
+    }
 
-pub fn on_tx<
-    S: State,
-    BH: BlockHash,
-    BR: BlockRepository<Storage = SharedStorage>,
-    Fee: BaseGasFee,
-    L1F: CreateL1GasFee,
-    L2F: CreateL2GasFee,
-    Token: BaseTokenAccounts,
->() -> OnTx<S, BH, BR, Fee, L1F, L2F, Token> {
-    StateActor::on_tx_noop()
-}
+    fn on_tx() -> Self::OnTx {
+        StateActor::on_tx_noop()
+    }
 
-pub fn on_payload<
-    S: State,
-    BH: BlockHash,
-    BR: BlockRepository<Storage = SharedStorage>,
-    Fee: BaseGasFee,
-    L1F: CreateL1GasFee,
-    L2F: CreateL2GasFee,
-    Token: BaseTokenAccounts,
->() -> OnPayload<S, BH, BR, Fee, L1F, L2F, Token> {
-    Box::new(|| {
-        Box::new(|state, id, hash| state.payload_queries().add_block_hash(id, hash).unwrap())
-    })
-}
+    fn on_tx_batch() -> Self::OnTxBatch {
+        Box::new(|| {
+            Box::new(|state| {
+                state
+                    .state_queries
+                    .push_state_root(state.state.state_root())
+                    .unwrap()
+            })
+        })
+    }
 
-pub fn transaction_repository() -> TransactionRepository {
-    transaction::HeedTransactionRepository
-}
+    fn payload_queries() -> Self::PayloadQueries {
+        payload::HeedPayloadQueries::new(db())
+    }
 
-pub fn transaction_queries() -> TransactionQueries {
-    transaction::HeedTransactionQueries
-}
+    fn receipt_queries() -> Self::ReceiptQueries {
+        receipt::HeedReceiptQueries
+    }
 
-pub fn receipt_repository() -> ReceiptRepository {
-    receipt::HeedReceiptRepository
-}
+    fn receipt_repository() -> Self::ReceiptRepository {
+        receipt::HeedReceiptRepository
+    }
 
-pub fn receipt_queries() -> ReceiptQueries {
-    receipt::HeedReceiptQueries
-}
+    fn receipt_memory() -> Self::ReceiptStorage {
+        db()
+    }
 
-pub fn receipt_memory() -> ReceiptStorage {
-    db()
-}
+    fn shared_storage() -> Self::SharedStorage {
+        db()
+    }
 
-pub fn block_queries() -> BlockQueries {
-    block::HeedBlockQueries
-}
+    fn state() -> Self::State {
+        state::HeedState::new(std::sync::Arc::new(trie::HeedEthTrieDb::new(db())))
+    }
 
-pub fn payload_queries() -> PayloadQueries {
-    payload::HeedPayloadQueries::new(db())
-}
+    fn state_queries(genesis_config: &GenesisConfig) -> Self::StateQueries {
+        state::HeedStateQueries::from_genesis(db(), genesis_config.initial_state_root)
+    }
 
-pub fn storage_trie_repository() -> StorageTrieRepository {
-    evm::HeedStorageTrieRepository::new(db())
+    fn storage_trie_repository() -> Self::StorageTrieRepository {
+        evm::HeedStorageTrieRepository::new(db())
+    }
+
+    fn transaction_queries() -> Self::TransactionQueries {
+        transaction::HeedTransactionQueries
+    }
+
+    fn transaction_repository() -> Self::TransactionRepository {
+        transaction::HeedTransactionRepository
+    }
+
+    impl_shared!();
 }
 
 lazy_static::lazy_static! {
