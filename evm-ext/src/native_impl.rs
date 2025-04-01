@@ -1,5 +1,6 @@
 use {
     super::{
+        events::EthTransfer,
         native_evm_context::NativeEVMContext,
         solidity_abi::{abi_decode_params, abi_encode_params},
         type_utils::evm_result_to_move_value,
@@ -15,14 +16,14 @@ use {
     move_core_types::{account_address::AccountAddress, ident_str, identifier::IdentStr},
     move_vm_runtime::native_functions::NativeFunctionTable,
     move_vm_types::{loaded_data::runtime_types::Type, values::Value},
-    moved_shared::primitives::{ToEthAddress, ToU256},
+    moved_shared::primitives::{ToEthAddress, ToMoveAddress, ToU256},
     revm::{
         db::CacheDB,
         primitives::{Address, BlobExcessGasAndPrice, BlockEnv, EVMError, TxEnv, TxKind, U256},
         Evm,
     },
     smallvec::SmallVec,
-    std::collections::VecDeque,
+    std::{collections::VecDeque, sync::Arc},
 };
 
 pub const EVM_CALL_FN_NAME: &IdentStr = ident_str!("system_evm_call");
@@ -97,6 +98,11 @@ fn evm_create(
     )
 }
 
+// Clippy is warning us that using `Arc` is not necessary when the inner type
+// is not `Send`, but we don't have a choice because the library chose to use `Arc`.
+// We are choosing to make the inner type `!Send` because this function is only
+// executed on a single thread anyway.
+#[allow(clippy::arc_with_non_send_sync)]
 fn evm_transact_inner(
     context: &mut SafeNativeContext,
     caller: Address,
@@ -108,6 +114,9 @@ fn evm_transact_inner(
     let gas_limit: u64 = context.gas_balance().into();
 
     let evm_native_ctx = context.extensions_mut().get_mut::<NativeEVMContext>();
+    evm_native_ctx
+        .transfer_logs
+        .add_tx_origin(caller.to_move_address(), value);
     let mut db = CacheDB::new(ResolverBackedDB::new(
         evm_native_ctx.storage_trie,
         evm_native_ctx.resolver,
@@ -156,6 +165,32 @@ fn evm_transact_inner(
             env.disable_balance_check = true;
         })
         .build();
+
+    // Modify the post-execution handler to extract transfer events.
+    evm.handler.post_execution.output = Arc::new(|evm_ctx, result| {
+        let transfers = evm_ctx
+            .evm
+            .journaled_state
+            .journal
+            .iter()
+            .flat_map(|entries| {
+                entries.iter().filter_map(|entry| {
+                    if let revm::JournalEntry::BalanceTransfer { from, to, balance } = entry {
+                        Some(EthTransfer {
+                            from: from.to_move_address(),
+                            to: to.to_move_address(),
+                            amount: *balance,
+                        })
+                    } else {
+                        None
+                    }
+                })
+            });
+        for t in transfers {
+            evm_native_ctx.transfer_logs.push_transfer(t);
+        }
+        revm::handler::mainnet::output(evm_ctx, result)
+    });
 
     let outcome = evm.transact().map_err(|e| match e {
         EVMError::Database(e) => SafeNativeError::InvariantViolation(e),

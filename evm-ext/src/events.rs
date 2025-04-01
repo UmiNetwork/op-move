@@ -1,14 +1,74 @@
 use {
     super::{EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE},
-    alloy::primitives::{Log, LogData, B256},
+    alloy::primitives::{Log, LogData, B256, U256},
     move_core_types::{
+        account_address::AccountAddress,
         ident_str,
         language_storage::StructTag,
         value::{MoveStructLayout, MoveTypeLayout, MoveValue},
     },
     moved_shared::primitives::ToEthAddress,
-    std::sync::LazyLock,
+    std::{cell::RefCell, sync::LazyLock},
 };
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EthTransfer {
+    pub from: AccountAddress,
+    pub to: AccountAddress,
+    pub amount: U256,
+}
+
+pub trait EthTransferLog {
+    fn push_transfer(&self, transfer: EthTransfer);
+    fn take_transfers(&self) -> Vec<EthTransfer>;
+    fn add_tx_origin(&self, address: AccountAddress, amount: U256);
+    fn take_origins(&self) -> Vec<(AccountAddress, U256)>;
+}
+
+/// Struct external to the EVM to capture transfer events.
+/// This is used for bookkeeping token balances between Move and EVM.
+///
+/// It needs to use a `RefCell` for interior mutability because the
+/// EVM handler hooks require the closures to be immutable.
+/// The usage of interior mutability is safe because execution of the single
+/// EVM instance is single threaded.
+#[derive(Debug, Default)]
+pub struct EthTransfersLogger {
+    transfers: RefCell<Vec<EthTransfer>>,
+    origins: RefCell<Vec<(AccountAddress, U256)>>,
+}
+
+impl EthTransferLog for EthTransfersLogger {
+    fn push_transfer(&self, transfer: EthTransfer) {
+        self.transfers.borrow_mut().push(transfer);
+    }
+
+    fn take_transfers(&self) -> Vec<EthTransfer> {
+        self.transfers.take()
+    }
+
+    fn add_tx_origin(&self, address: AccountAddress, amount: U256) {
+        self.origins.borrow_mut().push((address, amount));
+    }
+
+    fn take_origins(&self) -> Vec<(AccountAddress, U256)> {
+        self.origins.take()
+    }
+}
+
+impl EthTransferLog for () {
+    fn push_transfer(&self, _transfer: EthTransfer) {}
+
+    fn take_transfers(&self) -> Vec<EthTransfer> {
+        Vec::new()
+    }
+
+    fn add_tx_origin(&self, _address: AccountAddress, _amount: U256) {}
+
+    fn take_origins(&self) -> Vec<(AccountAddress, U256)> {
+        Vec::new()
+    }
+}
 
 /// Marker struct defined in our framework for marking data as FixedBytes in the Solidity ABI.
 pub static EVM_LOGS_EVENT_TAG: LazyLock<StructTag> = LazyLock::new(|| StructTag {
