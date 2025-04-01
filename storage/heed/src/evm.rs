@@ -1,6 +1,6 @@
 use {
     crate::evm_storage_trie::HeedEthStorageTrieDb,
-    eth_trie::{TrieError, DB},
+    eth_trie::{DB, TrieError},
     moved_evm_ext::state::{self, BoxedTrieDb, DbWithRoot, EthTrieDbWithLocalError, StorageTrieDb},
     moved_shared::primitives::{Address, B256},
     moved_trie::StagingEthTrieDb,

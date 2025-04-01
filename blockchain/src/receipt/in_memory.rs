@@ -1,6 +1,6 @@
 use {
     crate::receipt::{
-        write::ReceiptRepository, ExtendedReceipt, ReceiptQueries, TransactionReceipt,
+        ExtendedReceipt, ReceiptQueries, TransactionReceipt, write::ReceiptRepository,
     },
     moved_shared::primitives::B256,
     std::{collections::HashMap, convert::Infallible},

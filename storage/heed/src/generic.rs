@@ -1,8 +1,8 @@
 use {
     heed::{
+        BoxedError, BytesDecode, BytesEncode,
         byteorder::LittleEndian,
         types::{Bytes, U64},
-        BoxedError, BytesDecode, BytesEncode,
     },
     moved_shared::primitives::{Address, B256},
     serde::{Deserialize, Serialize},

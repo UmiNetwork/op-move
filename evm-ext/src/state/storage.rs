@@ -1,7 +1,7 @@
 use {
     alloy::{primitives::keccak256, rlp},
     auto_impl::auto_impl,
-    eth_trie::{EthTrie, MemDBError, MemoryDB, RootWithTrieDiff, Trie, TrieError, DB},
+    eth_trie::{DB, EthTrie, MemDBError, MemoryDB, RootWithTrieDiff, Trie, TrieError},
     moved_shared::primitives::{Address, B256, U256},
     moved_trie::StagingEthTrieDb,
     std::{

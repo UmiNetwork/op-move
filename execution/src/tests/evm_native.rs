@@ -1,9 +1,8 @@
 use {
     crate::{
-        execute_transaction,
+        CanonicalExecutionInput, execute_transaction,
         tests::{ALT_EVM_ADDRESS, EVM_ADDRESS, *},
         transaction::TransactionData,
-        CanonicalExecutionInput,
     },
     alloy::{
         primitives::utils::parse_ether,
@@ -14,7 +13,7 @@ use {
     move_core_types::{ident_str, language_storage::ModuleId, value::MoveValue},
     move_vm_types::values::Value,
     moved_evm_ext::{
-        state::InMemoryStorageTrieRepository, CODE_LAYOUT, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
+        CODE_LAYOUT, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE, state::InMemoryStorageTrieRepository,
     },
     moved_shared::primitives::{ToEthAddress, ToMoveAddress, ToMoveU256},
     moved_state::{InMemoryState, State},

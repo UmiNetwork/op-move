@@ -33,7 +33,7 @@ impl<'db> HeedEthStorageTrieDb<'db> {
     }
 }
 
-impl<'db> DbWithRoot for HeedEthStorageTrieDb<'db> {
+impl DbWithRoot for HeedEthStorageTrieDb<'_> {
     fn root(&self) -> Result<Option<B256>, heed::Error> {
         let transaction = self.env.read_txn()?;
 
@@ -57,7 +57,7 @@ impl<'db> DbWithRoot for HeedEthStorageTrieDb<'db> {
     }
 }
 
-impl<'db> DB for HeedEthStorageTrieDb<'db> {
+impl DB for HeedEthStorageTrieDb<'_> {
     type Error = heed::Error;
 
     fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>, Self::Error> {

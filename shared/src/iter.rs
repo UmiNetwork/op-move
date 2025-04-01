@@ -127,9 +127,9 @@ where
 mod tests {
     use {
         super::*,
+        PairOrSingle::{Pair, Single},
         std::collections::HashMap,
         test_case::test_case,
-        PairOrSingle::{Pair, Single},
     };
 
     #[test_case([], []; "Empty")]

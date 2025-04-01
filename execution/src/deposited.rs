@@ -1,10 +1,10 @@
 use {
     crate::{
-        create_move_vm, create_vm_session, eth_token,
+        ADDRESS_LAYOUT, DepositExecutionInput, Logs, U256_LAYOUT, create_move_vm,
+        create_vm_session, eth_token,
         gas::{new_gas_meter, total_gas_used},
         session_id::SessionId,
         transaction::{Changes, TransactionExecutionOutcome},
-        DepositExecutionInput, Logs, ADDRESS_LAYOUT, U256_LAYOUT,
     },
     alloy::primitives::U256,
     aptos_table_natives::TableResolver,
@@ -13,9 +13,9 @@ use {
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
     move_vm_types::values::Value,
     moved_evm_ext::{
-        self, events::EthTransfersLogger, extract_evm_changes, extract_evm_result,
-        state::StorageTrieRepository, CODE_LAYOUT, EVM_CALL_FN_NAME, EVM_NATIVE_ADDRESS,
-        EVM_NATIVE_MODULE,
+        self, CODE_LAYOUT, EVM_CALL_FN_NAME, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
+        events::EthTransfersLogger, extract_evm_changes, extract_evm_result,
+        state::StorageTrieRepository,
     },
     moved_shared::{
         error::{Error, UserError},

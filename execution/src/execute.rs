@@ -1,6 +1,6 @@
 use {
     super::tag_validation::{validate_entry_type_tag, validate_entry_value},
-    crate::{eth_token::burn_eth, layout::has_value_invariants, ADDRESS_LAYOUT, U256_LAYOUT},
+    crate::{ADDRESS_LAYOUT, U256_LAYOUT, eth_token::burn_eth, layout::has_value_invariants},
     alloy::primitives::{Log, LogData},
     aptos_types::transaction::{EntryFunction, Module, Script},
     move_binary_format::CompiledModule,
@@ -12,7 +12,7 @@ use {
     move_vm_runtime::{module_traversal::TraversalContext, session::Session},
     move_vm_types::{gas::GasMeter, loaded_data::runtime_types::Type, values::Value},
     moved_evm_ext::{
-        extract_evm_result, CODE_LAYOUT, EVM_CALL_FN_NAME, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
+        CODE_LAYOUT, EVM_CALL_FN_NAME, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE, extract_evm_result,
     },
     moved_shared::{
         error::{Error, Error::User, InvalidTransactionCause, ScriptTransaction, UserError},

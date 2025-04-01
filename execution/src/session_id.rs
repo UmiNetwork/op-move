@@ -4,8 +4,8 @@ use {
     aptos_types::transaction::EntryFunction,
     aptos_vm::move_vm_ext::UserTransactionContext,
     moved_evm_ext::HeaderForExecution,
-    moved_genesis::config::{GenesisConfig, CHAIN_ID},
-    moved_shared::primitives::{ToMoveAddress, B256},
+    moved_genesis::config::{CHAIN_ID, GenesisConfig},
+    moved_shared::primitives::{B256, ToMoveAddress},
 };
 
 /// This struct represents a unique identifier for the current session of the MoveVM.

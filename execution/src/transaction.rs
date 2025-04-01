@@ -5,7 +5,7 @@ use {
             TxLegacy,
         },
         eips::eip2930::AccessList,
-        primitives::{address, Address, Bloom, Bytes, Log, LogData, TxKind, B256, U256, U64},
+        primitives::{Address, B256, Bloom, Bytes, Log, LogData, TxKind, U64, U256, address},
         rlp::{Buf, Decodable, Encodable, RlpDecodable, RlpEncodable},
         rpc::types::TransactionRequest,
     },
@@ -333,7 +333,6 @@ impl TryFrom<TxEnvelope> for NormalizedEthTransaction {
             TxEnvelope::Eip4844(_) | TxEnvelope::Eip7702(_) => {
                 Err(InvalidTransactionCause::UnsupportedType)?
             }
-            t => Err(InvalidTransactionCause::UnknownType(t.tx_type()))?,
         })
     }
 }
@@ -523,10 +522,14 @@ mod tests {
     #[test]
     fn test_extended_tx_envelope_rlp() {
         // Deposited Transaction
-        rlp_roundtrip(&Bytes::from_static(&hex!("7ef8f8a0672dfee56b1754d9fb99b11dae8eab6dfb7246470f6f7354d7acab837eab12b294deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000000558000c5fc50000000000000004000000006672f4bd000000000000020e00000000000000000000000000000000000000000000000000000000000000070000000000000000000000000000000000000000000000000000000000000001bc6d63f57e9fd865ae9a204a4db7fe1cff654377442541b06d020ddab88c2eeb000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425")));
+        rlp_roundtrip(&Bytes::from_static(&hex!(
+            "7ef8f8a0672dfee56b1754d9fb99b11dae8eab6dfb7246470f6f7354d7acab837eab12b294deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000000558000c5fc50000000000000004000000006672f4bd000000000000020e00000000000000000000000000000000000000000000000000000000000000070000000000000000000000000000000000000000000000000000000000000001bc6d63f57e9fd865ae9a204a4db7fe1cff654377442541b06d020ddab88c2eeb000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425"
+        )));
 
         // Canonical Transaction
-        rlp_roundtrip(&Bytes::from_static(&hex!("02f86f82a45580808346a8928252089465d08a056c17ae13370565b04cf77d2afa1cb9fa8806f05b59d3b2000080c080a0dd50efde9a4d2f01f5248e1a983165c8cfa5f193b07b4b094f4078ad4717c1e4a017db1be1e8751b09e033bcffca982d0fe4919ff6b8594654e06647dee9292750")));
+        rlp_roundtrip(&Bytes::from_static(&hex!(
+            "02f86f82a45580808346a8928252089465d08a056c17ae13370565b04cf77d2afa1cb9fa8806f05b59d3b2000080c080a0dd50efde9a4d2f01f5248e1a983165c8cfa5f193b07b4b094f4078ad4717c1e4a017db1be1e8751b09e033bcffca982d0fe4919ff6b8594654e06647dee9292750"
+        )));
     }
 
     fn rlp_roundtrip(encoded: &[u8]) {

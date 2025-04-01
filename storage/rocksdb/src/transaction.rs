@@ -4,7 +4,7 @@ use {
         ExtendedTransaction, TransactionQueries, TransactionRepository, TransactionResponse,
     },
     moved_shared::primitives::B256,
-    rocksdb::{AsColumnFamilyRef, WriteBatchWithTransaction, DB as RocksDb},
+    rocksdb::{AsColumnFamilyRef, DB as RocksDb, WriteBatchWithTransaction},
 };
 
 pub const COLUMN_FAMILY: &str = "transaction";
@@ -64,7 +64,7 @@ mod tests {
         super::*,
         alloy::{
             consensus::{SignableTransaction, TxEip1559},
-            primitives::{address, Sealable, TxKind},
+            primitives::{Sealable, TxKind, address},
             signers::local::PrivateKeySigner,
         },
         hex_literal::hex,

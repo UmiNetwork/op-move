@@ -4,7 +4,7 @@ use {
         primitives::{B256, U256},
         rlp,
     },
-    revm::primitives::AccountInfo,
+    revm::state::AccountInfo,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]

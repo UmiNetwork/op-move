@@ -24,7 +24,7 @@ pub mod tests {
             consensus::{SignableTransaction, TxEip1559, TxEnvelope},
             hex::FromHex,
             network::TxSignerSync,
-            primitives::{hex, utils::parse_ether, Bytes, FixedBytes, TxKind},
+            primitives::{Bytes, FixedBytes, TxKind, hex, utils::parse_ether},
             rlp::Encodable,
             signers::local::PrivateKeySigner,
         },
@@ -46,11 +46,11 @@ pub mod tests {
         },
         moved_evm_ext::state::InMemoryStorageTrieRepository,
         moved_execution::{
-            transaction::{DepositedTx, ExtendedTxEnvelope},
             MovedBaseTokenAccounts,
+            transaction::{DepositedTx, ExtendedTxEnvelope},
         },
-        moved_genesis::config::{GenesisConfig, CHAIN_ID},
-        moved_shared::primitives::{Address, B256, U256, U64},
+        moved_genesis::config::{CHAIN_ID, GenesisConfig},
+        moved_shared::primitives::{Address, B256, U64, U256},
         moved_state::InMemoryState,
         tokio::sync::mpsc::{self, Sender},
     };
@@ -176,6 +176,7 @@ pub mod tests {
         channel.send(msg).await.map_err(access_state_error).unwrap();
     }
 
+    #[allow(clippy::type_complexity)]
     pub fn create_state_actor_with_mock_state_queries(
         address: AccountAddress,
         height: u64,

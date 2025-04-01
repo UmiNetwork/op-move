@@ -6,7 +6,7 @@ use {
     },
     heed::RoTxn,
     moved_blockchain::payload::{PayloadId, PayloadQueries, PayloadResponse},
-    moved_shared::primitives::{ToU64, B256},
+    moved_shared::primitives::{B256, ToU64},
 };
 
 pub type Key = EncodableU64;

@@ -47,11 +47,13 @@ fn test_initiate_withdrawal() {
     let expected_topic = B256::new(hex!(
         "02a52367d10742d8032712c1bb8e0144ff1ec5ffda1ed7d70bb05a2744955054"
     ));
-    assert!(outcome
-        .unwrap()
-        .logs
-        .iter()
-        .any(|l| l.topics()[0] == expected_topic));
+    assert!(
+        outcome
+            .unwrap()
+            .logs
+            .iter()
+            .any(|l| l.topics()[0] == expected_topic)
+    );
 
     let new_balance = ctx.get_balance(EVM_ADDRESS);
     assert_eq!(new_balance, mint_amount - withdraw_amount);

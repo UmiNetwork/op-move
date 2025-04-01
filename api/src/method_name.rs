@@ -60,7 +60,7 @@ impl FromStr for MethodName {
                 return Err(JsonRpcError::without_data(
                     -32601,
                     format!("Unsupported method: {other}"),
-                ))
+                ));
             }
         })
     }

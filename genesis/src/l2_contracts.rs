@@ -1,6 +1,6 @@
 use {
     alloy::genesis::Genesis,
-    moved_evm_ext::{state::StorageTrieRepository, Changes},
+    moved_evm_ext::{Changes, state::StorageTrieRepository},
     moved_state::State,
 };
 

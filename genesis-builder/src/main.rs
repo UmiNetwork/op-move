@@ -2,12 +2,12 @@ use {
     crate::generate::l2_abi_to_move,
     aptos_framework::{BuildOptions, BuiltPackage, ReleaseBundle, ReleasePackage},
     move_package::{
-        package_hooks::register_package_hooks, BuildConfig as MoveBuildConfig, LintFlag,
+        BuildConfig as MoveBuildConfig, LintFlag, package_hooks::register_package_hooks,
     },
     once_cell::sync::Lazy,
     std::{
         collections::BTreeMap,
-        fs::{copy, read_to_string, remove_dir_all, write, OpenOptions},
+        fs::{OpenOptions, copy, read_to_string, remove_dir_all, write},
         io::{BufRead, BufReader},
         path::PathBuf,
         process::Command,

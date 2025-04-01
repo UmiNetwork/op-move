@@ -3,7 +3,7 @@ use {
         all::HeedDb,
         generic::{EncodableB256, EncodableBytes, EncodableU64},
     },
-    eth_trie::{EthTrie, TrieError, DB},
+    eth_trie::{DB, EthTrie, TrieError},
     heed::RoTxn,
     moved_shared::primitives::B256,
     std::sync::Arc,
@@ -51,7 +51,7 @@ impl<'db> HeedEthTrieDb<'db> {
     }
 }
 
-impl<'db> DB for HeedEthTrieDb<'db> {
+impl DB for HeedEthTrieDb<'_> {
     type Error = heed::Error;
 
     fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>, Self::Error> {

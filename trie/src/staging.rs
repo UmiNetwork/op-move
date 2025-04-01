@@ -1,4 +1,4 @@
-use eth_trie::{MemoryDB, DB};
+use eth_trie::{DB, MemoryDB};
 
 const INFALLIBLE: &str = "Memory DB should be infallible";
 

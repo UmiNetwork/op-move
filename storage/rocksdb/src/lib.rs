@@ -14,5 +14,5 @@ pub use {
     block::RocksDbBlockRepository,
     rocksdb::{self, DB as RocksDb},
     state::{RocksDbState, RocksDbStateQueries},
-    trie::{RocksEthTrieDb, ROOT_KEY},
+    trie::{ROOT_KEY, RocksEthTrieDb},
 };

@@ -518,7 +518,6 @@ async fn deposit_erc20_to_l2(amount: U256) -> Result<erc20::Erc20AddressPair> {
 async fn deploy_move_counter() -> Result<()> {
     let from_wallet = get_prefunded_wallet().await?;
     let provider = ProviderBuilder::new()
-        .with_recommended_fillers()
         .wallet(EthereumWallet::from(from_wallet.to_owned()))
         .on_http(Url::parse(L2_RPC_URL)?);
 
@@ -526,7 +525,7 @@ async fn deploy_move_counter() -> Result<()> {
     let bytecode = hex::decode(bytecode_hex.trim()).unwrap();
     let bytecode = set_module_address(bytecode, from_wallet.address());
 
-    let call = CallBuilder::new_raw_deploy(&provider, bytecode.into());
+    let call = CallBuilder::<(), _, _, _>::new_raw_deploy(&provider, bytecode.into());
     let contract_address = call.deploy().await.unwrap();
 
     let input = TransactionData::EntryFunction(EntryFunction::new(
@@ -541,11 +540,12 @@ async fn deploy_move_counter() -> Result<()> {
             bcs::to_bytes(&MoveValue::U64(7)).unwrap(),
         ],
     ));
-    let pending_tx = CallBuilder::new_raw(&provider, bcs::to_bytes(&input).unwrap().into())
-        .to(contract_address)
-        .send()
-        .await
-        .unwrap();
+    let pending_tx =
+        CallBuilder::<(), _, _, _>::new_raw(&provider, bcs::to_bytes(&input).unwrap().into())
+            .to(contract_address)
+            .send()
+            .await
+            .unwrap();
     let receipt = pending_tx.get_receipt().await.unwrap();
     assert!(receipt.status(), "Transaction should succeed");
 
@@ -598,9 +598,7 @@ fn cleanup_processes(processes: Vec<Child>) -> Result<()> {
 }
 
 async fn get_code_size(address: Address) -> Result<usize> {
-    let provider = ProviderBuilder::new()
-        .with_recommended_fillers()
-        .on_http(Url::parse(&var("L1_RPC_URL")?)?);
+    let provider = ProviderBuilder::new().on_http(Url::parse(&var("L1_RPC_URL")?)?);
     let bytecode = provider.get_code_at(address).await?;
     Ok(bytecode.len())
 }
@@ -645,7 +643,6 @@ async fn send_ethers(
         .with_value(parse_ether(how_many_ethers)?);
 
     let provider = ProviderBuilder::new()
-        .with_recommended_fillers()
         .wallet(EthereumWallet::from(from_wallet.to_owned()))
         .on_http(Url::parse(url)?);
     let prev_balance = provider.get_balance(to).await?;
@@ -661,9 +658,7 @@ async fn send_ethers(
 }
 
 async fn get_op_balance(account: Address) -> Result<U256> {
-    let provider = ProviderBuilder::new()
-        .with_recommended_fillers()
-        .on_http(Url::parse(L2_RPC_URL)?);
+    let provider = ProviderBuilder::new().on_http(Url::parse(L2_RPC_URL)?);
     Ok(provider.get_balance(account).await?)
 }
 

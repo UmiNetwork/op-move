@@ -1,5 +1,5 @@
 use {
-    super::{EvmNativeOutcome, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE},
+    super::{EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE, EvmNativeOutcome},
     alloy::hex::ToHexExt,
     move_core_types::{
         account_address::AccountAddress, identifier::Identifier, language_storage::StructTag,
@@ -7,7 +7,11 @@ use {
     move_vm_runtime::session::SerializedReturnValues,
     move_vm_types::values::{Struct, Value, Vector},
     moved_shared::primitives::{ToEthAddress, ToMoveAddress, ToMoveU256},
-    revm::primitives::{utilities::KECCAK_EMPTY, AccountInfo, Address, ExecutionResult, Log, B256},
+    revm::{
+        context::result::ExecutionResult,
+        primitives::{Address, B256, KECCAK_EMPTY, Log},
+        state::AccountInfo,
+    },
 };
 
 pub const ACCOUNT_INFO_PREFIX: &str = "Account_";

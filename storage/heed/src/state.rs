@@ -4,7 +4,7 @@ use {
         generic::{EncodableB256, EncodableU64},
         trie::{FromOptRoot, HeedEthTrieDb},
     },
-    eth_trie::{EthTrie, TrieError, DB},
+    eth_trie::{DB, EthTrie, TrieError},
     heed::RoTxn,
     move_binary_format::errors::PartialVMError,
     move_core_types::{
@@ -12,15 +12,15 @@ use {
     },
     move_table_extension::{TableChangeSet, TableResolver},
     moved_blockchain::state::{
-        proof_from_trie_and_resolver, Balance, BlockHeight, EthTrieResolver, Nonce, ProofResponse,
-        StateQueries,
+        Balance, BlockHeight, EthTrieResolver, Nonce, ProofResponse, StateQueries,
+        proof_from_trie_and_resolver,
     },
     moved_evm_ext::state::StorageTrieRepository,
     moved_execution::{
         quick_get_eth_balance, quick_get_nonce,
         transaction::{L2_HIGHEST_ADDRESS, L2_LOWEST_ADDRESS},
     },
-    moved_shared::primitives::{ToEthAddress, B256, U256},
+    moved_shared::primitives::{B256, ToEthAddress, U256},
     moved_state::{InsertChangeSetIntoMerkleTrie, State},
     std::sync::Arc,
 };
@@ -67,7 +67,7 @@ impl<'db> HeedState<'db> {
     }
 }
 
-impl<'db> State for HeedState<'db> {
+impl State for HeedState<'_> {
     type Err = TrieError;
 
     fn apply(&mut self, changes: ChangeSet) -> Result<(), Self::Err> {
@@ -171,7 +171,7 @@ impl<'db> HeedStateQueries<'db> {
     }
 }
 
-impl<'db> StateQueries for HeedStateQueries<'db> {
+impl StateQueries for HeedStateQueries<'_> {
     fn balance_at(
         &self,
         db: Arc<impl DB>,

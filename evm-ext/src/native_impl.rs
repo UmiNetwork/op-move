@@ -1,15 +1,16 @@
 use {
     super::{
+        EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
         events::EthTransfer,
         native_evm_context::NativeEVMContext,
         solidity_abi::{abi_decode_params, abi_encode_params},
         type_utils::evm_result_to_move_value,
-        EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
     },
-    crate::ResolverBackedDB,
+    crate::{ResolverBackedDB, native_evm_context::DbError},
+    alloy::eips::eip2930::AccessList,
     aptos_gas_algebra::{GasExpression, GasQuantity, InternalGasUnit},
     aptos_native_interface::{
-        safely_pop_arg, SafeNativeBuilder, SafeNativeContext, SafeNativeError, SafeNativeResult,
+        SafeNativeBuilder, SafeNativeContext, SafeNativeError, SafeNativeResult, safely_pop_arg,
     },
     aptos_types::vm_status::StatusCode,
     move_binary_format::errors::PartialVMError,
@@ -18,12 +19,19 @@ use {
     move_vm_types::{loaded_data::runtime_types::Type, values::Value},
     moved_shared::primitives::{ToEthAddress, ToMoveAddress, ToU256},
     revm::{
-        db::CacheDB,
-        primitives::{Address, BlobExcessGasAndPrice, BlockEnv, EVMError, TxEnv, TxKind, U256},
-        Evm,
+        Journal, JournalEntry, MainBuilder, MainContext,
+        context::{BlockEnv, CfgEnv, Context, Evm, TxEnv, result::ResultAndState},
+        context_interface::{block::BlobExcessGasAndPrice, result::EVMError},
+        database::in_memory_db::CacheDB,
+        handler::{
+            EthFrame, EthPrecompiles, FrameResult, Handler, MainnetHandler,
+            instructions::EthInstructions,
+        },
+        interpreter::{InitialAndFloorGas, interpreter::EthInterpreter},
+        primitives::{Address, TxKind, U256},
     },
     smallvec::SmallVec,
-    std::{collections::VecDeque, sync::Arc},
+    std::collections::VecDeque,
 };
 
 pub const EVM_CALL_FN_NAME: &IdentStr = ident_str!("system_evm_call");
@@ -121,37 +129,38 @@ fn evm_transact_inner(
         evm_native_ctx.storage_trie,
         evm_native_ctx.resolver,
     ));
-    // todo: storage trie repository factory?
-    let mut evm = Evm::builder()
+
+    let mut evm = Context::mainnet()
         .with_db(&mut db)
-        .with_tx_env(TxEnv {
+        .with_tx(TxEnv {
             caller,
             gas_limit,
             // Gas price can be zero here because fee is charged in the MoveVM
-            gas_price: U256::ZERO,
-            transact_to,
+            gas_price: 0,
+            tx_type: 0,
+            kind: transact_to,
             value,
             data: data.into(),
-            // Nonce and chain id can be None because replay attacks
+            // Nonce and chain id can be ignored because replay attacks
             // are prevented at the MoveVM level. I.e. replay will
             // never occur because the MoveVM will not accept a duplicate
             // transaction
-            nonce: None,
+            nonce: 0,
             chain_id: None,
             // TODO: could maybe construct something based on the values that
             // have already been accessed in `context.traversal_context()`.
-            access_list: Vec::new(),
+            access_list: AccessList::default(),
             gas_priority_fee: None,
             blob_hashes: Vec::new(),
-            max_fee_per_blob_gas: None,
-            authorization_list: None,
+            max_fee_per_blob_gas: 0,
+            authorization_list: Vec::new(),
         })
-        .with_block_env(BlockEnv {
-            number: U256::from(evm_native_ctx.block_header.number),
-            coinbase: Address::ZERO,
-            timestamp: U256::from(evm_native_ctx.block_header.timestamp),
-            gas_limit: U256::from(u64::MAX),
-            basefee: U256::ZERO,
+        .with_block(BlockEnv {
+            number: evm_native_ctx.block_header.number,
+            beneficiary: Address::ZERO,
+            timestamp: evm_native_ctx.block_header.timestamp,
+            gas_limit: u64::MAX,
+            basefee: 0,
             difficulty: U256::ZERO,
             prevrandao: Some(evm_native_ctx.block_header.prev_randao),
             blob_excess_gas_and_price: Some(BlobExcessGasAndPrice {
@@ -159,41 +168,21 @@ fn evm_transact_inner(
                 blob_gasprice: 0,
             }),
         })
-        .modify_cfg_env(|env| {
+        .modify_cfg_chained(|env| {
             // We can safely disable the transaction-level check because
             // the Move side ensures the funds for `value` were present.
             env.disable_balance_check = true;
+            // Nonce can be ignored because replay attacks are prevented by MoveVM.
+            env.disable_nonce_check = true;
         })
-        .build();
+        .build_mainnet();
 
-    // Modify the post-execution handler to extract transfer events.
-    evm.handler.post_execution.output = Arc::new(|evm_ctx, result| {
-        let transfers = evm_ctx
-            .evm
-            .journaled_state
-            .journal
-            .iter()
-            .flat_map(|entries| {
-                entries.iter().filter_map(|entry| {
-                    if let revm::JournalEntry::BalanceTransfer { from, to, balance } = entry {
-                        Some(EthTransfer {
-                            from: from.to_move_address(),
-                            to: to.to_move_address(),
-                            amount: *balance,
-                        })
-                    } else {
-                        None
-                    }
-                })
-            });
-        for t in transfers {
-            evm_native_ctx.transfer_logs.push_transfer(t);
-        }
-        revm::handler::mainnet::output(evm_ctx, result)
-    });
-
-    let outcome = evm.transact().map_err(|e| match e {
-        EVMError::Database(e) => SafeNativeError::InvariantViolation(e),
+    let mut handler = WrappedMainnetHandler {
+        inner: InnerMainnetHandler::default(),
+        evm_native_ctx,
+    };
+    let outcome = handler.run(&mut evm).map_err(|e| match e {
+        EVMError::Database(e) => SafeNativeError::InvariantViolation(e.inner),
         other => SafeNativeError::InvariantViolation(
             PartialVMError::new(StatusCode::ABORTED).with_message(format!("EVM Error: {other:?}")),
         ),
@@ -209,6 +198,60 @@ fn evm_transact_inner(
 
     let result = outcome.result;
     Ok(smallvec::smallvec![evm_result_to_move_value(result)])
+}
+
+// Type aliases to make the `revm` types more tractable
+type EvmDB<'a> = &'a mut CacheDB<ResolverBackedDB<'a>>;
+type EvmCtx<'a> = Context<BlockEnv, TxEnv, CfgEnv, EvmDB<'a>, Journal<EvmDB<'a>, JournalEntry>>;
+type InnerMainnetHandler<'a> = MainnetHandler<
+    Evm<EvmCtx<'a>, (), EthInstructions<EthInterpreter, EvmCtx<'a>>, EthPrecompiles>,
+    EVMError<DbError>,
+    EthFrame<
+        Evm<EvmCtx<'a>, (), EthInstructions<EthInterpreter, EvmCtx<'a>>, EthPrecompiles>,
+        EVMError<DbError>,
+        EthInterpreter,
+    >,
+>;
+
+/// Custom handler to allow extracting transfer events.
+struct WrappedMainnetHandler<'a> {
+    inner: InnerMainnetHandler<'a>,
+    evm_native_ctx: &'a NativeEVMContext<'a>,
+}
+
+impl<'a> Handler for WrappedMainnetHandler<'a> {
+    type Evm = <InnerMainnetHandler<'a> as Handler>::Evm;
+    type Error = <InnerMainnetHandler<'a> as Handler>::Error;
+    type Frame = <InnerMainnetHandler<'a> as Handler>::Frame;
+    type HaltReason = <InnerMainnetHandler<'a> as Handler>::HaltReason;
+
+    // Modify the post-execution handler to extract transfer events.
+    fn post_execution(
+        &self,
+        evm: &mut Self::Evm,
+        exec_result: FrameResult,
+        init_and_floor_gas: InitialAndFloorGas,
+        eip7702_gas_refund: i64,
+    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
+        let transfers = evm.journaled_state.journal.iter().flat_map(|entries| {
+            entries.iter().filter_map(|entry| {
+                if let revm::JournalEntry::BalanceTransfer { from, to, balance } = entry {
+                    Some(EthTransfer {
+                        from: from.to_move_address(),
+                        to: to.to_move_address(),
+                        amount: *balance,
+                    })
+                } else {
+                    None
+                }
+            })
+        });
+        for t in transfers {
+            self.evm_native_ctx.transfer_logs.push_transfer(t);
+        }
+        self.inner
+            .post_execution(evm, exec_result, init_and_floor_gas, eip7702_gas_refund)
+    }
 }
 
 struct EvmGasUsed {

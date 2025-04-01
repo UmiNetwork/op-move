@@ -2,7 +2,7 @@ use {
     eth_trie::DB,
     moved_evm_ext::state::DbWithRoot,
     moved_shared::primitives::{Address, B256},
-    rocksdb::{AsColumnFamilyRef, WriteBatchWithTransaction, DB as RocksDb},
+    rocksdb::{AsColumnFamilyRef, DB as RocksDb, WriteBatchWithTransaction},
 };
 
 pub const TRIE_COLUMN_FAMILY: &str = "evm_storage_trie";
@@ -35,7 +35,7 @@ impl<'db> RocksEthStorageTrieDb<'db> {
     }
 }
 
-impl<'db> DbWithRoot for RocksEthStorageTrieDb<'db> {
+impl DbWithRoot for RocksEthStorageTrieDb<'_> {
     fn root(&self) -> Result<Option<B256>, rocksdb::Error> {
         Ok(self
             .db
@@ -49,7 +49,7 @@ impl<'db> DbWithRoot for RocksEthStorageTrieDb<'db> {
     }
 }
 
-impl<'db> DB for RocksEthStorageTrieDb<'db> {
+impl DB for RocksEthStorageTrieDb<'_> {
     type Error = rocksdb::Error;
 
     fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>, Self::Error> {

@@ -46,7 +46,7 @@ impl From<ExtendedReceipt> for TransactionReceipt {
                 transaction_index: Some(rx.transaction_index),
                 block_hash: Some(rx.block_hash),
                 block_number: Some(rx.block_number),
-                gas_used: rx.gas_used as u128,
+                gas_used: rx.gas_used,
                 // TODO: make all gas prices bounded by u128?
                 effective_gas_price: rx.l2_gas_price.saturating_to(),
                 // Always None because we do not support eip-4844 transactions
@@ -55,8 +55,6 @@ impl From<ExtendedReceipt> for TransactionReceipt {
                 from: rx.from,
                 to: rx.to,
                 contract_address,
-                // EIP-7702 not yet supported
-                authorization_list: None,
             },
             l1_block_info: rx.l1_block_info.unwrap_or_default(),
         }

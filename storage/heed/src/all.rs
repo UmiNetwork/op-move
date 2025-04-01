@@ -1,6 +1,6 @@
 use {
     crate::{block, evm_storage_trie, payload, receipt, state, transaction, trie},
-    heed::{types::LazyDecode, BytesDecode, BytesEncode, RoTxn, RwTxn},
+    heed::{BytesDecode, BytesEncode, RoTxn, RwTxn, types::LazyDecode},
 };
 
 pub const DATABASES: [&str; 11] = [

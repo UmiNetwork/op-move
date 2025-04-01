@@ -3,8 +3,8 @@ use {
     move_binary_format::errors::VMError,
     move_core_types::effects::ChangeSet,
     moved_evm_ext::{
-        extract_evm_changes, extract_evm_result, state::InMemoryStorageTrieRepository,
-        EvmNativeOutcome, EVM_NATIVE_ADDRESS,
+        EVM_NATIVE_ADDRESS, EvmNativeOutcome, extract_evm_changes, extract_evm_result,
+        state::InMemoryStorageTrieRepository,
     },
     moved_genesis::config::CHAIN_ID,
 };
