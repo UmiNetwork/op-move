@@ -1,5 +1,6 @@
 use {
     crate::dependency::shared::*,
+    move_core_types::effects::ChangeSet,
     moved_app::{Application, StateActor},
     moved_genesis::config::GenesisConfig,
 };
@@ -37,15 +38,15 @@ impl moved_app::Dependencies for InMemoryDependencies {
         moved_state::InMemoryState::new()
     }
 
-    fn on_tx_batch() -> Self::OnTxBatch {
+    fn on_tx_batch() -> &'static Self::OnTxBatch {
         StateActor::on_tx_batch_in_memory()
     }
 
-    fn on_tx() -> Self::OnTx {
+    fn on_tx() -> &'static Self::OnTx {
         StateActor::on_tx_in_memory()
     }
 
-    fn on_payload() -> Self::OnPayload {
+    fn on_payload() -> &'static Self::OnPayload {
         StateActor::on_payload_in_memory()
     }
 

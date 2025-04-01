@@ -1,5 +1,6 @@
 use {
     crate::dependency::shared::*,
+    move_core_types::effects::ChangeSet,
     moved_app::{Application, StateActor},
     moved_genesis::config::GenesisConfig,
     moved_state::State,
@@ -38,25 +39,21 @@ impl moved_app::Dependencies for RocksDbDependencies {
         moved_storage_rocksdb::block::RocksDbBlockRepository
     }
 
-    fn on_payload() -> Self::OnPayload {
-        Box::new(|| {
-            Box::new(|state, id, hash| state.payload_queries.add_block_hash(id, hash).unwrap())
-        })
+    fn on_payload() -> &'static Self::OnPayload {
+        &|state, id, hash| state.payload_queries.add_block_hash(id, hash).unwrap()
     }
 
-    fn on_tx() -> Self::OnTx {
+    fn on_tx() -> &'static Self::OnTx {
         StateActor::on_tx_noop()
     }
 
-    fn on_tx_batch() -> Self::OnTxBatch {
-        Box::new(|| {
-            Box::new(|state| {
-                state
-                    .state_queries
-                    .push_state_root(state.state.state_root())
-                    .unwrap()
-            })
-        })
+    fn on_tx_batch() -> &'static Self::OnTxBatch {
+        &|state| {
+            state
+                .state_queries
+                .push_state_root(state.state.state_root())
+                .unwrap()
+        }
     }
 
     fn payload_queries() -> Self::PayloadQueries {

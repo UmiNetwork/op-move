@@ -14,9 +14,9 @@ pub struct Application<D: Dependencies> {
     pub block_hash: D::BlockHash,
     pub block_queries: D::BlockQueries,
     pub block_repository: D::BlockRepository,
-    pub on_payload: D::OnPayload,
-    pub on_tx: D::OnTx,
-    pub on_tx_batch: D::OnTxBatch,
+    pub on_payload: &'static D::OnPayload,
+    pub on_tx: &'static D::OnTx,
+    pub on_tx_batch: &'static D::OnTxBatch,
     pub payload_queries: D::PayloadQueries,
     pub receipt_queries: D::ReceiptQueries,
     pub receipt_repository: D::ReceiptRepository,
@@ -53,6 +53,10 @@ impl<D: Dependencies> Application<D> {
             transaction_queries: D::transaction_queries(),
             transaction_repository: D::transaction_repository(),
         }
+    }
+
+    pub fn on_tx(&mut self, changes: ChangeSet) {
+        (self.on_tx)(self, changes)
     }
 }
 
@@ -120,22 +124,13 @@ pub trait Dependencies: Sized {
     type BlockRepository: moved_blockchain::block::BlockRepository<Storage = Self::SharedStorage>;
 
     /// A function invoked on an execution of a new payload.
-    type OnPayload: Fn() -> Box<dyn Fn(&mut Application<Self>, PayloadId, B256) + Send + Sync + 'static>
-        + Send
-        + Sync
-        + 'static;
+    type OnPayload: Fn(&mut Application<Self>, PayloadId, B256) + 'static + ?Sized;
 
     /// A function invoked on an execution of a new transaction.
-    type OnTx: Fn() -> Box<dyn Fn(&mut Application<Self>, ChangeSet) + Send + Sync + 'static>
-        + Send
-        + Sync
-        + 'static;
+    type OnTx: Fn(&mut Application<Self>, ChangeSet) + 'static + ?Sized;
 
     /// A function invoked on a completion of new transaction execution batch.
-    type OnTxBatch: Fn() -> Box<dyn Fn(&mut Application<Self>) + Send + Sync + 'static>
-        + Send
-        + Sync
-        + 'static;
+    type OnTxBatch: Fn(&mut Application<Self>) + 'static + ?Sized;
 
     type PayloadQueries: moved_blockchain::payload::PayloadQueries<Storage = Self::SharedStorage>;
     type ReceiptQueries: moved_blockchain::receipt::ReceiptQueries<Storage = Self::ReceiptStorage>;
@@ -165,11 +160,11 @@ pub trait Dependencies: Sized {
 
     fn block_repository() -> Self::BlockRepository;
 
-    fn on_payload() -> Self::OnPayload;
+    fn on_payload() -> &'static Self::OnPayload;
 
-    fn on_tx() -> Self::OnTx;
+    fn on_tx() -> &'static Self::OnTx;
 
-    fn on_tx_batch() -> Self::OnTxBatch;
+    fn on_tx_batch() -> &'static Self::OnTxBatch;
 
     fn payload_queries() -> Self::PayloadQueries;
 
@@ -202,10 +197,9 @@ pub trait Dependencies: Sized {
 mod test_doubles {
     use {
         crate::{Application, Dependencies},
-        move_core_types::effects::ChangeSet,
-        moved_blockchain::{payload::PayloadId, state::StateQueries},
+        moved_blockchain::state::StateQueries,
         moved_genesis::config::GenesisConfig,
-        moved_shared::primitives::{B256, U256},
+        moved_shared::primitives::U256,
         moved_state::State,
     };
 
@@ -275,24 +269,9 @@ mod test_doubles {
         type BlockHash = BH;
         type BlockQueries = BQ;
         type BlockRepository = BR;
-        type OnPayload = Box<
-            dyn Fn() -> Box<dyn Fn(&mut Application<Self>, PayloadId, B256) + Send + Sync + 'static>
-                + Send
-                + Sync
-                + 'static,
-        >;
-        type OnTx = Box<
-            dyn Fn() -> Box<dyn Fn(&mut Application<Self>, ChangeSet) + Send + Sync + 'static>
-                + Send
-                + Sync
-                + 'static,
-        >;
-        type OnTxBatch = Box<
-            dyn Fn() -> Box<dyn Fn(&mut Application<Self>) + Send + Sync + 'static>
-                + Send
-                + Sync
-                + 'static,
-        >;
+        type OnPayload = crate::OnPayload<Application<Self>>;
+        type OnTx = crate::OnTx<Application<Self>>;
+        type OnTxBatch = crate::OnTxBatch<Application<Self>>;
         type PayloadQueries = PQ;
         type ReceiptQueries = RQ;
         type ReceiptRepository = RR;
@@ -323,15 +302,15 @@ mod test_doubles {
             unimplemented!("Dependencies are created manually in tests")
         }
 
-        fn on_payload() -> Self::OnPayload {
+        fn on_payload() -> &'static Self::OnPayload {
             unimplemented!("Dependencies are created manually in tests")
         }
 
-        fn on_tx() -> Self::OnTx {
+        fn on_tx() -> &'static Self::OnTx {
             unimplemented!("Dependencies are created manually in tests")
         }
 
-        fn on_tx_batch() -> Self::OnTxBatch {
+        fn on_tx_batch() -> &'static Self::OnTxBatch {
             unimplemented!("Dependencies are created manually in tests")
         }
 

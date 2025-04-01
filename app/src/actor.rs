@@ -47,20 +47,13 @@ use {
 };
 
 /// A function invoked on a completion of new transaction execution batch.
-pub type OnTxBatch<S> =
-    Box<dyn Fn() -> Box<dyn Fn(&mut S) + Send + Sync + 'static> + Send + Sync + 'static>;
+pub type OnTxBatch<S> = dyn Fn(&mut S) + Send + Sync;
 
 /// A function invoked on an execution of a new transaction.
-pub type OnTx<S> =
-    Box<dyn Fn() -> Box<dyn Fn(&mut S, ChangeSet) + Send + Sync + 'static> + Send + Sync + 'static>;
+pub type OnTx<S> = dyn Fn(&mut S, ChangeSet) + Send + Sync;
 
 /// A function invoked on an execution of a new payload.
-pub type OnPayload<S> = Box<
-    dyn Fn() -> Box<dyn Fn(&mut S, PayloadId, B256) + Send + Sync + 'static>
-        + Send
-        + Sync
-        + 'static,
->;
+pub type OnPayload<S> = dyn Fn(&mut S, PayloadId, B256) + Send + Sync;
 
 pub struct StateActor<D: Dependencies> {
     genesis_config: GenesisConfig,
@@ -267,8 +260,7 @@ impl<D: Dependencies> StateActor<D> {
                     )
                     .unwrap();
                 self.height = self.height.max(block_number);
-                let on_payload = (self.app.on_payload)();
-                on_payload(&mut self.app, id, block_hash);
+                (self.app.on_payload)(&mut self.app, id, block_hash);
             }
             Command::AddTransaction { tx } => {
                 let tx_hash = tx.tx_hash().0.into();
@@ -382,7 +374,6 @@ impl<D: Dependencies> StateActor<D> {
         base_fee: U256,
         block_header: &HeaderForExecution,
     ) -> (ExecutionOutcome, Vec<ExtendedReceipt>) {
-        let on_tx = (self.app.on_tx)();
         let mut total_tip = U256::ZERO;
         let mut receipts = Vec::new();
         let mut transactions = transactions.peekable();
@@ -446,7 +437,7 @@ impl<D: Dependencies> StateActor<D> {
 
             let l1_block_info = l1_fee.as_ref().and_then(|x| x.l1_block_info(l1_cost_input));
 
-            on_tx(&mut self.app, outcome.changes.move_vm.clone());
+            self.app.on_tx(outcome.changes.move_vm.clone());
 
             self.app
                 .state
@@ -512,8 +503,7 @@ impl<D: Dependencies> StateActor<D> {
             tx_index += 1;
         }
 
-        let on_tx_batch = (self.app.on_tx_batch)();
-        on_tx_batch(&mut self.app);
+        (self.app.on_tx_batch)(&mut self.app);
 
         // Compute the receipts root by RLP-encoding each receipt to be a leaf of
         // a merkle trie.
@@ -533,42 +523,38 @@ impl<D: Dependencies> StateActor<D> {
         (outcome, receipts)
     }
 
-    pub fn on_tx_batch_noop() -> OnTxBatch<Application<D>> {
-        Box::new(|| Box::new(|_| {}))
+    pub fn on_tx_batch_noop() -> &'static OnTxBatch<Application<D>> {
+        &|_| {}
     }
 
-    pub fn on_tx_noop() -> OnTx<Application<D>> {
-        Box::new(|| Box::new(|_, _| {}))
+    pub fn on_tx_noop() -> &'static OnTx<Application<D>> {
+        &|_, _| {}
     }
 
-    pub fn on_payload_noop() -> OnPayload<Application<D>> {
-        Box::new(|| Box::new(|_, _, _| {}))
+    pub fn on_payload_noop() -> &'static OnPayload<Application<D>> {
+        &|_, _, _| {}
     }
 }
 
 impl<D: Dependencies<StateQueries = InMemoryStateQueries>> StateActor<D> {
-    pub fn on_tx_in_memory() -> OnTx<Application<D>> {
-        Box::new(|| Box::new(|_state, _changes| ()))
+    pub fn on_tx_in_memory() -> &'static OnTx<Application<D>> {
+        &|_state, _changes| ()
     }
 
-    pub fn on_tx_batch_in_memory() -> OnTxBatch<Application<D>> {
-        Box::new(|| {
-            Box::new(|state| {
-                state
-                    .state_queries
-                    .push_state_root(state.state.state_root())
-            })
-        })
+    pub fn on_tx_batch_in_memory() -> &'static OnTxBatch<Application<D>> {
+        &|state| {
+            state
+                .state_queries
+                .push_state_root(state.state.state_root())
+        }
     }
 }
 
 impl<D: Dependencies<PayloadQueries = InMemoryPayloadQueries>> StateActor<D> {
-    pub fn on_payload_in_memory() -> OnPayload<Application<D>> {
-        Box::new(|| {
-            Box::new(|state, payload_id, block_hash| {
-                state.payload_queries.add_block_hash(payload_id, block_hash)
-            })
-        })
+    pub fn on_payload_in_memory() -> &'static OnPayload<Application<D>> {
+        &|state, payload_id, block_hash| {
+            state.payload_queries.add_block_hash(payload_id, block_hash)
+        }
     }
 }
 
