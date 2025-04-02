@@ -16,13 +16,17 @@ use {
 };
 
 pub mod config;
+
+// TODO: LoaderV2 migration
+#[allow(deprecated)]
 mod framework;
+
 mod l2_contracts;
 mod serde;
 mod vm;
 
 pub fn build(
-    vm: &impl CreateMoveVm,
+    vm: &MovedVm,
     config: &GenesisConfig,
     state: &impl State,
     storage_trie: &impl StorageTrieRepository,
@@ -73,7 +77,7 @@ pub fn apply(
 }
 
 pub fn build_and_apply(
-    vm: &impl CreateMoveVm,
+    vm: &MovedVm,
     config: &GenesisConfig,
     state: &mut impl State,
     storage_trie: &mut impl StorageTrieRepository,
