@@ -11,6 +11,9 @@ use {
 };
 
 fn main() {
+    // We're particularly interested in Aptos / Sui bundle changes, but wouldn't
+    // hurt to rerun whenever anything in genesis changes as it's a separate package
+    println!("cargo::rerun-if-changed=../genesis/");
     let state = InMemoryState::default();
     let storage_trie = InMemoryStorageTrieRepository::new();
     let genesis_config = GenesisConfig::default();
