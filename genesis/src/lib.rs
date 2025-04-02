@@ -1,5 +1,5 @@
 pub use {
-    framework::{CreateMoveVm, FRAMEWORK_ADDRESS},
+    framework::{CreateMoveVm, FRAMEWORK_ADDRESS, load_aptos_framework_snapshot},
     serde::{
         SerdeAccountChanges, SerdeAllChanges, SerdeChanges, SerdeOp, SerdeTableChange,
         SerdeTableChangeSet, SerdeTableInfo,

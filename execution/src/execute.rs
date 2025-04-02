@@ -127,6 +127,8 @@ pub(super) fn execute_script<G: GasMeter, CS: CodeStorage>(
     Ok(())
 }
 
+// TODO: group MoveVM elements (session, traversal_context, gas_mete, module_storage) together.
+#[allow(clippy::too_many_arguments)]
 pub(super) fn execute_l2_contract<G: GasMeter, MS: ModuleStorage>(
     signer: &AccountAddress,
     contract: &AccountAddress,

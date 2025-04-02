@@ -1,3 +1,7 @@
+use move_vm_runtime::{AsFunctionValueExtension, AsUnsyncCodeStorage};
+use moved_genesis::{CreateMoveVm, MovedVm};
+use moved_state::ResolverBasedModuleBytesStorage;
+
 use super::*;
 
 #[test]
@@ -14,7 +18,10 @@ fn test_execute_tables_contract() {
     let mut ctx = TestContext::new();
     let module_id = ctx.deploy_contract("tables");
 
-    let vm = create_move_vm().unwrap();
+    let moved_vm = MovedVm::default();
+    let module_bytes_storage = ResolverBasedModuleBytesStorage::new(ctx.state.resolver());
+    let code_storage = module_bytes_storage.as_unsync_code_storage(&moved_vm);
+    let vm = moved_vm.create_move_vm().unwrap();
     let traversal_storage = TraversalStorage::new();
 
     let mut session = create_vm_session(
@@ -36,21 +43,23 @@ fn test_execute_tables_contract() {
     );
     let (module_id, function_name, ty_args, args) = entry_fn.into_inner();
 
+    let function = session
+        .load_function(&code_storage, &module_id, &function_name, &ty_args)
+        .unwrap();
     session
         .execute_entry_function(
-            &module_id,
-            &function_name,
-            ty_args,
+            function,
             args,
             &mut UnmeteredGasMeter,
             &mut traversal_context,
+            &code_storage,
         )
         .unwrap();
 
-    let (_change_set, mut extensions) = session.finish_with_extensions().unwrap();
+    let (_change_set, mut extensions) = session.finish_with_extensions(&code_storage).unwrap();
     let table_change_set = extensions
         .remove::<NativeTableContext>()
-        .into_change_set()
+        .into_change_set(&code_storage.as_function_value_extension())
         .unwrap();
 
     // tables.move creates 11 new tables and makes 11 changes

@@ -5,7 +5,9 @@ use {
     aptos_types::on_chain_config::{Features, TimedFeaturesBuilder},
     aptos_vm_environment::natives::aptos_natives_with_builder,
     move_binary_format::errors::VMError,
-    move_vm_runtime::{RuntimeEnvironment, WithRuntimeEnvironment, move_vm::MoveVM},
+    move_vm_runtime::{
+        RuntimeEnvironment, WithRuntimeEnvironment, config::VMConfig, move_vm::MoveVM,
+    },
 };
 
 pub struct MovedVm {
@@ -24,7 +26,13 @@ impl MovedVm {
         );
         let mut natives = aptos_natives_with_builder(&mut builder, false);
         moved_evm_ext::append_evm_natives(&mut natives, &builder);
-        let env = RuntimeEnvironment::new(natives);
+        // TODO: V2 loader
+        let config = VMConfig {
+            paranoid_type_checks: true,
+            use_loader_v2: false,
+            ..Default::default()
+        };
+        let env = RuntimeEnvironment::new_with_config(natives, config);
         Self { env }
     }
 }

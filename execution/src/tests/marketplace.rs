@@ -32,7 +32,6 @@ fn test_marketplace() {
     ctx.signer = Signer::new(&ALT_PRIVATE_KEY);
     ctx.run_script(
         "marketplace_script",
-        &["marketplace"],
         vec![
             TransactionArgument::Address(market_address),
             TransactionArgument::U64(0),

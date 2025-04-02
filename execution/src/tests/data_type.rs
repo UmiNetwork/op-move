@@ -28,10 +28,7 @@ fn test_recursive_struct() {
 
     // Load a real module
     let module_name = "signer_struct";
-    let move_address = EVM_ADDRESS.to_move_address();
-    let mut module_bytes = ModuleCompileJob::new(module_name, &move_address)
-        .compile()
-        .unwrap();
+    let mut module_bytes = ModuleCompileJob::new(module_name).compile().unwrap();
     let mut compiled_module = CompiledModule::deserialize(&module_bytes).unwrap();
 
     // Modify to include a recursive struct (it has one field which has type
@@ -87,10 +84,7 @@ fn test_deeply_nested_type() {
 
     // Load a real module
     let module_name = "signer_struct";
-    let move_address = EVM_ADDRESS.to_move_address();
-    let mut module_bytes = ModuleCompileJob::new(module_name, &move_address)
-        .compile()
-        .unwrap();
+    let mut module_bytes = ModuleCompileJob::new(module_name).compile().unwrap();
     let mut compiled_module = CompiledModule::deserialize(&module_bytes).unwrap();
 
     // Define a procedure which wraps the argument to the function `main` in an

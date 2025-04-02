@@ -278,7 +278,7 @@ impl<'a, R: MoveResolver> ResolverBasedModuleBytesStorage<'a, R> {
     }
 }
 
-impl<'a, R: MoveResolver> ModuleBytesStorage for ResolverBasedModuleBytesStorage<'a, R> {
+impl<R: MoveResolver> ModuleBytesStorage for ResolverBasedModuleBytesStorage<'_, R> {
     fn fetch_module_bytes(
         &self,
         address: &AccountAddress,

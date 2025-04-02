@@ -41,7 +41,7 @@ fn test_execute_counter_script() {
     // Change the signer because the script should work with any signer.
     ctx.signer = Signer::new(&ALT_PRIVATE_KEY);
     let counter_arg = TransactionArgument::U64(13);
-    ctx.run_script("counter_script", &["counter"], vec![counter_arg]);
+    ctx.run_script("counter_script", vec![counter_arg]);
 
     // After the transaction there should be a Counter at the script signer's address
     let resource: u64 = ctx.get_resource("counter", "Counter", ALT_EVM_ADDRESS.to_move_address());

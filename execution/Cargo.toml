@@ -33,5 +33,6 @@ serde.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true
-move-compiler.workspace = true
+aptos-framework.workspace = true
 moved-genesis-image.workspace = true
+move-package.workspace = true

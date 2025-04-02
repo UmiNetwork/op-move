@@ -322,6 +322,7 @@ mod tests {
         crate::{create_vm_session, session_id::SessionId, tests::EVM_ADDRESS},
         alloy::primitives::address,
         move_core_types::value::MoveStruct,
+        move_vm_runtime::AsUnsyncCodeStorage,
         moved_evm_ext::state::InMemoryStorageTrieRepository,
         moved_genesis::{CreateMoveVm, MovedVm},
         moved_shared::primitives::ToMoveAddress,
@@ -525,7 +526,7 @@ mod tests {
         let moved_vm = MovedVm::default();
         let vm = moved_vm.create_move_vm().unwrap();
         let state = InMemoryState::new();
-        let module_bytes_storage = ResolverBasedModuleBytesStorage::new(&state);
+        let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
         let code_storage = module_bytes_storage.as_unsync_code_storage(&moved_vm);
         let evm_storage = InMemoryStorageTrieRepository::new();
         let mut session = create_vm_session(
@@ -612,11 +613,11 @@ mod tests {
         let moved_vm = MovedVm::default();
         let vm = moved_vm.create_move_vm().unwrap();
         let state = InMemoryState::new();
-        let module_bytes_storage = ResolverBasedModuleBytesStorage::new(&state);
+        let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
         let code_storage = module_bytes_storage.as_unsync_code_storage(&moved_vm);
         let evm_storage = InMemoryStorageTrieRepository::new();
         let mut session = create_vm_session(
-            &move_vm,
+            &vm,
             state.resolver(),
             SessionId::default(),
             &evm_storage,

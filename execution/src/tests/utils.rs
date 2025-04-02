@@ -1,12 +1,17 @@
 use {
     super::*,
+    aptos_framework::BuiltPackage,
     move_binary_format::errors::VMError,
     move_core_types::effects::ChangeSet,
+    move_vm_runtime::AsUnsyncCodeStorage,
+    move_vm_types::resolver::ResourceResolver,
     moved_evm_ext::{
         EVM_NATIVE_ADDRESS, EvmNativeOutcome, extract_evm_changes, extract_evm_result,
         state::InMemoryStorageTrieRepository,
     },
-    moved_genesis::config::CHAIN_ID,
+    moved_genesis::{CreateMoveVm, MovedVm, config::CHAIN_ID},
+    moved_state::ResolverBasedModuleBytesStorage,
+    std::path::PathBuf,
 };
 
 /// Represents the base token state for a test transaction
@@ -121,7 +126,7 @@ impl TestContext {
     /// # Returns
     /// The ModuleId of the deployed contract
     pub fn deploy_contract(&mut self, module_name: &str) -> ModuleId {
-        let module_bytes = self.compile_module(module_name, self.move_address);
+        let module_bytes = self.compile_module(module_name);
         let (tx_hash, tx) = create_transaction(&mut self.signer, TxKind::Create, module_bytes);
         let transaction = TestTransaction::new(tx, tx_hash);
         let outcome = self.execute_tx(&transaction).unwrap();
@@ -149,10 +154,9 @@ impl TestContext {
     pub fn run_script(
         &mut self,
         script_name: &str,
-        local_deps: &[&str],
         args: Vec<TransactionArgument>,
     ) -> Vec<Log<LogData>> {
-        let script_bytes = self.compile_script(script_name, local_deps, args);
+        let script_bytes = self.compile_script(script_name, args);
         let (tx_hash, tx) = create_transaction(&mut self.signer, TxKind::Create, script_bytes);
         let transaction = TestTransaction::new(tx, tx_hash);
         let outcome = self.execute_tx(&transaction).unwrap();
@@ -387,11 +391,15 @@ impl TestContext {
             name: Identifier::new(struct_name).unwrap(),
             type_args: Vec::new(),
         };
+
+        let module_id = ModuleId::new(self.move_address, struct_tag.name.clone());
+        let metadata = self.state.resolver().get_module_metadata(&module_id);
         let data = self
             .state
             .resolver()
-            .get_resource(&address, &struct_tag)
+            .get_resource_bytes_with_metadata_and_layout(&address, &struct_tag, &metadata, None)
             .unwrap()
+            .0
             .unwrap();
         bcs::from_bytes(data.as_ref()).unwrap()
     }
@@ -432,10 +440,13 @@ impl TestContext {
         module_name: &str,
         fn_name: &str,
     ) -> (EvmNativeOutcome, ChangeSet, NativeContextExtensions<'a>) {
-        let move_vm = create_move_vm().unwrap();
+        let moved_vm = MovedVm::default();
+        let module_bytes_storage = ResolverBasedModuleBytesStorage::new(self.state.resolver());
+        let code_storage = module_bytes_storage.as_unsync_code_storage(&moved_vm);
+        let vm = moved_vm.create_move_vm().unwrap();
         let session_id = SessionId::default();
         let mut session = create_vm_session(
-            &move_vm,
+            &vm,
             self.state.resolver(),
             session_id,
             &self.evm_storage,
@@ -446,7 +457,7 @@ impl TestContext {
         let mut gas_meter = UnmeteredGasMeter;
         let args = args
             .into_iter()
-            .map(|arg| bcs::to_bytes(&arg).unwrap())
+            .map(|arg| arg.simple_serialize().unwrap())
             .collect();
         let module_name = Identifier::new(module_name).unwrap();
         let fn_name = Identifier::new(fn_name).unwrap();
@@ -460,11 +471,12 @@ impl TestContext {
                 args,
                 &mut gas_meter,
                 &mut traversal_context,
+                &code_storage,
             )
             .unwrap();
 
         let outcome = extract_evm_result(outcome);
-        let (changes, extensions) = session.finish_with_extensions().unwrap();
+        let (changes, extensions) = session.finish_with_extensions(&code_storage).unwrap();
         (outcome, changes, extensions)
     }
 
@@ -474,10 +486,13 @@ impl TestContext {
         module_name: &str,
         fn_name: &str,
     ) -> VMError {
-        let move_vm = create_move_vm().unwrap();
+        let moved_vm = MovedVm::default();
+        let module_bytes_storage = ResolverBasedModuleBytesStorage::new(self.state.resolver());
+        let code_storage = module_bytes_storage.as_unsync_code_storage(&moved_vm);
+        let vm = moved_vm.create_move_vm().unwrap();
         let session_id = SessionId::default();
         let mut session = create_vm_session(
-            &move_vm,
+            &vm,
             self.state.resolver(),
             session_id,
             &self.evm_storage,
@@ -502,6 +517,7 @@ impl TestContext {
                 args,
                 &mut gas_meter,
                 &mut traversal_context,
+                &code_storage,
             )
             .unwrap_err()
     }
@@ -539,7 +555,7 @@ impl TestContext {
         ]));
         let args = vec![
             // From
-            MoveValue::Address(EVM_NATIVE_ADDRESS),
+            MoveValue::Signer(EVM_NATIVE_ADDRESS),
             // Value
             // serialize_fungible_asset_value(0),
             fa_zero,
@@ -558,27 +574,16 @@ impl TestContext {
         to: AccountAddress,
         input: Vec<u8>,
     ) -> EvmNativeOutcome {
-        // Fungible asset Move type is a struct with two fields:
-        // 1. another struct with a single address field,
-        // 2. a u256 value.
-        let fa_zero = MoveValue::Struct(MoveStruct::Runtime(vec![
-            MoveValue::Struct(MoveStruct::Runtime(vec![MoveValue::Address(
-                AccountAddress::ZERO,
-            )])),
-            MoveValue::U256(U256::ZERO.to_move_u256()),
-        ]));
         let args = vec![
             // From
             MoveValue::Address(from),
             // To
             MoveValue::Address(to),
-            // Value
-            fa_zero,
             // Calldata
             MoveValue::vector_u8(input),
         ];
 
-        self.quick_call(args, "evm", "evm_call").0
+        self.quick_call(args, "evm", "entry_evm_call").0
     }
 
     /// Compiles a Move module
@@ -589,10 +594,8 @@ impl TestContext {
     ///
     /// # Returns
     /// The compiled module bytes ready for deployment
-    fn compile_module(&self, module_name: &str, address: AccountAddress) -> Vec<u8> {
-        let module_bytes = ModuleCompileJob::new(module_name, &address)
-            .compile()
-            .unwrap();
+    fn compile_module(&self, module_name: &str) -> Vec<u8> {
+        let module_bytes = ModuleCompileJob::new(module_name).compile().unwrap();
         module_bytes_to_tx_data(module_bytes)
     }
 
@@ -605,15 +608,8 @@ impl TestContext {
     ///
     /// # Returns
     /// The compiled script bytes
-    fn compile_script(
-        &self,
-        script_name: &str,
-        local_deps: &[&str],
-        args: Vec<TransactionArgument>,
-    ) -> Vec<u8> {
-        let script_code = ScriptCompileJob::new(script_name, local_deps)
-            .compile()
-            .unwrap();
+    fn compile_script(&self, script_name: &str, args: Vec<TransactionArgument>) -> Vec<u8> {
+        let script_code = ScriptCompileJob::new(script_name).compile().unwrap();
         let script = Script::new(script_code, Vec::new(), args);
         bcs::to_bytes(&ScriptOrModule::Script(script)).unwrap()
     }
@@ -715,212 +711,68 @@ pub fn create_transaction_with_value(
 
 /// Trait for compilation jobs with common functionality
 pub trait CompileJob {
-    /// Gets the target files to compile
-    fn targets(&self) -> Vec<String>;
+    /// Gets the path containing the Move package to compile.
+    /// Note: a `Move.toml` file is required!
+    fn package_path(&self) -> PathBuf;
 
-    /// Gets the dependency files needed for compilation
-    fn deps(&self) -> Vec<String>;
-
-    /// Gets the named addresses mapping
-    fn named_addresses(&self) -> BTreeMap<String, NumericalAddress>;
-
-    /// Gets the known attributes for compilation
-    fn known_attributes(&self) -> BTreeSet<String> {
-        BTreeSet::new()
-    }
+    fn get_compiled_bytes(&self, package: &BuiltPackage) -> Vec<u8>;
 
     /// Compiles the Move code
     ///
     /// # Returns
     /// Compiled bytes or error
     fn compile(&self) -> anyhow::Result<Vec<u8>> {
-        let targets = self.targets();
-        let error_context = format!("Failed to compile {targets:?}");
-        let compiler = Compiler::from_files(
-            targets,
-            self.deps(),
-            self.named_addresses(),
-            Flags::empty(),
-            &self.known_attributes(),
-        );
-        let (_, result) = compiler.build().context(error_context)?;
-        let compiled_unit = result.unwrap().0.pop().unwrap().into_compiled_unit();
-        let bytes = compiled_unit.serialize(None);
-        Ok(bytes)
+        let package_path = self.package_path();
+        let error_context = format!("Failed to compile {package_path:?}");
+        let package = BuiltPackage::build(package_path, aptos_framework::BuildOptions::default())
+            .context(error_context)?;
+        Ok(self.get_compiled_bytes(&package))
     }
 }
 
 pub struct ModuleCompileJob {
-    targets_inner: Vec<String>,
-    named_addresses_inner: BTreeMap<String, NumericalAddress>,
+    package_inner: PathBuf,
 }
 
 impl ModuleCompileJob {
-    pub fn new(package_name: &str, address: &AccountAddress) -> Self {
-        let named_address_mapping: std::collections::BTreeMap<_, _> = std::iter::once((
-            package_name.to_string(),
-            NumericalAddress::new(address.into(), NumberFormat::Hex),
-        ))
-        .chain(custom_framework_named_addresses())
-        .chain(aptos_framework::named_addresses().clone())
-        .collect();
-
+    pub fn new(package_name: &str) -> Self {
         let base_dir = format!("../execution/src/tests/res/{package_name}").replace('_', "-");
-        let targets = vec![format!("{base_dir}/sources/{package_name}.move")];
 
         Self {
-            targets_inner: targets,
-            named_addresses_inner: named_address_mapping,
+            package_inner: Path::new(&base_dir).to_path_buf(),
         }
     }
 }
 
 impl CompileJob for ModuleCompileJob {
-    fn targets(&self) -> Vec<String> {
-        self.targets_inner.clone()
+    fn package_path(&self) -> PathBuf {
+        self.package_inner.clone()
     }
 
-    fn deps(&self) -> Vec<String> {
-        let mut framework = aptos_framework::testnet_release_bundle()
-            .files()
-            .expect("Must be able to find Aptos Framework files");
-        let genesis_base = "../genesis-builder/framework/aptos-framework/sources";
-        framework.append(&mut vec![
-            format!("{genesis_base}/fungible_asset_u256.move"),
-            format!("{genesis_base}/primary_fungible_store_u256.move"),
-        ]);
-        add_custom_framework_paths(&mut framework);
-        framework
-    }
-
-    fn named_addresses(&self) -> BTreeMap<String, NumericalAddress> {
-        self.named_addresses_inner.clone()
+    fn get_compiled_bytes(&self, package: &BuiltPackage) -> Vec<u8> {
+        package.extract_code().pop().unwrap()
     }
 }
 
 pub struct ScriptCompileJob {
-    targets_inner: Vec<String>,
-    deps_inner: Vec<String>,
+    package_inner: PathBuf,
 }
 
 impl ScriptCompileJob {
-    pub fn new(script_name: &str, local_deps: &[&str]) -> Self {
+    pub fn new(script_name: &str) -> Self {
         let base_dir = format!("../execution/src/tests/res/{script_name}").replace('_', "-");
-        let targets = vec![format!("{base_dir}/sources/{script_name}.move")];
-
-        let local_deps = local_deps.iter().map(|package_name| {
-            let base_dir = format!("../execution/src/tests/res/{package_name}").replace('_', "-");
-            format!("{base_dir}/sources/{package_name}.move")
-        });
-        let deps = {
-            let mut framework = aptos_framework::testnet_release_bundle()
-                .files()
-                .expect("Must be able to find Aptos Framework files");
-            let genesis_base = "../genesis-builder/framework/aptos-framework/sources";
-            framework.append(&mut vec![
-                format!("{genesis_base}/fungible_asset_u256.move"),
-                format!("{genesis_base}/primary_fungible_store_u256.move"),
-            ]);
-
-            add_custom_framework_paths(&mut framework);
-            local_deps.for_each(|d| framework.push(d));
-
-            framework
-        };
-
         Self {
-            targets_inner: targets,
-            deps_inner: deps,
+            package_inner: Path::new(&base_dir).to_path_buf(),
         }
     }
 }
 
 impl CompileJob for ScriptCompileJob {
-    fn targets(&self) -> Vec<String> {
-        self.targets_inner.clone()
+    fn package_path(&self) -> PathBuf {
+        self.package_inner.clone()
     }
 
-    fn deps(&self) -> Vec<String> {
-        self.deps_inner.clone()
+    fn get_compiled_bytes(&self, package: &BuiltPackage) -> Vec<u8> {
+        package.extract_script_code().pop().unwrap()
     }
-
-    fn named_addresses(&self) -> BTreeMap<String, NumericalAddress> {
-        let mut result = aptos_framework::named_addresses().clone();
-        for (name, address) in custom_framework_named_addresses() {
-            result.insert(name, address);
-        }
-        result
-    }
-}
-
-/// Helper function to get custom framework named addresses
-///
-/// # Returns
-/// Iterator of framework name and address pairs
-fn custom_framework_named_addresses() -> impl Iterator<Item = (String, NumericalAddress)> {
-    let mut named_addresses = vec![
-        (
-            "EthToken".to_string(),
-            NumericalAddress::parse_str("0x1").unwrap(),
-        ),
-        ("Evm".into(), NumericalAddress::parse_str("0x1").unwrap()),
-        ("Erc20".into(), NumericalAddress::parse_str("0x1").unwrap()),
-        (
-            "evm_admin".to_string(),
-            NumericalAddress::parse_str("0x1").unwrap(),
-        ),
-    ];
-    named_addresses.append(
-        &mut get_l2_contracts()
-            .into_iter()
-            .map(|(name, address)| (name, NumericalAddress::parse_str(&address).unwrap()))
-            .collect::<Vec<_>>(),
-    );
-    named_addresses.into_iter()
-}
-
-/// Adds custom framework paths to dependencies
-///
-/// # Arguments
-/// * `files` - Vector to add framework paths to
-fn add_custom_framework_paths(files: &mut Vec<String>) {
-    add_framework_path("eth-token", "EthToken", files);
-    add_framework_path("evm", "Evm", files);
-    add_framework_path("erc20", "erc20", files);
-    get_l2_contracts().iter().for_each(|(name, _)| {
-        add_framework_path("l2", name, files);
-    });
-}
-
-/// Adds an individual framework path in genesis builder to the dependency list
-///
-/// # Arguments
-/// * `folder_name` - Name of the framework folder
-/// * `source_name` - Name of the source file
-/// * `files` - Vector to add the path to
-fn add_framework_path(folder_name: &str, source_name: &str, files: &mut Vec<String>) {
-    let base_path = Path::new(std::env!("CARGO_MANIFEST_DIR"));
-    let framework_path = base_path
-        .join(format!(
-            "../genesis-builder/framework/{folder_name}/sources/{source_name}.move"
-        ))
-        .canonicalize()
-        .unwrap();
-    files.push(framework_path.to_string_lossy().into());
-}
-
-fn get_l2_contracts() -> Vec<(String, String)> {
-    let move_toml = read_to_string("../genesis-builder/framework/l2/Move.toml").unwrap();
-    // Capture the contract name where the address starts with 0x42
-    let mut names_and_addresses = Vec::new();
-    let re = Regex::new("^(?<name>.*) = \"(?<address>0x42.*)\"$").unwrap();
-    for line in move_toml.lines() {
-        if re.is_match(line) {
-            names_and_addresses.push((
-                re.replace(line, "$name").to_string(),
-                re.replace(line, "$address").to_string(),
-            ));
-        }
-    }
-    names_and_addresses
 }
