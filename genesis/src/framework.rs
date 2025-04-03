@@ -191,7 +191,7 @@ fn deploy_aptos_framework(session: &mut Session) -> Result<(), VMError> {
                 let sender = module.1.self_id().address;
                 assert!(
                     sender.ge(&L2_LOWEST_ADDRESS) && sender.le(&L2_HIGHEST_ADDRESS),
-                    "L2 module {sender} should be within the allowed address range."
+                    "L2 module {sender} should be within the allowed address range."    
                 );
                 session.publish_module(code, sender, &mut UnmeteredGasMeter)?;
             }
@@ -240,8 +240,8 @@ fn deploy_sui_framework(session: &mut Session) -> Result<(), VMError> {
 mod tests {
     use {super::*, crate::vm::MovedVm, moved_state::InMemoryState};
 
-    // Aptos framework has 134 modules and Sui has 69. They are kept mutually exclusive.
-    const APTOS_MODULES_LEN: usize = 134;
+    // Aptos framework has 145 modules and Sui has 69. They are kept mutually exclusive.
+    const APTOS_MODULES_LEN: usize = 145;
     const SUI_MODULES_LEN: usize = 69;
     const TOTAL_MODULES_LEN: usize = APTOS_MODULES_LEN + SUI_MODULES_LEN;
 

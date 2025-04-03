@@ -58,5 +58,5 @@ fn test_execute_object_playground_contract() {
 #[test]
 fn test_l2_contracts() {
     let mut ctx = TestContext::new();
-    ctx.run_script("l2_script", vec![]);
+    ctx.run_script("l2_script", &[], vec![]);
 }

@@ -1,8 +1,12 @@
 use {
     super::*,
-    aptos_framework::BuiltPackage,
     move_binary_format::errors::VMError,
+    move_compiler::{
+        compiled_unit::AnnotatedCompiledUnit,
+        shared::{NumberFormat, NumericalAddress},
+    },
     move_core_types::effects::ChangeSet,
+    move_model::metadata::LanguageVersion,
     move_vm_runtime::AsUnsyncCodeStorage,
     move_vm_types::resolver::ResourceResolver,
     moved_evm_ext::{
@@ -11,7 +15,11 @@ use {
     },
     moved_genesis::{CreateMoveVm, MovedVm, config::CHAIN_ID},
     moved_state::ResolverBasedModuleBytesStorage,
-    std::path::PathBuf,
+    regex::Regex,
+    std::{
+        collections::{BTreeMap, BTreeSet},
+        fs::read_to_string,
+    },
 };
 
 /// Represents the base token state for a test transaction
@@ -126,7 +134,7 @@ impl TestContext {
     /// # Returns
     /// The ModuleId of the deployed contract
     pub fn deploy_contract(&mut self, module_name: &str) -> ModuleId {
-        let module_bytes = self.compile_module(module_name);
+        let module_bytes = self.compile_module(module_name, self.move_address);
         let (tx_hash, tx) = create_transaction(&mut self.signer, TxKind::Create, module_bytes);
         let transaction = TestTransaction::new(tx, tx_hash);
         let outcome = self.execute_tx(&transaction).unwrap();
@@ -154,9 +162,10 @@ impl TestContext {
     pub fn run_script(
         &mut self,
         script_name: &str,
+        local_deps: &[&str],
         args: Vec<TransactionArgument>,
     ) -> Vec<Log<LogData>> {
-        let script_bytes = self.compile_script(script_name, args);
+        let script_bytes = self.compile_script(script_name, local_deps, args);
         let (tx_hash, tx) = create_transaction(&mut self.signer, TxKind::Create, script_bytes);
         let transaction = TestTransaction::new(tx, tx_hash);
         let outcome = self.execute_tx(&transaction).unwrap();
@@ -574,16 +583,27 @@ impl TestContext {
         to: AccountAddress,
         input: Vec<u8>,
     ) -> EvmNativeOutcome {
+        // Fungible asset Move type is a struct with two fields:
+        // 1. another struct with a single address field,
+        // 2. a u256 value.
+        let fa_zero = MoveValue::Struct(MoveStruct::Runtime(vec![
+            MoveValue::Struct(MoveStruct::Runtime(vec![MoveValue::Address(
+                AccountAddress::ZERO,
+            )])),
+            MoveValue::U256(U256::ZERO.to_move_u256()),
+        ]));
         let args = vec![
             // From
-            MoveValue::Address(from),
+            MoveValue::Signer(from),
             // To
             MoveValue::Address(to),
+            // Value
+            fa_zero,
             // Calldata
             MoveValue::vector_u8(input),
         ];
 
-        self.quick_call(args, "evm", "entry_evm_call").0
+        self.quick_call(args, "evm", "evm_call").0
     }
 
     /// Compiles a Move module
@@ -594,8 +614,10 @@ impl TestContext {
     ///
     /// # Returns
     /// The compiled module bytes ready for deployment
-    fn compile_module(&self, module_name: &str) -> Vec<u8> {
-        let module_bytes = ModuleCompileJob::new(module_name).compile().unwrap();
+    fn compile_module(&self, module_name: &str, address: AccountAddress) -> Vec<u8> {
+        let module_bytes = ModuleCompileJob::new(module_name, &address)
+            .compile()
+            .unwrap();
         module_bytes_to_tx_data(module_bytes)
     }
 
@@ -608,8 +630,15 @@ impl TestContext {
     ///
     /// # Returns
     /// The compiled script bytes
-    fn compile_script(&self, script_name: &str, args: Vec<TransactionArgument>) -> Vec<u8> {
-        let script_code = ScriptCompileJob::new(script_name).compile().unwrap();
+    fn compile_script(
+        &self,
+        script_name: &str,
+        local_deps: &[&str],
+        args: Vec<TransactionArgument>,
+    ) -> Vec<u8> {
+        let script_code = ScriptCompileJob::new(script_name, local_deps)
+            .compile()
+            .unwrap();
         let script = Script::new(script_code, Vec::new(), args);
         bcs::to_bytes(&ScriptOrModule::Script(script)).unwrap()
     }
@@ -710,69 +739,260 @@ pub fn create_transaction_with_value(
 }
 
 /// Trait for compilation jobs with common functionality
-pub trait CompileJob {
-    /// Gets the path containing the Move package to compile.
-    /// Note: a `Move.toml` file is required!
-    fn package_path(&self) -> PathBuf;
+pub trait CompileJob: Send + Sync {
+    /// Gets the target files to compile
+    fn targets(&self) -> Vec<String>;
 
-    fn get_compiled_bytes(&self, package: &BuiltPackage) -> Vec<u8>;
+    /// Gets the dependency files needed for compilation
+    fn deps(&self) -> Vec<String>;
+
+    /// Gets the named addresses mapping
+    fn named_addresses(&self) -> BTreeMap<String, NumericalAddress>;
+
+    /// Gets the known attributes for compilation
+    fn known_attributes(&self) -> BTreeSet<String> {
+        BTreeSet::new()
+    }
+
+    fn extract_byes(&self, result: Vec<AnnotatedCompiledUnit>) -> Vec<u8>;
 
     /// Compiles the Move code
     ///
     /// # Returns
     /// Compiled bytes or error
     fn compile(&self) -> anyhow::Result<Vec<u8>> {
-        let package_path = self.package_path();
-        let error_context = format!("Failed to compile {package_path:?}");
-        let package = BuiltPackage::build(package_path, aptos_framework::BuildOptions::default())
-            .context(error_context)?;
-        Ok(self.get_compiled_bytes(&package))
+        let targets = self.targets();
+        let error_context = format!("Failed to compile {targets:?}");
+        // We need to compile on a separate thread with a large stack because
+        // the Move V2 compile needs it I guess.
+        let result = std::thread::scope(|s| {
+            let compile_job = std::thread::Builder::new()
+                .stack_size(134_217_728)
+                .spawn_scoped(s, || {
+                    let options = move_compiler_v2::Options {
+                        language_version: Some(LanguageVersion::latest_stable()),
+                        sources_deps: self.deps(),
+                        sources: targets,
+                        known_attributes: self.known_attributes(),
+                        named_address_mapping: self
+                            .named_addresses()
+                            .into_iter()
+                            .map(|(k, v)| format!("{k}={v}"))
+                            .collect(),
+                        ..Default::default()
+                    };
+                    move_compiler_v2::run_move_compiler_to_stderr(options).map(|(_, result)| result)
+                })
+                .context("Failed to spawn compiler thread")?;
+            compile_job.join().expect("Compiler should complete")
+        })
+        .context(error_context)?;
+        Ok(self.extract_byes(result))
     }
 }
 
 pub struct ModuleCompileJob {
-    package_inner: PathBuf,
+    package_name: String,
+    targets_inner: Vec<String>,
+    named_addresses_inner: BTreeMap<String, NumericalAddress>,
 }
 
 impl ModuleCompileJob {
-    pub fn new(package_name: &str) -> Self {
+    pub fn new(package_name: &str, address: &AccountAddress) -> Self {
+        let named_address_mapping: std::collections::BTreeMap<_, _> = std::iter::once((
+            package_name.to_string(),
+            NumericalAddress::new(address.into(), NumberFormat::Hex),
+        ))
+        .chain(custom_framework_named_addresses())
+        .chain(aptos_framework::named_addresses().clone())
+        .collect();
+
         let base_dir = format!("../execution/src/tests/res/{package_name}").replace('_', "-");
+        let targets = vec![format!("{base_dir}/sources/{package_name}.move")];
 
         Self {
-            package_inner: Path::new(&base_dir).to_path_buf(),
+            package_name: package_name.into(),
+            targets_inner: targets,
+            named_addresses_inner: named_address_mapping,
         }
     }
 }
 
 impl CompileJob for ModuleCompileJob {
-    fn package_path(&self) -> PathBuf {
-        self.package_inner.clone()
+    fn targets(&self) -> Vec<String> {
+        self.targets_inner.clone()
     }
 
-    fn get_compiled_bytes(&self, package: &BuiltPackage) -> Vec<u8> {
-        package.extract_code().pop().unwrap()
+    fn deps(&self) -> Vec<String> {
+        let mut framework = aptos_framework::testnet_release_bundle()
+            .files()
+            .expect("Must be able to find Aptos Framework files");
+        let genesis_base = "../genesis-builder/framework/aptos-framework/sources";
+        framework.append(&mut vec![
+            format!("{genesis_base}/fungible_asset_u256.move"),
+            format!("{genesis_base}/primary_fungible_store_u256.move"),
+        ]);
+        add_custom_framework_paths(&mut framework);
+        framework
+    }
+
+    fn named_addresses(&self) -> BTreeMap<String, NumericalAddress> {
+        self.named_addresses_inner.clone()
+    }
+
+    fn extract_byes(&self, result: Vec<AnnotatedCompiledUnit>) -> Vec<u8> {
+        let unit = result
+            .into_iter()
+            .find_map(|unit| {
+                let unit = unit.into_compiled_unit();
+                if unit.name().as_str() == self.package_name {
+                    Some(unit)
+                } else {
+                    None
+                }
+            })
+            .expect("Should find module");
+        unit.serialize(None)
     }
 }
 
 pub struct ScriptCompileJob {
-    package_inner: PathBuf,
+    targets_inner: Vec<String>,
+    deps_inner: Vec<String>,
 }
 
 impl ScriptCompileJob {
-    pub fn new(script_name: &str) -> Self {
+    pub fn new(script_name: &str, local_deps: &[&str]) -> Self {
         let base_dir = format!("../execution/src/tests/res/{script_name}").replace('_', "-");
+        let targets = vec![format!("{base_dir}/sources/{script_name}.move")];
+
+        let local_deps = local_deps.iter().map(|package_name| {
+            let base_dir = format!("../execution/src/tests/res/{package_name}").replace('_', "-");
+            format!("{base_dir}/sources/{package_name}.move")
+        });
+        let deps = {
+            let mut framework = aptos_framework::testnet_release_bundle()
+                .files()
+                .expect("Must be able to find Aptos Framework files");
+            let genesis_base = "../genesis-builder/framework/aptos-framework/sources";
+            framework.append(&mut vec![
+                format!("{genesis_base}/fungible_asset_u256.move"),
+                format!("{genesis_base}/primary_fungible_store_u256.move"),
+            ]);
+
+            add_custom_framework_paths(&mut framework);
+            local_deps.for_each(|d| framework.push(d));
+
+            framework
+        };
+
         Self {
-            package_inner: Path::new(&base_dir).to_path_buf(),
+            targets_inner: targets,
+            deps_inner: deps,
         }
     }
 }
 
 impl CompileJob for ScriptCompileJob {
-    fn package_path(&self) -> PathBuf {
-        self.package_inner.clone()
+    fn targets(&self) -> Vec<String> {
+        self.targets_inner.clone()
     }
 
-    fn get_compiled_bytes(&self, package: &BuiltPackage) -> Vec<u8> {
-        package.extract_script_code().pop().unwrap()
+    fn deps(&self) -> Vec<String> {
+        self.deps_inner.clone()
     }
+
+    fn named_addresses(&self) -> BTreeMap<String, NumericalAddress> {
+        let mut result = aptos_framework::named_addresses().clone();
+        for (name, address) in custom_framework_named_addresses() {
+            result.insert(name, address);
+        }
+        result
+    }
+
+    fn extract_byes(&self, result: Vec<AnnotatedCompiledUnit>) -> Vec<u8> {
+        let unit = result
+            .into_iter()
+            .find_map(|unit| {
+                if matches!(unit, AnnotatedCompiledUnit::Script(_)) {
+                    Some(unit.into_compiled_unit())
+                } else {
+                    None
+                }
+            })
+            .expect("Should find script");
+        unit.serialize(None)
+    }
+}
+
+/// Helper function to get custom framework named addresses
+///
+/// # Returns
+/// Iterator of framework name and address pairs
+fn custom_framework_named_addresses() -> impl Iterator<Item = (String, NumericalAddress)> {
+    let mut named_addresses = vec![
+        (
+            "EthToken".to_string(),
+            NumericalAddress::parse_str("0x1").unwrap(),
+        ),
+        ("Evm".into(), NumericalAddress::parse_str("0x1").unwrap()),
+        ("Erc20".into(), NumericalAddress::parse_str("0x1").unwrap()),
+        (
+            "evm_admin".to_string(),
+            NumericalAddress::parse_str("0x1").unwrap(),
+        ),
+    ];
+    named_addresses.append(
+        &mut get_l2_contracts()
+            .into_iter()
+            .map(|(name, address)| (name, NumericalAddress::parse_str(&address).unwrap()))
+            .collect::<Vec<_>>(),
+    );
+    named_addresses.into_iter()
+}
+
+/// Adds custom framework paths to dependencies
+///
+/// # Arguments
+/// * `files` - Vector to add framework paths to
+fn add_custom_framework_paths(files: &mut Vec<String>) {
+    add_framework_path("eth-token", "EthToken", files);
+    add_framework_path("evm", "Evm", files);
+    add_framework_path("erc20", "erc20", files);
+    get_l2_contracts().iter().for_each(|(name, _)| {
+        add_framework_path("l2", name, files);
+    });
+}
+
+/// Adds an individual framework path in genesis builder to the dependency list
+///
+/// # Arguments
+/// * `folder_name` - Name of the framework folder
+/// * `source_name` - Name of the source file
+/// * `files` - Vector to add the path to
+fn add_framework_path(folder_name: &str, source_name: &str, files: &mut Vec<String>) {
+    let base_path = Path::new(std::env!("CARGO_MANIFEST_DIR"));
+    let framework_path = base_path
+        .join(format!(
+            "../genesis-builder/framework/{folder_name}/sources/{source_name}.move"
+        ))
+        .canonicalize()
+        .unwrap();
+    files.push(framework_path.to_string_lossy().into());
+}
+
+fn get_l2_contracts() -> Vec<(String, String)> {
+    let move_toml = read_to_string("../genesis-builder/framework/l2/Move.toml").unwrap();
+    // Capture the contract name where the address starts with 0x42
+    let mut names_and_addresses = Vec::new();
+    let re = Regex::new("^(?<name>.*) = \"(?<address>0x42.*)\"$").unwrap();
+    for line in move_toml.lines() {
+        if re.is_match(line) {
+            names_and_addresses.push((
+                re.replace(line, "$name").to_string(),
+                re.replace(line, "$address").to_string(),
+            ));
+        }
+    }
+    names_and_addresses
 }

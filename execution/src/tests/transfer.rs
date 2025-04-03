@@ -91,6 +91,7 @@ fn test_withdrawal_tx() {
     // 2. Use script to withdraw
     let logs = ctx.run_script(
         "withdrawal_script",
+        &[],
         vec![
             TransactionArgument::Address(EVM_ADDRESS.to_move_address()),
             TransactionArgument::U256(U256::from(mint_amount).to_move_u256()),
