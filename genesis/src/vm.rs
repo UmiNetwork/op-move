@@ -26,7 +26,7 @@ impl MovedVm {
         );
         let mut natives = aptos_natives_with_builder(&mut builder, false);
         moved_evm_ext::append_evm_natives(&mut natives, &builder);
-        // TODO: V2 loader
+        // TODO(#328): V2 loader
         let config = VMConfig {
             paranoid_type_checks: true,
             use_loader_v2: false,

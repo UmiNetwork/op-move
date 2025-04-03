@@ -127,7 +127,8 @@ pub(super) fn execute_script<G: GasMeter, CS: CodeStorage>(
     Ok(())
 }
 
-// TODO: group MoveVM elements (session, traversal_context, gas_mete, module_storage) together.
+// TODO(#329): group MoveVM elements (session, traversal_context,
+// gas_meter, module_storage) together.
 #[allow(clippy::too_many_arguments)]
 pub(super) fn execute_l2_contract<G: GasMeter, MS: ModuleStorage>(
     signer: &AccountAddress,
@@ -206,7 +207,7 @@ fn strip_reference(t: &Type) -> moved_shared::error::Result<&Type> {
     }
 }
 
-// TODO: V2 loader
+// TODO(#328): V2 loader
 #[allow(deprecated)]
 pub(super) fn deploy_module<G: GasMeter>(
     code: Module,

@@ -266,7 +266,7 @@ pub fn is_evm_storage_or_account_key(k: &StructTag) -> bool {
         && k.name.as_str().starts_with(ACCOUNT_INFO_PREFIX)
 }
 
-// TODO: Figure out what is going on with code cache and loader V2.
+// TODO(#328): Figure out what is going on with code cache and loader V2.
 // https://github.com/aptos-labs/aptos-core/pull/14184 might be a good place to start.
 pub struct ResolverBasedModuleBytesStorage<'a, R> {
     resolver: &'a R,
