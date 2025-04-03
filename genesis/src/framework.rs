@@ -191,7 +191,7 @@ fn deploy_aptos_framework(session: &mut Session) -> Result<(), VMError> {
                 let sender = module.1.self_id().address;
                 assert!(
                     sender.ge(&L2_LOWEST_ADDRESS) && sender.le(&L2_HIGHEST_ADDRESS),
-                    "L2 module {sender} should be within the allowed address range."    
+                    "L2 module {sender} should be within the allowed address range."
                 );
                 session.publish_module(code, sender, &mut UnmeteredGasMeter)?;
             }
