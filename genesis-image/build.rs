@@ -3,8 +3,8 @@ use {
     move_table_extension::TableChangeSet,
     moved_evm_ext::state::{InMemoryStorageTrieRepository, StorageTrieRepository},
     moved_genesis::{
-        build, config::GenesisConfig, CreateMoveVm, MovedVm, SerdeAllChanges, SerdeChanges,
-        SerdeTableChangeSet,
+        CreateMoveVm, MovedVm, SerdeAllChanges, SerdeChanges, SerdeTableChangeSet, build,
+        config::GenesisConfig,
     },
     moved_state::{InMemoryState, State},
     std::io::Write,

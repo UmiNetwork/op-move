@@ -3,7 +3,7 @@ use {
     crate::native_evm_context::FRAMEWORK_ADDRESS,
     alloy::dyn_abi::{DynSolType, DynSolValue, Error},
     aptos_native_interface::{
-        safely_pop_arg, safely_pop_type_arg, SafeNativeContext, SafeNativeError, SafeNativeResult,
+        SafeNativeContext, SafeNativeError, SafeNativeResult, safely_pop_arg, safely_pop_type_arg,
     },
     move_core_types::{
         ident_str,
@@ -16,7 +16,7 @@ use {
     },
     moved_shared::primitives::{ToEthAddress, ToMoveAddress, ToMoveU256, ToU256},
     revm::primitives::U256,
-    smallvec::{smallvec, SmallVec},
+    smallvec::{SmallVec, smallvec},
     std::{collections::VecDeque, sync::LazyLock},
 };
 
@@ -159,7 +159,9 @@ fn move_value_to_sol_value(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> 
             };
             let (struct_tag, field_layouts) = match struct_layout {
                 MoveStructLayout::WithTypes { type_, fields } => (type_, fields),
-                _ => unreachable!("Must have type because layout is constructed with `type_to_fully_annotated_layout`"),
+                _ => unreachable!(
+                    "Must have type because layout is constructed with `type_to_fully_annotated_layout`"
+                ),
             };
             let mut fields = inner.into_fields();
 
@@ -235,7 +237,9 @@ fn layout_to_sol_type(layout: &MoveTypeLayout) -> DynSolType {
         MoveTypeLayout::Struct(struct_layout) => {
             let (struct_tag, field_layouts) = match struct_layout {
                 MoveStructLayout::WithTypes { type_, fields } => (type_, fields),
-                _ => unreachable!("Must have type because layout is constructed with `type_to_fully_annotated_layout`"),
+                _ => unreachable!(
+                    "Must have type because layout is constructed with `type_to_fully_annotated_layout`"
+                ),
             };
 
             // Special case data marked as being fixed bytes

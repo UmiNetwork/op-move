@@ -1,7 +1,8 @@
 use {
     super::{CreateL2GasFee, CreateMovedL2GasFee, L2GasFeeInput},
     crate::{
-        canonical::{verify_transaction, CanonicalVerificationInput},
+        BaseTokenAccounts, CanonicalExecutionInput,
+        canonical::{CanonicalVerificationInput, verify_transaction},
         create_move_vm, create_vm_session, execute_transaction,
         gas::new_gas_meter,
         quick_get_nonce,
@@ -9,18 +10,17 @@ use {
         transaction::{
             NormalizedEthTransaction, ScriptOrModule, TransactionData, TransactionExecutionOutcome,
         },
-        BaseTokenAccounts, CanonicalExecutionInput,
     },
     alloy::rpc::types::TransactionRequest,
     move_binary_format::errors::PartialVMError,
     move_core_types::resolver::MoveResolver,
     move_table_extension::TableResolver,
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
-    moved_evm_ext::{state::StorageTrieRepository, HeaderForExecution},
+    moved_evm_ext::{HeaderForExecution, state::StorageTrieRepository},
     moved_genesis::config::GenesisConfig,
     moved_shared::{
         error::{Error::InvalidTransaction, InvalidTransactionCause},
-        primitives::{ToMoveAddress, B256, U256},
+        primitives::{B256, ToMoveAddress, U256},
     },
     std::time::{SystemTime, UNIX_EPOCH},
 };

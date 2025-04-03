@@ -3,13 +3,13 @@ pub mod nodes;
 use {
     alloy::hex::FromHex,
     aptos_types::state_store::{state_key::StateKey, state_value::StateValue},
-    eth_trie::{EthTrie, MemoryDB, Trie, TrieError, DB},
+    eth_trie::{DB, EthTrie, MemoryDB, Trie, TrieError},
     move_binary_format::errors::PartialVMError,
     move_core_types::{effects::ChangeSet, language_storage::StructTag, resolver::MoveResolver},
     move_table_extension::{TableChangeSet, TableResolver},
     move_vm_test_utils::InMemoryStorage,
-    moved_evm_ext::{type_utils::ACCOUNT_INFO_PREFIX, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE},
-    moved_shared::primitives::{Address, KeyHashable, B256},
+    moved_evm_ext::{EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE, type_utils::ACCOUNT_INFO_PREFIX},
+    moved_shared::primitives::{Address, B256, KeyHashable},
     nodes::{TreeKey, TreeValue},
     std::{collections::HashMap, fmt::Debug, sync::Arc},
 };

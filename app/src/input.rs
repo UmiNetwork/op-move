@@ -12,7 +12,7 @@ use {
         state::ProofResponse,
         transaction::TransactionResponse,
     },
-    moved_shared::primitives::{Address, Bytes, ToU64, B2048, B256, U256, U64},
+    moved_shared::primitives::{Address, B256, B2048, Bytes, ToU64, U64, U256},
     tokio::sync::oneshot,
 };
 

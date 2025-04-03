@@ -1,19 +1,19 @@
 use {
     crate::{
+        Application, Dependencies, DependenciesThreadSafe,
         input::{
             Command, ExecutionOutcome, Payload, Query, StateMessage, WithExecutionOutcome,
             WithPayloadAttributes,
         },
-        Application, Dependencies, DependenciesThreadSafe,
     },
     alloy::{
         consensus::{Receipt, Transaction},
         eips::{
-            eip2718::Encodable2718,
             BlockId,
             BlockNumberOrTag::{self, *},
+            eip2718::Encodable2718,
         },
-        primitives::{keccak256, Bloom, TxKind},
+        primitives::{Bloom, TxKind, keccak256},
         rlp::{Decodable, Encodable},
         rpc::types::FeeHistory,
     },
@@ -27,18 +27,17 @@ use {
         state::{InMemoryStateQueries, StateQueries},
         transaction::{ExtendedTransaction, TransactionQueries, TransactionRepository},
     },
-    moved_evm_ext::{state::StorageTrieRepository, HeaderForExecution},
+    moved_evm_ext::{HeaderForExecution, state::StorageTrieRepository},
     moved_execution::{
-        execute_transaction,
+        CanonicalExecutionInput, CreateL1GasFee, CreateL2GasFee, DepositExecutionInput, L1GasFee,
+        L1GasFeeInput, L2GasFeeInput, LogsBloom, execute_transaction,
         simulate::{call_transaction, simulate_transaction},
         transaction::{ExtendedTxEnvelope, NormalizedExtendedTxEnvelope},
-        CanonicalExecutionInput, CreateL1GasFee, CreateL2GasFee, DepositExecutionInput, L1GasFee,
-        L1GasFeeInput, L2GasFeeInput, LogsBloom,
     },
     moved_genesis::config::GenesisConfig,
     moved_shared::{
         error::Error::{InvalidTransaction, InvariantViolation, User},
-        primitives::{ToEthAddress, ToMoveAddress, ToSaturatedU64, B256, U256, U64},
+        primitives::{B256, ToEthAddress, ToMoveAddress, ToSaturatedU64, U64, U256},
     },
     moved_state::State,
     op_alloy::consensus::OpTxEnvelope,
@@ -461,7 +460,11 @@ impl<D: Dependencies> StateActor<D> {
             log_offset += outcome.logs.len() as u64;
             let receipt = Receipt {
                 status: outcome.vm_outcome.is_ok().into(),
-                cumulative_gas_used,
+                cumulative_gas_used: if cumulative_gas_used < u64::MAX as u128 {
+                    cumulative_gas_used as u64
+                } else {
+                    u64::MAX
+                },
                 logs: outcome.logs,
             };
 
@@ -642,6 +645,7 @@ fn test_build_block_hash() {
 }
 
 #[cfg(test)]
+#[allow(clippy::type_complexity)]
 mod tests {
     use {
         super::*,
@@ -649,7 +653,7 @@ mod tests {
             consensus::{SignableTransaction, TxEip1559, TxEnvelope},
             hex,
             network::TxSignerSync,
-            primitives::{address, TxKind},
+            primitives::{TxKind, address},
         },
         move_core_types::{account_address::AccountAddress, effects::ChangeSet},
         move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
@@ -663,9 +667,9 @@ mod tests {
             transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
         },
         moved_execution::{
-            create_move_vm, create_vm_session, session_id::SessionId, MovedBaseTokenAccounts,
+            MovedBaseTokenAccounts, create_move_vm, create_vm_session, session_id::SessionId,
         },
-        moved_genesis::config::{GenesisConfig, CHAIN_ID},
+        moved_genesis::config::{CHAIN_ID, GenesisConfig},
         moved_shared::primitives::Address,
         moved_state::InMemoryState,
         std::convert::Infallible,

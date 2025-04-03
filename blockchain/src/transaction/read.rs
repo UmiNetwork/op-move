@@ -1,4 +1,7 @@
-use {crate::transaction::ExtendedTransaction, moved_shared::primitives::B256, std::fmt::Debug};
+use {
+    crate::transaction::ExtendedTransaction, alloy::consensus::transaction::Recovered,
+    moved_shared::primitives::B256, std::fmt::Debug,
+};
 
 pub trait TransactionQueries {
     type Err: Debug;
@@ -20,12 +23,12 @@ impl From<ExtendedTransaction> for TransactionResponse {
             .map(|nonce| (Some(nonce.nonce), Some(nonce.version)))
             .unwrap_or((None, None));
 
+        let from = value
+            .from()
+            .expect("Block transactions should contain valid signature");
         Self {
             inner: alloy::rpc::types::eth::Transaction {
-                from: value
-                    .from()
-                    .expect("Block transactions should contain valid signature"),
-                inner: value.inner,
+                inner: Recovered::new_unchecked(value.inner, from),
                 block_hash: Some(value.block_hash),
                 block_number: Some(value.block_number),
                 transaction_index: Some(value.transaction_index),

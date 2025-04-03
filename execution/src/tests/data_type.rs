@@ -116,11 +116,7 @@ fn test_deeply_nested_type() {
         // Helper function for this procedure
         fn update_byte(x: u8) -> (u8, u8) {
             let (y, overflow) = x.overflowing_add(3);
-            if overflow {
-                (y + 128, 1)
-            } else {
-                (y, 0)
-            }
+            if overflow { (y + 128, 1) } else { (y, 0) }
         }
 
         let mut result = Vec::with_capacity(module_bytes.len() + 3);

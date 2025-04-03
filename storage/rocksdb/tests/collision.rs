@@ -2,7 +2,7 @@ use {
     eth_trie::DB,
     hex_literal::hex,
     moved_shared::primitives::B256,
-    moved_storage_rocksdb::{RocksEthTrieDb, ROOT_KEY},
+    moved_storage_rocksdb::{ROOT_KEY, RocksEthTrieDb},
 };
 
 mod common;

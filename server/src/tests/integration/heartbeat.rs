@@ -34,7 +34,6 @@ impl HeartbeatTask {
             runtime.block_on(async {
                 let signer = PrivateKeySigner::from_slice(&SK).unwrap();
                 let provider = ProviderBuilder::new()
-                    .with_recommended_fillers()
                     .wallet(EthereumWallet::from(signer))
                     .on_http(Url::parse(&var("L1_RPC_URL")?)?);
                 let amount = U256::from(100_u64);

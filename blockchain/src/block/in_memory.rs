@@ -1,8 +1,8 @@
 use {
     crate::{
         block::{
-            root::{BlockQueries, BlockRepository},
             BlockResponse, ExtendedBlock,
+            root::{BlockQueries, BlockRepository},
         },
         in_memory::SharedMemory,
     },

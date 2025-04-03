@@ -4,7 +4,7 @@
 use {
     moved_app::Payload,
     moved_blockchain::payload::{BlobsBundle, ExecutionPayload, PayloadResponse, Withdrawal},
-    moved_shared::primitives::{Address, Bytes, B2048, B256, U256, U64},
+    moved_shared::primitives::{Address, B256, B2048, Bytes, U64, U256},
     serde::{Deserialize, Serialize},
     std::str::FromStr,
 };

@@ -1,7 +1,7 @@
 use {
     super::{L2GasFee, L2GasFeeInput},
     crate::{
-        create_move_vm, create_vm_session,
+        CanonicalExecutionInput, Logs, create_move_vm, create_vm_session,
         eth_token::{self, BaseTokenAccounts, TransferArgs},
         execute::{deploy_module, execute_entry_function, execute_l2_contract, execute_script},
         gas::{new_gas_meter, total_gas_used},
@@ -11,7 +11,6 @@ use {
             Changes, NormalizedEthTransaction, ScriptOrModule, TransactionData,
             TransactionExecutionOutcome,
         },
-        CanonicalExecutionInput, Logs,
     },
     aptos_gas_meter::{AptosGasMeter, StandardGasAlgebra, StandardGasMeter},
     aptos_table_natives::TableResolver,

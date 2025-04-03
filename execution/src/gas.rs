@@ -164,6 +164,9 @@ impl L1GasFee for EcotoneGasFee {
             l1_base_fee_scalar: Some(self.base_fee_scalar.saturating_to()),
             l1_blob_base_fee: Some(self.blob_base_fee.saturating_to()),
             l1_blob_base_fee_scalar: Some(self.blob_base_fee_scalar.saturating_to()),
+            // TODO(#327): What are these?
+            operator_fee_scalar: None,
+            operator_fee_constant: None,
         })
     }
 }

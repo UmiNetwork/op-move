@@ -1,8 +1,8 @@
 use {
     super::{
+        CODE_LAYOUT, EVM_NATIVE_ADDRESS,
         native_evm_context::NativeEVMContext,
         type_utils::{account_info_struct_tag, code_hash_struct_tag, get_account_code_hash},
-        CODE_LAYOUT, EVM_NATIVE_ADDRESS,
     },
     crate::state::{self, StorageTrieChanges, StorageTrieRepository, StorageTriesChanges},
     move_binary_format::errors::PartialVMError,
@@ -13,9 +13,10 @@ use {
     },
     move_vm_runtime::native_extensions::NativeContextExtensions,
     move_vm_types::values::Value,
-    revm::primitives::{
-        utilities::KECCAK_EMPTY, Account, AccountInfo, AccountStatus, Address, Bytecode,
-        EvmStorageSlot, U256,
+    revm::{
+        bytecode::Bytecode,
+        primitives::{Address, KECCAK_EMPTY, U256},
+        state::{Account, AccountInfo, AccountStatus, EvmStorageSlot},
     },
 };
 

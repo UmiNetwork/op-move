@@ -89,31 +89,31 @@ pub trait DependenciesThreadSafe:
 }
 
 impl<
-        T: Dependencies<
-                BaseTokenAccounts: Send + Sync + 'static,
-                BlockHash: Send + Sync + 'static,
-                BlockQueries: Send + Sync + 'static,
-                BlockRepository: Send + Sync + 'static,
-                OnPayload: Send + Sync + 'static,
-                OnTx: Send + Sync + 'static,
-                OnTxBatch: Send + Sync + 'static,
-                PayloadQueries: Send + Sync + 'static,
-                ReceiptQueries: Send + Sync + 'static,
-                ReceiptRepository: Send + Sync + 'static,
-                ReceiptStorage: Send + Sync + 'static,
-                SharedStorage: Send + Sync + 'static,
-                State: Send + Sync + 'static,
-                StateQueries: Send + Sync + 'static,
-                StorageTrieRepository: Send + Sync + 'static,
-                TransactionQueries: Send + Sync + 'static,
-                TransactionRepository: Send + Sync + 'static,
-                BaseGasFee: Send + Sync + 'static,
-                CreateL1GasFee: Send + Sync + 'static,
-                CreateL2GasFee: Send + Sync + 'static,
-            > + Send
-            + Sync
-            + 'static,
-    > DependenciesThreadSafe for T
+    T: Dependencies<
+            BaseTokenAccounts: Send + Sync + 'static,
+            BlockHash: Send + Sync + 'static,
+            BlockQueries: Send + Sync + 'static,
+            BlockRepository: Send + Sync + 'static,
+            OnPayload: Send + Sync + 'static,
+            OnTx: Send + Sync + 'static,
+            OnTxBatch: Send + Sync + 'static,
+            PayloadQueries: Send + Sync + 'static,
+            ReceiptQueries: Send + Sync + 'static,
+            ReceiptRepository: Send + Sync + 'static,
+            ReceiptStorage: Send + Sync + 'static,
+            SharedStorage: Send + Sync + 'static,
+            State: Send + Sync + 'static,
+            StateQueries: Send + Sync + 'static,
+            StorageTrieRepository: Send + Sync + 'static,
+            TransactionQueries: Send + Sync + 'static,
+            TransactionRepository: Send + Sync + 'static,
+            BaseGasFee: Send + Sync + 'static,
+            CreateL1GasFee: Send + Sync + 'static,
+            CreateL2GasFee: Send + Sync + 'static,
+        > + Send
+        + Sync
+        + 'static,
+> DependenciesThreadSafe for T
 {
 }
 
@@ -134,20 +134,14 @@ pub trait Dependencies: Sized {
 
     type PayloadQueries: moved_blockchain::payload::PayloadQueries<Storage = Self::SharedStorage>;
     type ReceiptQueries: moved_blockchain::receipt::ReceiptQueries<Storage = Self::ReceiptStorage>;
-    type ReceiptRepository: moved_blockchain::receipt::ReceiptRepository<
-        Storage = Self::ReceiptStorage,
-    >;
+    type ReceiptRepository: moved_blockchain::receipt::ReceiptRepository<Storage = Self::ReceiptStorage>;
     type ReceiptStorage;
     type SharedStorage;
     type State: moved_state::State;
     type StateQueries: moved_blockchain::state::StateQueries;
     type StorageTrieRepository: moved_evm_ext::state::StorageTrieRepository;
-    type TransactionQueries: moved_blockchain::transaction::TransactionQueries<
-        Storage = Self::SharedStorage,
-    >;
-    type TransactionRepository: moved_blockchain::transaction::TransactionRepository<
-        Storage = Self::SharedStorage,
-    >;
+    type TransactionQueries: moved_blockchain::transaction::TransactionQueries<Storage = Self::SharedStorage>;
+    type TransactionRepository: moved_blockchain::transaction::TransactionRepository<Storage = Self::SharedStorage>;
     type BaseGasFee: moved_blockchain::block::BaseGasFee;
     type CreateL1GasFee: moved_execution::CreateL1GasFee;
     type CreateL2GasFee: moved_execution::CreateL2GasFee;
@@ -242,27 +236,24 @@ mod test_doubles {
     );
 
     impl<
-            SQ: StateQueries + Send + Sync + 'static,
-            S: State + Send + Sync + 'static,
-            BT: moved_execution::BaseTokenAccounts + Send + Sync + 'static,
-            BH: moved_blockchain::block::BlockHash + Send + Sync + 'static,
-            BQ: moved_blockchain::block::BlockQueries<Storage = B> + Send + Sync + 'static,
-            BR: moved_blockchain::block::BlockRepository<Storage = B> + Send + Sync + 'static,
-            PQ: moved_blockchain::payload::PayloadQueries<Storage = B> + Send + Sync + 'static,
-            RQ: moved_blockchain::receipt::ReceiptQueries<Storage = R> + Send + Sync + 'static,
-            RR: moved_blockchain::receipt::ReceiptRepository<Storage = R> + Send + Sync + 'static,
-            R: Send + Sync + 'static,
-            B: Send + Sync + 'static,
-            ST: moved_evm_ext::state::StorageTrieRepository + Send + Sync + 'static,
-            TQ: moved_blockchain::transaction::TransactionQueries<Storage = B> + Send + Sync + 'static,
-            TR: moved_blockchain::transaction::TransactionRepository<Storage = B>
-                + Send
-                + Sync
-                + 'static,
-            BF: moved_blockchain::block::BaseGasFee + Send + Sync + 'static,
-            F1: moved_execution::CreateL1GasFee + Send + Sync + 'static,
-            F2: moved_execution::CreateL2GasFee + Send + Sync + 'static,
-        > Dependencies
+        SQ: StateQueries + Send + Sync + 'static,
+        S: State + Send + Sync + 'static,
+        BT: moved_execution::BaseTokenAccounts + Send + Sync + 'static,
+        BH: moved_blockchain::block::BlockHash + Send + Sync + 'static,
+        BQ: moved_blockchain::block::BlockQueries<Storage = B> + Send + Sync + 'static,
+        BR: moved_blockchain::block::BlockRepository<Storage = B> + Send + Sync + 'static,
+        PQ: moved_blockchain::payload::PayloadQueries<Storage = B> + Send + Sync + 'static,
+        RQ: moved_blockchain::receipt::ReceiptQueries<Storage = R> + Send + Sync + 'static,
+        RR: moved_blockchain::receipt::ReceiptRepository<Storage = R> + Send + Sync + 'static,
+        R: Send + Sync + 'static,
+        B: Send + Sync + 'static,
+        ST: moved_evm_ext::state::StorageTrieRepository + Send + Sync + 'static,
+        TQ: moved_blockchain::transaction::TransactionQueries<Storage = B> + Send + Sync + 'static,
+        TR: moved_blockchain::transaction::TransactionRepository<Storage = B> + Send + Sync + 'static,
+        BF: moved_blockchain::block::BaseGasFee + Send + Sync + 'static,
+        F1: moved_execution::CreateL1GasFee + Send + Sync + 'static,
+        F2: moved_execution::CreateL2GasFee + Send + Sync + 'static,
+    > Dependencies
         for TestDependencies<SQ, S, BT, BH, BQ, BR, PQ, RQ, RR, R, B, ST, TQ, TR, BF, F1, F2>
     {
         type BaseTokenAccounts = BT;

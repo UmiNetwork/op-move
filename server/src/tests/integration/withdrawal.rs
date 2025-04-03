@@ -34,7 +34,6 @@ pub async fn withdraw_eth_to_l1() -> Result<()> {
         l2_send_ethers(&prefunded_wallet, WITHDRAW_ADDRESS, amount, false).await?;
 
     let l1_provider = ProviderBuilder::new()
-        .with_recommended_fillers()
         .wallet(EthereumWallet::from(prefunded_wallet.clone()))
         .on_http(Url::parse(&var("L1_RPC_URL")?)?);
 
@@ -74,7 +73,6 @@ pub async fn withdraw_to_l1(withdraw_tx_hash: B256, l1_wallet: PrivateKeySigner)
     let storage_slot = alloy::primitives::keccak256(slot_preimage);
 
     let l1_provider = ProviderBuilder::new()
-        .with_recommended_fillers()
         .wallet(EthereumWallet::from(l1_wallet))
         .on_http(Url::parse(&var("L1_RPC_URL")?)?);
 
@@ -132,7 +130,7 @@ pub async fn withdraw_to_l1(withdraw_tx_hash: B256, l1_wallet: PrivateKeySigner)
 
     // Look up the corresponding L2 block
     let block = l2_provider
-        .get_block_by_number(l2_block_number.into(), Default::default())
+        .get_block_by_number(l2_block_number.into())
         .await?
         .unwrap();
 

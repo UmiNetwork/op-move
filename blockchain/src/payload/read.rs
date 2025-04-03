@@ -1,7 +1,7 @@
 use {
     crate::{block::ExtendedBlock, payload::id::PayloadId},
     alloy::eips::eip2718::Encodable2718,
-    moved_shared::primitives::{Address, Bytes, B2048, B256, U256, U64},
+    moved_shared::primitives::{Address, B256, B2048, Bytes, U64, U256},
     std::fmt::Debug,
 };
 

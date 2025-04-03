@@ -1,4 +1,4 @@
-pub use alloy::primitives::{aliases::B2048, Address, Bytes, B256, B64, U256, U64};
+pub use alloy::primitives::{Address, B64, B256, Bytes, U64, U256, aliases::B2048};
 
 use {
     alloy::consensus::{Receipt, ReceiptWithBloom},
@@ -174,8 +174,8 @@ mod tests {
     }
 
     #[test]
-    fn test_eth_from_move_address_with_only_zero_bits_outside_intersection_and_back_produces_identical_value(
-    ) {
+    fn test_eth_from_move_address_with_only_zero_bits_outside_intersection_and_back_produces_identical_value()
+     {
         let expected_move_address: AccountAddress =
             hex!("000000000000000000000000ffffffffffffffffffffffffffffffffffffffff").into();
         let eth_address = expected_move_address.to_eth_address();
@@ -185,8 +185,8 @@ mod tests {
     }
 
     #[test]
-    fn test_eth_from_move_address_with_non_zero_bits_outside_intersection_and_back_produces_different_value(
-    ) {
+    fn test_eth_from_move_address_with_non_zero_bits_outside_intersection_and_back_produces_different_value()
+     {
         let expected_move_address: AccountAddress =
             hex!("100000000000000000000000ffffffffffffffffffffffffffffffffffffffff").into();
         let eth_address = expected_move_address.to_eth_address();

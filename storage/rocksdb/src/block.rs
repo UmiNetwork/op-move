@@ -8,7 +8,7 @@ use {
         transaction::ExtendedTransaction,
     },
     moved_shared::primitives::B256,
-    rocksdb::{AsColumnFamilyRef, WriteBatchWithTransaction, DB as RocksDb},
+    rocksdb::{AsColumnFamilyRef, DB as RocksDb, WriteBatchWithTransaction},
 };
 
 pub const BLOCK_COLUMN_FAMILY: &str = "block";

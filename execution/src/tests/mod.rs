@@ -11,9 +11,9 @@ use {
         },
     },
     alloy::{
-        consensus::{transaction::TxEip1559, SignableTransaction, TxEnvelope},
+        consensus::{SignableTransaction, TxEnvelope, transaction::TxEip1559},
         network::TxSignerSync,
-        primitives::{address, hex, keccak256, Address, Bytes, FixedBytes, TxKind},
+        primitives::{Address, Bytes, FixedBytes, TxKind, address, hex, keccak256},
         rlp::Encodable,
     },
     anyhow::Context,
@@ -22,16 +22,16 @@ use {
         transaction::{EntryFunction, Module, Script, TransactionArgument},
     },
     move_binary_format::{
+        CompiledModule,
         file_format::{
             AbilitySet, FieldDefinition, IdentifierIndex, ModuleHandleIndex, SignatureToken,
             StructDefinition, StructFieldInformation, StructHandle, StructHandleIndex,
             TypeSignature,
         },
-        CompiledModule,
     },
     move_compiler::{
-        shared::{NumberFormat, NumericalAddress},
         Compiler, Flags,
+        shared::{NumberFormat, NumericalAddress},
     },
     move_core_types::{
         account_address::AccountAddress,
@@ -42,7 +42,7 @@ use {
     },
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
     move_vm_types::gas::UnmeteredGasMeter,
-    moved_shared::primitives::{ToMoveAddress, ToMoveU256, B256, U256, U64},
+    moved_shared::primitives::{B256, ToMoveAddress, ToMoveU256, U64, U256},
     moved_state::{InMemoryState, State},
     regex::Regex,
     serde::de::DeserializeOwned,

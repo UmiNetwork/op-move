@@ -1,12 +1,12 @@
 use {
     alloy::json_abi::{InternalType, JsonAbi, StateMutability},
     convert_case::{Case, Casing},
-    handlebars::{handlebars_helper, Handlebars},
+    handlebars::{Handlebars, handlebars_helper},
     regex::Regex,
     serde::Serialize,
     std::{
         collections::BTreeMap,
-        fs::{read_dir, read_to_string, File},
+        fs::{File, read_dir, read_to_string},
         path::Path,
     },
 };

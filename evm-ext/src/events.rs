@@ -1,6 +1,6 @@
 use {
     super::{EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE},
-    alloy::primitives::{Log, LogData, B256, U256},
+    alloy::primitives::{B256, Log, LogData, U256},
     move_core_types::{
         account_address::AccountAddress,
         ident_str,

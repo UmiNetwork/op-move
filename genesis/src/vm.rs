@@ -1,6 +1,6 @@
 use {
     crate::framework::CreateMoveVm,
-    aptos_gas_schedule::{MiscGasParameters, NativeGasParameters, LATEST_GAS_FEATURE_VERSION},
+    aptos_gas_schedule::{LATEST_GAS_FEATURE_VERSION, MiscGasParameters, NativeGasParameters},
     aptos_native_interface::SafeNativeBuilder,
     aptos_types::on_chain_config::{Features, TimedFeaturesBuilder},
     aptos_vm::natives::aptos_natives_with_builder,

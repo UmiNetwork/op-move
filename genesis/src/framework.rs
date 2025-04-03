@@ -30,9 +30,9 @@ pub const SUI_SNAPSHOT_NAME: &str = "sui.mrb";
 pub const L2_PACKAGE_NAME: &str = "L2";
 pub const FRAMEWORK_ADDRESS: AccountAddress = moved_evm_ext::FRAMEWORK_ADDRESS;
 pub const L2_LOWEST_ADDRESS: AccountAddress =
-    eth_address(&address!("4200000000000000000000000000000000000000").0 .0);
+    eth_address(&address!("4200000000000000000000000000000000000000").0.0);
 pub const L2_HIGHEST_ADDRESS: AccountAddress =
-    eth_address(&address!("42000000000000000000000000000000000000ff").0 .0);
+    eth_address(&address!("42000000000000000000000000000000000000ff").0.0);
 pub const TOKEN_ADDRESS: AccountAddress = small_account_address(0x13);
 pub const TOKEN_OBJECT_ADDRESS: AccountAddress = small_account_address(0x14);
 pub const SUI_STDLIB_ADDRESS: AccountAddress = small_account_address(0x21);

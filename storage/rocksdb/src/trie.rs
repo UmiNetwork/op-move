@@ -1,7 +1,7 @@
 use {
-    eth_trie::{EthTrie, TrieError, DB},
+    eth_trie::{DB, EthTrie, TrieError},
     moved_shared::primitives::B256,
-    rocksdb::{AsColumnFamilyRef, WriteBatchWithTransaction, DB as RocksDb},
+    rocksdb::{AsColumnFamilyRef, DB as RocksDb, WriteBatchWithTransaction},
     std::sync::Arc,
 };
 
@@ -42,7 +42,7 @@ impl<'db> RocksEthTrieDb<'db> {
     }
 }
 
-impl<'db> DB for RocksEthTrieDb<'db> {
+impl DB for RocksEthTrieDb<'_> {
     type Error = rocksdb::Error;
 
     fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>, Self::Error> {

@@ -57,7 +57,6 @@ pub struct Erc20AddressPair {
 pub async fn deploy_l1_token(from_wallet: &PrivateKeySigner, rpc_url: &str) -> Result<Address> {
     let from_address = from_wallet.address();
     let provider = ProviderBuilder::new()
-        .with_recommended_fillers()
         .wallet(EthereumWallet::from(from_wallet.to_owned()))
         .on_http(Url::parse(rpc_url)?);
 
@@ -90,7 +89,6 @@ pub async fn deploy_l2_token(
 ) -> Result<Address> {
     let factory_address = alloy::primitives::address!("4200000000000000000000000000000000000012");
     let provider = ProviderBuilder::new()
-        .with_recommended_fillers()
         .wallet(EthereumWallet::from(from_wallet.to_owned()))
         .on_http(Url::parse(rpc_url)?);
 
@@ -129,7 +127,6 @@ pub async fn deposit_l1_token(
     rpc_url: &str,
 ) -> Result<()> {
     let provider = ProviderBuilder::new()
-        .with_recommended_fillers()
         .wallet(EthereumWallet::from(from_wallet.to_owned()))
         .on_http(Url::parse(rpc_url)?);
 
@@ -178,7 +175,6 @@ pub async fn withdraw_erc20_token_from_l2_to_l1(
 
     // Initiate bridging
     let l2_provider = ProviderBuilder::new()
-        .with_recommended_fillers()
         .wallet(EthereumWallet::from(wallet.to_owned()))
         .on_http(Url::parse(l2_rpc_url)?);
     let bridge_contract = bridge_l2::L2StandardBridge::new(L2_STANDARD_BRIDGE_ADDRESS, l2_provider);
@@ -195,7 +191,6 @@ pub async fn withdraw_erc20_token_from_l2_to_l1(
 
     // Get initial balance
     let l1_provider = ProviderBuilder::new()
-        .with_recommended_fillers()
         .wallet(EthereumWallet::from(wallet.to_owned()))
         .on_http(Url::parse(l1_rpc_url)?);
     let l1_token = Erc20::new(l1_address, l1_provider);
@@ -217,9 +212,7 @@ pub async fn withdraw_erc20_token_from_l2_to_l1(
 }
 
 pub async fn l2_erc20_balance_of(token: Address, account: Address, rpc_url: &str) -> Result<U256> {
-    let provider = ProviderBuilder::new()
-        .with_recommended_fillers()
-        .on_http(Url::parse(rpc_url)?);
+    let provider = ProviderBuilder::new().on_http(Url::parse(rpc_url)?);
 
     let args = vec![
         // The caller here does not matter because it is a view call.
@@ -241,7 +234,7 @@ pub async fn l2_erc20_balance_of(token: Address, account: Address, rpc_url: &str
     );
     let tx_data = TransactionData::EntryFunction(function_call);
     let data = bcs::to_bytes(&tx_data)?;
-    let eth_call_result = CallBuilder::new_raw(provider, data.into())
+    let eth_call_result = CallBuilder::<(), _, _, _>::new_raw(provider, data.into())
         .to(EVM_NATIVE_ADDRESS.to_eth_address())
         .call()
         .await?;
@@ -261,9 +254,7 @@ pub async fn l2_erc20_allowance(
     spender: Address,
     rpc_url: &str,
 ) -> Result<U256> {
-    let provider = ProviderBuilder::new()
-        .with_recommended_fillers()
-        .on_http(Url::parse(rpc_url)?);
+    let provider = ProviderBuilder::new().on_http(Url::parse(rpc_url)?);
 
     let args = vec![
         // The caller here does not matter because it is a view call.
@@ -288,7 +279,7 @@ pub async fn l2_erc20_allowance(
     );
     let tx_data = TransactionData::EntryFunction(function_call);
     let data = bcs::to_bytes(&tx_data)?;
-    let eth_call_result = CallBuilder::new_raw(provider, data.into())
+    let eth_call_result = CallBuilder::<(), _, _, _>::new_raw(provider, data.into())
         .to(EVM_NATIVE_ADDRESS.to_eth_address())
         .call()
         .await?;
@@ -311,7 +302,6 @@ pub async fn l2_erc20_approve(
 ) -> Result<()> {
     let from_address = from_wallet.address();
     let provider = ProviderBuilder::new()
-        .with_recommended_fillers()
         .wallet(EthereumWallet::from(from_wallet.to_owned()))
         .on_http(Url::parse(rpc_url)?);
 
@@ -337,7 +327,7 @@ pub async fn l2_erc20_approve(
     );
     let tx_data = TransactionData::EntryFunction(function_call);
     let data = bcs::to_bytes(&tx_data)?;
-    let receipt = CallBuilder::new_raw(provider, data.into())
+    let receipt = CallBuilder::<(), _, _, _>::new_raw(provider, data.into())
         .to(EVM_NATIVE_ADDRESS.to_eth_address())
         .send()
         .await?

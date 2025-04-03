@@ -15,7 +15,7 @@ use {
         gas::{GasMeter, UnmeteredGasMeter},
         values::Value,
     },
-    moved_evm_ext::{events::EthTransferLog, state::StorageTrieRepository, EVM_NATIVE_ADDRESS},
+    moved_evm_ext::{EVM_NATIVE_ADDRESS, events::EthTransferLog, state::StorageTrieRepository},
     moved_genesis::FRAMEWORK_ADDRESS,
     moved_shared::{
         error::EthToken,

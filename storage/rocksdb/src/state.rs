@@ -1,25 +1,25 @@
 use {
     crate::{
+        RocksDb, RocksEthTrieDb,
         generic::{FromKey, ToKey},
         trie::FromOptRoot,
-        RocksDb, RocksEthTrieDb,
     },
-    eth_trie::{EthTrie, TrieError, DB},
+    eth_trie::{DB, EthTrie, TrieError},
     move_binary_format::errors::PartialVMError,
     move_core_types::{
         account_address::AccountAddress, effects::ChangeSet, resolver::MoveResolver,
     },
     move_table_extension::{TableChangeSet, TableResolver},
     moved_blockchain::state::{
-        proof_from_trie_and_resolver, Balance, BlockHeight, EthTrieResolver, Nonce, ProofResponse,
-        StateQueries,
+        Balance, BlockHeight, EthTrieResolver, Nonce, ProofResponse, StateQueries,
+        proof_from_trie_and_resolver,
     },
     moved_evm_ext::state::StorageTrieRepository,
     moved_execution::{
         quick_get_eth_balance, quick_get_nonce,
         transaction::{L2_HIGHEST_ADDRESS, L2_LOWEST_ADDRESS},
     },
-    moved_shared::primitives::{ToEthAddress, B256, U256},
+    moved_shared::primitives::{B256, ToEthAddress, U256},
     moved_state::{InsertChangeSetIntoMerkleTrie, State},
     rocksdb::{AsColumnFamilyRef, WriteBatchWithTransaction},
     std::sync::Arc,
@@ -60,7 +60,7 @@ impl<'db> RocksDbState<'db> {
     }
 }
 
-impl<'db> State for RocksDbState<'db> {
+impl State for RocksDbState<'_> {
     type Err = TrieError;
 
     fn apply(&mut self, changes: ChangeSet) -> Result<(), Self::Err> {
@@ -162,7 +162,7 @@ impl<'db> RocksDbStateQueries<'db> {
     }
 }
 
-impl<'db> StateQueries for RocksDbStateQueries<'db> {
+impl StateQueries for RocksDbStateQueries<'_> {
     fn balance_at(
         &self,
         db: Arc<impl DB>,

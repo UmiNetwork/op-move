@@ -1,7 +1,7 @@
 use {
     super::{
-        type_utils::{account_info_struct_tag, code_hash_struct_tag},
         CODE_LAYOUT, EVM_NATIVE_ADDRESS,
+        type_utils::{account_info_struct_tag, code_hash_struct_tag},
     },
     crate::{
         events::EthTransferLog,
@@ -14,11 +14,11 @@ use {
     move_core_types::{account_address::AccountAddress, resolver::MoveResolver},
     move_vm_types::values::{VMValueCast, Value},
     revm::{
-        db::DatabaseRef,
-        primitives::{
-            utilities::KECCAK_EMPTY, Account, AccountInfo, Address, Bytecode, B256, U256,
-        },
+        DatabaseRef,
+        primitives::{Address, B256, KECCAK_EMPTY, U256},
+        state::{Account, AccountInfo, Bytecode},
     },
+    std::fmt,
 };
 
 pub const FRAMEWORK_ADDRESS: AccountAddress = AccountAddress::ONE;
@@ -87,14 +87,36 @@ impl<'a> ResolverBackedDB<'a> {
     }
 }
 
-impl From<state::Error> for PartialVMError {
-    fn from(e: state::Error) -> Self {
-        PartialVMError::new(StatusCode::STORAGE_ERROR).with_message(format!("{e:?}"))
+#[derive(Debug, Clone)]
+pub struct DbError {
+    pub inner: PartialVMError,
+}
+
+impl fmt::Display for DbError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.inner.fmt(f)
     }
 }
 
-impl<'a> DatabaseRef for ResolverBackedDB<'a> {
-    type Error = PartialVMError;
+impl std::error::Error for DbError {}
+
+impl revm::database::DBErrorMarker for DbError {}
+
+impl From<PartialVMError> for DbError {
+    fn from(value: PartialVMError) -> Self {
+        Self { inner: value }
+    }
+}
+
+impl From<state::Error> for DbError {
+    fn from(e: state::Error) -> Self {
+        let inner = PartialVMError::new(StatusCode::STORAGE_ERROR).with_message(format!("{e:?}"));
+        Self { inner }
+    }
+}
+
+impl DatabaseRef for ResolverBackedDB<'_> {
+    type Error = DbError;
 
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         let value = self.get_account(&address)?;

@@ -5,7 +5,7 @@ use {
     },
     aptos_types::state_store::{state_key::StateKey, state_value::StateValue},
     bytes::Bytes,
-    eth_trie::{EthTrie, Trie, TrieError, DB},
+    eth_trie::{DB, EthTrie, Trie, TrieError},
     move_binary_format::errors::PartialVMError,
     move_core_types::{
         account_address::AccountAddress,
@@ -17,16 +17,16 @@ use {
     },
     move_table_extension::{TableHandle, TableResolver},
     moved_evm_ext::{
-        state::{self, StorageTrieRepository},
         ResolverBackedDB,
+        state::{self, StorageTrieRepository},
     },
     moved_execution::{
         quick_get_eth_balance, quick_get_nonce,
         transaction::{L2_HIGHEST_ADDRESS, L2_LOWEST_ADDRESS},
     },
-    moved_shared::primitives::{Address, KeyHashable, ToEthAddress, B256, U256},
+    moved_shared::primitives::{Address, B256, KeyHashable, ToEthAddress, U256},
     moved_state::{
-        evm_key_address, is_evm_storage_or_account_key, nodes::TreeKey, IN_MEMORY_EXPECT_MSG,
+        IN_MEMORY_EXPECT_MSG, evm_key_address, is_evm_storage_or_account_key, nodes::TreeKey,
     },
     std::{fmt::Debug, sync::Arc},
 };

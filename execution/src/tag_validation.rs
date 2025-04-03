@@ -535,8 +535,7 @@ mod tests {
                 validate_entry_value(type_tag, test_case, &correct_signer, &mut session)
                     .map_err(|_| ());
             assert_eq!(
-                &actual_outcome,
-                expected_outcome,
+                &actual_outcome, expected_outcome,
                 "check_signer test case {test_case:?} failed. Expected={expected_outcome:?} Actual={actual_outcome:?}"
             );
         }
@@ -615,8 +614,7 @@ mod tests {
                 validate_entry_value(type_tag, test_case, &AccountAddress::ZERO, &mut session)
                     .map_err(|_| ());
             assert_eq!(
-                &actual_outcome,
-                expected_outcome,
+                &actual_outcome, expected_outcome,
                 "validate_option test case {test_case:?} failed. Expected={expected_outcome:?} Actual={actual_outcome:?}"
             );
         }

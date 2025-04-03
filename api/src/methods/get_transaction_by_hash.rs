@@ -77,10 +77,9 @@ mod tests {
         let request = serde_json::Value::Object(
             iter::once((
                 "params".to_string(),
-                serde_json::Value::Array(vec![serde_json::to_value(
-                    forkchoice_response.payload_id.unwrap(),
-                )
-                .unwrap()]),
+                serde_json::Value::Array(vec![
+                    serde_json::to_value(forkchoice_response.payload_id.unwrap()).unwrap(),
+                ]),
             ))
             .collect(),
         );
