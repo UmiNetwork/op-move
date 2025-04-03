@@ -1,8 +1,9 @@
-use move_vm_runtime::{AsFunctionValueExtension, AsUnsyncCodeStorage};
-use moved_genesis::{CreateMoveVm, MovedVm};
-use moved_state::ResolverBasedModuleBytesStorage;
-
-use super::*;
+use {
+    super::*,
+    move_vm_runtime::{AsFunctionValueExtension, AsUnsyncCodeStorage},
+    moved_genesis::{CreateMoveVm, MovedVm},
+    moved_state::ResolverBasedModuleBytesStorage,
+};
 
 #[test]
 fn test_execute_natives_contract() {
