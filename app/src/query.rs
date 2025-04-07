@@ -69,7 +69,12 @@ impl<D: Dependencies> Application<D> {
         self.height
     }
 
-    pub fn fee_history(&self) -> FeeHistory {
+    pub fn fee_history(
+        &self,
+        _block_count: u64,
+        _block_number: BlockNumberOrTag,
+        _reward_percentiles: Option<Vec<f64>>,
+    ) -> FeeHistory {
         // TODO: Respond with a real fee history
         FeeHistory::default()
     }
@@ -100,7 +105,11 @@ impl<D: Dependencies> Application<D> {
         })
     }
 
-    pub fn call(&self, transaction: TransactionRequest) -> Result<Vec<u8>> {
+    pub fn call(
+        &self,
+        transaction: TransactionRequest,
+        _block_number: BlockNumberOrTag,
+    ) -> Result<Vec<u8>> {
         // TODO: Support transaction call from arbitrary blocks
         call_transaction(
             transaction,
