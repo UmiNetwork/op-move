@@ -149,7 +149,7 @@ fn test_solidity_fixed_bytes() {
                 state: state.resolver(),
                 storage_trie: evm_storage,
                 genesis_config: &ctx.genesis_config,
-                l1_cost: 0,
+                l1_cost: U256::ZERO,
                 l2_fee: U256::ZERO,
                 l2_input: (u64::MAX, U256::ZERO).into(),
                 base_token: &(),

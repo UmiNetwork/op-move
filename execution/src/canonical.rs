@@ -12,6 +12,7 @@ use {
             TransactionExecutionOutcome,
         },
     },
+    alloy::primitives::U256,
     aptos_gas_meter::{AptosGasMeter, StandardGasAlgebra, StandardGasMeter},
     aptos_table_natives::TableResolver,
     move_vm_runtime::{
@@ -27,7 +28,7 @@ use {
             Error::{InvalidTransaction, User},
             EthToken, InvalidTransactionCause, InvariantViolation,
         },
-        primitives::{ToMoveAddress, ToSaturatedU64},
+        primitives::ToMoveAddress,
     },
     moved_state::ResolverBasedModuleBytesStorage,
 };
@@ -38,8 +39,8 @@ pub struct CanonicalVerificationInput<'input, 'r, 'l, B, MS> {
     pub traversal_context: &'input mut TraversalContext<'input>,
     pub gas_meter: &'input mut StandardGasMeter<StandardGasAlgebra>,
     pub genesis_config: &'input GenesisConfig,
-    pub l1_cost: u64,
-    pub l2_cost: u64,
+    pub l1_cost: U256,
+    pub l2_cost: U256,
     pub base_token: &'input B,
     pub module_storage: &'input MS,
 }
@@ -116,8 +117,9 @@ pub(super) fn execute_canonical_transaction<
 
     let tx_data = TransactionData::parse_from(input.tx)?;
 
-    let moved_vm = MovedVm::default();
-    let module_bytes_storage = ResolverBasedModuleBytesStorage::new(input.state);
+    let moved_vm = MovedVm::new(input.genesis_config);
+    let module_bytes_storage: ResolverBasedModuleBytesStorage<'_, S> =
+        ResolverBasedModuleBytesStorage::new(input.state);
     let code_storage = module_bytes_storage.as_unsync_code_storage(&moved_vm);
     let vm = moved_vm.create_move_vm()?;
     let session_id = SessionId::new_from_canonical(
@@ -233,7 +235,7 @@ pub(super) fn execute_canonical_transaction<
 
     let gas_used = total_gas_used(verify_input.gas_meter, input.genesis_config);
     let used_l2_input = L2GasFeeInput::new(gas_used, input.l2_input.effective_gas_price);
-    let used_l2_cost = input.l2_fee.l2_fee(used_l2_input).to_saturated_u64();
+    let used_l2_cost = input.l2_fee.l2_fee(used_l2_input);
 
     // Refunds should not be metered as they're supposed to always succeed
     input

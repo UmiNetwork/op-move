@@ -34,6 +34,13 @@ use {
     std::collections::VecDeque,
 };
 
+// Scale factor relating EVM gas units to MoveVM internal gas units.
+pub const EVM_SCALE_FACTOR: u64 = 6_000;
+// Amount of EVM gas charged on all EVM transactions.
+// This amount is ignored when converting to/from MoveVM internal gas units
+// because we do not need to do any signature or nonce checks to start an EVM
+// transaction in our case; that was already done by Move.
+pub const EVM_BASE_GAS: u64 = 21_000;
 pub const EVM_CALL_FN_NAME: &IdentStr = ident_str!("system_evm_call");
 
 pub fn append_evm_natives(natives: &mut NativeFunctionTable, builder: &SafeNativeBuilder) {
@@ -118,8 +125,12 @@ fn evm_transact_inner(
     value: U256,
     data: Vec<u8>,
 ) -> SafeNativeResult<SmallVec<[Value; 1]>> {
-    // TODO: does it make sense for EVM gas to be 1:1 with MoveVM gas?
-    let gas_limit: u64 = context.gas_balance().into();
+    let gas_limit: u64 = {
+        let internal_units: u64 = context.gas_balance().into();
+        internal_units
+            .saturating_div(EVM_SCALE_FACTOR)
+            .saturating_add(EVM_BASE_GAS)
+    };
 
     let evm_native_ctx = context.extensions_mut().get_mut::<NativeEVMContext>();
     evm_native_ctx
@@ -265,11 +276,14 @@ impl EvmGasUsed {
 }
 
 impl<Env> GasExpression<Env> for EvmGasUsed {
-    // TODO: does it make sense for EVM gas to be 1:1 with MoveVM gas?
     type Unit = InternalGasUnit;
 
     fn evaluate(&self, _feature_version: u64, _env: &Env) -> GasQuantity<Self::Unit> {
-        GasQuantity::new(self.amount)
+        GasQuantity::new(
+            self.amount
+                .saturating_sub(EVM_BASE_GAS)
+                .saturating_mul(EVM_SCALE_FACTOR),
+        )
     }
 
     fn visit(&self, visitor: &mut impl aptos_gas_algebra::GasExpressionVisitor) {

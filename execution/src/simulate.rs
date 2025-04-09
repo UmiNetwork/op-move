@@ -58,7 +58,7 @@ pub fn simulate_transaction(
         state,
         storage_trie,
         genesis_config,
-        l1_cost: 0,
+        l1_cost: U256::ONE,
         l2_fee,
         l2_input,
         base_token,
@@ -81,7 +81,7 @@ pub fn call_transaction(
     }
     let tx_data = TransactionData::parse_from(&tx)?;
 
-    let moved_vm = MovedVm::default();
+    let moved_vm = MovedVm::new(genesis_config);
     let vm = moved_vm.create_move_vm()?;
     let module_storage_bytes = ResolverBasedModuleBytesStorage::new(state);
     let code_storage = module_storage_bytes.as_unsync_code_storage(&moved_vm);
@@ -97,8 +97,8 @@ pub fn call_transaction(
         traversal_context: &mut traversal_context,
         gas_meter: &mut gas_meter,
         genesis_config,
-        l1_cost: 0,
-        l2_cost: 0,
+        l1_cost: U256::ZERO,
+        l2_cost: U256::ZERO,
         base_token,
         module_storage: &code_storage,
     };

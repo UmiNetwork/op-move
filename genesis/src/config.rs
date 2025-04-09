@@ -1,8 +1,9 @@
 use {
     alloy::{genesis::Genesis, primitives::hex},
-    aptos_gas_schedule::{InitialGasSchedule, VMGasParameters},
+    aptos_gas_schedule::{InitialGasSchedule, NativeGasParameters, VMGasParameters},
     aptos_vm_types::storage::StorageGasParameters,
-    move_core_types::account_address::AccountAddress,
+    move_core_types::{account_address::AccountAddress, gas_algebra::GasQuantity},
+    moved_evm_ext::EVM_SCALE_FACTOR,
     moved_shared::primitives::B256,
 };
 
@@ -14,6 +15,8 @@ const DEFAULT_L2_CONTRACT_GENESIS: &str =
 pub struct GasCosts {
     pub vm: VMGasParameters,
     pub storage: StorageGasParameters,
+    pub natives: NativeGasParameters,
+
     pub version: u64,
 }
 
@@ -28,11 +31,16 @@ pub struct GenesisConfig {
 
 impl Default for GasCosts {
     fn default() -> Self {
-        Self {
+        let mut result = Self {
             vm: VMGasParameters::initial(),
             storage: StorageGasParameters::latest(),
+            natives: NativeGasParameters::initial(),
             version: aptos_gas_schedule::LATEST_GAS_FEATURE_VERSION,
-        }
+        };
+        // We're setting the scale factor lower than Aptos because we want
+        // our gas costs to align with expected values for EVM chains.
+        result.vm.txn.gas_unit_scaling_factor = GasQuantity::new(EVM_SCALE_FACTOR);
+        result
     }
 }
 

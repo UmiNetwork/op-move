@@ -523,7 +523,7 @@ mod tests {
             ),
         ];
 
-        let moved_vm = MovedVm::default();
+        let moved_vm = MovedVm::new(&Default::default());
         let vm = moved_vm.create_move_vm().unwrap();
         let state = InMemoryState::new();
         let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
@@ -610,7 +610,7 @@ mod tests {
             ),
         ];
 
-        let moved_vm = MovedVm::default();
+        let moved_vm = MovedVm::new(&Default::default());
         let vm = moved_vm.create_move_vm().unwrap();
         let state = InMemoryState::new();
         let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());

@@ -118,7 +118,7 @@ fn mint_eth(
     addr: AccountAddress,
     amount: U256,
 ) -> ChangeSet {
-    let moved_vm = MovedVm::default();
+    let moved_vm = MovedVm::new(&Default::default());
     let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
     let code_storage = module_bytes_storage.as_unsync_code_storage(&moved_vm);
     let vm = moved_vm.create_move_vm().unwrap();

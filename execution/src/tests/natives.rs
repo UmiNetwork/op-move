@@ -19,7 +19,7 @@ fn test_execute_tables_contract() {
     let mut ctx = TestContext::new();
     let module_id = ctx.deploy_contract("tables");
 
-    let moved_vm = MovedVm::default();
+    let moved_vm = MovedVm::new(&ctx.genesis_config);
     let module_bytes_storage = ResolverBasedModuleBytesStorage::new(ctx.state.resolver());
     let code_storage = module_bytes_storage.as_unsync_code_storage(&moved_vm);
     let vm = moved_vm.create_move_vm().unwrap();

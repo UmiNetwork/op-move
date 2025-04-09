@@ -431,7 +431,7 @@ mod tests {
 
     fn mint_one_eth(state: &mut impl State, addr: AccountAddress) -> ChangeSet {
         let evm_storage = InMemoryStorageTrieRepository::new();
-        let moved_vm = MovedVm::default();
+        let moved_vm = MovedVm::new(&Default::default());
         let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
         let code_storage = module_bytes_storage.as_unsync_code_storage(&moved_vm);
         let vm = moved_vm.create_move_vm().unwrap();
@@ -620,7 +620,7 @@ mod tests {
 
     fn inc_one_nonce(old_nonce: u64, state: &mut impl State, addr: AccountAddress) -> ChangeSet {
         let evm_storage = InMemoryStorageTrieRepository::new();
-        let moved_vm = MovedVm::default();
+        let moved_vm = MovedVm::new(&Default::default());
         let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
         let code_storage = module_bytes_storage.as_unsync_code_storage(&moved_vm);
         let vm = moved_vm.create_move_vm().unwrap();

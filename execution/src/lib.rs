@@ -1,4 +1,5 @@
 pub use {
+    alloy::primitives::U256,
     eth_token::{BaseTokenAccounts, MovedBaseTokenAccounts, mint_eth, quick_get_eth_balance},
     gas::{
         CreateEcotoneL1GasFee, CreateL1GasFee, CreateL2GasFee, CreateMovedL2GasFee, EcotoneGasFee,
@@ -133,7 +134,7 @@ pub struct CanonicalExecutionInput<'input, S, ST, F, B> {
     pub state: &'input S,
     pub storage_trie: &'input ST,
     pub genesis_config: &'input GenesisConfig,
-    pub l1_cost: u64,
+    pub l1_cost: U256,
     pub l2_fee: F,
     pub l2_input: L2GasFeeInput,
     pub base_token: &'input B,
