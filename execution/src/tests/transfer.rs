@@ -73,8 +73,9 @@ fn test_initiate_withdrawal_zero_balance() {
     );
 
     let transaction = TestTransaction::new(tx, tx_hash);
-    let err = ctx.execute_tx(&transaction).unwrap_err();
-    assert!(err.to_string().contains("VMError with status ABORTED"));
+    let outcome = ctx.execute_tx(&transaction).unwrap();
+    let err = outcome.vm_outcome.unwrap_err();
+    assert!(err.to_string().contains("ABORTED"));
 }
 
 #[test]
@@ -119,13 +120,13 @@ fn test_eoa_base_token_transfer() {
     let receiver = ALT_EVM_ADDRESS;
     let transfer_amount = mint_amount.saturating_add(U256::from(1));
     // Still need to set gas limit for proper functioning of the gas meter
-    let outcome = ctx.transfer(receiver, transfer_amount, 0, 100, U256::ZERO);
+    let outcome = ctx.transfer(receiver, transfer_amount, 0, u64::MAX, U256::ZERO);
     assert!(outcome.unwrap().vm_outcome.is_err());
 
     // Should work with proper transfer
     let transfer_amount = mint_amount.wrapping_shr(1);
     // Still need to set gas limit for proper functioning of the gas meter
-    let outcome = ctx.transfer(receiver, transfer_amount, 0, 100, U256::ZERO);
+    let outcome = ctx.transfer(receiver, transfer_amount, 0, u64::MAX, U256::ZERO);
     assert!(outcome.unwrap().vm_outcome.is_ok());
 
     let sender_balance = ctx.get_balance(sender);

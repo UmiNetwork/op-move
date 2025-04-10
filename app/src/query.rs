@@ -94,7 +94,10 @@ impl<D: Dependencies> Application<D> {
             block_height,
         );
 
-        outcome.map(|outcome| outcome.gas_used)
+        outcome.map(|outcome| {
+            // Add 33% extra gas as a buffer.
+            outcome.gas_used + (outcome.gas_used / 3)
+        })
     }
 
     pub fn call(&self, transaction: TransactionRequest) -> Result<Vec<u8>> {

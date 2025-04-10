@@ -2,7 +2,7 @@ pub use self::{
     native_evm_context::{
         FRAMEWORK_ADDRESS, HeaderForExecution, NativeEVMContext, ResolverBackedDB,
     },
-    native_impl::{EVM_CALL_FN_NAME, EVM_SCALE_FACTOR, append_evm_natives},
+    native_impl::{EVM_CALL_FN_NAME, append_evm_natives},
     state_changes::{Changes, extract_evm_changes, genesis_state_changes},
     type_utils::extract_evm_result,
 };

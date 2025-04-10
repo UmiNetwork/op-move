@@ -3,13 +3,26 @@ use {
     aptos_gas_schedule::{InitialGasSchedule, NativeGasParameters, VMGasParameters},
     aptos_vm_types::storage::StorageGasParameters,
     move_core_types::{account_address::AccountAddress, gas_algebra::GasQuantity},
-    moved_evm_ext::EVM_SCALE_FACTOR,
     moved_shared::primitives::B256,
 };
 
 pub const CHAIN_ID: u64 = 404;
 const DEFAULT_L2_CONTRACT_GENESIS: &str =
     include_str!("../../execution/src/tests/res/l2_genesis_tests.json");
+
+// We're setting the scale factor lower than Aptos because we want
+// our gas costs to align with expected values for EVM chains.
+// For example, a simple token transfer should be around 21_000 gas.
+const EXTERNAL_GAS_SCALE_FACTOR: u64 = 600;
+
+// If we spend around 10k internal gas units per ms of computation
+// as the Aptos code comments suggest
+// (https://github.com/aptos-labs/aptos-core/blob/aptos-node-v1.27.2/aptos-move/aptos-gas-schedule/src/gas_schedule/transaction.rs#L212)
+// then this is around 5 minutes worth of computation.
+// However, with the current EVM conversion of 600 internal gas units
+// per EVM gas unit, this is only 167 ms of computation.
+// I'm not sure which is right, benchmarks are needed.
+const INTERNAL_EXECUTION_LIMIT: u64 = 3_000_000_000;
 
 #[derive(Debug, Clone)]
 pub struct GasCosts {
@@ -37,9 +50,8 @@ impl Default for GasCosts {
             natives: NativeGasParameters::initial(),
             version: aptos_gas_schedule::LATEST_GAS_FEATURE_VERSION,
         };
-        // We're setting the scale factor lower than Aptos because we want
-        // our gas costs to align with expected values for EVM chains.
-        result.vm.txn.gas_unit_scaling_factor = GasQuantity::new(EVM_SCALE_FACTOR);
+        result.vm.txn.gas_unit_scaling_factor = GasQuantity::new(EXTERNAL_GAS_SCALE_FACTOR);
+        result.vm.txn.max_execution_gas = GasQuantity::new(INTERNAL_EXECUTION_LIMIT);
         result
     }
 }

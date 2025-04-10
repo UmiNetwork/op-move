@@ -207,19 +207,19 @@ pub(super) fn execute_canonical_transaction<
                 &code_storage,
             )
         }
-        TransactionData::L2Contract(contract) => {
-            evm_logs = execute_l2_contract(
-                &sender_move_address,
-                &contract.to_move_address(),
-                input.tx.value,
-                input.tx.data.to_vec(),
-                verify_input.session,
-                verify_input.traversal_context,
-                verify_input.gas_meter,
-                &code_storage,
-            )?;
-            Ok(())
-        }
+        TransactionData::L2Contract(contract) => execute_l2_contract(
+            &sender_move_address,
+            &contract.to_move_address(),
+            input.tx.value,
+            input.tx.data.to_vec(),
+            verify_input.session,
+            verify_input.traversal_context,
+            verify_input.gas_meter,
+            &code_storage,
+        )
+        .map(|mut logs| {
+            evm_logs.append(&mut logs);
+        }),
     };
 
     let vm_outcome = vm_outcome.and_then(|_| {
