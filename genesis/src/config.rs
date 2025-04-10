@@ -24,6 +24,12 @@ const EXTERNAL_GAS_SCALE_FACTOR: u64 = 600;
 // I'm not sure which is right, benchmarks are needed.
 const INTERNAL_EXECUTION_LIMIT: u64 = 3_000_000_000;
 
+// This is the amount of gas we charge to validate a transaction and thus
+// is the minimum amount of gas a transaction must attach to be executed.
+// Note: this is in internal gas units; the external gas units value is
+// obtained by dividing this value by the `EXTERNAL_GAS_SCALE_FACTOR`.
+const TRANSACTION_BASE_COST: u64 = 11_400_000;
+
 #[derive(Debug, Clone)]
 pub struct GasCosts {
     pub vm: VMGasParameters,
@@ -52,6 +58,7 @@ impl Default for GasCosts {
         };
         result.vm.txn.gas_unit_scaling_factor = GasQuantity::new(EXTERNAL_GAS_SCALE_FACTOR);
         result.vm.txn.max_execution_gas = GasQuantity::new(INTERNAL_EXECUTION_LIMIT);
+        result.vm.txn.min_transaction_gas_units = GasQuantity::new(TRANSACTION_BASE_COST);
         result
     }
 }

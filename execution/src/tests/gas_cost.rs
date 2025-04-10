@@ -110,7 +110,7 @@ fn test_very_low_gas_limit_makes_tx_invalid() {
         matches!(
             err,
             moved_shared::error::Error::InvalidTransaction(
-                moved_shared::error::InvalidTransactionCause::FailedToPayL1Fee
+                moved_shared::error::InvalidTransactionCause::InsufficientIntrinsicGas
             )
         ),
         "Unexpected err {err:?}"

@@ -20,7 +20,7 @@ use {
         module_traversal::{TraversalContext, TraversalStorage},
         session::Session,
     },
-    move_vm_types::resolver::MoveResolver,
+    move_vm_types::{gas::UnmeteredGasMeter, resolver::MoveResolver},
     moved_evm_ext::{events::EthTransfersLogger, state::StorageTrieRepository},
     moved_genesis::{CreateMoveVm, MovedVm, config::GenesisConfig},
     moved_shared::{
@@ -69,6 +69,10 @@ pub(super) fn verify_transaction<B: BaseTokenAccounts, MS: ModuleStorage>(
         ));
     }
 
+    // We use the no-op gas meter for the fee-charging operations because
+    // the gas they would consume was already paid in the intrinsic gas above.
+    let mut noop_meter = UnmeteredGasMeter;
+
     input
         .base_token
         .charge_gas_cost(
@@ -76,7 +80,7 @@ pub(super) fn verify_transaction<B: BaseTokenAccounts, MS: ModuleStorage>(
             input.l1_cost,
             input.session,
             input.traversal_context,
-            input.gas_meter,
+            &mut noop_meter,
             input.module_storage,
         )
         .map_err(|_| InvalidTransaction(InvalidTransactionCause::FailedToPayL1Fee))?;
@@ -88,7 +92,7 @@ pub(super) fn verify_transaction<B: BaseTokenAccounts, MS: ModuleStorage>(
             input.l2_cost,
             input.session,
             input.traversal_context,
-            input.gas_meter,
+            &mut noop_meter,
             input.module_storage,
         )
         .map_err(|_| InvalidTransaction(InvalidTransactionCause::FailedToPayL2Fee))?;
@@ -98,7 +102,7 @@ pub(super) fn verify_transaction<B: BaseTokenAccounts, MS: ModuleStorage>(
         &sender_move_address,
         input.session,
         input.traversal_context,
-        input.gas_meter,
+        &mut noop_meter,
         input.module_storage,
     )?;
 
