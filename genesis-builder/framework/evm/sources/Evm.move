@@ -33,19 +33,23 @@ module Evm::evm {
         logs: vector<EvmLog>
     }
 
-    // Marker byte size structs
+    /// Marker struct for 0 in binary.
+    struct B0 {}
+
+    /// Marker struct for 1 in binary.
     struct B1 {}
-    struct B2 {}
-    struct B4 {}
-    struct B8 {}
-    struct B16 {}
-    struct B20 {}
-    struct B32 {}
+
+    /// Marker struct to encode all byte sizes between 1 and 32 for 
+    /// use in the fixed bytes type representation at the type level. The encoding is 
+    /// binary and uses `B0` and `B1` as its type parameters. The actual
+    /// size is also 1 bigger than the U5 instance, i.e. 11111 in binary stands 
+    /// for 32 in decimal.
+    struct U5<phantom A, phantom B, phantom C, phantom D, phantom E> {}
 
     /// Mark a byte array as being of fixed length for the purpose
     /// of encoding it into the Solidity ABI.
     struct SolidityFixedBytes<phantom S> has drop {
-        data: vector<u8>,
+        data: vector<u8>
     }
 
     /// Mark a collection of values as being of fixed length for the purpose
@@ -54,13 +58,60 @@ module Evm::evm {
         elements: vector<T>
     }
 
-    public fun as_fixed_bytes<S>(data: vector<u8>): SolidityFixedBytes<S> {
+    /// The constructor function for `SolidityFixedBytes`.
+    ///
+    /// Refer to the U5 docstring for the five generic parameters explanation. While these type
+    /// parameters are meant to be exclusively B0 or B1 marker structs defined above, due
+    /// to limitations of the Move language this cannot be enforced. 
+    ///
+    /// However, the native implementations of `abi_decode_params()` and `abi_encode_params()`
+    /// will treat any other type in type argument position as B1 and only B0 itself will map to B0.
+    ///
+    /// For user convenience, non-generic wrappers for the most common fixed bytes type
+    /// sizes are also provided in this module.
+    public fun as_fixed_bytes<A, B, C, D, E>(data: vector<u8>):
+        SolidityFixedBytes<U5<A, B, C, D, E>> {
         let actual_size = std::vector::length(&data);
 
         // Solidity ABI always pads fixed bytes to 32 bytes
         assert!(actual_size == 32, error::invalid_argument(EINVALID_FIXED_BYTES_SIZE));
-    
-        SolidityFixedBytes<S> { data }
+
+        SolidityFixedBytes<U5<A, B, C, D, E>> { data }
+    }
+
+    /// Specialized convenience function to mark ABI-encoded bytes as bytes1 in Solidity.
+    public fun as_fixed_bytes_1(data: vector<u8>): SolidityFixedBytes<U5<B0, B0, B0, B0, B0>> {
+        as_fixed_bytes<B0, B0, B0, B0, B0>(data)
+    }
+
+    /// Specialized convenience function to mark ABI-encoded bytes as bytes2 in Solidity.
+    public fun as_fixed_bytes_2(data: vector<u8>): SolidityFixedBytes<U5<B0, B0, B0, B0, B1>> {
+        as_fixed_bytes<B0, B0, B0, B0, B1>(data)
+    }
+
+    /// Specialized convenience function to mark ABI-encoded bytes as bytes4 in Solidity.
+    public fun as_fixed_bytes_4(data: vector<u8>): SolidityFixedBytes<U5<B0, B0, B0, B1, B1>> {
+        as_fixed_bytes<B0, B0, B0, B1, B1>(data)
+    }
+
+    /// Specialized convenience function to mark ABI-encoded bytes as bytes8 in Solidity.
+    public fun as_fixed_bytes_8(data: vector<u8>): SolidityFixedBytes<U5<B0, B0, B1, B1, B1>> {
+        as_fixed_bytes<B0, B0, B1, B1, B1>(data)
+    }
+
+    /// Specialized convenience function to mark ABI-encoded bytes as bytes16 in Solidity.
+    public fun as_fixed_bytes_16(data: vector<u8>): SolidityFixedBytes<U5<B0, B1, B1, B1, B1>> {
+        as_fixed_bytes<B0, B1, B1, B1, B1>(data)
+    }
+
+    /// Specialized convenience function to mark ABI-encoded bytes as bytes20 in Solidity.
+    public fun as_fixed_bytes_20(data: vector<u8>): SolidityFixedBytes<U5<B1, B0, B0, B1, B1>> {
+        as_fixed_bytes<B1, B0, B0, B1, B1>(data)
+    }
+
+    /// Specialized convenience function to mark ABI-encoded bytes as bytes32 in Solidity.
+    public fun as_fixed_bytes_32(data: vector<u8>): SolidityFixedBytes<U5<B1, B1, B1, B1, B1>> {
+        as_fixed_bytes<B1, B1, B1, B1, B1>(data)
     }
 
     public fun as_fixed_array<T>(elements: vector<T>): SolidityFixedArray<T> {
@@ -141,13 +192,19 @@ module Evm::evm {
     // A private function used by the system to call the EVM native.
     // (For some reason we cannot call the native function directly)
     fun system_evm_call(
-        caller: address, to: address, value: u256, data: vector<u8>
+        caller: address,
+        to: address,
+        value: u256,
+        data: vector<u8>
     ): EvmResult {
         native_evm_call(caller, to, value, data)
     }
 
     native fun native_evm_call(
-        caller: address, to: address, value: u256, data: vector<u8>
+        caller: address,
+        to: address,
+        value: u256,
+        data: vector<u8>
     ): EvmResult;
     native fun native_evm_create(
         caller: address, value: u256, data: vector<u8>
