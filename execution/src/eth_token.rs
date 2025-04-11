@@ -43,7 +43,7 @@ pub trait BaseTokenAccounts {
     fn charge_gas_cost<G: GasMeter, MS: ModuleStorage>(
         &self,
         from: &AccountAddress,
-        amount: u64,
+        amount: U256,
         session: &mut Session,
         traversal_context: &mut TraversalContext,
         gas_meter: &mut G,
@@ -53,7 +53,7 @@ pub trait BaseTokenAccounts {
     fn refund_gas_cost(
         &self,
         to: &AccountAddress,
-        amount: u64,
+        amount: U256,
         session: &mut Session,
         traversal_context: &mut TraversalContext,
         module_storage: &impl ModuleStorage,
@@ -84,7 +84,7 @@ impl BaseTokenAccounts for MovedBaseTokenAccounts {
     fn charge_gas_cost<G: GasMeter, MS: ModuleStorage>(
         &self,
         from: &AccountAddress,
-        amount: u64,
+        amount: U256,
         session: &mut Session,
         traversal_context: &mut TraversalContext,
         gas_meter: &mut G,
@@ -94,7 +94,7 @@ impl BaseTokenAccounts for MovedBaseTokenAccounts {
             TransferArgs {
                 from,
                 to: &self.eth_treasury,
-                amount: U256::from(amount),
+                amount,
             },
             session,
             traversal_context,
@@ -106,7 +106,7 @@ impl BaseTokenAccounts for MovedBaseTokenAccounts {
     fn refund_gas_cost(
         &self,
         to: &AccountAddress,
-        amount: u64,
+        amount: U256,
         session: &mut Session,
         traversal_context: &mut TraversalContext,
         module_storage: &impl ModuleStorage,
@@ -116,7 +116,7 @@ impl BaseTokenAccounts for MovedBaseTokenAccounts {
             TransferArgs {
                 from: &self.eth_treasury,
                 to,
-                amount: U256::from(amount),
+                amount,
             },
             session,
             traversal_context,
@@ -361,7 +361,7 @@ pub fn quick_get_eth_balance(
     state: &(impl MoveResolver + TableResolver),
     storage_trie: &impl StorageTrieRepository,
 ) -> U256 {
-    let moved_vm = MovedVm::default();
+    let moved_vm = MovedVm::new(&Default::default());
     let vm = moved_vm.create_move_vm().unwrap();
     let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state);
     let code_storage = module_bytes_storage.as_unsync_code_storage(&moved_vm);
@@ -387,7 +387,7 @@ mod tests {
         fn charge_gas_cost<G: GasMeter, MS: ModuleStorage>(
             &self,
             _from: &AccountAddress,
-            _amount: u64,
+            _amount: U256,
             _session: &mut Session,
             _traversal_context: &mut TraversalContext,
             _gas_meter: &mut G,
@@ -410,7 +410,7 @@ mod tests {
         fn refund_gas_cost(
             &self,
             _to: &AccountAddress,
-            _amount: u64,
+            _amount: U256,
             _session: &mut Session,
             _traversal_context: &mut TraversalContext,
             _module_storage: &impl ModuleStorage,

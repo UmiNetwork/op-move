@@ -23,7 +23,7 @@ use {
     },
     moved_shared::{
         error::Error::{InvalidTransaction, InvariantViolation, User},
-        primitives::{B256, ToEthAddress, ToSaturatedU64, U64, U256},
+        primitives::{B256, ToEthAddress, U64, U256},
     },
     moved_state::State,
     op_alloy::consensus::OpTxEnvelope,
@@ -185,7 +185,7 @@ impl<D: Dependencies> Application<D> {
             .peek()
             .and_then(|(_, v, _)| v.as_deposited())
             .map(|tx| self.l1_fee.for_deposit(tx.data.as_ref()));
-        let l2_fee = self.l2_fee.with_gas_fee_multiplier(U256::from(1));
+        let l2_fee = self.l2_fee.with_default_gas_fee_multiplier();
 
         // TODO: parallel transaction processing?
         for (tx_hash, tx, l1_cost_input) in transactions {
@@ -208,8 +208,8 @@ impl<D: Dependencies> Application<D> {
                     genesis_config: &self.genesis_config,
                     l1_cost: l1_fee
                         .as_ref()
-                        .map(|v| v.l1_fee(l1_cost_input.clone()).to_saturated_u64())
-                        .unwrap_or(0),
+                        .map(|v| v.l1_fee(l1_cost_input.clone()))
+                        .unwrap_or(U256::ZERO),
                     l2_fee: l2_fee.clone(),
                     l2_input: l2_gas_input,
                     base_token: &self.base_token,

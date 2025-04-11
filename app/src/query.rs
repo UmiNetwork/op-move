@@ -85,7 +85,6 @@ impl<D: Dependencies> Application<D> {
             Finalized | Pending | Latest | Safe => self.height,
             Earliest => 0,
         };
-        // TODO: simulation should account for gas from non-zero L1 fee
         let outcome = simulate_transaction(
             transaction,
             self.state.resolver(),
@@ -95,7 +94,10 @@ impl<D: Dependencies> Application<D> {
             block_height,
         );
 
-        outcome.map(|outcome| 1000 * outcome.gas_used)
+        outcome.map(|outcome| {
+            // Add 33% extra gas as a buffer.
+            outcome.gas_used + (outcome.gas_used / 3)
+        })
     }
 
     pub fn call(&self, transaction: TransactionRequest) -> Result<Vec<u8>> {

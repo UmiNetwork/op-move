@@ -1,8 +1,8 @@
 use {
     alloy::{genesis::Genesis, primitives::hex},
-    aptos_gas_schedule::{InitialGasSchedule, VMGasParameters},
+    aptos_gas_schedule::{InitialGasSchedule, NativeGasParameters, VMGasParameters},
     aptos_vm_types::storage::StorageGasParameters,
-    move_core_types::account_address::AccountAddress,
+    move_core_types::{account_address::AccountAddress, gas_algebra::GasQuantity},
     moved_shared::primitives::B256,
 };
 
@@ -10,10 +10,32 @@ pub const CHAIN_ID: u64 = 404;
 const DEFAULT_L2_CONTRACT_GENESIS: &str =
     include_str!("../../execution/src/tests/res/l2_genesis_tests.json");
 
+// We're setting the scale factor lower than Aptos because we want
+// our gas costs to align with expected values for EVM chains.
+// For example, a simple token transfer should be around 21_000 gas.
+const EXTERNAL_GAS_SCALE_FACTOR: u64 = 600;
+
+// If we spend around 10k internal gas units per ms of computation
+// as the Aptos code comments suggest
+// (https://github.com/aptos-labs/aptos-core/blob/aptos-node-v1.27.2/aptos-move/aptos-gas-schedule/src/gas_schedule/transaction.rs#L212)
+// then this is around 5 minutes worth of computation.
+// However, with the current EVM conversion of 600 internal gas units
+// per EVM gas unit, this is only 167 ms of computation.
+// I'm not sure which is right, benchmarks are needed.
+const INTERNAL_EXECUTION_LIMIT: u64 = 3_000_000_000;
+
+// This is the amount of gas we charge to validate a transaction and thus
+// is the minimum amount of gas a transaction must attach to be executed.
+// Note: this is in internal gas units; the external gas units value is
+// obtained by dividing this value by the `EXTERNAL_GAS_SCALE_FACTOR`.
+const TRANSACTION_BASE_COST: u64 = 11_400_000;
+
 #[derive(Debug, Clone)]
 pub struct GasCosts {
     pub vm: VMGasParameters,
     pub storage: StorageGasParameters,
+    pub natives: NativeGasParameters,
+
     pub version: u64,
 }
 
@@ -28,11 +50,16 @@ pub struct GenesisConfig {
 
 impl Default for GasCosts {
     fn default() -> Self {
-        Self {
+        let mut result = Self {
             vm: VMGasParameters::initial(),
             storage: StorageGasParameters::latest(),
+            natives: NativeGasParameters::initial(),
             version: aptos_gas_schedule::LATEST_GAS_FEATURE_VERSION,
-        }
+        };
+        result.vm.txn.gas_unit_scaling_factor = GasQuantity::new(EXTERNAL_GAS_SCALE_FACTOR);
+        result.vm.txn.max_execution_gas = GasQuantity::new(INTERNAL_EXECUTION_LIMIT);
+        result.vm.txn.min_transaction_gas_units = GasQuantity::new(TRANSACTION_BASE_COST);
+        result
     }
 }
 

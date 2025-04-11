@@ -32,7 +32,7 @@ pub(super) fn execute_deposited_transaction<
 >(
     input: DepositExecutionInput<S, ST>,
 ) -> moved_shared::error::Result<TransactionExecutionOutcome> {
-    let moved_vm = MovedVm::default();
+    let moved_vm = MovedVm::new(input.genesis_config);
     let module_bytes_storage = ResolverBasedModuleBytesStorage::new(input.state);
     let code_storage = module_bytes_storage.as_unsync_code_storage(&moved_vm);
     let vm = moved_vm.create_move_vm()?;

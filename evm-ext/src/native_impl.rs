@@ -36,6 +36,25 @@ use {
 
 pub const EVM_CALL_FN_NAME: &IdentStr = ident_str!("system_evm_call");
 
+// Scale factor relating EVM gas units to MoveVM internal gas units.
+// We make the following assumptions:
+// 1s CPU time ~ 30M EVM gas (based on
+// https://ethereum.stackexchange.com/questions/127852/what-is-the-maximum-amount-of-gas-the-ethereum-virtual-machine-can-handle)
+// 1s CPU time ~ 10M Move Internal Gas units (based on comments in the Aptos code:
+// https://github.com/aptos-labs/aptos-core/blob/aptos-node-v1.27.2/aptos-move/aptos-gas-schedule/src/gas_schedule/transaction.rs#L212)
+// This implies 1 IG ~ 3 E.
+// But this seems much too optimistic given that the scale factor needed to make the
+// MoveVM gas values look like EVM ones (i.e. a transfer transaction costs around 21_000)
+// is 600. EVM gas should be 1:1 with this external gas number since the external
+// gas is meant to look like EVM numbers. So we'll instead use the conversion that
+// 600 IG ~ 1 E (which is 1800x different from the timing-based conversion).
+const EVM_SCALE_FACTOR: u64 = 600;
+// Amount of EVM gas charged on all EVM transactions.
+// This amount is ignored when converting to/from MoveVM internal gas units
+// because we do not need to do any signature or nonce checks to start an EVM
+// transaction in our case; that was already done by Move.
+const EVM_BASE_GAS: u64 = 21_000;
+
 pub fn append_evm_natives(natives: &mut NativeFunctionTable, builder: &SafeNativeBuilder) {
     type NativeFn = fn(
         &mut SafeNativeContext,
@@ -118,8 +137,12 @@ fn evm_transact_inner(
     value: U256,
     data: Vec<u8>,
 ) -> SafeNativeResult<SmallVec<[Value; 1]>> {
-    // TODO: does it make sense for EVM gas to be 1:1 with MoveVM gas?
-    let gas_limit: u64 = context.gas_balance().into();
+    let gas_limit: u64 = {
+        let internal_units: u64 = context.gas_balance().into();
+        internal_units
+            .saturating_div(EVM_SCALE_FACTOR)
+            .saturating_add(EVM_BASE_GAS)
+    };
 
     let evm_native_ctx = context.extensions_mut().get_mut::<NativeEVMContext>();
     evm_native_ctx
@@ -265,11 +288,14 @@ impl EvmGasUsed {
 }
 
 impl<Env> GasExpression<Env> for EvmGasUsed {
-    // TODO: does it make sense for EVM gas to be 1:1 with MoveVM gas?
     type Unit = InternalGasUnit;
 
     fn evaluate(&self, _feature_version: u64, _env: &Env) -> GasQuantity<Self::Unit> {
-        GasQuantity::new(self.amount)
+        GasQuantity::new(
+            self.amount
+                .saturating_sub(EVM_BASE_GAS)
+                .saturating_mul(EVM_SCALE_FACTOR),
+        )
     }
 
     fn visit(&self, visitor: &mut impl aptos_gas_algebra::GasExpressionVisitor) {

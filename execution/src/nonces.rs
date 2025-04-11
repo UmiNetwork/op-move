@@ -33,7 +33,7 @@ pub fn quick_get_nonce(
     state: &(impl MoveResolver + TableResolver),
     storage_trie: &impl StorageTrieRepository,
 ) -> u64 {
-    let moved_vm = MovedVm::default();
+    let moved_vm = MovedVm::new(&Default::default());
     let module_storage_bytes = ResolverBasedModuleBytesStorage::new(state);
     let code_storage = module_storage_bytes.as_unsync_code_storage(&moved_vm);
     let vm = moved_vm.create_move_vm().expect("Must create MoveVM");

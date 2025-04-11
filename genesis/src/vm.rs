@@ -1,6 +1,5 @@
 use {
-    crate::framework::CreateMoveVm,
-    aptos_gas_schedule::{LATEST_GAS_FEATURE_VERSION, MiscGasParameters, NativeGasParameters},
+    crate::{config::GenesisConfig, framework::CreateMoveVm},
     aptos_native_interface::SafeNativeBuilder,
     aptos_types::on_chain_config::{Features, TimedFeaturesBuilder},
     aptos_vm_environment::natives::aptos_natives_with_builder,
@@ -15,11 +14,11 @@ pub struct MovedVm {
 }
 
 impl MovedVm {
-    pub fn new() -> Self {
+    pub fn new(config: &GenesisConfig) -> Self {
         let mut builder = SafeNativeBuilder::new(
-            LATEST_GAS_FEATURE_VERSION,
-            NativeGasParameters::zeros(),
-            MiscGasParameters::zeros(),
+            config.gas_costs.version,
+            config.gas_costs.natives.clone(),
+            config.gas_costs.vm.misc.clone(),
             TimedFeaturesBuilder::enable_all().build(),
             Features::default(),
             None,
@@ -34,12 +33,6 @@ impl MovedVm {
         };
         let env = RuntimeEnvironment::new_with_config(natives, config);
         Self { env }
-    }
-}
-
-impl Default for MovedVm {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

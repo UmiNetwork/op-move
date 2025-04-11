@@ -12,6 +12,7 @@ use {
             TransactionExecutionOutcome,
         },
     },
+    alloy::primitives::U256,
     aptos_gas_meter::{AptosGasMeter, StandardGasAlgebra, StandardGasMeter},
     aptos_table_natives::TableResolver,
     move_vm_runtime::{
@@ -19,7 +20,7 @@ use {
         module_traversal::{TraversalContext, TraversalStorage},
         session::Session,
     },
-    move_vm_types::resolver::MoveResolver,
+    move_vm_types::{gas::UnmeteredGasMeter, resolver::MoveResolver},
     moved_evm_ext::{events::EthTransfersLogger, state::StorageTrieRepository},
     moved_genesis::{CreateMoveVm, MovedVm, config::GenesisConfig},
     moved_shared::{
@@ -27,7 +28,7 @@ use {
             Error::{InvalidTransaction, User},
             EthToken, InvalidTransactionCause, InvariantViolation,
         },
-        primitives::{ToMoveAddress, ToSaturatedU64},
+        primitives::ToMoveAddress,
     },
     moved_state::ResolverBasedModuleBytesStorage,
 };
@@ -38,8 +39,8 @@ pub struct CanonicalVerificationInput<'input, 'r, 'l, B, MS> {
     pub traversal_context: &'input mut TraversalContext<'input>,
     pub gas_meter: &'input mut StandardGasMeter<StandardGasAlgebra>,
     pub genesis_config: &'input GenesisConfig,
-    pub l1_cost: u64,
-    pub l2_cost: u64,
+    pub l1_cost: U256,
+    pub l2_cost: U256,
     pub base_token: &'input B,
     pub module_storage: &'input MS,
 }
@@ -68,6 +69,10 @@ pub(super) fn verify_transaction<B: BaseTokenAccounts, MS: ModuleStorage>(
         ));
     }
 
+    // We use the no-op gas meter for the fee-charging operations because
+    // the gas they would consume was already paid in the intrinsic gas above.
+    let mut noop_meter = UnmeteredGasMeter;
+
     input
         .base_token
         .charge_gas_cost(
@@ -75,7 +80,7 @@ pub(super) fn verify_transaction<B: BaseTokenAccounts, MS: ModuleStorage>(
             input.l1_cost,
             input.session,
             input.traversal_context,
-            input.gas_meter,
+            &mut noop_meter,
             input.module_storage,
         )
         .map_err(|_| InvalidTransaction(InvalidTransactionCause::FailedToPayL1Fee))?;
@@ -87,7 +92,7 @@ pub(super) fn verify_transaction<B: BaseTokenAccounts, MS: ModuleStorage>(
             input.l2_cost,
             input.session,
             input.traversal_context,
-            input.gas_meter,
+            &mut noop_meter,
             input.module_storage,
         )
         .map_err(|_| InvalidTransaction(InvalidTransactionCause::FailedToPayL2Fee))?;
@@ -97,7 +102,7 @@ pub(super) fn verify_transaction<B: BaseTokenAccounts, MS: ModuleStorage>(
         &sender_move_address,
         input.session,
         input.traversal_context,
-        input.gas_meter,
+        &mut noop_meter,
         input.module_storage,
     )?;
 
@@ -116,8 +121,9 @@ pub(super) fn execute_canonical_transaction<
 
     let tx_data = TransactionData::parse_from(input.tx)?;
 
-    let moved_vm = MovedVm::default();
-    let module_bytes_storage = ResolverBasedModuleBytesStorage::new(input.state);
+    let moved_vm = MovedVm::new(input.genesis_config);
+    let module_bytes_storage: ResolverBasedModuleBytesStorage<'_, S> =
+        ResolverBasedModuleBytesStorage::new(input.state);
     let code_storage = module_bytes_storage.as_unsync_code_storage(&moved_vm);
     let vm = moved_vm.create_move_vm()?;
     let session_id = SessionId::new_from_canonical(
@@ -205,19 +211,19 @@ pub(super) fn execute_canonical_transaction<
                 &code_storage,
             )
         }
-        TransactionData::L2Contract(contract) => {
-            evm_logs = execute_l2_contract(
-                &sender_move_address,
-                &contract.to_move_address(),
-                input.tx.value,
-                input.tx.data.to_vec(),
-                verify_input.session,
-                verify_input.traversal_context,
-                verify_input.gas_meter,
-                &code_storage,
-            )?;
-            Ok(())
-        }
+        TransactionData::L2Contract(contract) => execute_l2_contract(
+            &sender_move_address,
+            &contract.to_move_address(),
+            input.tx.value,
+            input.tx.data.to_vec(),
+            verify_input.session,
+            verify_input.traversal_context,
+            verify_input.gas_meter,
+            &code_storage,
+        )
+        .map(|mut logs| {
+            evm_logs.append(&mut logs);
+        }),
     };
 
     let vm_outcome = vm_outcome.and_then(|_| {
@@ -233,7 +239,7 @@ pub(super) fn execute_canonical_transaction<
 
     let gas_used = total_gas_used(verify_input.gas_meter, input.genesis_config);
     let used_l2_input = L2GasFeeInput::new(gas_used, input.l2_input.effective_gas_price);
-    let used_l2_cost = input.l2_fee.l2_fee(used_l2_input).to_saturated_u64();
+    let used_l2_cost = input.l2_fee.l2_fee(used_l2_input);
 
     // Refunds should not be metered as they're supposed to always succeed
     input

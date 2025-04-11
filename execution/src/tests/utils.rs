@@ -290,7 +290,7 @@ impl TestContext {
         let l2_fee = CreateMovedL2GasFee.with_default_gas_fee_multiplier();
         let l2_gas_input = L2GasFeeInput::new(tx.l2_gas_limit, tx.l2_gas_price);
         let tx_hash = tx.tx_hash;
-        let l1_cost = tx.l1_cost;
+        let l1_cost = U256::from(tx.l1_cost);
 
         match &tx.base_token {
             TestBaseToken::Empty => execute_transaction(match &tx.tx {
@@ -300,7 +300,7 @@ impl TestContext {
                     state: self.state.resolver(),
                     storage_trie: &self.evm_storage,
                     genesis_config: &self.genesis_config,
-                    l1_cost: 0,
+                    l1_cost: U256::ZERO,
                     l2_fee,
                     l2_input: l2_gas_input,
                     base_token: &(),
@@ -449,7 +449,7 @@ impl TestContext {
         module_name: &str,
         fn_name: &str,
     ) -> (EvmNativeOutcome, ChangeSet, NativeContextExtensions<'a>) {
-        let moved_vm = MovedVm::default();
+        let moved_vm = MovedVm::new(&Default::default());
         let module_bytes_storage = ResolverBasedModuleBytesStorage::new(self.state.resolver());
         let code_storage = module_bytes_storage.as_unsync_code_storage(&moved_vm);
         let vm = moved_vm.create_move_vm().unwrap();
@@ -495,7 +495,7 @@ impl TestContext {
         module_name: &str,
         fn_name: &str,
     ) -> VMError {
-        let moved_vm = MovedVm::default();
+        let moved_vm = MovedVm::new(&Default::default());
         let module_bytes_storage = ResolverBasedModuleBytesStorage::new(self.state.resolver());
         let code_storage = module_bytes_storage.as_unsync_code_storage(&moved_vm);
         let vm = moved_vm.create_move_vm().unwrap();

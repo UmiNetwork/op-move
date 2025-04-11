@@ -16,7 +16,7 @@ fn main() {
     let state = InMemoryState::default();
     let storage_trie = InMemoryStorageTrieRepository::new();
     let genesis_config = GenesisConfig::default();
-    let vm = MovedVm::default();
+    let vm = MovedVm::new(&genesis_config);
 
     save(&vm, &genesis_config, &state, &storage_trie);
 }

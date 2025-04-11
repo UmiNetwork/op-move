@@ -150,7 +150,7 @@ mod tests {
             "id": 1
         });
 
-        let expected_response: serde_json::Value = serde_json::from_str(r#""0x5208""#).unwrap();
+        let expected_response: serde_json::Value = serde_json::from_str(r#""0x6326""#).unwrap();
         let response = execute(request, state_channel).await.unwrap();
 
         assert_eq!(response, expected_response);
