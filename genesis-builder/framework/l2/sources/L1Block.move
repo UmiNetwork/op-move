@@ -204,16 +204,16 @@ module L1Block::l1_block {
     struct SetGasPayingTokenArgs {
         token: address,
         decimals: u8,
-        name: Evm::evm::SolidityFixedBytes<Evm::evm::B32>,
-        symbol: Evm::evm::SolidityFixedBytes<Evm::evm::B32>,
+        name: Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>,
+        symbol: Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>,
     }
 
     public fun set_gas_paying_token(
         caller: &signer,
         token: address,
         decimals: u8,
-        name: Evm::evm::SolidityFixedBytes<Evm::evm::B32>,
-        symbol: Evm::evm::SolidityFixedBytes<Evm::evm::B32>,
+        name: Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>,
+        symbol: Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>,
     ): EvmResult {
         let _value = zero(get_metadata());
         let arg_struct = SetGasPayingTokenArgs {
@@ -238,9 +238,9 @@ module L1Block::l1_block {
         number: u64,
         timestamp: u64,
         basefee: u256,
-        hash: Evm::evm::SolidityFixedBytes<Evm::evm::B32>,
+        hash: Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>,
         sequence_number: u64,
-        batcher_hash: Evm::evm::SolidityFixedBytes<Evm::evm::B32>,
+        batcher_hash: Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>,
         l1_fee_overhead: u256,
         l1_fee_scalar: u256,
     }
@@ -250,9 +250,9 @@ module L1Block::l1_block {
         number: u64,
         timestamp: u64,
         basefee: u256,
-        hash: Evm::evm::SolidityFixedBytes<Evm::evm::B32>,
+        hash: Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>,
         sequence_number: u64,
-        batcher_hash: Evm::evm::SolidityFixedBytes<Evm::evm::B32>,
+        batcher_hash: Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>,
         l1_fee_overhead: u256,
         l1_fee_scalar: u256,
     ): EvmResult {

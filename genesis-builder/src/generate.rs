@@ -188,7 +188,7 @@ fn get_input_match(solidity_type: String) -> String {
         "bytes" => "vector<u8>",
         "bytes[]" => "vector<vector<u8>>",
         // no other fixed bytes types in L2 contracts besides this
-        "bytes32" => "Evm::evm::SolidityFixedBytes<Evm::evm::B32>",
+        "bytes32" => "Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>",
         "string" => "vector<u8>",
         "uint256" => "u256",
         "uint128" => "u128",

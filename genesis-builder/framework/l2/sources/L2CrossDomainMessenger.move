@@ -151,12 +151,12 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
     }
 
     struct FailedMessagesArgs {
-        key: Evm::evm::SolidityFixedBytes<Evm::evm::B32>,
+        key: Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>,
     }
 
     public fun failed_messages(
         caller: &signer,
-        key: Evm::evm::SolidityFixedBytes<Evm::evm::B32>,
+        key: Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>,
     ): EvmResult {
         let _value = zero(get_metadata());
         let arg_struct = FailedMessagesArgs {
@@ -307,12 +307,12 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
     }
 
     struct SuccessfulMessagesArgs {
-        key: Evm::evm::SolidityFixedBytes<Evm::evm::B32>,
+        key: Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>,
     }
 
     public fun successful_messages(
         caller: &signer,
-        key: Evm::evm::SolidityFixedBytes<Evm::evm::B32>,
+        key: Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>,
     ): EvmResult {
         let _value = zero(get_metadata());
         let arg_struct = SuccessfulMessagesArgs {
