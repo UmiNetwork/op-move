@@ -185,7 +185,7 @@ fn move_value_to_sol_value(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> 
                 for (b, x) in buf.iter_mut().zip(data.into_iter().map(force_to_u8)) {
                     *b = x;
                 }
-                let size_arg = type_arg_to_usize(&struct_tag.type_args);
+                let size_arg = type_args_to_usize(&struct_tag.type_args);
                 return DynSolValue::FixedBytes(buf.into(), size_arg);
             }
 
@@ -250,7 +250,7 @@ fn layout_to_sol_type(layout: &MoveTypeLayout) -> DynSolType {
                 && FIXED_BYTES_TAG.name == struct_tag.name
             {
                 // The generic argument encodes actual size at the type level
-                let bytes_size = type_arg_to_usize(&struct_tag.type_args);
+                let bytes_size = type_args_to_usize(&struct_tag.type_args);
                 return DynSolType::FixedBytes(bytes_size);
             }
 
@@ -293,7 +293,6 @@ fn sol_to_value(sv: DynSolValue) -> Value {
             _ => unreachable!("Only 8, 16, 32, 64, 128 and 256 bit uints are supported by move"),
         },
         // Packing it back into type-erased `SolidityFixedBytes`
-        // TODO: any way to pass back the size type parameter?
         DynSolValue::FixedBytes(w, _size) => {
             Value::struct_(Struct::pack(vec![Value::vector_u8(w.to_vec())]))
         }
@@ -313,27 +312,37 @@ fn sol_to_value(sv: DynSolValue) -> Value {
     }
 }
 
-fn type_arg_to_usize(type_args: &[TypeTag]) -> usize {
-    let type_arg = type_args
-        .iter()
-        .next()
-        .expect("Type args should be at least 1 in length");
-    let type_name = type_arg
-        .struct_tag()
-        .expect("Should only be called for struct-based tags")
-        .name
-        .as_str();
+fn type_args_to_usize(type_args: &[TypeTag]) -> usize {
+    // We treat it loosely so that even completely malformed type params
+    // still return a reasonable fixed bytes size
+    let u5_type_params = type_args
+        .first()
+        .and_then(|tag| tag.struct_tag())
+        .map(|struct_tag| &struct_tag.type_args);
 
-    match type_name {
-        "B1" => 1,
-        "B2" => 2,
-        "B4" => 4,
-        "B8" => 8,
-        "B16" => 16,
-        "B20" => 20,
-        "B32" => 32,
-        _ => unreachable!("Other sizes are not available and should cause a failure at Move level"),
+    let mut bytes_size: usize = 0b11111;
+
+    if let Some(params) = u5_type_params {
+        for (i, param) in params.iter().enumerate() {
+            // If more type args than needed were passed, we only process the first 5
+            if i >= 5 {
+                break;
+            }
+            let bit_param_name = param
+                .struct_tag()
+                .map(|tag| tag.name.as_str())
+                .unwrap_or_default();
+
+            // By only doing something for B0 markers we default to a size of 32
+            if bit_param_name == "B0" {
+                // Clear the i-th bit at that position
+                bytes_size ^= 1 << (4 - i);
+            }
+        }
     }
+
+    // Add 1 to shift the return range to 1-32
+    bytes_size + 1
 }
 
 fn force_to_u8(mv: MoveValue) -> u8 {
