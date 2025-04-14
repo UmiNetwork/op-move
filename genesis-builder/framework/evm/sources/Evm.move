@@ -47,7 +47,12 @@ module Evm::evm {
     struct U5<phantom A, phantom B, phantom C, phantom D, phantom E> {}
 
     /// Mark a byte array as being of fixed length for the purpose
-    /// of encoding it into the Solidity ABI.
+    /// of encoding it into the Solidity ABI. The only legal phantom type
+    /// argument is supposed to be `U5` with `B0` or `B1` inside of it.
+    /// Any other type passed into it (which is only available through
+    /// the native `abi_decode_params()`) will silently assume a size marker of 32.
+    /// 
+    /// See the mentioned structs' docstrings for more info.
     struct SolidityFixedBytes<phantom S> has drop {
         data: vector<u8>
     }
@@ -62,7 +67,7 @@ module Evm::evm {
     ///
     /// Refer to the U5 docstring for the five generic parameters explanation. While these type
     /// parameters are meant to be exclusively B0 or B1 marker structs defined above, due
-    /// to limitations of the Move language this cannot be enforced. 
+    /// to limitations of the Move language this cannot be enforced.
     ///
     /// However, the native implementations of `abi_decode_params()` and `abi_encode_params()`
     /// will treat any other type in type argument position as B1 and only B0 itself will map to B0.
