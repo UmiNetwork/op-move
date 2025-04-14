@@ -1,6 +1,6 @@
 script {
     use 0x4200000000000000000000000000000000000019::base_fee_vault;
-    use Evm::evm::{as_fixed_bytes, abi_decode_params, evm_output, is_result_success, SolidityFixedBytes, B20};
+    use Evm::evm::{as_fixed_bytes_20, abi_decode_params, evm_output, is_result_success, SolidityFixedBytes, U5, B0, B1};
     use std::string::{bytes, String};
 
     fun main(owner: &signer) {
@@ -33,9 +33,17 @@ script {
         assert!(*bytes(&test_str) == b"hello");
 
         let bytes_32 = x"0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20";
-        let test_fixed_bytes = abi_decode_params<SolidityFixedBytes<B20>>(bytes_32);
-        let expected_fixed_bytes = as_fixed_bytes<B20>(bytes_32);
+
+        // Appropriate type args work as expected
+        let expected_fixed_bytes = as_fixed_bytes_20(bytes_32);
+        let test_fixed_bytes = abi_decode_params<SolidityFixedBytes<U5<B1, B0, B0, B1, B1>>>(bytes_32);
         assert!(test_fixed_bytes == expected_fixed_bytes);
+ 
+        // The wrong type params default to 32 size. As we can't
+        // do a direct assertion here due to `as_fixed_bytes` returning
+        // a struct with different generics, we only check that the call
+        // itself doesn't fail.
+        let _test_fixed_bytes = abi_decode_params<SolidityFixedBytes<u8>>(bytes_32);
 
 
         /* ************************ */

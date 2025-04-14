@@ -172,6 +172,8 @@ fn test_solidity_fixed_bytes() {
         ("encode_fixed_bytes1", vec![0x88; 32], false),
         ("encode_fixed_bytes32", vec![0x88; 32], false),
         ("encode_fixed_bytes16", vec![0x88; 32], false),
+        // This should still work and default to size 32
+        ("encode_fixed_bytes_bad_args", vec![0x88; 32], false),
     ]
     .into_iter()
     .for_each(|(fn_name, input, should_err)| {
