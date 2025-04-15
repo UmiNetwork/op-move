@@ -4,6 +4,7 @@ use {
     aptos_vm_types::storage::StorageGasParameters,
     move_core_types::{account_address::AccountAddress, gas_algebra::GasQuantity},
     moved_shared::primitives::B256,
+    std::path::PathBuf,
 };
 
 pub const CHAIN_ID: u64 = 404;
@@ -46,6 +47,8 @@ pub struct GenesisConfig {
     pub gas_costs: GasCosts,
     pub treasury: AccountAddress,
     pub l2_contract_genesis: Genesis,
+    /// Path to Superchain Token List data.
+    pub token_list: Option<PathBuf>,
 }
 
 impl Default for GasCosts {
@@ -74,6 +77,7 @@ impl Default for GenesisConfig {
             treasury: AccountAddress::ONE, // todo: fill in the real address
             l2_contract_genesis: serde_json::from_str(DEFAULT_L2_CONTRACT_GENESIS)
                 .expect("Default L2 contract genesis should be JSON encoded `Genesis` struct"),
+            token_list: None,
         }
     }
 }

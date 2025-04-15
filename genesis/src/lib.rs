@@ -21,6 +21,7 @@ pub mod config;
 #[allow(deprecated)]
 mod framework;
 
+mod bridged_tokens;
 mod l2_contracts;
 mod serde;
 mod vm;
@@ -37,6 +38,12 @@ pub fn build(
     // Deploy OP stack L2 contracts
     let changes_l2 =
         l2_contracts::init_state(config.l2_contract_genesis.clone(), state, storage_trie);
+
+    if let Some(path) = config.token_list.as_ref() {
+        let tokens = bridged_tokens::parse_token_list(path).expect("Token list must parse");
+        // TODO: use `tokens` to modify `changes_l2` with the deployments of those tokens.
+        // This will involve executing the Optimism ERC20 factory inside the EVM native.
+    }
 
     let mut changes = ChangeSet::new();
 
