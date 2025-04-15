@@ -1,8 +1,6 @@
 use {
     crate::block::BlockResponse,
-    alloy::eips::eip2718::Encodable2718,
     moved_shared::primitives::{B256, U256},
-    op_alloy::consensus::OpTxEnvelope,
     std::fmt::Debug,
 };
 
@@ -72,7 +70,7 @@ impl ExtendedBlock {
     }
 
     pub fn transaction_hashes(&self) -> impl Iterator<Item = B256> + use<'_> {
-        self.block.transactions.iter().map(|tx| tx.trie_hash())
+        self.block.transactions.iter().copied()
     }
 }
 
@@ -80,11 +78,11 @@ impl ExtendedBlock {
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct Block {
     pub header: Header,
-    pub transactions: Vec<OpTxEnvelope>,
+    pub transactions: Vec<B256>,
 }
 
 impl Block {
-    pub fn new(header: Header, transactions: Vec<OpTxEnvelope>) -> Self {
+    pub fn new(header: Header, transactions: Vec<B256>) -> Self {
         Self {
             header,
             transactions,

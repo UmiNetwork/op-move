@@ -3,6 +3,7 @@ use {
         all::HeedDb,
         block::HeedBlockExt,
         generic::{EncodableB256, EncodableU64},
+        transaction::HeedTransactionExt,
     },
     heed::RoTxn,
     moved_blockchain::payload::{PayloadId, PayloadQueries, PayloadResponse},
@@ -49,11 +50,27 @@ impl PayloadQueries for HeedPayloadQueries {
 
         let db = env.block_database(&transaction)?;
 
-        let response = db.get(&transaction, &hash);
+        let response = db.get(&transaction, &hash).and_then(|v| {
+            v.map(|block| {
+                let db = env.transaction_database(&transaction)?;
+
+                let transactions = block
+                    .transaction_hashes()
+                    .filter_map(|hash| db.get(&transaction, &hash).transpose())
+                    .map(|v| v.map(|v| v.inner))
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                Ok(PayloadResponse::from_block_with_transactions(
+                    block,
+                    transactions,
+                ))
+            })
+            .transpose()
+        });
 
         transaction.commit()?;
 
-        Ok(response?.map(PayloadResponse::from_block))
+        response
     }
 
     fn by_id(

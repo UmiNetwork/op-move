@@ -2,6 +2,7 @@ use {
     crate::{block::ExtendedBlock, payload::id::PayloadId},
     alloy::eips::eip2718::Encodable2718,
     moved_shared::primitives::{Address, B256, B2048, Bytes, U64, U256},
+    op_alloy::consensus::OpTxEnvelope,
     std::fmt::Debug,
 };
 
@@ -17,15 +18,18 @@ pub struct PayloadResponse {
 }
 
 impl PayloadResponse {
-    pub fn from_block(value: ExtendedBlock) -> Self {
+    pub fn from_block_with_transactions(
+        block: ExtendedBlock,
+        transactions: impl IntoIterator<Item = OpTxEnvelope>,
+    ) -> Self {
         Self {
-            parent_beacon_block_root: value
+            parent_beacon_block_root: block
                 .block
                 .header
                 .parent_beacon_block_root
                 .unwrap_or_default(),
-            block_value: value.value,
-            execution_payload: ExecutionPayload::from_block(value),
+            block_value: block.value,
+            execution_payload: ExecutionPayload::from_block_with_transactions(block, transactions),
             blobs_bundle: Default::default(),
             should_override_builder: false,
         }
@@ -54,10 +58,11 @@ pub struct ExecutionPayload {
 }
 
 impl ExecutionPayload {
-    pub fn from_block(value: ExtendedBlock) -> Self {
-        let transactions = value
-            .block
-            .transactions
+    pub fn from_block_with_transactions(
+        block: ExtendedBlock,
+        transactions: impl IntoIterator<Item = OpTxEnvelope>,
+    ) -> Self {
+        let transactions = transactions
             .into_iter()
             .map(|tx| {
                 let capacity = tx.eip2718_encoded_length();
@@ -68,23 +73,23 @@ impl ExecutionPayload {
             .collect();
 
         Self {
-            block_hash: value.hash,
-            parent_hash: value.block.header.parent_hash,
-            fee_recipient: value.block.header.beneficiary,
-            state_root: value.block.header.state_root,
-            receipts_root: value.block.header.receipts_root,
-            logs_bloom: value.block.header.logs_bloom.0,
-            prev_randao: value.block.header.mix_hash,
-            block_number: U64::from(value.block.header.number),
-            gas_limit: U64::from(value.block.header.gas_limit),
-            gas_used: U64::from(value.block.header.gas_used),
-            timestamp: U64::from(value.block.header.timestamp),
-            extra_data: value.block.header.extra_data,
-            base_fee_per_gas: U256::from(value.block.header.base_fee_per_gas.unwrap_or_default()),
+            block_hash: block.hash,
+            parent_hash: block.block.header.parent_hash,
+            fee_recipient: block.block.header.beneficiary,
+            state_root: block.block.header.state_root,
+            receipts_root: block.block.header.receipts_root,
+            logs_bloom: block.block.header.logs_bloom.0,
+            prev_randao: block.block.header.mix_hash,
+            block_number: U64::from(block.block.header.number),
+            gas_limit: U64::from(block.block.header.gas_limit),
+            gas_used: U64::from(block.block.header.gas_used),
+            timestamp: U64::from(block.block.header.timestamp),
+            extra_data: block.block.header.extra_data,
+            base_fee_per_gas: U256::from(block.block.header.base_fee_per_gas.unwrap_or_default()),
             transactions,
             withdrawals: Vec::new(), // TODO: withdrawals
-            blob_gas_used: U64::from(value.block.header.blob_gas_used.unwrap_or_default()),
-            excess_blob_gas: U64::from(value.block.header.excess_blob_gas.unwrap_or_default()),
+            blob_gas_used: U64::from(block.block.header.blob_gas_used.unwrap_or_default()),
+            excess_blob_gas: U64::from(block.block.header.excess_blob_gas.unwrap_or_default()),
         }
     }
 }
