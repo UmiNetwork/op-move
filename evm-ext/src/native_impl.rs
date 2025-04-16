@@ -156,7 +156,7 @@ fn evm_transact_inner(
     Ok(smallvec::smallvec![evm_result_to_move_value(result)])
 }
 
-fn evm_transact_with_native(
+pub fn evm_transact_with_native(
     evm_native_ctx: &mut NativeEVMContext,
     caller: Address,
     transact_to: TxKind,
