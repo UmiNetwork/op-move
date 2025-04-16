@@ -18,7 +18,7 @@ use {
     },
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Changes {
     pub accounts: ChangeSet,
     pub storage: StorageTriesChanges,

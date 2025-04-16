@@ -277,3 +277,22 @@ impl ModuleResolver for ChangesBasedResolver<'_> {
         Ok(bytes)
     }
 }
+
+// Test to double check `deploy_bridged_tokens` does
+// indeed deploy some tokens.
+#[test]
+fn test_deploy_bridged_tokens() {
+    let config = crate::config::GenesisConfig::default();
+    let n_bridged_tokens = config.token_list.len();
+    assert!(n_bridged_tokens > 0);
+    let state = moved_state::InMemoryState::default();
+    let storage = InMemoryStorageTrieRepository::new();
+    let l2_changes = crate::l2_contracts::init_state(config.l2_contract_genesis, &state, &storage);
+    let new_l2_changes = deploy_bridged_tokens(l2_changes.clone(), config.token_list).unwrap();
+    let added_addresses = new_l2_changes
+        .storage
+        .tries
+        .keys()
+        .filter(|address| !l2_changes.storage.tries.contains_key(*address));
+    assert_eq!(added_addresses.count(), n_bridged_tokens);
+}
