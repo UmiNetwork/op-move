@@ -1,17 +1,18 @@
 use {
     crate::{
-        json_utils::{access_state_error, parse_params_3},
+        json_utils::parse_params_3,
         jsonrpc::JsonRpcError,
         schema::{ExecutionPayloadV3, GetPayloadResponseV3, PayloadStatusV1, Status},
     },
-    moved_app::{Query, StateMessage},
+    moved_app::{Application, Dependencies},
     moved_shared::primitives::B256,
-    tokio::sync::{mpsc, oneshot},
+    std::sync::Arc,
+    tokio::sync::RwLock,
 };
 
 pub async fn execute_v3(
     request: serde_json::Value,
-    state_channel: mpsc::Sender<StateMessage>,
+    app: &Arc<RwLock<Application<impl Dependencies>>>,
 ) -> Result<serde_json::Value, JsonRpcError> {
     let (execution_payload, expected_blob_versioned_hashes, parent_beacon_block_root) =
         parse_params_3(request)?;
@@ -19,7 +20,7 @@ pub async fn execute_v3(
         execution_payload,
         expected_blob_versioned_hashes,
         parent_beacon_block_root,
-        state_channel,
+        app,
     )
     .await?;
     Ok(serde_json::to_value(response).expect("Must be able to JSON-serialize response"))
@@ -29,21 +30,15 @@ async fn inner_execute_v3(
     execution_payload: ExecutionPayloadV3,
     expected_blob_versioned_hashes: Vec<B256>,
     parent_beacon_block_root: B256,
-    state_channel: mpsc::Sender<StateMessage>,
+    app: &Arc<RwLock<Application<impl Dependencies>>>,
 ) -> Result<PayloadStatusV1, JsonRpcError> {
     // Spec: https://github.com/ethereum/execution-apis/blob/main/src/engine/cancun.md#specification
 
-    let (tx, rx) = oneshot::channel();
-    let msg = Query::GetPayloadByBlockHash {
-        block_hash: execution_payload.block_hash,
-        response_channel: tx,
-    }
-    .into();
-    state_channel.send(msg).await.map_err(access_state_error)?;
-    let maybe_response = rx.await.map_err(access_state_error)?;
-
     // TODO: in theory we should start syncing to learn about this block hash.
-    let response = maybe_response
+    let response = app
+        .read()
+        .await
+        .payload_by_block_hash(execution_payload.block_hash)
         .ok_or(JsonRpcError {
             code: -1,
             data: serde_json::to_value(execution_payload.block_hash)
@@ -163,7 +158,7 @@ mod tests {
         super::*,
         crate::methods::{forkchoice_updated, get_payload},
         alloy::primitives::hex,
-        moved_app::{Application, StateActor, TestDependencies},
+        moved_app::{Application, CommandActor, TestDependencies},
         moved_blockchain::{
             block::{
                 Block, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
@@ -179,6 +174,8 @@ mod tests {
         moved_genesis::config::GenesisConfig,
         moved_shared::primitives::{Address, B2048, Bytes, U64, U256},
         moved_state::InMemoryState,
+        std::sync::Arc,
+        tokio::sync::{RwLock, mpsc},
     };
 
     #[test]
@@ -289,37 +286,35 @@ mod tests {
         );
         let initial_state_root = genesis_config.initial_state_root;
 
-        let state: StateActor<TestDependencies<_, _, _, _>> = StateActor::new(
-            rx,
-            Application {
-                mem_pool: Default::default(),
-                head: head_hash,
-                height: 0,
-                genesis_config,
-                gas_fee: Eip1559GasFee::default(),
-                base_token: (),
-                l1_fee: U256::ZERO,
-                l2_fee: U256::ZERO,
-                block_hash: B256::from(hex!(
-                    "c013e1ff1b8bca9f0d074618cc9e661983bc91d7677168b156765781aee775d3"
-                )),
-                block_queries: InMemoryBlockQueries,
-                block_repository: repository,
-                on_payload: StateActor::on_payload_in_memory(),
-                on_tx: StateActor::on_tx_noop(),
-                on_tx_batch: StateActor::on_tx_batch_noop(),
-                payload_queries: InMemoryPayloadQueries::new(),
-                receipt_queries: InMemoryReceiptQueries::new(),
-                receipt_repository: InMemoryReceiptRepository::new(),
-                receipt_memory: ReceiptMemory::new(),
-                storage: memory,
-                state,
-                evm_storage,
-                transaction_queries: InMemoryTransactionQueries::new(),
-                state_queries: InMemoryStateQueries::from_genesis(initial_state_root),
-                transaction_repository: InMemoryTransactionRepository::new(),
-            },
-        );
+        let app = Arc::new(RwLock::new(Application {
+            mem_pool: Default::default(),
+            head: head_hash,
+            height: 0,
+            genesis_config,
+            gas_fee: Eip1559GasFee::default(),
+            base_token: (),
+            l1_fee: U256::ZERO,
+            l2_fee: U256::ZERO,
+            block_hash: B256::from(hex!(
+                "c013e1ff1b8bca9f0d074618cc9e661983bc91d7677168b156765781aee775d3"
+            )),
+            block_queries: InMemoryBlockQueries,
+            block_repository: repository,
+            on_payload: CommandActor::on_payload_in_memory(),
+            on_tx: CommandActor::on_tx_noop(),
+            on_tx_batch: CommandActor::on_tx_batch_noop(),
+            payload_queries: InMemoryPayloadQueries::new(),
+            receipt_queries: InMemoryReceiptQueries::new(),
+            receipt_repository: InMemoryReceiptRepository::new(),
+            receipt_memory: ReceiptMemory::new(),
+            storage: memory,
+            state,
+            evm_storage,
+            transaction_queries: InMemoryTransactionQueries::new(),
+            state_queries: InMemoryStateQueries::from_genesis(initial_state_root),
+            transaction_repository: InMemoryTransactionRepository::new(),
+        }));
+        let state: CommandActor<TestDependencies<_, _, _, _>> = CommandActor::new(rx, app.clone());
         let state_handle = state.spawn();
 
         let fc_updated_request: serde_json::Value = serde_json::from_str(
@@ -407,13 +402,14 @@ mod tests {
         .await
         .unwrap();
 
-        get_payload::execute_v3(get_payload_request, state_channel.clone())
+        drop(state_channel);
+        state_handle.await.unwrap();
+
+        get_payload::execute_v3(get_payload_request, &app)
             .await
             .unwrap();
 
-        let response = execute_v3(new_payload_request, state_channel)
-            .await
-            .unwrap();
+        let response = execute_v3(new_payload_request, &app).await.unwrap();
 
         let expected_response: serde_json::Value = serde_json::from_str(
             r#"
@@ -427,6 +423,5 @@ mod tests {
         .unwrap();
 
         assert_eq!(response, expected_response);
-        state_handle.await.unwrap();
     }
 }

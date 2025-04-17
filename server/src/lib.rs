@@ -4,7 +4,7 @@ use {
     flate2::read::GzDecoder,
     jsonwebtoken::{DecodingKey, Validation},
     moved_api::method_name::MethodName,
-    moved_app::{Command, StateActor, StateMessage},
+    moved_app::{Application, Command, CommandActor, Dependencies},
     moved_blockchain::{
         block::{Block, BlockHash, BlockRepository, ExtendedBlock, Header},
         payload::{NewPayloadId, StatePayloadId},
@@ -16,9 +16,10 @@ use {
         fs,
         io::Read,
         net::{Ipv4Addr, SocketAddr, SocketAddrV4},
+        sync::Arc,
         time::SystemTime,
     },
-    tokio::sync::mpsc,
+    tokio::sync::{mpsc, RwLock},
     warp::{
         http::{header::CONTENT_TYPE, HeaderMap, HeaderValue, StatusCode},
         hyper::{body::Bytes, Body, Response},
@@ -79,16 +80,19 @@ pub async fn run() {
         ..Default::default()
     };
 
-    let state = initialize_state_actor(genesis_config, rx);
+    let app = initialize_app(genesis_config);
+    let app = Arc::new(RwLock::with_max_readers(app, 4));
+    let state = CommandActor::new(rx, app.clone());
 
+    let http_app = app.clone();
     let http_state_channel = state_channel.clone();
     let http_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8545));
     let mut content_type = HeaderMap::new();
     content_type.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
     let http_route = warp::any()
-        .map(move || http_state_channel.clone())
+        .map(move || (http_state_channel.clone(), http_app.clone()))
         .and(extract_request_data_filter())
-        .and_then(|state_channel, path, query, method, headers, body| {
+        .and_then(|(state_channel, app), path, query, method, headers, body| {
             mirror(
                 state_channel,
                 (path, query, method, headers, body),
@@ -96,6 +100,7 @@ pub async fn run() {
                 // Limit engine API access to only authenticated endpoint
                 MethodName::is_non_engine_api,
                 &StatePayloadId,
+                app,
             )
         })
         .with(warp::reply::with::headers(content_type))
@@ -104,18 +109,21 @@ pub async fn run() {
     let auth_state_channel = state_channel;
     let auth_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8551));
     let auth_route = warp::any()
-        .map(move || auth_state_channel.clone())
+        .map(move || (auth_state_channel.clone(), app.clone()))
         .and(extract_request_data_filter())
         .and(validate_jwt())
-        .and_then(|state_channel, path, query, method, headers, body, _| {
-            mirror(
-                state_channel,
-                (path, query, method, headers, body),
-                "9551",
-                |_| true,
-                &StatePayloadId,
-            )
-        })
+        .and_then(
+            |(state_channel, app), path, query, method, headers, body, _| {
+                mirror(
+                    state_channel,
+                    (path, query, method, headers, body),
+                    "9551",
+                    |_| true,
+                    &StatePayloadId,
+                    app,
+                )
+            },
+        )
         .with(warp::cors().allow_any_origin());
 
     let (_, _, state_result) = tokio::join!(
@@ -126,10 +134,7 @@ pub async fn run() {
     state_result.unwrap();
 }
 
-pub fn initialize_state_actor(
-    genesis_config: GenesisConfig,
-    rx: mpsc::Receiver<StateMessage>,
-) -> StateActor<dependency::Dependency> {
+pub fn initialize_app(genesis_config: GenesisConfig) -> Application<dependency::Dependency> {
     let mut app = dependency::create(&genesis_config);
 
     let (genesis_changes, table_changes, evm_storage_changes) = {
@@ -163,7 +168,7 @@ pub fn initialize_state_actor(
         .expect("Database should be ready");
     app.update_head(head);
 
-    StateActor::new(rx, app)
+    app
 }
 
 fn create_genesis_block(
@@ -205,11 +210,12 @@ pub fn validate_jwt() -> impl Filter<Extract = (String,), Error = Rejection> + C
 }
 
 async fn mirror(
-    state_channel: mpsc::Sender<StateMessage>,
+    state_channel: mpsc::Sender<Command>,
     request: Request,
     port: &str,
     is_allowed: impl Fn(&MethodName) -> bool,
     payload_id: &impl NewPayloadId,
+    app: Arc<RwLock<Application<impl Dependencies>>>,
 ) -> Result<warp::reply::Response, Rejection> {
     let (path, query, method, headers, body) = request;
 
@@ -262,6 +268,7 @@ async fn mirror(
         state_channel.clone(),
         is_allowed,
         payload_id,
+        &app,
     )
     .await;
     let log = MirrorLog {
@@ -278,7 +285,7 @@ async fn mirror(
         let block = geth_genesis::extract_genesis_block(&parsed_geth_response)
             .expect("Must get genesis from geth");
         state_channel
-            .send(Command::GenesisUpdate { block }.into())
+            .send(Command::GenesisUpdate { block })
             .await
             .ok();
         let body = hyper::Body::from(geth_response_bytes);

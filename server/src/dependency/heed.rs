@@ -1,6 +1,6 @@
 use {
     crate::dependency::shared::*,
-    moved_app::{Application, StateActor},
+    moved_app::{Application, CommandActor},
     moved_genesis::config::GenesisConfig,
     moved_state::State,
     moved_storage_heed::{
@@ -47,7 +47,7 @@ impl moved_app::Dependencies for HeedDependencies {
     }
 
     fn on_tx() -> &'static Self::OnTx {
-        StateActor::on_tx_noop()
+        CommandActor::on_tx_noop()
     }
 
     fn on_tx_batch() -> &'static Self::OnTxBatch {
@@ -125,6 +125,7 @@ fn create_db() -> moved_storage_heed::Env {
 
     let env = unsafe {
         EnvOpenOptions::new()
+            .max_readers(20)
             .max_dbs(moved_storage_heed::DATABASES.len() as u32)
             .map_size(1024 * 1024 * 1024 * 1024) // 1 TiB
             .open(path)
