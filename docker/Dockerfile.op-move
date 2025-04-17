@@ -2,6 +2,9 @@ FROM alpine:3.21.2 AS build
 
 WORKDIR /volume
 
+# Copy file with workspace rust toolchain
+COPY rust-toolchain rust-toolchain
+
 RUN \
 # Install build dependencies
     apk upgrade --no-cache \
@@ -10,7 +13,7 @@ RUN \
     && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup.sh \
     && chmod +x ./rustup.sh \
 # Install default rust toolchain
-    && ./rustup.sh -y --default-toolchain 1.82.0
+    && ./rustup.sh -y --default-toolchain "$(cat rust-toolchain)"
 
 # Add `cargo` to `PATH`
 ENV PATH="/root/.cargo/bin:${PATH}"
