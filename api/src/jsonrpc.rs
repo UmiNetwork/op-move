@@ -1,7 +1,4 @@
-use {
-    std::fmt,
-    tokio::sync::{mpsc::error::SendError, oneshot::error::RecvError},
-};
+use std::fmt;
 
 #[derive(Debug, serde::Serialize)]
 pub struct JsonRpcError {
@@ -27,12 +24,8 @@ impl JsonRpcError {
         }
     }
 
-    pub fn access_state_error<E: fmt::Debug>(e: E) -> JsonRpcError {
-        Self::without_data(-1, format!("Failed to access state: {e:?}"))
-    }
-
     pub fn block_not_found<T: fmt::Display>(block_number: T) -> Self {
-        JsonRpcError::without_data(-32001, format!("Block not found: {block_number}"))
+        Self::without_data(-32001, format!("Block not found: {block_number}"))
     }
 }
 
@@ -44,16 +37,4 @@ pub struct JsonRpcResponse {
     pub result: Option<serde_json::Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<JsonRpcError>,
-}
-
-impl<T> From<SendError<T>> for JsonRpcError {
-    fn from(value: SendError<T>) -> Self {
-        Self::access_state_error(value)
-    }
-}
-
-impl From<RecvError> for JsonRpcError {
-    fn from(value: RecvError) -> Self {
-        Self::access_state_error(value)
-    }
 }

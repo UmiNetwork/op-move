@@ -19,7 +19,6 @@ pub mod send_raw_transaction;
 #[cfg(test)]
 pub mod tests {
     use {
-        crate::json_utils::access_state_error,
         alloy::{
             consensus::{SignableTransaction, TxEip1559, TxEnvelope},
             hex::FromHex,
@@ -52,22 +51,11 @@ pub mod tests {
         moved_shared::primitives::{Address, B256, U64, U256},
         moved_state::InMemoryState,
         std::sync::Arc,
-        tokio::sync::{
-            RwLock,
-            mpsc::{self, Sender},
-        },
+        tokio::sync::{RwLock, mpsc::Sender},
     };
 
     /// The address corresponding to this private key is 0x8fd379246834eac74B8419FfdA202CF8051F7A03
     pub const PRIVATE_KEY: [u8; 32] = [0xaa; 32];
-
-    pub fn create_state_actor() -> (CommandActor<impl DependenciesThreadSafe>, Sender<Command>) {
-        let (state_channel, rx) = mpsc::channel(10);
-        let app = create_app();
-
-        let state: CommandActor<TestDependencies> = CommandActor::new(rx, app);
-        (state, state_channel)
-    }
 
     pub fn create_app() -> Arc<RwLock<Application<TestDependencies>>> {
         let genesis_config = GenesisConfig::default();
@@ -145,7 +133,7 @@ pub mod tests {
             payload_attributes,
             payload_id: U64::from(0x03421ee50df45cacu64),
         };
-        channel.send(msg).await.map_err(access_state_error).unwrap();
+        channel.send(msg).await.unwrap();
     }
 
     pub async fn deploy_contract(contract_bytes: Bytes, channel: &Sender<Command>) {
@@ -175,7 +163,7 @@ pub mod tests {
             payload_attributes,
             payload_id: U64::from(0x03421ee50df45cacu64),
         };
-        channel.send(msg).await.map_err(access_state_error).unwrap();
+        channel.send(msg).await.unwrap();
     }
 
     #[allow(clippy::type_complexity)]

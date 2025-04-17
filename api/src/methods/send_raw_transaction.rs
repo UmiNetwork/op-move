@@ -1,20 +1,16 @@
 use {
-    crate::{
-        json_utils::{self, access_state_error},
-        jsonrpc::JsonRpcError,
-    },
+    crate::{json_utils, jsonrpc::JsonRpcError},
     alloy::{consensus::transaction::TxEnvelope, rlp::Decodable},
-    moved_app::Command,
+    moved_app::{Command, CommandQueue},
     moved_shared::primitives::{B256, Bytes},
-    tokio::sync::mpsc,
 };
 
 pub async fn execute(
     request: serde_json::Value,
-    state_channel: mpsc::Sender<Command>,
+    queue: CommandQueue,
 ) -> Result<serde_json::Value, JsonRpcError> {
     let tx = parse_params(request)?;
-    let response = inner_execute(tx, state_channel).await?;
+    let response = inner_execute(tx, queue).await?;
     Ok(serde_json::to_value(response).expect("Must be able to JSON-serialize response"))
 }
 
@@ -44,21 +40,18 @@ fn parse_params(request: serde_json::Value) -> Result<TxEnvelope, JsonRpcError> 
     }
 }
 
-async fn inner_execute(
-    tx: TxEnvelope,
-    state_channel: mpsc::Sender<Command>,
-) -> Result<B256, JsonRpcError> {
+async fn inner_execute(tx: TxEnvelope, queue: CommandQueue) -> Result<B256, JsonRpcError> {
     let tx_hash = tx.tx_hash().0.into();
 
     let msg = Command::AddTransaction { tx };
-    state_channel.send(msg).await.map_err(access_state_error)?;
+    queue.send(msg).await;
 
     Ok(tx_hash)
 }
 
 #[cfg(test)]
 pub mod tests {
-    use {super::*, crate::methods::tests::create_state_actor};
+    use {super::*, crate::methods::tests::create_app};
 
     pub fn example_request() -> serde_json::Value {
         serde_json::from_str(
@@ -77,7 +70,8 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_execute() {
-        let (state, state_channel) = create_state_actor();
+        let app = create_app();
+        let (queue, state) = moved_app::create(app, 10);
         let state_handle = state.spawn();
 
         let request = example_request();
@@ -87,7 +81,7 @@ pub mod tests {
         )
         .unwrap();
 
-        let response = execute(request, state_channel).await.unwrap();
+        let response = execute(request, queue).await.unwrap();
 
         assert_eq!(response, expected_response);
         state_handle.await.unwrap();

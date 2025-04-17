@@ -175,7 +175,7 @@ mod tests {
         moved_shared::primitives::{Address, B2048, Bytes, U64, U256},
         moved_state::InMemoryState,
         std::sync::Arc,
-        tokio::sync::{RwLock, mpsc},
+        tokio::sync::RwLock,
     };
 
     #[test]
@@ -261,7 +261,6 @@ mod tests {
     #[tokio::test]
     async fn test_execute_v3() {
         let genesis_config = GenesisConfig::default();
-        let (state_channel, rx) = mpsc::channel(10);
 
         // Set known block height
         let head_hash = B256::new(hex!(
@@ -286,7 +285,7 @@ mod tests {
         );
         let initial_state_root = genesis_config.initial_state_root;
 
-        let app = Arc::new(RwLock::new(Application {
+        let app = Arc::new(RwLock::new(Application::<TestDependencies<_, _, _, _>> {
             mem_pool: Default::default(),
             head: head_hash,
             height: 0,
@@ -314,7 +313,7 @@ mod tests {
             state_queries: InMemoryStateQueries::from_genesis(initial_state_root),
             transaction_repository: InMemoryTransactionRepository::new(),
         }));
-        let state: CommandActor<TestDependencies<_, _, _, _>> = CommandActor::new(rx, app.clone());
+        let (queue, state) = moved_app::create(app.clone(), 10);
         let state_handle = state.spawn();
 
         let fc_updated_request: serde_json::Value = serde_json::from_str(
@@ -394,15 +393,11 @@ mod tests {
         )
         .unwrap();
 
-        forkchoice_updated::execute_v3(
-            fc_updated_request,
-            state_channel.clone(),
-            &0x0306d51fc5aa1533u64,
-        )
-        .await
-        .unwrap();
+        forkchoice_updated::execute_v3(fc_updated_request, queue.clone(), &0x0306d51fc5aa1533u64)
+            .await
+            .unwrap();
 
-        drop(state_channel);
+        drop(queue);
         state_handle.await.unwrap();
 
         get_payload::execute_v3(get_payload_request, &app)

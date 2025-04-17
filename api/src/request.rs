@@ -4,15 +4,15 @@ use {
         jsonrpc::{JsonRpcError, JsonRpcResponse},
         method_name::MethodName,
     },
-    moved_app::{Application, Command, Dependencies},
+    moved_app::{Application, CommandQueue, Dependencies},
     moved_blockchain::payload::NewPayloadId,
     std::sync::Arc,
-    tokio::sync::{RwLock, mpsc},
+    tokio::sync::RwLock,
 };
 
 pub async fn handle(
     request: serde_json::Value,
-    state_channel: mpsc::Sender<Command>,
+    queue: CommandQueue,
     is_allowed: impl Fn(&MethodName) -> bool,
     payload_id: &impl NewPayloadId,
     app: &Arc<RwLock<Application<impl Dependencies>>>,
@@ -20,7 +20,7 @@ pub async fn handle(
     let id = json_utils::get_field(&request, "id");
     let jsonrpc = json_utils::get_field(&request, "jsonrpc");
 
-    match inner_handle_request(request, state_channel, is_allowed, payload_id, app).await {
+    match inner_handle_request(request, queue, is_allowed, payload_id, app).await {
         Ok(r) => JsonRpcResponse {
             id,
             jsonrpc,
@@ -38,7 +38,7 @@ pub async fn handle(
 
 async fn inner_handle_request(
     request: serde_json::Value,
-    state_channel: mpsc::Sender<Command>,
+    queue: CommandQueue,
     is_allowed: impl Fn(&MethodName) -> bool,
     payload_id: &impl NewPayloadId,
     app: &Arc<RwLock<Application<impl Dependencies>>>,
@@ -55,12 +55,10 @@ async fn inner_handle_request(
     }
 
     match method {
-        ForkChoiceUpdatedV3 => {
-            forkchoice_updated::execute_v3(request, state_channel, payload_id).await
-        }
+        ForkChoiceUpdatedV3 => forkchoice_updated::execute_v3(request, queue, payload_id).await,
         GetPayloadV3 => get_payload::execute_v3(request, app).await,
         NewPayloadV3 => new_payload::execute_v3(request, app).await,
-        SendRawTransaction => send_raw_transaction::execute(request, state_channel).await,
+        SendRawTransaction => send_raw_transaction::execute(request, queue).await,
         ChainId => chain_id::execute(app).await,
         GetBalance => get_balance::execute(request, app).await,
         GetNonce => get_nonce::execute(request, app).await,

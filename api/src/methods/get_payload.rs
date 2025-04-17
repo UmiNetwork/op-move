@@ -52,7 +52,6 @@ mod tests {
         moved_genesis::config::GenesisConfig,
         moved_shared::primitives::{B256, U256},
         moved_state::InMemoryState,
-        tokio::sync::mpsc,
     };
 
     #[test]
@@ -81,7 +80,6 @@ mod tests {
     #[tokio::test]
     async fn test_execute_v3() {
         let genesis_config = GenesisConfig::default();
-        let (state_channel, rx) = mpsc::channel(10);
 
         // Set known block height
         let head_hash = B256::new(hex!(
@@ -106,7 +104,7 @@ mod tests {
         );
         let initial_state_root = genesis_config.initial_state_root;
 
-        let app = Arc::new(RwLock::new(Application {
+        let app = Arc::new(RwLock::new(Application::<TestDependencies<_, _, _, _>> {
             mem_pool: Default::default(),
             genesis_config,
             head: head_hash,
@@ -132,19 +130,19 @@ mod tests {
             on_tx_batch: CommandActor::on_tx_batch_noop(),
             on_payload: CommandActor::on_payload_in_memory(),
         }));
-        let state: CommandActor<TestDependencies<_, _, _, _>> = CommandActor::new(rx, app.clone());
+        let (queue, state) = moved_app::create(app.clone(), 10);
         let state_handle = state.spawn();
 
         // Set head block hash
         let msg = Command::UpdateHead {
             block_hash: head_hash,
         };
-        state_channel.send(msg).await.unwrap();
+        queue.send(msg).await;
 
         // Update the state with an execution payload
         forkchoice_updated::execute_v3(
             forkchoice_updated::tests::example_request(),
-            state_channel.clone(),
+            queue.clone(),
             &0x03421ee50df45cacu64,
         )
         .await
@@ -199,7 +197,7 @@ mod tests {
             }
         "#).unwrap();
 
-        drop(state_channel);
+        drop(queue);
         state_handle.await.unwrap();
         let actual_response = execute_v3(request, &app).await.unwrap();
 

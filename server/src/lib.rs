@@ -4,7 +4,7 @@ use {
     flate2::read::GzDecoder,
     jsonwebtoken::{DecodingKey, Validation},
     moved_api::method_name::MethodName,
-    moved_app::{Application, Command, CommandActor, Dependencies},
+    moved_app::{Application, Command, CommandQueue, Dependencies},
     moved_blockchain::{
         block::{Block, BlockHash, BlockRepository, ExtendedBlock, Header},
         payload::{NewPayloadId, StatePayloadId},
@@ -19,7 +19,7 @@ use {
         sync::Arc,
         time::SystemTime,
     },
-    tokio::sync::{mpsc, RwLock},
+    tokio::sync::RwLock,
     warp::{
         http::{header::CONTENT_TYPE, HeaderMap, HeaderValue, StatusCode},
         hyper::{body::Bytes, Body, Response},
@@ -63,10 +63,7 @@ static JWTSECRET: Lazy<Vec<u8>> = Lazy::new(|| {
     hex::decode(jwt).expect("JWT secret should be a hex string")
 });
 
-pub async fn run() {
-    // TODO: think about channel size bound
-    let (state_channel, rx) = mpsc::channel(1_000);
-
+pub async fn run(max_buffered_commands: u32, max_concurrent_queries: u32) {
     // TODO: genesis should come from a file (path specified by CLI)
     let genesis_config = GenesisConfig {
         chain_id: 42069,
@@ -81,20 +78,20 @@ pub async fn run() {
     };
 
     let app = initialize_app(genesis_config);
-    let app = Arc::new(RwLock::with_max_readers(app, 4));
-    let state = CommandActor::new(rx, app.clone());
+    let app = Arc::new(RwLock::with_max_readers(app, max_concurrent_queries));
+    let (queue, state) = moved_app::create(app.clone(), max_buffered_commands);
 
     let http_app = app.clone();
-    let http_state_channel = state_channel.clone();
+    let http_cmd_queue = queue.clone();
     let http_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8545));
     let mut content_type = HeaderMap::new();
     content_type.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
     let http_route = warp::any()
-        .map(move || (http_state_channel.clone(), http_app.clone()))
+        .map(move || (http_cmd_queue.clone(), http_app.clone()))
         .and(extract_request_data_filter())
-        .and_then(|(state_channel, app), path, query, method, headers, body| {
+        .and_then(|(queue, app), path, query, method, headers, body| {
             mirror(
-                state_channel,
+                queue,
                 (path, query, method, headers, body),
                 "9545",
                 // Limit engine API access to only authenticated endpoint
@@ -106,32 +103,36 @@ pub async fn run() {
         .with(warp::reply::with::headers(content_type))
         .with(warp::cors().allow_any_origin());
 
-    let auth_state_channel = state_channel;
+    let auth_cmd_queue = queue.clone();
     let auth_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8551));
     let auth_route = warp::any()
-        .map(move || (auth_state_channel.clone(), app.clone()))
+        .map(move || (auth_cmd_queue.clone(), app.clone()))
         .and(extract_request_data_filter())
         .and(validate_jwt())
-        .and_then(
-            |(state_channel, app), path, query, method, headers, body, _| {
-                mirror(
-                    state_channel,
-                    (path, query, method, headers, body),
-                    "9551",
-                    |_| true,
-                    &StatePayloadId,
-                    app,
-                )
-            },
-        )
+        .and_then(|(queue, app), path, query, method, headers, body, _| {
+            mirror(
+                queue,
+                (path, query, method, headers, body),
+                "9551",
+                |_| true,
+                &StatePayloadId,
+                app,
+            )
+        })
         .with(warp::cors().allow_any_origin());
 
-    let (_, _, state_result) = tokio::join!(
-        warp::serve(http_route).run(http_server_addr),
-        warp::serve(auth_route).run(auth_server_addr),
-        state.spawn(),
+    tokio::join!(
+        warp::serve(http_route)
+            .bind_with_graceful_shutdown(http_server_addr, queue.shutdown_listener())
+            .1,
+        warp::serve(auth_route)
+            .bind_with_graceful_shutdown(auth_server_addr, queue.shutdown_listener())
+            .1,
+        async move {
+            state.spawn().await.ok();
+            queue.shutdown();
+        },
     );
-    state_result.unwrap();
 }
 
 pub fn initialize_app(genesis_config: GenesisConfig) -> Application<dependency::Dependency> {
@@ -210,7 +211,7 @@ pub fn validate_jwt() -> impl Filter<Extract = (String,), Error = Rejection> + C
 }
 
 async fn mirror(
-    state_channel: mpsc::Sender<Command>,
+    queue: CommandQueue,
     request: Request,
     port: &str,
     is_allowed: impl Fn(&MethodName) -> bool,
@@ -242,7 +243,7 @@ async fn mirror(
                         Err(e) => {
                             println!("WARN: gz decompression failed: {e:?}");
                             let body = hyper::Body::from(raw_bytes);
-                            return Ok(warp::reply::Response::from_parts(parts, body));
+                            return Ok(Response::from_parts(parts, body));
                         }
                     }
                 } else {
@@ -255,7 +256,7 @@ async fn mirror(
                         println!("headers: {headers:?}");
                         println!("WARN: op-geth non-json response: {:?}", bytes);
                         let body = hyper::Body::from(bytes);
-                        return Ok(warp::reply::Response::from_parts(parts, body));
+                        return Ok(Response::from_parts(parts, body));
                     }
                 }
             }
@@ -263,14 +264,9 @@ async fn mirror(
         };
 
     let request = request.expect("geth responded, so body must have been JSON");
-    let op_move_response = moved_api::request::handle(
-        request.clone(),
-        state_channel.clone(),
-        is_allowed,
-        payload_id,
-        &app,
-    )
-    .await;
+    let op_move_response =
+        moved_api::request::handle(request.clone(), queue.clone(), is_allowed, payload_id, &app)
+            .await;
     let log = MirrorLog {
         request: &request,
         geth_response: &parsed_geth_response,
@@ -284,16 +280,13 @@ async fn mirror(
     if geth_genesis::is_genesis_block_request(&request).unwrap_or(false) {
         let block = geth_genesis::extract_genesis_block(&parsed_geth_response)
             .expect("Must get genesis from geth");
-        state_channel
-            .send(Command::GenesisUpdate { block })
-            .await
-            .ok();
+        queue.send(Command::GenesisUpdate { block }).await;
         let body = hyper::Body::from(geth_response_bytes);
-        return Ok(warp::reply::Response::from_parts(geth_response_parts, body));
+        return Ok(Response::from_parts(geth_response_parts, body));
     }
 
     let body = hyper::Body::from(serde_json::to_vec(&op_move_response).unwrap());
-    Ok(warp::reply::Response::new(body))
+    Ok(Response::new(body))
 }
 
 async fn proxy(

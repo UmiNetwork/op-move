@@ -1,31 +1,24 @@
 use {
     crate::{
         json_utils,
-        json_utils::access_state_error,
         jsonrpc::JsonRpcError,
         schema::{
             ForkchoiceStateV1, ForkchoiceUpdatedResponseV1, PayloadAttributesV3, PayloadId,
             PayloadStatusV1, Status,
         },
     },
-    moved_app::{Command, Payload, ToPayloadIdInput},
+    moved_app::{Command, CommandQueue, Payload, ToPayloadIdInput},
     moved_blockchain::payload::NewPayloadId,
-    tokio::sync::mpsc,
 };
 
 pub async fn execute_v3(
     request: serde_json::Value,
-    state_channel: mpsc::Sender<Command>,
+    queue: CommandQueue,
     payload_id: &impl NewPayloadId,
 ) -> Result<serde_json::Value, JsonRpcError> {
     let (forkchoice_state, payload_attributes) = parse_params_v3(request)?;
-    let response = inner_execute_v3(
-        forkchoice_state,
-        payload_attributes,
-        state_channel,
-        payload_id,
-    )
-    .await?;
+    let response =
+        inner_execute_v3(forkchoice_state, payload_attributes, queue, payload_id).await?;
     Ok(serde_json::to_value(response).expect("Must be able to JSON-serialize response"))
 }
 
@@ -59,7 +52,7 @@ fn parse_params_v3(
 async fn inner_execute_v3(
     forkchoice_state: ForkchoiceStateV1,
     payload_attributes: Option<PayloadAttributesV3>,
-    state_channel: mpsc::Sender<Command>,
+    queue: CommandQueue,
     payload_id_generator: &impl NewPayloadId,
 ) -> Result<ForkchoiceUpdatedResponseV1, JsonRpcError> {
     // Spec: https://github.com/ethereum/execution-apis/blob/main/src/engine/cancun.md#specification-1
@@ -70,7 +63,7 @@ async fn inner_execute_v3(
     let msg = Command::UpdateHead {
         block_hash: forkchoice_state.head_block_hash,
     };
-    state_channel.send(msg).await.map_err(access_state_error)?;
+    queue.send(msg).await;
 
     let payload_status = PayloadStatusV1 {
         status: Status::Valid,
@@ -88,7 +81,7 @@ async fn inner_execute_v3(
             payload_attributes,
             payload_id,
         };
-        state_channel.send(msg).await.map_err(access_state_error)?;
+        queue.send(msg).await;
         Some(PayloadId(payload_id))
     } else {
         None
@@ -104,7 +97,7 @@ async fn inner_execute_v3(
 pub(super) mod tests {
     use {
         super::*,
-        crate::methods::tests::create_state_actor,
+        crate::methods::tests::create_app,
         alloy::primitives::hex,
         moved_shared::primitives::{Address, B256, Bytes, U64},
     };
@@ -239,7 +232,8 @@ pub(super) mod tests {
 
     #[tokio::test]
     async fn test_execute_v3() {
-        let (state, state_channel) = create_state_actor();
+        let app = create_app();
+        let (queue, state) = moved_app::create(app, 10);
         let state_handle = state.spawn();
         let request = example_request();
 
@@ -254,7 +248,7 @@ pub(super) mod tests {
             }
         "#).unwrap();
 
-        let response = execute_v3(request, state_channel, &0x03421ee50df45cacu64)
+        let response = execute_v3(request, queue, &0x03421ee50df45cacu64)
             .await
             .unwrap();
 
