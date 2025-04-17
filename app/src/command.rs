@@ -35,54 +35,8 @@ impl<D: Dependencies> Application<D> {
     }
 
     pub fn start_block_build(&mut self, attributes: Payload, id: PayloadId) {
-        let block = self.create_block(attributes);
-        self.block_repository
-            .add(&mut self.storage, block.clone())
-            .unwrap();
-        let block_number = block.block.header.number;
-        let block_hash = block.hash;
-        let base_fee = block.block.header.base_fee_per_gas;
-        self.transaction_repository
-            .extend(
-                &mut self.storage,
-                block
-                    .block
-                    .transactions
-                    .clone()
-                    .into_iter()
-                    .enumerate()
-                    .map(|(transaction_index, inner)| {
-                        ExtendedTransaction::new(
-                            inner.effective_gas_price(base_fee),
-                            inner,
-                            block_number,
-                            block_hash,
-                            transaction_index as u64,
-                        )
-                    }),
-            )
-            .unwrap();
-        self.height = self.height.max(block_number);
-        (self.on_payload)(self, id, block_hash);
-    }
-
-    pub fn add_transaction(&mut self, tx: TxEnvelope) {
-        let tx_hash = tx.tx_hash().0.into();
-        let mut encoded = Vec::new();
-        tx.encode(&mut encoded);
-        let encoded = encoded.as_slice().into();
-        self.mem_pool
-            .insert(tx_hash, (ExtendedTxEnvelope::Canonical(tx), encoded));
-    }
-
-    pub fn genesis_update(&mut self, block: ExtendedBlock) {
-        self.head = block.hash;
-        self.block_repository.add(&mut self.storage, block).unwrap();
-    }
-
-    fn create_block(&mut self, payload_attributes: Payload) -> ExtendedBlock {
         // Include transactions from both `payload_attributes` and internal mem-pool
-        let transactions = payload_attributes
+        let transactions = attributes
             .transactions
             .iter()
             .filter_map(|tx_bytes| {
@@ -114,8 +68,8 @@ impl<D: Dependencies> Application<D> {
 
         let header_for_execution = HeaderForExecution {
             number: self.height + 1,
-            timestamp: payload_attributes.timestamp.as_limbs()[0],
-            prev_randao: payload_attributes.prev_randao,
+            timestamp: attributes.timestamp.as_limbs()[0],
+            prev_randao: attributes.prev_randao,
         };
         let op_transactions: Vec<_> = transactions
             .iter()
@@ -134,7 +88,7 @@ impl<D: Dependencies> Application<D> {
                 tx.encode_2718(buf)
             });
         // TODO: is this the correct withdrawals root calculation?
-        let withdrawals_root = alloy_trie::root::ordered_trie_root(&payload_attributes.withdrawals);
+        let withdrawals_root = alloy_trie::root::ordered_trie_root(&attributes.withdrawals);
         let total_tip = execution_outcome.total_tip;
 
         let header = Header {
@@ -147,23 +101,66 @@ impl<D: Dependencies> Application<D> {
             excess_blob_gas: Some(0),
             ..Default::default()
         }
-        .with_payload_attributes(payload_attributes)
+        .with_payload_attributes(attributes)
         .with_execution_outcome(execution_outcome);
 
-        let hash = self.block_hash.block_hash(&header);
+        let block_hash = self.block_hash.block_hash(&header);
+
+        let block = Block::new(
+            header,
+            op_transactions.iter().map(|v| v.trie_hash()).collect(),
+        )
+        .with_hash(block_hash)
+        .with_value(total_tip);
+
+        let block_number = block.block.header.number;
+        let base_fee = block.block.header.base_fee_per_gas;
 
         self.receipt_repository
             .extend(
                 &mut self.receipt_memory,
                 receipts
                     .into_iter()
-                    .map(|receipt| receipt.with_block_hash(hash)),
+                    .map(|receipt| receipt.with_block_hash(block_hash)),
             )
             .unwrap();
 
-        Block::new(header, op_transactions)
-            .with_hash(hash)
-            .with_value(total_tip)
+        self.transaction_repository
+            .extend(
+                &mut self.storage,
+                op_transactions
+                    .into_iter()
+                    .enumerate()
+                    .map(|(transaction_index, inner)| {
+                        ExtendedTransaction::new(
+                            inner.effective_gas_price(base_fee),
+                            inner,
+                            block_number,
+                            block_hash,
+                            transaction_index as u64,
+                        )
+                    }),
+            )
+            .unwrap();
+
+        self.block_repository.add(&mut self.storage, block).unwrap();
+
+        self.height = self.height.max(block_number);
+        (self.on_payload)(self, id, block_hash);
+    }
+
+    pub fn add_transaction(&mut self, tx: TxEnvelope) {
+        let tx_hash = tx.tx_hash().0.into();
+        let mut encoded = Vec::new();
+        tx.encode(&mut encoded);
+        let encoded = encoded.as_slice().into();
+        self.mem_pool
+            .insert(tx_hash, (ExtendedTxEnvelope::Canonical(tx), encoded));
+    }
+
+    pub fn genesis_update(&mut self, block: ExtendedBlock) {
+        self.head = block.hash;
+        self.block_repository.add(&mut self.storage, block).unwrap();
     }
 
     fn execute_transactions(

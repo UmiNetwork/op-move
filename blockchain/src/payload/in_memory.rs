@@ -39,10 +39,15 @@ impl PayloadQueries for InMemoryPayloadQueries {
         storage: &Self::Storage,
         block_hash: B256,
     ) -> Result<Option<PayloadResponse>, Self::Err> {
-        Ok(storage
-            .block_memory
-            .by_hash(block_hash)
-            .map(PayloadResponse::from_block))
+        Ok(storage.block_memory.by_hash(block_hash).map(|block| {
+            let transactions = storage
+                .transaction_memory
+                .by_hashes(block.transaction_hashes())
+                .into_iter()
+                .map(|v| v.inner);
+
+            PayloadResponse::from_block_with_transactions(block, transactions)
+        }))
     }
 
     fn by_id(

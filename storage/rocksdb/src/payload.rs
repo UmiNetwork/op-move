@@ -2,10 +2,12 @@ use {
     crate::{
         block::block_cf,
         generic::{FromValue, ToKey},
+        transaction,
     },
     moved_blockchain::{
         block::ExtendedBlock,
         payload::{PayloadId, PayloadQueries, PayloadResponse},
+        transaction::ExtendedTransaction,
     },
     moved_shared::primitives::B256,
     rocksdb::{AsColumnFamilyRef, DB as RocksDb},
@@ -47,10 +49,26 @@ impl PayloadQueries for RocksDbPayloadQueries {
         db: &Self::Storage,
         hash: B256,
     ) -> Result<Option<PayloadResponse>, Self::Err> {
-        Ok(db
-            .get_pinned_cf(&block_cf(db), hash)?
-            .map(|bytes| ExtendedBlock::from_value(bytes.as_ref()))
-            .map(PayloadResponse::from_block))
+        db.get_pinned_cf(&block_cf(db), hash)?
+            .map(|bytes| {
+                let block = ExtendedBlock::from_value(bytes.as_ref());
+                let transaction_cf = transaction::cf(db);
+                let transactions = block
+                    .transaction_hashes()
+                    .map(|hash| {
+                        Ok(db
+                            .get_pinned_cf(&transaction_cf, hash)?
+                            .map(|v| ExtendedTransaction::from_value(v.as_ref()).inner))
+                    })
+                    .filter_map(|v| v.transpose())
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                Ok(PayloadResponse::from_block_with_transactions(
+                    block,
+                    transactions,
+                ))
+            })
+            .transpose()
     }
 
     fn by_id(

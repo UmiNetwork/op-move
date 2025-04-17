@@ -1,7 +1,6 @@
 use {
     crate::{block::ExtendedBlock, transaction::ExtendedTransaction},
     alloy::{eips::eip4895::Withdrawals, network::primitives::BlockTransactions},
-    op_alloy::{consensus::OpTxEnvelope, network::eip2718::Encodable2718},
 };
 
 type RpcBlock = alloy::rpc::types::Block<RpcTransaction>;
@@ -28,14 +27,7 @@ impl BlockResponse {
 
     pub fn from_block_with_transaction_hashes(block: ExtendedBlock) -> Self {
         Self::new(
-            BlockTransactions::Hashes(
-                block
-                    .block
-                    .transactions
-                    .iter()
-                    .map(OpTxEnvelope::trie_hash)
-                    .collect(),
-            ),
+            BlockTransactions::Hashes(block.block.transactions.clone()),
             block,
         )
     }
