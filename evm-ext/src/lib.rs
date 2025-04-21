@@ -18,7 +18,7 @@ use {
         value::{MoveStructLayout, MoveTypeLayout},
     },
     revm::primitives::Log,
-    std::{clone::Clone, sync::LazyLock},
+    std::sync::LazyLock,
 };
 
 pub mod events;
