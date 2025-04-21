@@ -115,7 +115,15 @@ pub fn call_transaction(
                 verify_input.traversal_context,
                 &code_storage,
             )?;
-            Ok(bcs::to_bytes(&outcome.return_values)?)
+            // Only return the results of the transaction in bytes without the Move value layout.
+            // Sending just the bytes works better when it comes to parsing on the client side.
+            Ok(bcs::to_bytes(
+                &outcome
+                    .return_values
+                    .into_iter()
+                    .map(|(bytes, _ty)| bytes)
+                    .collect::<Vec<_>>(),
+            )?)
         }
         TransactionData::ScriptOrModule(ScriptOrModule::Script(script)) => {
             crate::execute::execute_script(
