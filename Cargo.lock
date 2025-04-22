@@ -7665,6 +7665,7 @@ dependencies = [
  "moved-storage-rocksdb",
  "once_cell",
  "openssl",
+ "paste",
  "serde",
  "serde_json",
  "tokio",

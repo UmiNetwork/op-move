@@ -50,6 +50,7 @@ move-vm-runtime.workspace = true
 moved-evm-ext.workspace = true
 moved-genesis-image.workspace = true
 openssl.workspace = true
+paste.workspace = true
 
 [[bin]]
 name = "op-move"
