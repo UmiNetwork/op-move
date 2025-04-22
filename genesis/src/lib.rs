@@ -17,8 +17,6 @@ use {
 
 pub mod config;
 
-// TODO(#328): LoaderV2 migration
-#[allow(deprecated)]
 mod framework;
 
 mod bridged_tokens;
@@ -29,11 +27,11 @@ mod vm;
 pub fn build(
     vm: &MovedVm,
     config: &GenesisConfig,
-    state: &impl State,
+    state: &mut impl State,
     storage_trie: &impl StorageTrieRepository,
 ) -> (ChangeSet, TableChangeSet, StorageTriesChanges) {
     // Deploy Move/Aptos/Sui frameworks
-    let (changes_framework, table_changes) = framework::init_state(vm, state);
+    let changes_framework = framework::init_state(vm, state);
 
     // Deploy OP stack L2 contracts
     let mut changes_l2 =
@@ -55,7 +53,7 @@ pub fn build(
         .squash(changes_l2.accounts)
         .expect("L2 contract changes should not be in conflict");
 
-    (changes, table_changes, changes_l2.storage)
+    (changes, TableChangeSet::default(), changes_l2.storage)
 }
 
 pub fn apply(

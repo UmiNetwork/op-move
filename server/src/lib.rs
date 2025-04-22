@@ -148,7 +148,7 @@ pub fn initialize_app(genesis_config: GenesisConfig) -> Application<dependency::
             moved_genesis::build(
                 &moved_genesis::MovedVm::new(&genesis_config),
                 &genesis_config,
-                &app.state,
+                &mut app.state,
                 &app.evm_storage,
             )
         }
