@@ -15,8 +15,9 @@ use {
     move_vm_types::{resolver::MoveResolver, value_serde::ValueSerDeContext, values::Value},
     moved_evm_ext::{
         self, CODE_LAYOUT, EVM_CALL_FN_NAME, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
-        events::EthTransfersLogger, extract_evm_changes, extract_evm_result,
-        state::StorageTrieRepository,
+        events::EthTransfersLogger,
+        extract_evm_changes, extract_evm_result,
+        state::{BlockHashLookup, StorageTrieRepository},
     },
     moved_genesis::{CreateMoveVm, MovedVm},
     moved_shared::{
@@ -29,8 +30,9 @@ use {
 pub(super) fn execute_deposited_transaction<
     S: MoveResolver + TableResolver,
     ST: StorageTrieRepository,
+    H: BlockHashLookup,
 >(
-    input: DepositExecutionInput<S, ST>,
+    input: DepositExecutionInput<S, ST, H>,
 ) -> moved_shared::error::Result<TransactionExecutionOutcome> {
     let moved_vm = MovedVm::new(input.genesis_config);
     let module_bytes_storage = ResolverBasedModuleBytesStorage::new(input.state);
@@ -49,6 +51,7 @@ pub(super) fn execute_deposited_transaction<
         session_id,
         input.storage_trie,
         &eth_transfers_log,
+        input.block_hash_lookup,
     );
     let traversal_storage = TraversalStorage::new();
     let mut traversal_context = TraversalContext::new(&traversal_storage);

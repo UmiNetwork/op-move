@@ -365,7 +365,10 @@ pub fn quick_get_eth_balance(
     let vm = moved_vm.create_move_vm().unwrap();
     let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state);
     let code_storage = module_bytes_storage.as_unsync_code_storage(&moved_vm);
-    let mut session = super::create_vm_session(&vm, state, SessionId::default(), storage_trie, &());
+    // Noop block hash lookup is safe here because the EVM is not used for
+    // querying base token balances.
+    let mut session =
+        super::create_vm_session(&vm, state, SessionId::default(), storage_trie, &(), &());
     let traversal_storage = TraversalStorage::new();
     let mut traversal_context = TraversalContext::new(&traversal_storage);
     let mut gas_meter = UnmeteredGasMeter;

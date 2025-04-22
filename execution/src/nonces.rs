@@ -37,7 +37,10 @@ pub fn quick_get_nonce(
     let module_storage_bytes = ResolverBasedModuleBytesStorage::new(state);
     let code_storage = module_storage_bytes.as_unsync_code_storage(&moved_vm);
     let vm = moved_vm.create_move_vm().expect("Must create MoveVM");
-    let mut session = super::create_vm_session(&vm, state, SessionId::default(), storage_trie, &());
+    // Noop block hash lookup is safe here because the EVM is not used for
+    // querying account nonces.
+    let mut session =
+        super::create_vm_session(&vm, state, SessionId::default(), storage_trie, &(), &());
     let traversal_storage = TraversalStorage::new();
     let mut traversal_context = TraversalContext::new(&traversal_storage);
     let mut gas_meter = UnmeteredGasMeter;

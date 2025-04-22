@@ -149,7 +149,7 @@ pub fn proof_from_trie_and_resolver(
     resolver: &impl MoveResolver,
     storage_trie: &impl StorageTrieRepository,
 ) -> Option<ProofResponse> {
-    let evm_db = ResolverBackedDB::new(storage_trie, resolver);
+    let evm_db = ResolverBackedDB::new(storage_trie, resolver, &(), 0);
 
     // All L2 contract account data is part of the EVM state
     let account_info = evm_db.get_account(&address).ok()??;
@@ -441,6 +441,7 @@ mod tests {
             SessionId::default(),
             &evm_storage,
             &(),
+            &(),
         );
         let traversal_storage = TraversalStorage::new();
         let mut traversal_context = TraversalContext::new(&traversal_storage);
@@ -629,6 +630,7 @@ mod tests {
             state.resolver(),
             SessionId::default(),
             &evm_storage,
+            &(),
             &(),
         );
         let traversal_storage = TraversalStorage::new();

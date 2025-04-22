@@ -1,6 +1,7 @@
 use {
     crate::{
         Application, Dependencies, ExecutionOutcome, Payload,
+        block_hash::StorageBasedProvider,
         input::{WithExecutionOutcome, WithPayloadAttributes},
     },
     alloy::{
@@ -194,6 +195,7 @@ impl<D: Dependencies> Application<D> {
                 normalized_tx.gas_limit(),
                 normalized_tx.effective_gas_price(base_fee),
             );
+            let block_hash_lookup = StorageBasedProvider::new(&self.storage, &self.block_queries);
             let input = match &normalized_tx {
                 NormalizedExtendedTxEnvelope::Canonical(tx) => CanonicalExecutionInput {
                     tx,
@@ -209,6 +211,7 @@ impl<D: Dependencies> Application<D> {
                     l2_input: l2_gas_input,
                     base_token: &self.base_token,
                     block_header: block_header.clone(),
+                    block_hash_lookup: &block_hash_lookup,
                 }
                 .into(),
                 NormalizedExtendedTxEnvelope::DepositedTx(tx) => DepositExecutionInput {
@@ -218,6 +221,7 @@ impl<D: Dependencies> Application<D> {
                     storage_trie: &self.evm_storage,
                     genesis_config: &self.genesis_config,
                     block_header: block_header.clone(),
+                    block_hash_lookup: &block_hash_lookup,
                 }
                 .into(),
             };

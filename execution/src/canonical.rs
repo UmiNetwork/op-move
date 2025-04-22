@@ -22,7 +22,10 @@ use {
         session::Session,
     },
     move_vm_types::{gas::UnmeteredGasMeter, resolver::MoveResolver},
-    moved_evm_ext::{events::EthTransfersLogger, state::StorageTrieRepository},
+    moved_evm_ext::{
+        events::EthTransfersLogger,
+        state::{BlockHashLookup, StorageTrieRepository},
+    },
     moved_genesis::{CreateMoveVm, MovedVm, config::GenesisConfig},
     moved_shared::{
         error::{
@@ -115,8 +118,9 @@ pub(super) fn execute_canonical_transaction<
     ST: StorageTrieRepository,
     F: L2GasFee,
     B: BaseTokenAccounts,
+    H: BlockHashLookup,
 >(
-    input: CanonicalExecutionInput<S, ST, F, B>,
+    input: CanonicalExecutionInput<S, ST, F, B, H>,
 ) -> moved_shared::error::Result<TransactionExecutionOutcome> {
     let sender_move_address = input.tx.signer.to_move_address();
 
@@ -142,6 +146,7 @@ pub(super) fn execute_canonical_transaction<
         session_id,
         input.storage_trie,
         &eth_transfers_logger,
+        input.block_hash_lookup,
     );
     let traversal_storage = TraversalStorage::new();
     let mut traversal_context = TraversalContext::new(&traversal_storage);

@@ -1,4 +1,5 @@
 mod account;
+mod block_hash;
 mod storage;
 
-pub use {account::*, storage::*};
+pub use {account::*, block_hash::BlockHashLookup, storage::*};

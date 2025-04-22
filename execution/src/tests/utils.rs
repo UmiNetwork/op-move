@@ -305,6 +305,7 @@ impl TestContext {
                     l2_input: l2_gas_input,
                     base_token: &(),
                     block_header: Default::default(),
+                    block_hash_lookup: &(),
                 }
                 .into(),
                 NormalizedExtendedTxEnvelope::DepositedTx(tx) => DepositExecutionInput {
@@ -314,6 +315,7 @@ impl TestContext {
                     storage_trie: &self.evm_storage,
                     genesis_config: &self.genesis_config,
                     block_header: Default::default(),
+                    block_hash_lookup: &(),
                 }
                 .into(),
             }),
@@ -329,6 +331,7 @@ impl TestContext {
                     l2_input: l2_gas_input,
                     base_token: moved_base_token,
                     block_header: Default::default(),
+                    block_hash_lookup: &(),
                 }
                 .into(),
                 NormalizedExtendedTxEnvelope::DepositedTx(tx) => DepositExecutionInput {
@@ -338,6 +341,7 @@ impl TestContext {
                     storage_trie: &self.evm_storage,
                     genesis_config: &self.genesis_config,
                     block_header: Default::default(),
+                    block_hash_lookup: &(),
                 }
                 .into(),
             }),
@@ -460,6 +464,7 @@ impl TestContext {
             session_id,
             &self.evm_storage,
             &(),
+            &(),
         );
         let traversal_storage = TraversalStorage::new();
         let mut traversal_context = TraversalContext::new(&traversal_storage);
@@ -505,6 +510,7 @@ impl TestContext {
             self.state.resolver(),
             session_id,
             &self.evm_storage,
+            &(),
             &(),
         );
         let traversal_storage = TraversalStorage::new();

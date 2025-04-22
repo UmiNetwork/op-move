@@ -535,6 +535,7 @@ mod tests {
             SessionId::default(),
             &evm_storage,
             &(),
+            &(),
         );
         for (type_tag, test_case, expected_outcome) in test_cases {
             let actual_outcome = validate_entry_value(
@@ -621,6 +622,7 @@ mod tests {
             state.resolver(),
             SessionId::default(),
             &evm_storage,
+            &(),
             &(),
         );
         for (type_tag, test_case, expected_outcome) in test_cases {

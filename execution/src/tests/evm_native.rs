@@ -157,6 +157,7 @@ fn test_solidity_fixed_bytes() {
                 l2_input: (u64::MAX, U256::ZERO).into(),
                 base_token: &(),
                 block_header: HeaderForExecution::default(),
+                block_hash_lookup: &(),
             };
             execute_transaction(input.into()).unwrap()
         };
