@@ -103,7 +103,12 @@ pub fn extract_evm_changes_from_native(evm_native_ctx: &NativeEVMContext) -> Cha
         let mut single_account_changes = AccountChangeSet::new();
         for (address, account) in state {
             // If the account is not touched then there are no changes.
-            if !account.is_touched() {
+            // If the account was marked as self-destructed then it must
+            // have been created in the same transaction (per EIP-6780) so
+            // there are no storage changes to persist. Note REVM handles
+            // balance transfer without marking as self-destructed in the
+            // case of an account that was not created during this transaction.
+            if !account.is_touched() || account.is_selfdestructed() {
                 continue;
             }
 
@@ -141,9 +146,10 @@ fn add_account_changes(
         "Untouched accounts are filtered out before calling this function."
     );
 
-    if account.is_selfdestructed() {
-        unimplemented!("EVM account self-destruct is not implemented");
-    }
+    debug_assert!(
+        !account.is_selfdestructed(),
+        "Self-destructed accounts are filtered out before calling this function."
+    );
 
     let code_hash = get_account_code_hash(&account.info);
 
