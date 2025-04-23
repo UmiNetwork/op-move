@@ -4,24 +4,26 @@ use {
         criterion_group, measurement::WallTime, BatchSize, BenchmarkGroup, BenchmarkId, Criterion,
         Throughput,
     },
+    moved_app::{Application, DependenciesThreadSafe},
     moved_genesis::config::GenesisConfig,
     moved_server::initialize_app,
     std::{process::Termination, sync::Arc},
     tokio::{runtime::Runtime, sync::RwLock},
 };
 
-fn build_1000_blocks(current: &Runtime, bencher: &mut BenchmarkGroup<WallTime>, buffer_size: u32) {
+fn build_1000_blocks(
+    current: &Runtime,
+    bencher: &mut BenchmarkGroup<WallTime>,
+    app: Arc<RwLock<Application<impl DependenciesThreadSafe>>>,
+    buffer_size: u32,
+) {
     bencher.throughput(Throughput::Elements(*input::BLOCKS_1000_LEN));
-    bencher.sample_size(10);
-    bencher.bench_with_input(
-        BenchmarkId::from_parameter(buffer_size),
-        &buffer_size,
+    bencher.sample_size(100);
+    bencher.bench_with_input(BenchmarkId::from_parameter(buffer_size), &buffer_size, {
         |b, _size| {
             b.iter_batched(
                 || {
-                    let app = initialize_app(GenesisConfig::default());
-                    let app = Arc::new(RwLock::new(app));
-                    let (queue, actor) = moved_app::create(app, buffer_size);
+                    let (queue, actor) = moved_app::create(app.clone(), buffer_size);
 
                     let handle = current.spawn(async move { actor.spawn().await.unwrap() });
 
@@ -38,8 +40,8 @@ fn build_1000_blocks(current: &Runtime, bencher: &mut BenchmarkGroup<WallTime>, 
                 },
                 BatchSize::PerIteration,
             );
-        },
-    );
+        }
+    });
 }
 
 fn bench_build_1000_blocks_with_queue_size(bencher: &mut Criterion) -> impl Termination {
@@ -58,7 +60,10 @@ fn bench_build_1000_blocks_with_queue_size(bencher: &mut Criterion) -> impl Term
         100,
         1,
     ] {
-        build_1000_blocks(&current, &mut group, buffer_size);
+        let app = initialize_app(GenesisConfig::default());
+        let app = Arc::new(RwLock::new(app));
+
+        build_1000_blocks(&current, &mut group, app.clone(), buffer_size);
     }
 }
 
