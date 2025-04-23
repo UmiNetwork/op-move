@@ -6,12 +6,8 @@ module Evm::evm {
     use std::error;
     use std::signer;
 
-    /// For now deploying EVM contracts is restricted to an admin account.
-    /// This restriction may be lifted in the future.
-    const ENOT_OWNER: u64 = 1;
-
     /// Solidity FixedBytes must have length between 1 and 32 (inclusive).
-    const EINVALID_FIXED_BYTES_SIZE: u64 = 2;
+    const EINVALID_FIXED_BYTES_SIZE: u64 = 1;
 
     const OWNER: address = @evm_admin;
 
@@ -152,7 +148,6 @@ module Evm::evm {
         caller: &signer, value: FungibleAsset, data: vector<u8>
     ): EvmResult {
         let caller_addr = signer::address_of(caller);
-        assert!(caller_addr == OWNER, error::permission_denied(ENOT_OWNER));
 
         native_evm_create(caller_addr, get_asset_value(value), data)
     }
