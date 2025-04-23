@@ -1,61 +1,51 @@
 use {
     crate::queue::input,
     criterion::{
-        black_box, criterion_group, measurement::WallTime, BatchSize, BenchmarkGroup, BenchmarkId,
-        Criterion, Throughput,
+        criterion_group, measurement::WallTime, BatchSize, BenchmarkGroup, BenchmarkId, Criterion,
+        Throughput,
     },
     moved_genesis::config::GenesisConfig,
     moved_server::initialize_app,
     std::{process::Termination, sync::Arc},
-    tokio::sync::RwLock,
+    tokio::{runtime::Runtime, sync::RwLock},
 };
 
-fn build_1000_blocks(bencher: &mut BenchmarkGroup<WallTime>, buffer_size: u32) {
+fn build_1000_blocks(current: &Runtime, bencher: &mut BenchmarkGroup<WallTime>, buffer_size: u32) {
     bencher.throughput(Throughput::Elements(*input::BLOCKS_1000_LEN));
+    bencher.sample_size(10);
+    bencher.bench_with_input(
+        BenchmarkId::from_parameter(buffer_size),
+        &buffer_size,
+        |b, _size| {
+            b.iter_batched(
+                || {
+                    let app = initialize_app(GenesisConfig::default());
+                    let app = Arc::new(RwLock::new(app));
+                    let (queue, actor) = moved_app::create(app, buffer_size);
 
-    let app = initialize_app(GenesisConfig::default());
-    let app = Arc::new(RwLock::new(app));
+                    let handle = current.spawn(async move { actor.spawn().await.unwrap() });
 
-    let current = tokio::runtime::Builder::new_multi_thread().build().unwrap();
-
-    let (current, handle) = {
-        let (queue, actor) = moved_app::create(app, buffer_size);
-
-        let handle = current.spawn(async move { actor.spawn().await });
-
-        bencher.bench_with_input(
-            BenchmarkId::from_parameter(buffer_size),
-            &buffer_size,
-            |b, _size| {
-                b.iter_batched(
-                    input::blocks_1000,
-                    |input| {
-                        let handle = black_box(current.spawn({
-                            let queue = queue.clone();
-
-                            async move {
-                                for msg in input {
-                                    queue.send(msg).await;
-                                }
-                            }
-                        }));
-
-                        current.block_on(queue.wait_for_pending_commands());
-                        current.block_on(handle)
-                    },
-                    BatchSize::PerIteration,
-                );
-            },
-        );
-
-        (current, handle)
-    };
-
-    current.block_on(handle).unwrap().unwrap();
+                    (queue, handle, input::blocks_1000())
+                },
+                |(queue, handle, input)| {
+                    current.block_on(async move {
+                        for msg in input {
+                            queue.send(msg).await;
+                        }
+                        drop(queue);
+                        handle.await.unwrap()
+                    })
+                },
+                BatchSize::PerIteration,
+            );
+        },
+    );
 }
 
 fn bench_build_1000_blocks_with_queue_size(bencher: &mut Criterion) -> impl Termination {
+    let current = tokio::runtime::Builder::new_multi_thread().build().unwrap();
     let mut group = bencher.benchmark_group("Build 1000 blocks with queue size");
+
     for buffer_size in [
         1000000,
         10000,
@@ -68,7 +58,7 @@ fn bench_build_1000_blocks_with_queue_size(bencher: &mut Criterion) -> impl Term
         100,
         1,
     ] {
-        build_1000_blocks(&mut group, buffer_size);
+        build_1000_blocks(&current, &mut group, buffer_size);
     }
 }
 
