@@ -1,5 +1,6 @@
 mod get_proof;
 mod integration;
+mod test_context;
 
 use {
     crate::{validate_jwt, Claims},
