@@ -1,14 +1,18 @@
 use {
     crate::queue::input,
+    criterion::{
+        criterion_group, measurement::WallTime, BatchSize, BenchmarkGroup, BenchmarkId, Criterion,
+        Throughput,
+    },
     moved_genesis::config::GenesisConfig,
     moved_server::initialize_app,
-    paste::paste,
     std::{process::Termination, sync::Arc},
-    test::Bencher,
     tokio::sync::RwLock,
 };
 
-fn build_1000_blocks(bencher: &mut Bencher, buffer_size: u32) {
+fn build_1000_blocks(bencher: &mut BenchmarkGroup<WallTime>, buffer_size: u32) {
+    bencher.throughput(Throughput::Elements(*input::BLOCKS_1000_LEN));
+
     let app = initialize_app(GenesisConfig::default());
     let app = Arc::new(RwLock::new(app));
 
@@ -17,35 +21,51 @@ fn build_1000_blocks(bencher: &mut Bencher, buffer_size: u32) {
     let (current, handle) = {
         let (queue, actor) = moved_app::create(app, buffer_size);
 
-        let handle = current.block_on(async move { actor.spawn() });
+        let handle = current.spawn(async move { actor.spawn().await });
 
-        bencher.iter(|| {
-            let queue = queue.clone();
+        bencher.bench_with_input(
+            BenchmarkId::from_parameter(buffer_size),
+            &buffer_size,
+            |b, _size| {
+                b.iter_batched(
+                    input::blocks_1000,
+                    |input| {
+                        let queue = queue.clone();
 
-            current.block_on(async move {
-                for msg in input::blocks_1000() {
-                    queue.send(msg).await;
-                }
+                        current.block_on(async move {
+                            for msg in input {
+                                queue.send(msg).await;
+                            }
 
-                queue.wait_for_pending_commands().await
-            })
-        });
+                            queue.wait_for_pending_commands().await
+                        })
+                    },
+                    BatchSize::PerIteration,
+                );
+            },
+        );
 
         (current, handle)
     };
 
-    current.block_on(async move {
-        handle.await.unwrap();
-    });
+    current.block_on(handle).unwrap().unwrap();
 }
 
-macro_rules! generate_bench {
-    ($($buffer_size:expr$(,)?)*) => {$(paste!{
-        #[bench]
-        fn [<bench_build_1000_blocks_with_queue_size_ $buffer_size>](bencher: &mut Bencher) -> impl Termination {
-            build_1000_blocks(bencher, $buffer_size);
-        }
-    })*};
+fn bench_build_1000_blocks_with_queue_size(bencher: &mut Criterion) -> impl Termination {
+    let mut group = bencher.benchmark_group("Build 1000 blocks with queue size");
+    for buffer_size in [
+        10000,
+        6000,
+        5000,
+        *input::BLOCKS_1000_LEN as u32,
+        1000,
+        500,
+        200,
+        100,
+        1,
+    ] {
+        build_1000_blocks(&mut group, buffer_size);
+    }
 }
 
-generate_bench!(10000, 6000, 5000, 1000, 500, 200, 100);
+criterion_group!(benches, bench_build_1000_blocks_with_queue_size);

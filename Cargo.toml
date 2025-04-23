@@ -43,6 +43,7 @@ bcs = { git = "https://github.com/aptos-labs/bcs" }
 better_any = "0.1.1"
 bytes = "1.6"
 clap = { version = "4.5", features = ["derive"] }
+criterion = "0.5"
 convert_case = "0.6"
 dotenvy = "0.15"
 eth_trie = "0.5.0"
@@ -79,7 +80,6 @@ moved-trie = { path = "trie" }
 once_cell = "1.19"
 op-alloy = { version = "0.12", features = ["full", "std", "k256", "serde"] }
 openssl = "0.10"
-paste = "1"
 regex = "1.11.1"
 revm = { version = "21", features = ["optional_balance_check"] }
 rocksdb = { version = "0.23" }

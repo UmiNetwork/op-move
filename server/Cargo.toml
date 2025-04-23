@@ -43,6 +43,7 @@ warp-reverse-proxy.workspace = true
 
 [dev-dependencies]
 alloy.workspace = true
+criterion.workspace = true
 dotenvy.workspace = true
 eth_trie.workspace = true
 move-binary-format.workspace = true
@@ -50,8 +51,11 @@ move-vm-runtime.workspace = true
 moved-evm-ext.workspace = true
 moved-genesis-image.workspace = true
 openssl.workspace = true
-paste.workspace = true
 
 [[bin]]
 name = "op-move"
 path = "src/main.rs"
+
+[[bench]]
+name = "perf"
+harness = false

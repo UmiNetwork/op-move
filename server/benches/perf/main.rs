@@ -1,7 +1,5 @@
-#![feature(test)]
-
-extern crate test;
+use criterion::criterion_main;
 
 mod queue;
 
-const fn main() {}
+criterion_main!(queue::benches);
