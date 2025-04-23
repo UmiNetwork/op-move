@@ -54,6 +54,7 @@ fn build_1000_blocks(bencher: &mut BenchmarkGroup<WallTime>, buffer_size: u32) {
 fn bench_build_1000_blocks_with_queue_size(bencher: &mut Criterion) -> impl Termination {
     let mut group = bencher.benchmark_group("Build 1000 blocks with queue size");
     for buffer_size in [
+        1000000,
         10000,
         6000,
         5000,
