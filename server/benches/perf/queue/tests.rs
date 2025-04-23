@@ -1,8 +1,8 @@
 use {
     crate::queue::input,
     criterion::{
-        criterion_group, measurement::WallTime, BatchSize, BenchmarkGroup, BenchmarkId, Criterion,
-        Throughput,
+        black_box, criterion_group, measurement::WallTime, BatchSize, BenchmarkGroup, BenchmarkId,
+        Criterion, Throughput,
     },
     moved_genesis::config::GenesisConfig,
     moved_server::initialize_app,
@@ -30,15 +30,18 @@ fn build_1000_blocks(bencher: &mut BenchmarkGroup<WallTime>, buffer_size: u32) {
                 b.iter_batched(
                     input::blocks_1000,
                     |input| {
-                        let queue = queue.clone();
+                        let handle = black_box(current.spawn({
+                            let queue = queue.clone();
 
-                        current.block_on(async move {
-                            for msg in input {
-                                queue.send(msg).await;
+                            async move {
+                                for msg in input {
+                                    queue.send(msg).await;
+                                }
                             }
+                        }));
 
-                            queue.wait_for_pending_commands().await
-                        })
+                        current.block_on(queue.wait_for_pending_commands());
+                        current.block_on(handle)
                     },
                     BatchSize::PerIteration,
                 );
