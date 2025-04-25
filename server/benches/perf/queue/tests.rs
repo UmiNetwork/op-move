@@ -48,21 +48,17 @@ fn bench_build_1000_blocks_with_queue_size(bencher: &mut Criterion) -> impl Term
     let current = tokio::runtime::Builder::new_multi_thread().build().unwrap();
     let mut group = bencher.benchmark_group("Build 1000 blocks with queue size");
 
-    for buffer_size in [
-        1000000,
-        10000,
-        6000,
-        5000,
-        1000,
-        500,
-        200,
-        100,
-        1,
-    ].into_iter().rev() {
-        let app = initialize_app(GenesisConfig::default());
+    for buffer_size in [1000000, 10000, 6000, 5000, 1000, 500, 200, 100, 1]
+        .into_iter()
+        .rev()
+    {
+        let mut app = initialize_app(GenesisConfig::default());
+
+        app.genesis_update(input::GENESIS);
+
         let app = Arc::new(RwLock::new(app));
 
-        build_1000_blocks(&current, &mut group, app.clone(), buffer_size);
+        build_1000_blocks(&current, &mut group, app, buffer_size);
     }
 }
 
