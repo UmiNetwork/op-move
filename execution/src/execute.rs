@@ -6,11 +6,13 @@ use {
     move_binary_format::CompiledModule,
     move_core_types::{
         account_address::AccountAddress,
+        effects::{ChangeSet, Op},
         language_storage::{ModuleId, TypeTag},
         value::MoveValue,
     },
     move_vm_runtime::{
-        CodeStorage, ModuleStorage, module_traversal::TraversalContext, session::Session,
+        CodeStorage, ModuleStorage, StagingModuleStorage, module_traversal::TraversalContext,
+        session::Session,
     },
     move_vm_types::{
         gas::GasMeter, loaded_data::runtime_types::Type, value_serde::ValueSerDeContext,
@@ -207,17 +209,30 @@ fn strip_reference(t: &Type) -> moved_shared::error::Result<&Type> {
     }
 }
 
-// TODO(#328): V2 loader
-#[allow(deprecated)]
-pub(super) fn deploy_module<G: GasMeter>(
+pub(super) fn deploy_module(
     code: Module,
     address: AccountAddress,
-    session: &mut Session,
-    gas_meter: &mut G,
-) -> moved_shared::error::Result<ModuleId> {
+    module_storage: &impl ModuleStorage,
+) -> moved_shared::error::Result<(ModuleId, ChangeSet)> {
     let code = code.into_inner();
     let module = CompiledModule::deserialize(&code)?;
-    session.publish_module(code, address, gas_meter)?;
 
-    Ok(module.self_id())
+    let staged_module_storage =
+        StagingModuleStorage::create(&address, module_storage, vec![code.into()])?;
+    let bundle = staged_module_storage.release_verified_module_bundle();
+    let mut writes = ChangeSet::new();
+    for (module_id, bytes) in bundle.into_iter() {
+        let addr = module_id.address();
+        let name = module_id.name();
+
+        let module_exists = module_storage.check_module_exists(addr, name)?;
+        let op = if module_exists {
+            Op::Modify(bytes)
+        } else {
+            Op::New(bytes)
+        };
+        writes.add_module_op(module_id, op).unwrap();
+    }
+
+    Ok((module.self_id(), writes))
 }

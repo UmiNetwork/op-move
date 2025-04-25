@@ -15,6 +15,7 @@ use {
     alloy::primitives::U256,
     aptos_gas_meter::{AptosGasMeter, StandardGasAlgebra, StandardGasMeter},
     aptos_table_natives::TableResolver,
+    move_core_types::effects::ChangeSet,
     move_vm_runtime::{
         AsUnsyncCodeStorage, ModuleStorage,
         module_traversal::{TraversalContext, TraversalStorage},
@@ -147,6 +148,7 @@ pub(super) fn execute_canonical_transaction<
 
     let mut gas_meter = new_gas_meter(input.genesis_config, input.l2_input.gas_limit);
     let mut deployment = None;
+    let mut deploy_changes = ChangeSet::new();
     // Using l2 input here as test transactions don't set the max limit directly on itself
     let l2_cost = input.l2_fee.l2_fee(input.l2_input.clone()).saturating_to();
     let mut evm_logs = Vec::new();
@@ -184,14 +186,13 @@ pub(super) fn execute_canonical_transaction<
             &code_storage,
         ),
         TransactionData::ScriptOrModule(ScriptOrModule::Module(module)) => {
-            let module_id = deploy_module(
-                module,
-                sender_move_address,
-                verify_input.session,
-                verify_input.gas_meter,
-            );
-            module_id.map(|id| {
+            // TODO: gas for module deploy
+            let module_id = deploy_module(module, sender_move_address, &code_storage);
+            module_id.map(|(id, writes)| {
                 deployment = Some((sender_move_address, id));
+                deploy_changes
+                    .squash(writes)
+                    .expect("Move module deployment changes should be compatible");
             })
         }
         TransactionData::EoaBaseTokenTransfer(to) => {
@@ -264,6 +265,9 @@ pub(super) fn execute_canonical_transaction<
     changes
         .squash(evm_changes.accounts)
         .expect("EVM changes must merge with other session changes");
+    changes
+        .squash(deploy_changes)
+        .expect("Module deploy changes must merge with other session changes");
     let changes = Changes::new(changes, evm_changes.storage);
 
     match vm_outcome {

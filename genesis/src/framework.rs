@@ -1,9 +1,9 @@
 use {
     crate::MovedVm,
     alloy::primitives::address,
-    aptos_framework::ReleaseBundle,
-    aptos_table_natives::{NativeTableContext, TableChange, TableChangeSet},
-    move_binary_format::errors::{Location, VMError},
+    aptos_framework::{ReleaseBundle, ReleasePackage},
+    bytes::Bytes,
+    move_binary_format::errors::VMError,
     move_core_types::{
         account_address::AccountAddress,
         effects::{ChangeSet, Op},
@@ -12,10 +12,9 @@ use {
         value::MoveValue,
     },
     move_vm_runtime::{
-        AsFunctionValueExtension, AsUnsyncCodeStorage, ModuleStorage,
+        AsUnsyncCodeStorage, ModuleStorage, StagingModuleStorage, VerifiedModuleBundle,
         module_traversal::{TraversalContext, TraversalStorage},
         move_vm::MoveVM,
-        native_extensions::NativeContextExtensions,
         session::Session,
     },
     move_vm_types::gas::UnmeteredGasMeter,
@@ -89,80 +88,39 @@ pub fn load_sui_framework_snapshot() -> &'static BTreeMap<ObjectID, SystemPackag
 }
 
 /// Initializes the blockchain state with Aptos and Sui frameworks.
-pub fn init_state(
-    vm: &MovedVm,
-    state: &impl State,
-) -> (ChangeSet, move_table_extension::TableChangeSet) {
-    let (change_set, table_change_set) =
-        deploy_framework(vm, state).expect("All bundle modules should be valid");
-
-    // This function converts a `TableChange` to a move table extension struct.
-    // InMemoryStorage relies on this conversion to apply the storage changes correctly.
-    let convert_to_move_extension_table_change = |aptos_table_change: TableChange| {
-        let entries = aptos_table_change
-            .entries
-            .into_iter()
-            .map(|(key, op)| {
-                let new_op = match op {
-                    Op::New((bytes, _)) => Op::New(bytes),
-                    Op::Modify((bytes, _)) => Op::Modify(bytes),
-                    Op::Delete => Op::Delete,
-                };
-                (key, new_op)
-            })
-            .collect::<BTreeMap<_, _>>();
-
-        move_table_extension::TableChange { entries }
-    };
-    let table_change_set = move_table_extension::TableChangeSet {
-        new_tables: table_change_set.new_tables,
-        removed_tables: table_change_set.removed_tables,
-        changes: table_change_set
-            .changes
-            .into_iter()
-            .map(|(k, v)| (k, convert_to_move_extension_table_change(v)))
-            .collect(),
-    };
-
-    (change_set, table_change_set)
+pub fn init_state(vm: &MovedVm, state: &mut impl State) -> ChangeSet {
+    deploy_framework(vm, state).expect("All bundle modules should be valid")
 }
 
 pub trait CreateMoveVm {
     fn create_move_vm(&self) -> Result<MoveVM, VMError>;
 }
 
-fn deploy_framework(
-    moved_vm: &MovedVm,
-    state: &impl State,
-) -> Result<(ChangeSet, TableChangeSet), VMError> {
-    let resolver = state.resolver();
-    let module_bytes_storage = ResolverBasedModuleBytesStorage::new(resolver);
-    let code_storage = module_bytes_storage.as_unsync_code_storage(moved_vm);
-    let vm = moved_vm.create_move_vm()?;
-    let mut extensions = NativeContextExtensions::default();
-    extensions.add(NativeTableContext::new([0u8; 32], resolver));
-    let mut session = vm.new_session_with_extensions(state.resolver(), extensions);
-    let traversal_storage = TraversalStorage::new();
-    let mut traversal_context = TraversalContext::new(&traversal_storage);
+fn deploy_framework(moved_vm: &MovedVm, state: &mut impl State) -> Result<ChangeSet, VMError> {
+    let mut aptos_changeset = deploy_aptos_framework(state, moved_vm)?;
+    let eth_changeset = initialize_eth_token(state, moved_vm)?;
 
-    deploy_aptos_framework(&mut session)?;
-    deploy_sui_framework(&mut session)?;
-    initialize_eth_token(&mut session, &mut traversal_context, &code_storage)?;
+    let sui_changeset = deploy_sui_framework(state, moved_vm)?;
 
-    let (change_set, mut extensions) = session.finish_with_extensions(&code_storage)?;
-    let table_change_set = extensions
-        .remove::<NativeTableContext>()
-        .into_change_set(&code_storage.as_function_value_extension())
-        .map_err(|e| e.finish(Location::Undefined))?;
+    aptos_changeset
+        .squash(eth_changeset)
+        .expect("Aptos and EthToken changes should not conflict");
 
-    Ok((change_set, table_change_set))
+    aptos_changeset
+        .squash(sui_changeset)
+        .expect("Aptos and Sui changes should not conflict");
+
+    Ok(aptos_changeset)
 }
 
-fn initialize_eth_token(
-    session: &mut Session,
-    traversal_context: &mut TraversalContext,
-    module_storage: &impl ModuleStorage,
-) -> Result<(), VMError> {
+fn initialize_eth_token(state: &mut impl State, moved_vm: &MovedVm) -> Result<ChangeSet, VMError> {
+    let vm = moved_vm.create_move_vm()?;
+    // `init_module` doesn't produce any table changes, so we don't need the extensions
+    let mut session = vm.new_session(state.resolver());
+    let traversal_storage = TraversalStorage::new();
+    let mut traversal_context = TraversalContext::new(&traversal_storage);
+    let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
+    let code_storage = module_bytes_storage.as_unsync_code_storage(moved_vm);
     let module = ModuleId::new(FRAMEWORK_ADDRESS, ident_str!("eth_token").into());
     let function_name = ident_str!("init_module");
     let args = bcs::to_bytes(&MoveValue::Signer(FRAMEWORK_ADDRESS))
@@ -173,32 +131,78 @@ fn initialize_eth_token(
         Vec::new(),
         vec![args],
         &mut UnmeteredGasMeter,
-        traversal_context,
-        module_storage,
+        &mut traversal_context,
+        &code_storage,
     )?;
-    Ok(())
+    let change_set = session.finish(&code_storage)?;
+    Ok(change_set)
 }
 
-fn deploy_aptos_framework(session: &mut Session) -> Result<(), VMError> {
+fn initialize_package(
+    session: &mut Session,
+    module_storage: &impl ModuleStorage,
+    addr: AccountAddress,
+    traversal_context: &mut TraversalContext,
+    package: &ReleasePackage,
+) {
+    let module = &ModuleId::new(FRAMEWORK_ADDRESS, ident_str!("code").into());
+    let function_name = ident_str!("initialize");
+    session
+        .execute_function_bypass_visibility(
+            module,
+            function_name,
+            vec![],
+            vec![
+                MoveValue::Signer(FRAMEWORK_ADDRESS)
+                    .simple_serialize()
+                    .unwrap(),
+                MoveValue::Signer(addr).simple_serialize().unwrap(),
+                bcs::to_bytes(package.package_metadata()).unwrap(),
+            ],
+            &mut UnmeteredGasMeter,
+            traversal_context,
+            module_storage,
+        )
+        .unwrap();
+}
+
+fn deploy_aptos_framework(
+    state: &mut impl State,
+    moved_vm: &MovedVm,
+) -> Result<ChangeSet, VMError> {
     let framework = load_aptos_framework_snapshot();
     // Iterate over the bundled packages in the Aptos framework
+    let mut framework_writes = ChangeSet::new();
     for package in &framework.packages {
+        let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
+        let module_storage = module_bytes_storage.as_unsync_code_storage(moved_vm);
         let modules = package.sorted_code_and_modules();
-        if package.name() == L2_PACKAGE_NAME {
+        let package_writes = if package.name() == L2_PACKAGE_NAME {
             // L2 package have self-contained independent modules
-            for module in modules {
-                let code = module.0.to_vec();
-                let sender = module.1.self_id().address;
+            let mut l2_writes = ChangeSet::new();
+            for (bytecode, module) in modules {
+                let code = bytecode.to_vec();
+                let sender = module.self_id().address;
                 assert!(
                     sender.ge(&L2_LOWEST_ADDRESS) && sender.le(&L2_HIGHEST_ADDRESS),
                     "L2 module {sender} should be within the allowed address range."
                 );
-                session.publish_module(code, sender, &mut UnmeteredGasMeter)?;
+                let staged_module_storage =
+                    StagingModuleStorage::create(&sender, &module_storage, vec![code.into()])?;
+                let bundle = staged_module_storage.release_verified_module_bundle();
+                let l2_single_module_writes =
+                    convert_bundle_into_module_ops(bundle, &module_storage)?;
+                l2_writes.squash(l2_single_module_writes).unwrap();
             }
+            l2_writes
         } else {
             // Address from the first module is sufficient as they're the same within the package
-            let sender = modules.first().expect("Package has at least one module");
-            let sender = *sender.1.self_id().address();
+            let sender = *modules
+                .first()
+                .expect("Package has at least one module")
+                .1
+                .self_id()
+                .address();
 
             assert!(
                 sender == FRAMEWORK_ADDRESS
@@ -209,31 +213,124 @@ fn deploy_aptos_framework(session: &mut Session) -> Result<(), VMError> {
 
             let code = modules
                 .into_iter()
-                .map(|(code, _)| code.to_vec())
+                .map(|(code, _)| code.to_vec().into())
                 .collect::<Vec<_>>();
 
-            session.publish_module_bundle(code.clone(), sender, &mut UnmeteredGasMeter)?;
-        }
+            let staged_module_storage =
+                StagingModuleStorage::create(&sender, &module_storage, code)?;
+            let bundle = staged_module_storage.release_verified_module_bundle();
+            convert_bundle_into_module_ops(bundle, &module_storage)?
+        };
+        // We need to add changes on a package-by-package basis so that other packages in the framework
+        // can link against previous ones, but also pass it outside for genesis image generation
+        state.apply(package_writes.clone()).unwrap();
+        framework_writes
+            .squash(package_writes)
+            .expect("Packages in framework should not conflict with each other");
     }
-    Ok(())
+
+    // Initialization is done after actual publishing so that the resolver sees all the packages
+    // for linking
+    let vm = moved_vm.create_move_vm()?;
+    let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
+    let code_storage = module_bytes_storage.as_unsync_code_storage(moved_vm);
+    // `initialize` doesn't produce any table changes either, so we don't need the extensions
+    let mut session = vm.new_session(state.resolver());
+    let traversal_storage = TraversalStorage::new();
+    let mut traversal_context = TraversalContext::new(&traversal_storage);
+    for pack in &framework.packages {
+        let addr = *pack
+            .sorted_code_and_modules()
+            .first()
+            .unwrap()
+            .1
+            .self_id()
+            .address();
+        initialize_package(
+            &mut session,
+            &code_storage,
+            addr,
+            &mut traversal_context,
+            pack,
+        );
+    }
+    let session_changes = session.finish(&code_storage)?;
+    framework_writes
+        .squash(session_changes)
+        .expect("Initialization logic should not conflict with module writes");
+    Ok(framework_writes)
 }
 
-fn deploy_sui_framework(session: &mut Session) -> Result<(), VMError> {
-    // Load the framework packages from the framework snapshot
+fn deploy_sui_framework(state: &mut impl State, moved_vm: &MovedVm) -> Result<ChangeSet, VMError> {
     let snapshots = load_sui_framework_snapshot();
+    let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
+    let module_storage = module_bytes_storage.as_unsync_code_storage(moved_vm);
+    let mut total_writes = ChangeSet::new();
+
     let stdlib = snapshots
         .get(&SUI_STDLIB_PACKAGE_ID)
         .expect("Sui Move Stdlib package should exist in snapshot")
         .to_owned();
+    let staged_stdlib_storage = StagingModuleStorage::create(
+        &SUI_STDLIB_ADDRESS,
+        &module_storage,
+        stdlib
+            .bytes
+            .into_iter()
+            .map(|module| module.into())
+            .collect(),
+    )?;
+    let bundle = staged_stdlib_storage.release_verified_module_bundle();
+    let stdlib_writes = convert_bundle_into_module_ops(bundle, &module_storage)?;
+    state.apply(stdlib_writes.clone()).unwrap();
+    total_writes
+        .squash(stdlib_writes)
+        .expect("Sui stdlib can be squashed with empty change set");
+
+    // Storage needs to be redeclared to mask the first borrow
+    let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
+    let module_storage = module_bytes_storage.as_unsync_code_storage(moved_vm);
     let framework = snapshots
         .get(&SUI_FRAMEWORK_PACKAGE_ID)
         .expect("Sui Framework package should exist in snapshot")
         .to_owned();
+    let staged_framework_storage = StagingModuleStorage::create(
+        &SUI_FRAMEWORK_ADDRESS,
+        &module_storage,
+        framework
+            .bytes
+            .into_iter()
+            .map(|module| module.into())
+            .collect(),
+    )?;
+    let bundle = staged_framework_storage.release_verified_module_bundle();
+    let framework_writes = convert_bundle_into_module_ops(bundle, &module_storage)?;
+    state.apply(framework_writes.clone()).unwrap();
+    total_writes
+        .squash(framework_writes)
+        .expect("Sui framework can be squashed with stdlib");
 
-    let mut gas = UnmeteredGasMeter;
-    session.publish_module_bundle(stdlib.bytes, SUI_STDLIB_ADDRESS, &mut gas)?;
-    session.publish_module_bundle(framework.bytes, SUI_FRAMEWORK_ADDRESS, &mut gas)?;
-    Ok(())
+    Ok(total_writes)
+}
+
+fn convert_bundle_into_module_ops(
+    bundle: VerifiedModuleBundle<ModuleId, Bytes>,
+    module_storage: &impl ModuleStorage,
+) -> Result<ChangeSet, VMError> {
+    let mut writes = ChangeSet::new();
+    for (module_id, bytes) in bundle.into_iter() {
+        let addr = module_id.address();
+        let name = module_id.name();
+
+        let module_exists = module_storage.check_module_exists(addr, name)?;
+        let op = if module_exists {
+            Op::Modify(bytes)
+        } else {
+            Op::New(bytes)
+        };
+        writes.add_module_op(module_id, op).unwrap();
+    }
+    Ok(writes)
 }
 
 #[cfg(test)]
@@ -257,9 +354,9 @@ mod tests {
             .count();
         assert_eq!(sui_framework_len, SUI_MODULES_LEN);
 
-        let state = InMemoryState::new();
+        let mut state = InMemoryState::new();
         let vm = MovedVm::new(&Default::default());
-        let (change_set, _) = deploy_framework(&vm, &state).unwrap();
+        let change_set = deploy_framework(&vm, &mut state).unwrap();
         assert_eq!(change_set.modules().count(), TOTAL_MODULES_LEN);
     }
 }
