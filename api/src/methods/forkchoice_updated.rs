@@ -59,12 +59,6 @@ async fn inner_execute_v3(
 
     // TODO: implement proper validation of Forkchoice state
 
-    // Update the state with the new head
-    let msg = Command::UpdateHead {
-        block_hash: forkchoice_state.head_block_hash,
-    };
-    queue.send(msg).await;
-
     let payload_status = PayloadStatusV1 {
         status: Status::Valid,
         latest_valid_hash: Some(forkchoice_state.head_block_hash),

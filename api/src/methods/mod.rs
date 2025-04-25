@@ -126,8 +126,11 @@ pub mod tests {
 
         let mut encoded = Vec::new();
         tx.encode(&mut encoded);
-        let mut payload_attributes = Payload::default();
-        payload_attributes.transactions.push(encoded.into());
+        let payload_attributes = Payload {
+            gas_limit: U64::MAX,
+            transactions: vec![encoded.into()],
+            ..Default::default()
+        };
 
         let msg = Command::StartBlockBuild {
             payload_attributes,
@@ -156,8 +159,11 @@ pub mod tests {
 
         let mut encoded = Vec::new();
         tx.encode(&mut encoded);
-        let mut payload_attributes = Payload::default();
-        payload_attributes.transactions.push(encoded.into());
+        let payload_attributes = Payload {
+            gas_limit: U64::MAX,
+            transactions: vec![encoded.into()],
+            ..Default::default()
+        };
 
         let msg = Command::StartBlockBuild {
             payload_attributes,

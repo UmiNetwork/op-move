@@ -6,7 +6,7 @@ use {
     moved_api::method_name::MethodName,
     moved_app::{Application, Command, CommandQueue, Dependencies},
     moved_blockchain::{
-        block::{Block, BlockHash, BlockRepository, ExtendedBlock, Header},
+        block::{Block, BlockHash, ExtendedBlock, Header},
         payload::{NewPayloadId, StatePayloadId},
     },
     moved_genesis::config::GenesisConfig,
@@ -163,11 +163,8 @@ pub fn initialize_app(genesis_config: GenesisConfig) -> Application<dependency::
     );
 
     let genesis_block = create_genesis_block(&app.block_hash, &genesis_config);
-    let head = genesis_block.hash;
-    app.block_repository
-        .add(&mut app.storage, genesis_block)
-        .expect("Database should be ready");
-    app.update_head(head);
+
+    app.genesis_update(genesis_block);
 
     app
 }

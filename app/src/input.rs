@@ -22,9 +22,6 @@ pub type Withdrawal = alloy::rpc::types::Withdrawal;
 
 #[derive(Debug)]
 pub enum Command {
-    UpdateHead {
-        block_hash: B256,
-    },
     StartBlockBuild {
         payload_attributes: Payload,
         payload_id: PayloadId,

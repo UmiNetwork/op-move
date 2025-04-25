@@ -45,7 +45,6 @@ impl<D: Dependencies> CommandActor<D> {
 
     pub fn handle_command(mut app: impl DerefMut<Target = Application<D>>, msg: Command) {
         match msg {
-            Command::UpdateHead { block_hash } => app.update_head(block_hash),
             Command::StartBlockBuild {
                 payload_attributes,
                 payload_id,

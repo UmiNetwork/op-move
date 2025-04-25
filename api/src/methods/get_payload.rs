@@ -36,7 +36,7 @@ mod tests {
         super::*,
         crate::methods::forkchoice_updated,
         alloy::primitives::hex,
-        moved_app::{Application, Command, CommandActor, TestDependencies},
+        moved_app::{Application, CommandActor, TestDependencies},
         moved_blockchain::{
             block::{
                 Block, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
@@ -132,12 +132,6 @@ mod tests {
         }));
         let (queue, state) = moved_app::create(app.clone(), 10);
         let state_handle = state.spawn();
-
-        // Set head block hash
-        let msg = Command::UpdateHead {
-            block_hash: head_hash,
-        };
-        queue.send(msg).await;
 
         // Update the state with an execution payload
         forkchoice_updated::execute_v3(

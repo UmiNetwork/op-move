@@ -399,7 +399,13 @@ fn test_older_payload_can_be_fetched_again_successfully() {
 
     let payload_id = U64::from(0x03421ee50df45cacu64);
 
-    app.start_block_build(Default::default(), payload_id);
+    app.start_block_build(
+        Payload {
+            gas_limit: U64::MAX,
+            ..Default::default()
+        },
+        payload_id,
+    );
 
     let expected_payload = app.payload(payload_id);
 
@@ -412,6 +418,7 @@ fn test_older_payload_can_be_fetched_again_successfully() {
     app.start_block_build(
         Payload {
             timestamp: U64::from(1u64),
+            gas_limit: U64::MAX,
             ..Default::default()
         },
         payload_2_id,

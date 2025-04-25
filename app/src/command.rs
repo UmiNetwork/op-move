@@ -30,10 +30,6 @@ use {
 };
 
 impl<D: Dependencies> Application<D> {
-    pub fn update_head(&mut self, block_hash: B256) {
-        self.head = block_hash;
-    }
-
     pub fn start_block_build(&mut self, attributes: Payload, id: PayloadId) {
         // Include transactions from both `payload_attributes` and internal mem-pool
         let transactions = attributes
@@ -146,6 +142,8 @@ impl<D: Dependencies> Application<D> {
         self.block_repository.add(&mut self.storage, block).unwrap();
 
         self.height = self.height.max(block_number);
+        self.head = block_hash;
+
         (self.on_payload)(self, id, block_hash);
     }
 
