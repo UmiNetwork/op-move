@@ -67,12 +67,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 },
             },
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e5c897e4848c62c8d82a634b83a83ed8acb8fce4332aca3013b3c5ed9af4ed1c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e5c897e4848c62c8d82a634b83a83ed8acb8fce4332aca3013b3c5ed9af4ed1c")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341891u64]),
@@ -86,12 +80,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([276313159091229050u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8307f5e96c4da3d5efa3cbfd75100cdd1aabcaff9dcfbce41a02466298b363bf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8307f5e96c4da3d5efa3cbfd75100cdd1aabcaff9dcfbce41a02466298b363bf")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -107,12 +95,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([245006421958495091u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("86cdb00400f17c09aa1a87bac5db0fcf1294a8ec1ec4aab9155d13b35f77ea19")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("86cdb00400f17c09aa1a87bac5db0fcf1294a8ec1ec4aab9155d13b35f77ea19")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341893u64]),
@@ -126,12 +108,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([267308600897589079u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3ab59bb3da1466bb040477f85018fd4febb5049389db2ca8aa59cb2452b9e3ae")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3ab59bb3da1466bb040477f85018fd4febb5049389db2ca8aa59cb2452b9e3ae")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -147,12 +123,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([258187540796536110u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c91d70ef8e86b67328aafbdccaf531fd8d04f831c4506461f4f86b126b518de6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c91d70ef8e86b67328aafbdccaf531fd8d04f831c4506461f4f86b126b518de6")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341895u64]),
@@ -166,12 +136,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([268722536946332216u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ec7ac6a9f82e530e4bb8edba5598f9ed8fa67248a84c3c8d219084bce2397ba5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ec7ac6a9f82e530e4bb8edba5598f9ed8fa67248a84c3c8d219084bce2397ba5")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -187,12 +151,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([273379753470594664u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("19825eb7b96e186563af202d7f9340805bd261ed7b09c33f567fa76661badd79")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("19825eb7b96e186563af202d7f9340805bd261ed7b09c33f567fa76661badd79")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341897u64]),
@@ -206,12 +164,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([240049714779527423u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7c8d9d60f26528a20079ce4d81f79eaa09957afaf5d0f1234874ef671aba47bc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7c8d9d60f26528a20079ce4d81f79eaa09957afaf5d0f1234874ef671aba47bc")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -227,12 +179,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([244988002698837723u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e80d753e9d292631c30a06d4f6091d867fe7a42e7337bce8a1125a02f239be67")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e80d753e9d292631c30a06d4f6091d867fe7a42e7337bce8a1125a02f239be67")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341899u64]),
@@ -246,12 +192,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([257956728772231472u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3bd508afc8078e36650132fec1d64c82b27243aed615211a20d633c8c3850e57")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3bd508afc8078e36650132fec1d64c82b27243aed615211a20d633c8c3850e57")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -267,12 +207,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([250189241955072051u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("5b8fb802684a54c3723c7f3f13c63272ae169c6806633cf24f1f4848cd06cff2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5b8fb802684a54c3723c7f3f13c63272ae169c6806633cf24f1f4848cd06cff2")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341901u64]),
@@ -286,12 +220,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([246453185115934956u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f46f0f3fafbfbecb12b2f9fedfa187c974e839a261af93bdbedc3b9ddb7a5124")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f46f0f3fafbfbecb12b2f9fedfa187c974e839a261af93bdbedc3b9ddb7a5124")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -307,12 +235,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([258348861856531539u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("8c03c9297d33b5bf35fd433fc16a83e7eb2b77fbb5bf201912760b338c6ec5eb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8c03c9297d33b5bf35fd433fc16a83e7eb2b77fbb5bf201912760b338c6ec5eb")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341903u64]),
@@ -326,12 +248,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([238245250164803074u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5678e1c5bc7b935530970a6aea63a07f64555873b7bb2da392f173abcf751916")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5678e1c5bc7b935530970a6aea63a07f64555873b7bb2da392f173abcf751916")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -347,12 +263,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([263275140592071507u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("cbf4c16a256063d1507ac784f96581ee24fbe13cb678b9d715346a6658cb254e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cbf4c16a256063d1507ac784f96581ee24fbe13cb678b9d715346a6658cb254e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341905u64]),
@@ -366,12 +276,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([237561975274220305u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e48a7ee3020778338f549868be29daa4f32cfb8d2d92c5fcaab9b4b034a6b49c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e48a7ee3020778338f549868be29daa4f32cfb8d2d92c5fcaab9b4b034a6b49c")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -387,12 +291,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([245303073777378535u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("0acfbf8235b14b44a961ccffd58298bb1a342d13de8447a9e7f1b566e0b7270d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0acfbf8235b14b44a961ccffd58298bb1a342d13de8447a9e7f1b566e0b7270d")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341907u64]),
@@ -406,12 +304,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([274037464824028536u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d75e27ed91597a4cec10e8a6aeef9af348141025b3bb1db3deca4a9d49a43685")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d75e27ed91597a4cec10e8a6aeef9af348141025b3bb1db3deca4a9d49a43685")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -427,12 +319,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([220208187994278379u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("f0be06be6fc4ee92438dd0db91b4be2b77b4d183cd9b51c3727339cfe7acfc39")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f0be06be6fc4ee92438dd0db91b4be2b77b4d183cd9b51c3727339cfe7acfc39")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341909u64]),
@@ -446,12 +332,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([285205425597831479u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3f6f642d196239d58ec6c9ed0ca17fc9020040331212a63840e67b133b5caaee")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3f6f642d196239d58ec6c9ed0ca17fc9020040331212a63840e67b133b5caaee")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -467,12 +347,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([231431855698007751u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("f31b6fabf903d8ccc70ba366eeee284b4d5c947044ba62b0c1fdb2b092aa1e51")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f31b6fabf903d8ccc70ba366eeee284b4d5c947044ba62b0c1fdb2b092aa1e51")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341911u64]),
@@ -486,12 +360,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([227056886688690487u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ad0d0911a199854b1e6b4ac34245bf72a9496bcc720058311374e09d0943e6cb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ad0d0911a199854b1e6b4ac34245bf72a9496bcc720058311374e09d0943e6cb")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -507,12 +375,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([251168850054394974u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("51f233616b020dffccd53e3f170840ae1400de6bd78ba75b25f85d7f379b4c1e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("51f233616b020dffccd53e3f170840ae1400de6bd78ba75b25f85d7f379b4c1e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341913u64]),
@@ -526,12 +388,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([287200106037936643u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("36c7560f24ce1de8e90dfcaac025c19a3ca950728029c8b052703b4416e0e5f7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("36c7560f24ce1de8e90dfcaac025c19a3ca950728029c8b052703b4416e0e5f7")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -547,12 +403,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([254056776698676415u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("4c2112f5336f6c05ff98668f73fe2bde7e89b6780849c10ad30b8009af64cbda")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4c2112f5336f6c05ff98668f73fe2bde7e89b6780849c10ad30b8009af64cbda")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341915u64]),
@@ -566,12 +416,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([265238954795884645u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("917f5092fd7a8a2440c469c20ae0eb40b320db7dda81e69641a0f8b8b70fd402")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("917f5092fd7a8a2440c469c20ae0eb40b320db7dda81e69641a0f8b8b70fd402")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -587,12 +431,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([242550275980880344u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c56985564127a08219a9d6863d1312b1bf74ec0b0485d5e7ca010794966a4b19")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c56985564127a08219a9d6863d1312b1bf74ec0b0485d5e7ca010794966a4b19")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341917u64]),
@@ -606,12 +444,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([262176303966677926u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("192b4c3e881300387639156418b1752be31ea3a83101f14a734e1c8a23eeb23a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("192b4c3e881300387639156418b1752be31ea3a83101f14a734e1c8a23eeb23a")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -627,12 +459,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([274577312838379554u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("7a3ecbf9302b8f9394799e80b72c2379ab43c290bc48e72f67229e91fd7ed697")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7a3ecbf9302b8f9394799e80b72c2379ab43c290bc48e72f67229e91fd7ed697")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341919u64]),
@@ -646,12 +472,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([259764745298447622u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dbb65420a4b40e39ebd588567d8ac62e2aeb5a877486ef773f5ddd0781daf008")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dbb65420a4b40e39ebd588567d8ac62e2aeb5a877486ef773f5ddd0781daf008")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -667,12 +487,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([281676431395589961u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("ba02f7f402540e67ee3d362be804dce3e9a4ac932d616906e3bd924864ee7010")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ba02f7f402540e67ee3d362be804dce3e9a4ac932d616906e3bd924864ee7010")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341921u64]),
@@ -686,12 +500,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([286500743314675656u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d055b9a4de838db66337a62a25bb240457d7d66b5f6086f5fc5318ba76a6e27e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d055b9a4de838db66337a62a25bb240457d7d66b5f6086f5fc5318ba76a6e27e")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -707,12 +515,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([233440037584890422u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("047ba7fcf917db535d2525e187932bc14a9aede89cd16fb446aa5afb3c8759ba")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("047ba7fcf917db535d2525e187932bc14a9aede89cd16fb446aa5afb3c8759ba")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341923u64]),
@@ -726,12 +528,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([225626255113634830u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d43e714a8acf7bed45a657890d226d03e30dc7359b44ace2a477d67568615868")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d43e714a8acf7bed45a657890d226d03e30dc7359b44ace2a477d67568615868")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -747,12 +543,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([233662454891545580u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a9a6178a47345b6d092a4b16016b02ca1f95c08f3405ae83a1bb5bb405b20b65")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a9a6178a47345b6d092a4b16016b02ca1f95c08f3405ae83a1bb5bb405b20b65")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341925u64]),
@@ -766,12 +556,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([247037320129257730u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d1224a875d7f1c850c4ff4c72781a0923524366b661c12fad1a8510555ebc747")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d1224a875d7f1c850c4ff4c72781a0923524366b661c12fad1a8510555ebc747")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -787,12 +571,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([242063872990026882u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("7d2a041186e60a754011930b2703962b9a91da8ff3e0b08805ffc8e3f97cf4d6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7d2a041186e60a754011930b2703962b9a91da8ff3e0b08805ffc8e3f97cf4d6")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341927u64]),
@@ -806,12 +584,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([271381824022133321u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("84611168aa3b065f586db79d56a01366484c6db80073e7518b4a895325a3d4b3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("84611168aa3b065f586db79d56a01366484c6db80073e7518b4a895325a3d4b3")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -827,12 +599,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([245939803447827813u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("64a221b08f904f50c23200fd77ed058eb958d06df27a8cedbe75f4577dd3c63b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("64a221b08f904f50c23200fd77ed058eb958d06df27a8cedbe75f4577dd3c63b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341929u64]),
@@ -846,12 +612,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([276518973180943099u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a4d79b0b27017a9091f19cd38b2880b14d9810a5f831fdc423fede4fc02af983")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a4d79b0b27017a9091f19cd38b2880b14d9810a5f831fdc423fede4fc02af983")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -867,12 +627,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([279889278653188557u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("edb8098cb0eab54063cd896cee7988e762fc677cc1a89395d1d3aeb3fb736816")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("edb8098cb0eab54063cd896cee7988e762fc677cc1a89395d1d3aeb3fb736816")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341931u64]),
@@ -886,12 +640,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([226309493638255412u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e53e90fa32d4139c9d0a2c6d2325c36268aa0e1f6f5262379e669f22f5e1c981")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e53e90fa32d4139c9d0a2c6d2325c36268aa0e1f6f5262379e669f22f5e1c981")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -907,12 +655,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([260125112645757334u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("168fb3bd3c62d012f30f9bec87032dfaa2525e2cabb84ea8d062231a87f7a15b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("168fb3bd3c62d012f30f9bec87032dfaa2525e2cabb84ea8d062231a87f7a15b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341933u64]),
@@ -926,12 +668,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([245814399319840764u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("beeb054c05df4a7c2522837148078c57e4c3c40644dfb6e5bb7c978cd7381f85")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("beeb054c05df4a7c2522837148078c57e4c3c40644dfb6e5bb7c978cd7381f85")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -947,12 +683,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([278682901717993518u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("21952b12958d5b456af0a080a71cdabe1273f47f15acfcc46a89034902ed356d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("21952b12958d5b456af0a080a71cdabe1273f47f15acfcc46a89034902ed356d")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341935u64]),
@@ -966,12 +696,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([263486683786573251u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cf682f79d11110979b08799ac56599c0ccef6d1d3cf23f6c55c25fd15625e550")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cf682f79d11110979b08799ac56599c0ccef6d1d3cf23f6c55c25fd15625e550")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -987,12 +711,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([242180997742101137u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("cfc9612aac3e7b8f40191e2ec10a85d7687b75f43a5a33e71b129aaf74e5fb18")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cfc9612aac3e7b8f40191e2ec10a85d7687b75f43a5a33e71b129aaf74e5fb18")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341937u64]),
@@ -1006,12 +724,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([279879690187349920u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c5599e7e8b649364734782b6a01aa3ac9aaec88f937cd6c40d63616a15d311b2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c5599e7e8b649364734782b6a01aa3ac9aaec88f937cd6c40d63616a15d311b2")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1027,12 +739,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([261473960508542758u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c70fd5f248fdbea86fd7a8791ab64d2457a948ccba1364c2552b448a13caeae6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c70fd5f248fdbea86fd7a8791ab64d2457a948ccba1364c2552b448a13caeae6")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341939u64]),
@@ -1046,12 +752,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([227970505984115513u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bdd6c66ef01baf29eb7b5afdd68bfc659d6b8a5e4598f298d9485c42c1c3af6a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bdd6c66ef01baf29eb7b5afdd68bfc659d6b8a5e4598f298d9485c42c1c3af6a")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1067,12 +767,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([268967515725156456u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d046a838dcc9805e80e05b38c0ebf6acd33f35946d692a5a1053cc47e725cd65")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d046a838dcc9805e80e05b38c0ebf6acd33f35946d692a5a1053cc47e725cd65")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341941u64]),
@@ -1086,12 +780,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([224968235041614253u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("875416b43e96422c4df874f380b91d8696e4f67c3a99481dbbc3aa9ab949231d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("875416b43e96422c4df874f380b91d8696e4f67c3a99481dbbc3aa9ab949231d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1107,12 +795,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([280994336830127944u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("7517959faab01f4e380dd43b09b20c800384b100ef3f099ddf09856cdf3ce129")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7517959faab01f4e380dd43b09b20c800384b100ef3f099ddf09856cdf3ce129")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341943u64]),
@@ -1126,12 +808,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([229516162335045176u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("57b8c0e721e6d1b2ccf033a790d79e351ef41a6ea04a3c2c3ca4286714ce5881")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("57b8c0e721e6d1b2ccf033a790d79e351ef41a6ea04a3c2c3ca4286714ce5881")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1147,12 +823,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([286789534310545255u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("6b93db44b23bd03a7b423dde9bcadfacb935444a7a9b8e9f04a89c4a68cfa714")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6b93db44b23bd03a7b423dde9bcadfacb935444a7a9b8e9f04a89c4a68cfa714")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341945u64]),
@@ -1166,12 +836,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([229259861066987497u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("44e91441c5c0125abd2ca77e7eedb5d839572d1175ce94746a0c916f41248f0c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("44e91441c5c0125abd2ca77e7eedb5d839572d1175ce94746a0c916f41248f0c")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1187,12 +851,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([223075400319545651u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("0000c74f0ca31a236408507d4aa6b9eded3d4188772d1dbd575faf05ab6ff56b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0000c74f0ca31a236408507d4aa6b9eded3d4188772d1dbd575faf05ab6ff56b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341947u64]),
@@ -1206,12 +864,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([278444775687892075u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c7e9b2b0c35518db644a406146d6f6d8986ca4061a34d2621315af0e67f3d172")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c7e9b2b0c35518db644a406146d6f6d8986ca4061a34d2621315af0e67f3d172")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1227,12 +879,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([245029766772799118u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("6cc32feb64772e0cb85f418c469bd3c543efcb98c464853f280ab825a0f21f7a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6cc32feb64772e0cb85f418c469bd3c543efcb98c464853f280ab825a0f21f7a")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341949u64]),
@@ -1246,12 +892,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([264839015660894135u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("05b6991010d4bfb0c739422d54b863e843f9257225f5c6c135a270ae818f8d58")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("05b6991010d4bfb0c739422d54b863e843f9257225f5c6c135a270ae818f8d58")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1267,12 +907,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([216180976989409253u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a45e65c1ac5b5665cbcb58eb53df35428dbdfd2701a4e0068acc63ff8902fae7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a45e65c1ac5b5665cbcb58eb53df35428dbdfd2701a4e0068acc63ff8902fae7")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341951u64]),
@@ -1286,12 +920,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([262047688451889155u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8e87be11fc697f6b2c8e1d656f7cf5befd40d77a2a914836a9ea5a33bb508372")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8e87be11fc697f6b2c8e1d656f7cf5befd40d77a2a914836a9ea5a33bb508372")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1307,12 +935,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([286773326627189039u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("0b179a69ee3f7ddd484362c5400699137440cce0dec87e73f97e10fba5e72338")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0b179a69ee3f7ddd484362c5400699137440cce0dec87e73f97e10fba5e72338")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341953u64]),
@@ -1326,12 +948,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([272225556598133357u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("de7ef4b22a1e6b683735ed6bc652ade9fec7665fc34859f31f9681c2281b6a32")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("de7ef4b22a1e6b683735ed6bc652ade9fec7665fc34859f31f9681c2281b6a32")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1347,12 +963,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([272076743940479594u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("5f1476edfff742a03e757cd25333a07794ba3e2b58e0ea1cc9192da45d3c8333")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5f1476edfff742a03e757cd25333a07794ba3e2b58e0ea1cc9192da45d3c8333")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341955u64]),
@@ -1366,12 +976,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([246983118603144742u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("45766f63e845fb256cf42c7074d3ac0a7b2ec021e2be1f60fd525c3e691b9017")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("45766f63e845fb256cf42c7074d3ac0a7b2ec021e2be1f60fd525c3e691b9017")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1387,12 +991,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([236608805825822245u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("22b606dd7f1dbeb24cae349f34158a3aff54b491ae25eaf2298663d03b0fa9bd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("22b606dd7f1dbeb24cae349f34158a3aff54b491ae25eaf2298663d03b0fa9bd")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341957u64]),
@@ -1406,12 +1004,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([239152453978326558u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3caac020c2545e9a13155d1810c12baa8d73ea8cb027c8332966c37a1f879c34")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3caac020c2545e9a13155d1810c12baa8d73ea8cb027c8332966c37a1f879c34")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1427,12 +1019,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([219942011289874732u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("f6a3a61b9d85f53fec5ce1e70b5747616cb8e19921fc7a95ba8581e50f143a85")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f6a3a61b9d85f53fec5ce1e70b5747616cb8e19921fc7a95ba8581e50f143a85")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341959u64]),
@@ -1446,12 +1032,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([224992982233589713u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eaf201ecc4d3d27cb73b5dce445fd11aaac77b7c8c15decf26fe84c38acaf06d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eaf201ecc4d3d27cb73b5dce445fd11aaac77b7c8c15decf26fe84c38acaf06d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1467,12 +1047,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([231556813190466226u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("877e5fccdcee3290c6b6d533447846af415464d3131477fb0196517cfadfd3b9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("877e5fccdcee3290c6b6d533447846af415464d3131477fb0196517cfadfd3b9")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341961u64]),
@@ -1486,12 +1060,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([252951866304714802u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("58a1d754f566c587cb63da8aac9989f2207fbe10ccf001e599dd58a9fd054be4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("58a1d754f566c587cb63da8aac9989f2207fbe10ccf001e599dd58a9fd054be4")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1507,12 +1075,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([262990542833108133u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("4633ee7c1a640701a7d9895b76958a7f72e34625bd4b14d100684d4f85e2141b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4633ee7c1a640701a7d9895b76958a7f72e34625bd4b14d100684d4f85e2141b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341963u64]),
@@ -1526,12 +1088,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([221211813437455127u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ea05b4560d2656465fd2512d339a10c813628f4ad4cf5e18133ab7f7b4263454")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ea05b4560d2656465fd2512d339a10c813628f4ad4cf5e18133ab7f7b4263454")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1547,12 +1103,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([279823040764273528u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a7279bd3439c1f8da1e87564f843d92465b4d8d96a1ce6bbdc8475a77d283651")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a7279bd3439c1f8da1e87564f843d92465b4d8d96a1ce6bbdc8475a77d283651")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341965u64]),
@@ -1566,12 +1116,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([233293972797819971u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d0a30ab9834f2557a43936f9441a65de148b03ea9006fb303d77768a7823de99")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d0a30ab9834f2557a43936f9441a65de148b03ea9006fb303d77768a7823de99")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1587,12 +1131,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([285971129568682627u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a8b32ddcef2091dcdfe8a2f12d8416430e18623fecdf809a20e2f8b7ef46e3ba")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a8b32ddcef2091dcdfe8a2f12d8416430e18623fecdf809a20e2f8b7ef46e3ba")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341967u64]),
@@ -1606,12 +1144,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([282468445749324468u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d1ef813bb532b42ccf0db5758541e257c7bf7788041ddacc64b22bf01c6a8a5b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d1ef813bb532b42ccf0db5758541e257c7bf7788041ddacc64b22bf01c6a8a5b")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1627,12 +1159,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([250318058822504762u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("143979017b0c0916f2addf70d3b5261fa444d7d672c187edeef676f55db16763")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("143979017b0c0916f2addf70d3b5261fa444d7d672c187edeef676f55db16763")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341969u64]),
@@ -1646,12 +1172,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([255845658365829580u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f3f218d56054764d64c5ccfc80b93190d61f28c2540193a527f6aba6261286ab")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f3f218d56054764d64c5ccfc80b93190d61f28c2540193a527f6aba6261286ab")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1667,12 +1187,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([283674887905723775u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("69cee81823b419577418b01453652b9fe9d165c12f790bc0392c4f493c05a324")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("69cee81823b419577418b01453652b9fe9d165c12f790bc0392c4f493c05a324")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341971u64]),
@@ -1686,12 +1200,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([232055879306058717u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("72772e098b5a6efcbb356ffcc42cda13aef68c0c2895ec620ac6d0c75a7021b7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("72772e098b5a6efcbb356ffcc42cda13aef68c0c2895ec620ac6d0c75a7021b7")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1707,12 +1215,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([269009584024947885u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a873400e11be4e74bbc936142f8afd0abdb70d1264a06f93db402e79171ed0ef")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a873400e11be4e74bbc936142f8afd0abdb70d1264a06f93db402e79171ed0ef")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341973u64]),
@@ -1726,12 +1228,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([269595351448455254u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b43746be4abacf679438c02005026658e397cecb76f92e4446b591ff9ae7f1c8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b43746be4abacf679438c02005026658e397cecb76f92e4446b591ff9ae7f1c8")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1747,12 +1243,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([277307469812717345u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("334509b34c1da767c5d05d3b527ab1fed8ca1d4c319d53f92277634d28fa51f0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("334509b34c1da767c5d05d3b527ab1fed8ca1d4c319d53f92277634d28fa51f0")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341975u64]),
@@ -1766,12 +1256,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([232090035023848055u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8bd59cb78dd6ce52a1d3165a68b9f619b4b3fdac39ff8c9642969bc30abea043")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8bd59cb78dd6ce52a1d3165a68b9f619b4b3fdac39ff8c9642969bc30abea043")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1787,12 +1271,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([234152232317641803u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("05082e8aa6a913040156738377ed137d87d14945df72f579085392b5cc01166b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("05082e8aa6a913040156738377ed137d87d14945df72f579085392b5cc01166b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341977u64]),
@@ -1806,12 +1284,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([268394154385943336u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9ca55c2c075ffb948dcec1ec0ccc1a34f1c2e26b6e9e3952af278b10778027e4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9ca55c2c075ffb948dcec1ec0ccc1a34f1c2e26b6e9e3952af278b10778027e4")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1827,12 +1299,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([258349717961621427u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("1275a86281a68a671740a59efe956eae7677fa9258cdd7e36cd9b08ed0350ec5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1275a86281a68a671740a59efe956eae7677fa9258cdd7e36cd9b08ed0350ec5")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341979u64]),
@@ -1846,12 +1312,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([284558271992871153u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("482db37afe6ce9135e884b084b424af29afa1fae9dabdf6a621b9aa4494a6082")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("482db37afe6ce9135e884b084b424af29afa1fae9dabdf6a621b9aa4494a6082")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1867,12 +1327,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([228191190012581519u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("3784d96df15a16fd4324634accc76ae36106ebe2c26f477a23bb769f939ab8a8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3784d96df15a16fd4324634accc76ae36106ebe2c26f477a23bb769f939ab8a8")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341981u64]),
@@ -1886,12 +1340,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([237037985440061667u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8c69e5fad7dde2c5d991a2fe05c275fcf4962666741ff26cebaaac831e969259")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8c69e5fad7dde2c5d991a2fe05c275fcf4962666741ff26cebaaac831e969259")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1907,12 +1355,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([226200625698956781u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("945a5064ed219a9b4c56ba56f215b9d00ae55384bf67d328abcf15065ff21bb8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("945a5064ed219a9b4c56ba56f215b9d00ae55384bf67d328abcf15065ff21bb8")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341983u64]),
@@ -1926,12 +1368,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([257658729494958288u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bdede5f40c8937979907402386c6ae5a4d7f5e6a528b43e5b6986e771a266355")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bdede5f40c8937979907402386c6ae5a4d7f5e6a528b43e5b6986e771a266355")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1947,12 +1383,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([252046163916460985u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("44c4c5415d4ecced7058f43fbb572ea914cd853a2adc08d03ca370e9867ac5e5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("44c4c5415d4ecced7058f43fbb572ea914cd853a2adc08d03ca370e9867ac5e5")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341985u64]),
@@ -1966,12 +1396,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([257544916354854881u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("abf60b91873dc69f07953239277a30e380734589d4f3baf945afee9c31776762")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("abf60b91873dc69f07953239277a30e380734589d4f3baf945afee9c31776762")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -1987,12 +1411,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([238034711987261082u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("73847da5e99b66daf126aeafad23d5f63af0e399ee74a80d250d517cb171d5d4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("73847da5e99b66daf126aeafad23d5f63af0e399ee74a80d250d517cb171d5d4")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341987u64]),
@@ -2006,12 +1424,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([228142869528143875u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81d5fad104e95ea600f9f2b4bd0e5450c6193b9c2c0ce9323668159bdab06877")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81d5fad104e95ea600f9f2b4bd0e5450c6193b9c2c0ce9323668159bdab06877")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2027,12 +1439,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([226046709594683543u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("f47b0d591059b57b7c74ad77957656fbe9dbb71def730c2064d4ed6b16a0619a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f47b0d591059b57b7c74ad77957656fbe9dbb71def730c2064d4ed6b16a0619a")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341989u64]),
@@ -2046,12 +1452,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([276474326953829772u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da11e1d9d35660beed96b1b2ba56d315146c157c8d1f576f78759cdf9071fda8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da11e1d9d35660beed96b1b2ba56d315146c157c8d1f576f78759cdf9071fda8")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2067,12 +1467,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([248927780325319628u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("8dcd91000ee60bd60a9e9f4ad3e723a5614349e87a86908d4b1eec964b966fe1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8dcd91000ee60bd60a9e9f4ad3e723a5614349e87a86908d4b1eec964b966fe1")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341991u64]),
@@ -2086,12 +1480,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([262923754787543964u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5f70d2ae07d1a71c76333aacad3e8de4f50e991aa38183963e7ab5762ab5c036")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5f70d2ae07d1a71c76333aacad3e8de4f50e991aa38183963e7ab5762ab5c036")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2107,12 +1495,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([265690924263266759u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("13d5e58b749aff4177d93e06cced886cffac7fd62e53bf2df52e2031e8f91d28")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13d5e58b749aff4177d93e06cced886cffac7fd62e53bf2df52e2031e8f91d28")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341993u64]),
@@ -2126,12 +1508,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([232211121858035117u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f7867a660e31afc5c5728d841302d73e3f7debdfa8b004afc4ec8514ad0cea67")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f7867a660e31afc5c5728d841302d73e3f7debdfa8b004afc4ec8514ad0cea67")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2147,12 +1523,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([266886625622461974u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("078046f1334d1cfa465f73ad10b940016afed68b15ef2fbeb5693afaa09ed310")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("078046f1334d1cfa465f73ad10b940016afed68b15ef2fbeb5693afaa09ed310")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341995u64]),
@@ -2166,12 +1536,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([216705207726388471u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb394bad5c3e9e50ccd2f89dc9a3df5f5fd26deb3844b7ee7b711065b7a2d485")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb394bad5c3e9e50ccd2f89dc9a3df5f5fd26deb3844b7ee7b711065b7a2d485")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2187,12 +1551,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([258328928646692525u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("9c08fad3be00ac7068a77e780e177c1a7aec8a3f7c1f82cf6215d90a9500af25")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9c08fad3be00ac7068a77e780e177c1a7aec8a3f7c1f82cf6215d90a9500af25")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341997u64]),
@@ -2206,12 +1564,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([262031465341212362u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d1e91cad7952a43618ec919d6920de18769e759ea6b2ab2d02c5800365c753f3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d1e91cad7952a43618ec919d6920de18769e759ea6b2ab2d02c5800365c753f3")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2227,12 +1579,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([253856957074102434u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("31ed2089734ace6483e8435ea80a49e2f62165c4cefb88b472793f91910ff4b9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("31ed2089734ace6483e8435ea80a49e2f62165c4cefb88b472793f91910ff4b9")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745341999u64]),
@@ -2246,12 +1592,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([285990845381705306u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f2b8d12f4dfbb73f3a727ff71b72f6690027cbf59d20bc402be63f0a915e7d81")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f2b8d12f4dfbb73f3a727ff71b72f6690027cbf59d20bc402be63f0a915e7d81")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2267,12 +1607,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([223417962617641387u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("6ed6ebcf5afba9697f0d3e1fab866d48ccbf329cd1be65fb3718485d9bafe21c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6ed6ebcf5afba9697f0d3e1fab866d48ccbf329cd1be65fb3718485d9bafe21c")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342001u64]),
@@ -2286,12 +1620,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([283142497747038211u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0f851e2dfc4a56e6a37fb39424aa999a556b8958f13fa842aa64608aabf84c18")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0f851e2dfc4a56e6a37fb39424aa999a556b8958f13fa842aa64608aabf84c18")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2307,12 +1635,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([262574965268227331u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("20f3e87e1f756f62434b930a152effb6f4504d2bc0f952ae52788cbcb889dc1e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("20f3e87e1f756f62434b930a152effb6f4504d2bc0f952ae52788cbcb889dc1e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342003u64]),
@@ -2326,12 +1648,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([230782694236179749u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("67d7b5229c6d427d52530c458f99e8fdaa12509d4445efc1d467b8f255805863")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("67d7b5229c6d427d52530c458f99e8fdaa12509d4445efc1d467b8f255805863")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2347,12 +1663,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([236903656380422883u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("052cab7ae33cbe7cdb250ff32fd67c54e238d369d90fb1da962622362bcaede7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("052cab7ae33cbe7cdb250ff32fd67c54e238d369d90fb1da962622362bcaede7")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342005u64]),
@@ -2366,12 +1676,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([227348437981693378u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("01ef1004fb085badfa6180665589ad21493aadf6764dd08e8c212c0f7bd88483")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("01ef1004fb085badfa6180665589ad21493aadf6764dd08e8c212c0f7bd88483")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2387,12 +1691,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([273131687966740429u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("4bce7dee1bcf9c0f4b70e5efa51932631e8d7e0955a6ef7a7678de26a9b471a7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4bce7dee1bcf9c0f4b70e5efa51932631e8d7e0955a6ef7a7678de26a9b471a7")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342007u64]),
@@ -2406,12 +1704,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([258878827959873610u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a2e1d97141e9cc11e5b249e192644df9e82f84ae756f43596e8ac6ce76a933c2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a2e1d97141e9cc11e5b249e192644df9e82f84ae756f43596e8ac6ce76a933c2")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2427,12 +1719,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([237461312407452445u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("3bb07e07469f84091fe70676ea03046bc1736b484cd692e0e06862528c5c4309")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3bb07e07469f84091fe70676ea03046bc1736b484cd692e0e06862528c5c4309")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342009u64]),
@@ -2446,12 +1732,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([285858003491034833u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("68cace2c24155980acfb4b1f4b224ce0cd45c0804de2a24c8e8bec06bb1a26b6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("68cace2c24155980acfb4b1f4b224ce0cd45c0804de2a24c8e8bec06bb1a26b6")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2467,12 +1747,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([257178228438135437u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a1dfb2201ff276d9aaa190f81129ae3cbe2ed7133eb3c5d3d97caaf51766e385")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a1dfb2201ff276d9aaa190f81129ae3cbe2ed7133eb3c5d3d97caaf51766e385")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342011u64]),
@@ -2486,12 +1760,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([246887680812889409u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5eecdb7297af2cbb7d5991c027c943edc0980d068932815e1bb105cc21888683")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5eecdb7297af2cbb7d5991c027c943edc0980d068932815e1bb105cc21888683")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2507,12 +1775,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([243464414733007374u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("4922e143e80011dae80c021f6bdbf7cb1a472b0c99b81606cd40a4b2a24913ba")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4922e143e80011dae80c021f6bdbf7cb1a472b0c99b81606cd40a4b2a24913ba")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342013u64]),
@@ -2526,12 +1788,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([218551176941281053u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("944ad2301f9da7cd220c8ae387ddf9c40ed920257087410d4c8714f8bdf91051")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("944ad2301f9da7cd220c8ae387ddf9c40ed920257087410d4c8714f8bdf91051")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2547,12 +1803,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([279895452220606379u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("1b5ca844221f75c7c9dcda4c2f94c7bb624d03ae4fb0a0a9b45b95c176739cf6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1b5ca844221f75c7c9dcda4c2f94c7bb624d03ae4fb0a0a9b45b95c176739cf6")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342015u64]),
@@ -2566,12 +1816,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([255198653065978436u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1122b79626974998928cf20f203282f2c4d5d6d7d14cdaa4b1bb30c4e0d11df9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1122b79626974998928cf20f203282f2c4d5d6d7d14cdaa4b1bb30c4e0d11df9")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2587,12 +1831,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([237615562349720266u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("186a83b6d323bf67c346f94f655d03b8e8608d2e6672fd13ac2efc6804d337e3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("186a83b6d323bf67c346f94f655d03b8e8608d2e6672fd13ac2efc6804d337e3")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342017u64]),
@@ -2606,12 +1844,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([216577998560773611u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("707702fcc90bd0e01cdf5e10330a833943181e130513980253682e6c887aa558")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("707702fcc90bd0e01cdf5e10330a833943181e130513980253682e6c887aa558")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2627,12 +1859,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([283040563338137245u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("26ede3d8a471d040e070ebbe1284d2509aa446af4f1251c71c43933878b2b254")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("26ede3d8a471d040e070ebbe1284d2509aa446af4f1251c71c43933878b2b254")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342019u64]),
@@ -2646,12 +1872,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([280373345456949380u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5433337f9429d998d31e821b77a87230a0b6d4a2f692741a87f8a9710c0a55eb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5433337f9429d998d31e821b77a87230a0b6d4a2f692741a87f8a9710c0a55eb")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2667,12 +1887,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([236193010342506245u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("f8e2afa682aab6465d7de997ffc43de7b1257146eea44ee37259ac64c09ec160")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f8e2afa682aab6465d7de997ffc43de7b1257146eea44ee37259ac64c09ec160")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342021u64]),
@@ -2686,12 +1900,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([267458158431982779u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7584463097f50e761cc266e4e59af5a78f899b296cd3a3d1860b37f07912824e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7584463097f50e761cc266e4e59af5a78f899b296cd3a3d1860b37f07912824e")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2707,12 +1915,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([251968736446190964u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e01b16c328ebbdfd7c970975e77d465427b11cfce6db362c80903fccc97881be")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e01b16c328ebbdfd7c970975e77d465427b11cfce6db362c80903fccc97881be")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342023u64]),
@@ -2726,12 +1928,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([224836737243173859u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bb797b6ce74d12fe085af2c429d31b9f74b9d1b4384febff0cc4fe2ff21807fe")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bb797b6ce74d12fe085af2c429d31b9f74b9d1b4384febff0cc4fe2ff21807fe")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2747,12 +1943,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([218215192136808787u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("19b6214ba97748c273a9d0f184b8260f7986653b7cb5d27dae60453501823979")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("19b6214ba97748c273a9d0f184b8260f7986653b7cb5d27dae60453501823979")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342025u64]),
@@ -2766,12 +1956,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([257147200912013936u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bf97d84ca55c03c944eb943bfa10effd377119bc668ad182a7d98447b114ae83")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bf97d84ca55c03c944eb943bfa10effd377119bc668ad182a7d98447b114ae83")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2787,12 +1971,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([258223003002580438u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("9c94eafe8235b7cfd37bda2215f0dc19ca957a5a006bae353f24ec001e85719b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9c94eafe8235b7cfd37bda2215f0dc19ca957a5a006bae353f24ec001e85719b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342027u64]),
@@ -2806,12 +1984,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([269166468005370513u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1fc44909311cfb38ca49dae598407d96a21d8e3006d7949a813892fecb397440")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1fc44909311cfb38ca49dae598407d96a21d8e3006d7949a813892fecb397440")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2827,12 +1999,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([261377173230086254u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("8024e494bf438b7be9b260b7e5b3c8b7f7821280d43091f4d98551cbde2e3504")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8024e494bf438b7be9b260b7e5b3c8b7f7821280d43091f4d98551cbde2e3504")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342029u64]),
@@ -2846,12 +2012,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([253993534773015323u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1a39e6f0479ac0e49d032efe587e3350c7aa3a1698c79fc342d1f8eaa681c0b3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1a39e6f0479ac0e49d032efe587e3350c7aa3a1698c79fc342d1f8eaa681c0b3")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2867,12 +2027,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([240416456307252257u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a131ace4d3f327c05d81059e80bd00a024bbee7770b7518a60629cd786d3ac4e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a131ace4d3f327c05d81059e80bd00a024bbee7770b7518a60629cd786d3ac4e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342031u64]),
@@ -2886,12 +2040,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([224012796493525161u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e49d041383ade7a1d4938af2fd87b4c5861d7781a88212860605ca18a03177b3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e49d041383ade7a1d4938af2fd87b4c5861d7781a88212860605ca18a03177b3")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2907,12 +2055,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([251699638379261781u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("9b5304db02e14b2bbc151e4e14c5ba49de0566bbea8fb7e6ed74991195bd0468")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9b5304db02e14b2bbc151e4e14c5ba49de0566bbea8fb7e6ed74991195bd0468")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342033u64]),
@@ -2926,12 +2068,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([231920648090282848u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9b69d728e2e1dbb62aaca8913470c88682623bdc90434ddec6dd0ae113816412")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9b69d728e2e1dbb62aaca8913470c88682623bdc90434ddec6dd0ae113816412")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2947,12 +2083,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([284563581380350873u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("89ecf02cbc5d4579322263c4db21a41b358e458abaec532bcfbf8ed1cbe09ce3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("89ecf02cbc5d4579322263c4db21a41b358e458abaec532bcfbf8ed1cbe09ce3")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342035u64]),
@@ -2966,12 +2096,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([220151333327456653u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("67ceb6f96016b41d4daf93f113ca646f4e8afa59aff34f4abf61e0582accd914")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("67ceb6f96016b41d4daf93f113ca646f4e8afa59aff34f4abf61e0582accd914")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -2987,12 +2111,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([225440396745028715u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("4398eb95c14bb87af2431b9a83069db43f0232774f820a32796f5ca15347f582")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4398eb95c14bb87af2431b9a83069db43f0232774f820a32796f5ca15347f582")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342037u64]),
@@ -3006,12 +2124,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([218192446244343415u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9b707a552258a530d730bf33da9b531bb19b561b5e1235e4e0318b1949022bd8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9b707a552258a530d730bf33da9b531bb19b561b5e1235e4e0318b1949022bd8")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3027,12 +2139,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([221968064836395905u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("5de1e6113eb46dfca5e992b744ade86ce6013fe9f8969abce01dce4a7c0ea0e0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5de1e6113eb46dfca5e992b744ade86ce6013fe9f8969abce01dce4a7c0ea0e0")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342039u64]),
@@ -3046,12 +2152,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([270156941711888895u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9484fb8ecb89f2c0b1262a9aab14df429bea728ecd673a92c0627975207f1fbe")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9484fb8ecb89f2c0b1262a9aab14df429bea728ecd673a92c0627975207f1fbe")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3067,12 +2167,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([286712139890554713u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("ba15cb8af7748e50fd43586485f5f914740629cbf2fb3dbf5abc048e044a2996")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ba15cb8af7748e50fd43586485f5f914740629cbf2fb3dbf5abc048e044a2996")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342041u64]),
@@ -3086,12 +2180,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([263619258068099683u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e74500b71c7745e8213892497e23135a8e4939e38b197e18951d435913bb5351")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e74500b71c7745e8213892497e23135a8e4939e38b197e18951d435913bb5351")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3107,12 +2195,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([268776967736579834u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("73695a177f167e319c13a899c667cf56d8d27cd5029ffbfe6c229636b8cf9d72")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("73695a177f167e319c13a899c667cf56d8d27cd5029ffbfe6c229636b8cf9d72")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342043u64]),
@@ -3126,12 +2208,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([216408554726839539u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("462c3ba1d06061c8bf8b0136fa0fbd84466bf7789f54efd58378a674dcd99376")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("462c3ba1d06061c8bf8b0136fa0fbd84466bf7789f54efd58378a674dcd99376")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3147,12 +2223,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([282791777837994109u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd6adf6dde3d335f115a282faec5e95e9246e31e92ae052c98fc560b4f68cec7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd6adf6dde3d335f115a282faec5e95e9246e31e92ae052c98fc560b4f68cec7")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342045u64]),
@@ -3166,12 +2236,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([234723561787342633u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("90d0c6ff368a452a24510ee74c326abf1953124c3245225da8b2fb36b113e478")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("90d0c6ff368a452a24510ee74c326abf1953124c3245225da8b2fb36b113e478")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3187,12 +2251,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([272274645231538574u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("fa04a853a5e82f9f5882c034d01048fad7afbbc6de535b6da90710340644c71a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("fa04a853a5e82f9f5882c034d01048fad7afbbc6de535b6da90710340644c71a")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342047u64]),
@@ -3206,12 +2264,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([234700129880827983u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("658f2b9e6d3dd11b9778c6b9ebe962ab808e1ead0d841aa122a048e3be5a7aa6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("658f2b9e6d3dd11b9778c6b9ebe962ab808e1ead0d841aa122a048e3be5a7aa6")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3227,12 +2279,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([244973950016093777u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("08aabe99c26d7b534989caa156bf4941a05e3de637e247381c22f72e25bddd52")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("08aabe99c26d7b534989caa156bf4941a05e3de637e247381c22f72e25bddd52")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342049u64]),
@@ -3246,12 +2292,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([231981900636780892u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7bc00eaf5d421f9d29737691260ffa3bd3ebcb91c81e6dd276e91511a9954fc3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7bc00eaf5d421f9d29737691260ffa3bd3ebcb91c81e6dd276e91511a9954fc3")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3267,12 +2307,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([239183146005535452u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("10a102deb52f210d4e01654ab0fbc1cb3818ee16baa0c501b385d0aa54604c23")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("10a102deb52f210d4e01654ab0fbc1cb3818ee16baa0c501b385d0aa54604c23")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342051u64]),
@@ -3286,12 +2320,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([240341556404452086u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5ca7a9e2809ad4fb007f0f2c5530dfd4a0bee738678f491024d9d2c526b15cc3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5ca7a9e2809ad4fb007f0f2c5530dfd4a0bee738678f491024d9d2c526b15cc3")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3307,12 +2335,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([235044635482925873u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("474da997672ac76e08392fb462e08309298b657c6917ee0b0dab0f40cd2598ff")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("474da997672ac76e08392fb462e08309298b657c6917ee0b0dab0f40cd2598ff")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342053u64]),
@@ -3326,12 +2348,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([260913416845193623u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a4ecc0ed3340c0abe8e2ace1d0ebe515c35c437d2f2049ec7de8121bfd0d723b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a4ecc0ed3340c0abe8e2ace1d0ebe515c35c437d2f2049ec7de8121bfd0d723b")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3347,12 +2363,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([264334881186239088u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9f80840793e6450a91c4128dea0e9c5a17bff5f497a1f9eb52d11b9b10ed54a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9f80840793e6450a91c4128dea0e9c5a17bff5f497a1f9eb52d11b9b10ed54a")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342055u64]),
@@ -3366,12 +2376,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([287762512617180423u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d52dc209bf96a96dd22edca5d40d6f26b66859b58ec0a9c8e5720e74e3d9f460")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d52dc209bf96a96dd22edca5d40d6f26b66859b58ec0a9c8e5720e74e3d9f460")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3387,12 +2391,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([247004557478448198u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("8b7349cc535316584837042001f146529f6becd8ddf85c4df6458e34733023fb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8b7349cc535316584837042001f146529f6becd8ddf85c4df6458e34733023fb")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342057u64]),
@@ -3406,12 +2404,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([262698411493059459u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a780f30a004e7c96fdab90e233605a63c6dee2f80d563116c00741bf1d74fa91")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a780f30a004e7c96fdab90e233605a63c6dee2f80d563116c00741bf1d74fa91")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3427,12 +2419,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([237495663271180935u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a4cdda3981f554ec0af77c56db0612c64414b72fdc206bfa1f0651680a4b0dad")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a4cdda3981f554ec0af77c56db0612c64414b72fdc206bfa1f0651680a4b0dad")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342059u64]),
@@ -3446,12 +2432,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([262470965558124751u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("40789709435b82c4e2fd6965e868e4b084ae22fbb7744b25a8fd017b654cb801")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("40789709435b82c4e2fd6965e868e4b084ae22fbb7744b25a8fd017b654cb801")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3467,12 +2447,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([275052527954454633u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("af231fc4c0b011a8f4f21bc26e33edf20eb171c9667f17c05933dc3074b5c59c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("af231fc4c0b011a8f4f21bc26e33edf20eb171c9667f17c05933dc3074b5c59c")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342061u64]),
@@ -3486,12 +2460,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([282052611837051155u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b2b1f8c1c88e7c2c69e69638e36fd6ae562f63bcc1d30532013559f01932c1cb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b2b1f8c1c88e7c2c69e69638e36fd6ae562f63bcc1d30532013559f01932c1cb")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3507,12 +2475,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([247430543573455949u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("b20dc5969d18c72706550d782c18a2547c268de14f363551ae3b221ffa0f4edb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b20dc5969d18c72706550d782c18a2547c268de14f363551ae3b221ffa0f4edb")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342063u64]),
@@ -3526,12 +2488,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([270174448419195063u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("301a6697545e6dccb07cb136371815b812cd0121bfb0ede8379d6e07551961ec")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("301a6697545e6dccb07cb136371815b812cd0121bfb0ede8379d6e07551961ec")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3547,12 +2503,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([221449141331942567u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d15390682194de73dbb195d187c0d8368896e5620c43ee378072436e16e14148")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d15390682194de73dbb195d187c0d8368896e5620c43ee378072436e16e14148")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342065u64]),
@@ -3566,12 +2516,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([277309833794186668u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("07bdd0db29b01d9d3d611f6a72e1e9f1f48fb5f76d4a9e5ef808f3aec0ca1cb8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("07bdd0db29b01d9d3d611f6a72e1e9f1f48fb5f76d4a9e5ef808f3aec0ca1cb8")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3587,12 +2531,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([275456633423577410u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("61ac9d649ce9bed8719d39b438474c84c4711e645ac914c8529d80eb347b1306")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("61ac9d649ce9bed8719d39b438474c84c4711e645ac914c8529d80eb347b1306")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342067u64]),
@@ -3606,12 +2544,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([244641932228782793u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("817ead5db11fb14d9ff772d14c57f2c0de7e41e8277dff8949d270e3c0076061")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("817ead5db11fb14d9ff772d14c57f2c0de7e41e8277dff8949d270e3c0076061")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3627,12 +2559,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([231410680473113987u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("8db6cd82492c59ea0c27d7d35e978960662016c029d4401236e757dc11548e24")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8db6cd82492c59ea0c27d7d35e978960662016c029d4401236e757dc11548e24")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342069u64]),
@@ -3646,12 +2572,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([229161267788440474u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b0ff8649c80e8179fd97ae11bcae161a3035417a4da401cfe60109031706b08e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b0ff8649c80e8179fd97ae11bcae161a3035417a4da401cfe60109031706b08e")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3667,12 +2587,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([286776011654580265u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("068ebbffd5aeca4cd353ea8c630cffc7c52ffc4d73f38dc5333f714cbcf149c7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("068ebbffd5aeca4cd353ea8c630cffc7c52ffc4d73f38dc5333f714cbcf149c7")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342071u64]),
@@ -3686,12 +2600,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([220804023334456967u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("80ba49aa2eb8a4346e479a479eba7709eb154ba0153b7eebf36e7f3353e07c89")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("80ba49aa2eb8a4346e479a479eba7709eb154ba0153b7eebf36e7f3353e07c89")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3707,12 +2615,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([287813449076750930u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("47e0e3b747d553ad75ec76afca486ca629035297954147797a300799fc5cb493")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("47e0e3b747d553ad75ec76afca486ca629035297954147797a300799fc5cb493")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342073u64]),
@@ -3726,12 +2628,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([221521573173426627u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f921c8d6981918f2d3f5e842b8cd150b5a1dbf20726d648893f6bf2aeeddc9af")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f921c8d6981918f2d3f5e842b8cd150b5a1dbf20726d648893f6bf2aeeddc9af")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3747,12 +2643,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([275172443090524924u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("229e69f4d745bcc727facc16953b1f6f8ae9021f8aff65a866b5e52d9a29d54c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("229e69f4d745bcc727facc16953b1f6f8ae9021f8aff65a866b5e52d9a29d54c")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342075u64]),
@@ -3766,12 +2656,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([242033788687765372u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5efdb9b09262bcedd6535e851989d09f16f69542ad28a1b94f816d4fdaf2ea4f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5efdb9b09262bcedd6535e851989d09f16f69542ad28a1b94f816d4fdaf2ea4f")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3787,12 +2671,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([224202840257253699u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("94232a4c1bfa11e6a953aaabf43be76ac6290d63a6e64a97e876fbb8886b69d3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("94232a4c1bfa11e6a953aaabf43be76ac6290d63a6e64a97e876fbb8886b69d3")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342077u64]),
@@ -3806,12 +2684,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([241805263950399504u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b92e751f0464e6bc5d5960c0121f12cec5cb920ea61f773796d2e501cfc83cde")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b92e751f0464e6bc5d5960c0121f12cec5cb920ea61f773796d2e501cfc83cde")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3827,12 +2699,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([274268069595460904u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("22abd0ee4a3d5b0832b8f6fe1da559aa3380137501d1f767196329b127be78c8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("22abd0ee4a3d5b0832b8f6fe1da559aa3380137501d1f767196329b127be78c8")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342079u64]),
@@ -3846,12 +2712,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([225691526590938747u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2df459c55ddb3453401bdae50b2742b5ecba93e414ea9dc90cf52a3d1f1f890f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2df459c55ddb3453401bdae50b2742b5ecba93e414ea9dc90cf52a3d1f1f890f")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3867,12 +2727,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([218710081725102403u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e57dc90cbca92d0839d9208ec853f993381a44119c3e26c7bf35288fc5445bd3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e57dc90cbca92d0839d9208ec853f993381a44119c3e26c7bf35288fc5445bd3")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342081u64]),
@@ -3886,12 +2740,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([229726851113109892u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3758ca8c33c19ce2fc2d81b8d5a9d54ff18c6ec5ac3fb288f31d8c0fbceaec70")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3758ca8c33c19ce2fc2d81b8d5a9d54ff18c6ec5ac3fb288f31d8c0fbceaec70")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3907,12 +2755,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([271477515819956623u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("12701f7390c17101770f0fb5a817c4f584edca0626219c2e42e15f46fd9449ec")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("12701f7390c17101770f0fb5a817c4f584edca0626219c2e42e15f46fd9449ec")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342083u64]),
@@ -3926,12 +2768,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([277658255743894185u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0adae3c047c8c98dd771c00b832c4c1569a60b622db40d42b808a6c9fa349c27")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0adae3c047c8c98dd771c00b832c4c1569a60b622db40d42b808a6c9fa349c27")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3947,12 +2783,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([254642581442287131u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c48ff773fc8e64de6bcf3933d3978f5805b13d485ee5570ca3f1a83f192ecdff")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c48ff773fc8e64de6bcf3933d3978f5805b13d485ee5570ca3f1a83f192ecdff")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342085u64]),
@@ -3966,12 +2796,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([263455381615050847u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d38763d6a56839fca95aa86975b930e4dc9e6072fabe1faee22f0a28d25ed816")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d38763d6a56839fca95aa86975b930e4dc9e6072fabe1faee22f0a28d25ed816")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -3987,12 +2811,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([228968173035176377u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a38a2d383e76963e4f81ce83fadc90f59d18f437cfe11fdad5af44c9cef865f7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a38a2d383e76963e4f81ce83fadc90f59d18f437cfe11fdad5af44c9cef865f7")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342087u64]),
@@ -4006,12 +2824,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([278090545539038782u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("99617dc86e85a95be87af860f9b24c96e1f5e453cf9769b68c6e784a89d1c4e0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("99617dc86e85a95be87af860f9b24c96e1f5e453cf9769b68c6e784a89d1c4e0")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4027,12 +2839,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([226576899564836891u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("398357a7614849d5f385840aadbe9e252dc81a7f8da7b4bd9b0f390edce94404")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("398357a7614849d5f385840aadbe9e252dc81a7f8da7b4bd9b0f390edce94404")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342089u64]),
@@ -4046,12 +2852,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([268228263757658234u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("855e73fe820e7ab47fd33e835c8ce02b580fd0563d6948e97698c6ff051e32f8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("855e73fe820e7ab47fd33e835c8ce02b580fd0563d6948e97698c6ff051e32f8")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4067,12 +2867,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([268799741670407058u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("72578da38ac265e9561db989341f793b7d5d4024234e3d6668b7cd5916646253")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("72578da38ac265e9561db989341f793b7d5d4024234e3d6668b7cd5916646253")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342091u64]),
@@ -4086,12 +2880,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([260898372157957884u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0eee64123d6c01403db2415a5e98e333ae30e71df386dfe91d4c001af4ec4fc0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0eee64123d6c01403db2415a5e98e333ae30e71df386dfe91d4c001af4ec4fc0")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4107,12 +2895,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([232962424868629801u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a37ea3f6d81658eb6d6302f1bfcb0bdb51e6cef00321c7fb576059ca241376b1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a37ea3f6d81658eb6d6302f1bfcb0bdb51e6cef00321c7fb576059ca241376b1")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342093u64]),
@@ -4126,12 +2908,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([250990768943779424u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7591a9b821bb1c0b4e88bfd39c1c20a0ce8d149414464ecf5d85b52aeb9ad92f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7591a9b821bb1c0b4e88bfd39c1c20a0ce8d149414464ecf5d85b52aeb9ad92f")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4147,12 +2923,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([239345332373358558u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e33479d0c26739a882809f9f62563a799d51a10df684532517c6b8ee1dfadceb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e33479d0c26739a882809f9f62563a799d51a10df684532517c6b8ee1dfadceb")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342095u64]),
@@ -4166,12 +2936,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([265703770230992080u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0e0568ec147c73a77d7cf6c9b6e07d896669fc37d74865d22096e756c141159c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0e0568ec147c73a77d7cf6c9b6e07d896669fc37d74865d22096e756c141159c")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4187,12 +2951,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([253586653063488619u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("467c9d76f4c622f14b503525f723c265982a1c7e98ba3954ff04db79b8df9038")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("467c9d76f4c622f14b503525f723c265982a1c7e98ba3954ff04db79b8df9038")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342097u64]),
@@ -4206,12 +2964,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([252119438797271208u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5668dc1cb8be7100a7c7770c035e8cce15461220b7f13998ea7e97e356bc5f2d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5668dc1cb8be7100a7c7770c035e8cce15461220b7f13998ea7e97e356bc5f2d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4227,12 +2979,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([242063888802588622u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("04d1b8973506c3bb18beed06dfd82250a011815fbb42827e0c27e1aee49b30ca")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("04d1b8973506c3bb18beed06dfd82250a011815fbb42827e0c27e1aee49b30ca")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342099u64]),
@@ -4246,12 +2992,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([229615395780986726u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a0292e9c4e812071e7f0bc8c1d21ce4e1abc2bb06d177b1f0588955adbacbe1d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a0292e9c4e812071e7f0bc8c1d21ce4e1abc2bb06d177b1f0588955adbacbe1d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4267,12 +3007,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([237302614876086010u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("65587fc94b56b6d7444360bd0caf727017bb8c09b5c70670cc5f33fe5bcc98be")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("65587fc94b56b6d7444360bd0caf727017bb8c09b5c70670cc5f33fe5bcc98be")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342101u64]),
@@ -4286,12 +3020,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([285239266548703330u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("687e164f0d4e463f3446a32d784c3da1e7d7b4e9b11d04d22fbd7b03ed51ad86")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("687e164f0d4e463f3446a32d784c3da1e7d7b4e9b11d04d22fbd7b03ed51ad86")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4307,12 +3035,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([247962597496589290u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("6369ed07414b2c03adab8038b71d00e4a14059588fd2e5f52853849291611d13")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6369ed07414b2c03adab8038b71d00e4a14059588fd2e5f52853849291611d13")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342103u64]),
@@ -4326,12 +3048,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([284600192950506136u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6fea1acbef4f8087ca1349efe158bcc8e43ee51641ecd701eb0c84bf6bef7d5b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6fea1acbef4f8087ca1349efe158bcc8e43ee51641ecd701eb0c84bf6bef7d5b")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4347,12 +3063,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([287893194762722453u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("61e783a55590c6198bb95a59398a0950d5860b33791e18522e788a25a38f2869")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("61e783a55590c6198bb95a59398a0950d5860b33791e18522e788a25a38f2869")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342105u64]),
@@ -4366,12 +3076,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([255100628462848692u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("19d2312c1bfaefdb58fa2694d2b12db8aeffa4aa485003a3b785d6ad19f5ec1c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("19d2312c1bfaefdb58fa2694d2b12db8aeffa4aa485003a3b785d6ad19f5ec1c")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4387,12 +3091,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([268552402607665447u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("05144d0945393b9da7244d4cd2722a4b9fd2b57c413a4019300bc56cf04576ad")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("05144d0945393b9da7244d4cd2722a4b9fd2b57c413a4019300bc56cf04576ad")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342107u64]),
@@ -4406,12 +3104,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([247194551872177205u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9fdcfe2bcf0563ac322166eecb65be4b22899d8066c2a516cd43436bf446b209")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9fdcfe2bcf0563ac322166eecb65be4b22899d8066c2a516cd43436bf446b209")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4427,12 +3119,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([277481530319718879u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e3d6d29fef41b29d71082f27cfbee82f6513c043d49602548c57db844f2bf155")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e3d6d29fef41b29d71082f27cfbee82f6513c043d49602548c57db844f2bf155")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342109u64]),
@@ -4446,12 +3132,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([227961096178734206u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b1a762cc04751be89b9b4d903df54c480ab94c7cc736c60d1a7fc21c7c4719f0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b1a762cc04751be89b9b4d903df54c480ab94c7cc736c60d1a7fc21c7c4719f0")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4467,12 +3147,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([281132946819885186u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("8d106c2d1e51ac1df6225dda974df4d0e66706f6ff47fc33d073518b6ce2d36e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8d106c2d1e51ac1df6225dda974df4d0e66706f6ff47fc33d073518b6ce2d36e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342111u64]),
@@ -4486,12 +3160,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([218455006694316801u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7d9af80d22fb15184d8698c898a9c95aa305aa0670400ed114cc6476f7c17c89")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7d9af80d22fb15184d8698c898a9c95aa305aa0670400ed114cc6476f7c17c89")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4507,12 +3175,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([267017299920591033u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a86b0d81b027228649f1a3fb5c169bf0ad1cb7e0a5c10cca9b3d4f245ca63898")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a86b0d81b027228649f1a3fb5c169bf0ad1cb7e0a5c10cca9b3d4f245ca63898")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342113u64]),
@@ -4526,12 +3188,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([232853335027773014u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("202f03cb25824c67203d60ad2e98df1e6ca5e811919fc684fca3703fc0f7c7c2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("202f03cb25824c67203d60ad2e98df1e6ca5e811919fc684fca3703fc0f7c7c2")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4547,12 +3203,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([265299090006111469u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("56e66fba4857dff9753b86197da3c6bfa4a48f74ed2d1fd700b5d458cd40c271")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("56e66fba4857dff9753b86197da3c6bfa4a48f74ed2d1fd700b5d458cd40c271")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342115u64]),
@@ -4566,12 +3216,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([257644342361868744u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dd352c9fdb4d9e9bf8a8e72a17470190ac3bda32ab664418a4f3ec1a1e7e9473")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dd352c9fdb4d9e9bf8a8e72a17470190ac3bda32ab664418a4f3ec1a1e7e9473")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4587,12 +3231,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([281819800147463511u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("b4ebb81fa63aa39c21b7ab411a96ddaea99f31152d87cd0c66e57508d54ae0be")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b4ebb81fa63aa39c21b7ab411a96ddaea99f31152d87cd0c66e57508d54ae0be")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342117u64]),
@@ -4606,12 +3244,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([279215761457759788u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6187bf4202f09f2fb113891467abd4e3a87ea117ca7e817eff88c61b1ada8120")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6187bf4202f09f2fb113891467abd4e3a87ea117ca7e817eff88c61b1ada8120")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4627,12 +3259,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([238665828803627076u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("f7467010c7787e6d69d70bcc5965775d3013536de2448a4129452e02250c7d6b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f7467010c7787e6d69d70bcc5965775d3013536de2448a4129452e02250c7d6b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342119u64]),
@@ -4646,12 +3272,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([260372494275845336u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f3711cf6a887cde8e9a7a187fccecea187dbd54f5cb7383157ab1d3091e962a1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f3711cf6a887cde8e9a7a187fccecea187dbd54f5cb7383157ab1d3091e962a1")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4667,12 +3287,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([272552077366916838u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("de4563502b994d9a18b1e91f0e9cb018cc13db7b327ae599627bc79f51565805")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("de4563502b994d9a18b1e91f0e9cb018cc13db7b327ae599627bc79f51565805")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342121u64]),
@@ -4686,12 +3300,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([269204822092741974u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("39b86802533811d536a2f2beb4041550b94bb7c66b9797d8ee3381595eea23b7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("39b86802533811d536a2f2beb4041550b94bb7c66b9797d8ee3381595eea23b7")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4707,12 +3315,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([236729242757375170u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("7038cd3152e7d0fe4cb2576ce2752c5a15da5e3e0475a95de3d0b85b7b3ea5ca")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7038cd3152e7d0fe4cb2576ce2752c5a15da5e3e0475a95de3d0b85b7b3ea5ca")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342123u64]),
@@ -4726,12 +3328,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([262254039578185787u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b00eb14dd3393e35bad8efdfe077e8ee337aff3f56e455945a1da730854eebcd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b00eb14dd3393e35bad8efdfe077e8ee337aff3f56e455945a1da730854eebcd")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4747,12 +3343,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([263331264050595819u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("8438a99795b06e295d2aa128ee41e8c91034e669b706ebf69e0240bc3d98fa11")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8438a99795b06e295d2aa128ee41e8c91034e669b706ebf69e0240bc3d98fa11")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342125u64]),
@@ -4766,12 +3356,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([244008386680376860u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("09ce3491fdff0bb9221f4e7947eb98b51108c0113c8d1f45e4d18f45e7ed91db")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("09ce3491fdff0bb9221f4e7947eb98b51108c0113c8d1f45e4d18f45e7ed91db")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4787,12 +3371,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([274079148741294192u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("0a7ee176a298b0dacd3768ed9c18b0a79bb48604b96e783f7367e472e98efe13")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0a7ee176a298b0dacd3768ed9c18b0a79bb48604b96e783f7367e472e98efe13")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342127u64]),
@@ -4806,12 +3384,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([278929446614299058u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e556560c0c4df7b7e19731dbeed59f0e1486928a955dc6ab91c60e690dc521cd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e556560c0c4df7b7e19731dbeed59f0e1486928a955dc6ab91c60e690dc521cd")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4827,12 +3399,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([228540292138322824u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("4d862a4219595a6ec36e2ce9c892b2602447f19490520db64dc8032ab2039a92")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4d862a4219595a6ec36e2ce9c892b2602447f19490520db64dc8032ab2039a92")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342129u64]),
@@ -4846,12 +3412,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([249588602578290847u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("be46c928b24898cafb0ec0b506a7bacc99d845804fd004af19231ff1bb2cdc7c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("be46c928b24898cafb0ec0b506a7bacc99d845804fd004af19231ff1bb2cdc7c")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4867,12 +3427,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([262226080195059268u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("040cad8cff9aa680c88e14ec74233fced0a2045646289bb8ba389e3bebb45e9a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("040cad8cff9aa680c88e14ec74233fced0a2045646289bb8ba389e3bebb45e9a")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342131u64]),
@@ -4886,12 +3440,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([260921828509181386u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cbfcff34390d38b641a7f1be7014098facfbb8e5814fbe5e5b6f90fa332b58b4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cbfcff34390d38b641a7f1be7014098facfbb8e5814fbe5e5b6f90fa332b58b4")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4907,12 +3455,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([230142959834183580u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("fca2a909c1b99ac91a82a144f2d70b841f932a192b40fa7c04bcd503a45bf618")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("fca2a909c1b99ac91a82a144f2d70b841f932a192b40fa7c04bcd503a45bf618")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342133u64]),
@@ -4926,12 +3468,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([222252188541764063u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3f463c6422c93e963915fce48d0339a9bafec83169f374f48dcaf49f1164422c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3f463c6422c93e963915fce48d0339a9bafec83169f374f48dcaf49f1164422c")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4947,12 +3483,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([261167244247014054u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("792eea1e3bd13010bdf94d138b4408f3e5ccb7e68ce6347723960521b46d28e1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("792eea1e3bd13010bdf94d138b4408f3e5ccb7e68ce6347723960521b46d28e1")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342135u64]),
@@ -4966,12 +3496,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([220408116017756437u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("740c737a78d9da4be8fe04f5ef115447c3e5dbc5b11d0f9bcbbbe1f00b771a38")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("740c737a78d9da4be8fe04f5ef115447c3e5dbc5b11d0f9bcbbbe1f00b771a38")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -4987,12 +3511,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([282790185158257851u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e74311a226d0fd382bbc7c03ccdebba8f7a853c145f9c39c47ba8e44079460a5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e74311a226d0fd382bbc7c03ccdebba8f7a853c145f9c39c47ba8e44079460a5")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342137u64]),
@@ -5006,12 +3524,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([223167121563210419u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("25a83c636fc21502943e604e1e38f24dfdd5aa2c219bef6ee1286b006275ee13")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("25a83c636fc21502943e604e1e38f24dfdd5aa2c219bef6ee1286b006275ee13")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5027,12 +3539,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([264030980519436836u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("9385d836e6b08f6777e11009e8c1d79c50a9887fec927a1c546f754d1004c54e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9385d836e6b08f6777e11009e8c1d79c50a9887fec927a1c546f754d1004c54e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342139u64]),
@@ -5046,12 +3552,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([224120005109943182u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b0cb3015e7dfc47b6a756fd34904a40b05aabd511faacf5a40752dc642ac09d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b0cb3015e7dfc47b6a756fd34904a40b05aabd511faacf5a40752dc642ac09d8")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5067,12 +3567,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([260099692621057722u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e131ebaafa1d254da11819a8dee76bde98c6b55e82eb754cf6f35b85439982bd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e131ebaafa1d254da11819a8dee76bde98c6b55e82eb754cf6f35b85439982bd")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342141u64]),
@@ -5086,12 +3580,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([281894791470608880u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("84a90e5f671b9ba03c3b0d0cb1a586601e9439745698f7e0a3b0e9fd3a90102c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("84a90e5f671b9ba03c3b0d0cb1a586601e9439745698f7e0a3b0e9fd3a90102c")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5107,12 +3595,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([282815287936963189u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("54a9cdb187dd80da89f972a293743cda1d1ce3314b4d8ca89d3e394959280765")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("54a9cdb187dd80da89f972a293743cda1d1ce3314b4d8ca89d3e394959280765")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342143u64]),
@@ -5126,12 +3608,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([231787438945210304u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3ca09829cddeeb761c736304bcc843c1ede67f39e97d310f0e7633076eca6c9d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3ca09829cddeeb761c736304bcc843c1ede67f39e97d310f0e7633076eca6c9d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5147,12 +3623,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([234956487130554149u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("39673ec7681f192e59153bf388ceeaf79bfec3bf106929e3f9be6d75093f09c2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("39673ec7681f192e59153bf388ceeaf79bfec3bf106929e3f9be6d75093f09c2")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342145u64]),
@@ -5166,12 +3636,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([217992728047901802u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a87fbca647594ae4a244206599564bbc2cce5e6efe32318662f387ae924a49bd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a87fbca647594ae4a244206599564bbc2cce5e6efe32318662f387ae924a49bd")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5187,12 +3651,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([237476749810500930u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("2386d083939e9e6b11bda2d6cad32f5bdbb0d0c53a831486ea7599babe5b5033")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2386d083939e9e6b11bda2d6cad32f5bdbb0d0c53a831486ea7599babe5b5033")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342147u64]),
@@ -5206,12 +3664,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([257010240076134505u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("35e7b1b7379caf708a6b131f832feb4cd240806c6b4537dbaa56097cecf624b0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("35e7b1b7379caf708a6b131f832feb4cd240806c6b4537dbaa56097cecf624b0")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5227,12 +3679,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([234915161961722463u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("5c5ce9cc8cc259f5285b7714cf4719494569c26c47d08657b7c5846f5c24ba3c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5c5ce9cc8cc259f5285b7714cf4719494569c26c47d08657b7c5846f5c24ba3c")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342149u64]),
@@ -5246,12 +3692,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([247916030262527051u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("fbe66fc44e050faeb452e09b53ed2d0fce34ee26880b91cb45aaa78ddea90952")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("fbe66fc44e050faeb452e09b53ed2d0fce34ee26880b91cb45aaa78ddea90952")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5267,12 +3707,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([221378719605561442u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("0efa809f2b9fdbde551fc03f2fea1320c7ab9ef32478c3dc0596fa474472a759")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0efa809f2b9fdbde551fc03f2fea1320c7ab9ef32478c3dc0596fa474472a759")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342151u64]),
@@ -5286,12 +3720,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([249469021280702355u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8f2c8a01a540b10330153cc12b79a93aae5e28626c2b0a99608ffe83fcc5ea0a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8f2c8a01a540b10330153cc12b79a93aae5e28626c2b0a99608ffe83fcc5ea0a")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5307,12 +3735,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([222325896579817050u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("918919c0eda7a852c0a16935ade0b82e9431fd85a1fd596a7c737a6ea2379631")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("918919c0eda7a852c0a16935ade0b82e9431fd85a1fd596a7c737a6ea2379631")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342153u64]),
@@ -5326,12 +3748,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([271666456902761909u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8c8fcba19f880d34df566b3336c3a8aa8532b916b098dacfc5990363dd9d7855")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8c8fcba19f880d34df566b3336c3a8aa8532b916b098dacfc5990363dd9d7855")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5347,12 +3763,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([248324594245477339u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("92e43d916d4256d937e051919805505cbf74177d70ef632965fafbf322b834bf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("92e43d916d4256d937e051919805505cbf74177d70ef632965fafbf322b834bf")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342155u64]),
@@ -5366,12 +3776,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([231525398019505702u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("20a604ba8a2a47fe35d58e3f76cbc43a81509769b22b11e9c015112da8dd4f11")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("20a604ba8a2a47fe35d58e3f76cbc43a81509769b22b11e9c015112da8dd4f11")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5387,12 +3791,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([280893958118484002u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("52eef044461f62e3bf14ffe307163076a73de51fd031536badcce75723031113")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("52eef044461f62e3bf14ffe307163076a73de51fd031536badcce75723031113")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342157u64]),
@@ -5406,12 +3804,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([228942487630896458u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ba6569a2d4bd72bb20c435eebea4407bc049a01c6e97395da5c53584cad5537c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ba6569a2d4bd72bb20c435eebea4407bc049a01c6e97395da5c53584cad5537c")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5427,12 +3819,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([246645773935322134u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("ad60cb6d53eb3c403eb473fbbf0417abbb45538d7ba2cf4a4ca924c28071ec13")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ad60cb6d53eb3c403eb473fbbf0417abbb45538d7ba2cf4a4ca924c28071ec13")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342159u64]),
@@ -5446,12 +3832,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([237199178630620224u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e0b1f1009edff59a2ce9dc838540bee403a7e3cc5733e6e366206ac47159371b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e0b1f1009edff59a2ce9dc838540bee403a7e3cc5733e6e366206ac47159371b")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5467,12 +3847,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([252436931948185557u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("8e40fee6345792b7ef31b241d68f8c46534c6255c0780d7acd8bab908d170c94")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8e40fee6345792b7ef31b241d68f8c46534c6255c0780d7acd8bab908d170c94")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342161u64]),
@@ -5486,12 +3860,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([282779259410381522u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6a59652db575a3f012c41ab608a48f265e5a8c10809968fca55b06bcd77cdc6f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6a59652db575a3f012c41ab608a48f265e5a8c10809968fca55b06bcd77cdc6f")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5507,12 +3875,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([249218835455307597u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("baa1344688868722a5f8ea66384757f0d29cb13689ebd87530b0e2e5ed08d4f6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("baa1344688868722a5f8ea66384757f0d29cb13689ebd87530b0e2e5ed08d4f6")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342163u64]),
@@ -5526,12 +3888,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([217699883515782049u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f2caaf4d9130ba871f0c4c7da6b92293e628470c3a96dc72f08cd189db67f58b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f2caaf4d9130ba871f0c4c7da6b92293e628470c3a96dc72f08cd189db67f58b")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5547,12 +3903,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([229801766219975482u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("5fc3b89e4062ad3b5d32aeb785936780d496dbda3dffe7bcaf1581e873b641d4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5fc3b89e4062ad3b5d32aeb785936780d496dbda3dffe7bcaf1581e873b641d4")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342165u64]),
@@ -5566,12 +3916,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([253192435306130731u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("59027ed4db28a7cbae7cd39095b7cfa4d8ab4b1999e126488b47e89690c723e3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("59027ed4db28a7cbae7cd39095b7cfa4d8ab4b1999e126488b47e89690c723e3")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5587,12 +3931,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([271920681887335664u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("f11f6305d133ba887394f9e10d7d031dadc4c182d91feec78d6d0562002129b8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f11f6305d133ba887394f9e10d7d031dadc4c182d91feec78d6d0562002129b8")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342167u64]),
@@ -5606,12 +3944,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([270144327712882697u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1d8b3e249c781c36b82b772d47e4b667cc8f23e1192f45821bd88bb78a258e0f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1d8b3e249c781c36b82b772d47e4b667cc8f23e1192f45821bd88bb78a258e0f")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5627,12 +3959,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([283779532089778440u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("5b35ad8812ec662cd45006f8c30230321a2b334e46fc2b2e0668062ca6233bbe")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5b35ad8812ec662cd45006f8c30230321a2b334e46fc2b2e0668062ca6233bbe")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342169u64]),
@@ -5646,12 +3972,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([271439498407050081u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4bf13504fabfc959cd3cfc91cf65d8787e3a3a948a22caa9f6ff82271757c5d6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4bf13504fabfc959cd3cfc91cf65d8787e3a3a948a22caa9f6ff82271757c5d6")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5667,12 +3987,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([272992087339803928u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("763265638260fbfe319b76f81c4b806ff4f5b1f9caa459e4b96796384573bc4b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("763265638260fbfe319b76f81c4b806ff4f5b1f9caa459e4b96796384573bc4b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342171u64]),
@@ -5686,12 +4000,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([242568689508109129u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f44a78347b07a52f3174e7b77f371d98dd63c0e08ffbbcce45a1664ec064ac08")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f44a78347b07a52f3174e7b77f371d98dd63c0e08ffbbcce45a1664ec064ac08")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5707,12 +4015,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([286885356921154986u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("087e152c3a4c0bfd496d49f3f125ad6926612be9aefd9ac0d16bbde2b1bdfff5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("087e152c3a4c0bfd496d49f3f125ad6926612be9aefd9ac0d16bbde2b1bdfff5")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342173u64]),
@@ -5726,12 +4028,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([266735486831244535u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ef631a7335de189d1391c6f0ba18f7381364b7a351492300d19a0e0af7be6e67")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ef631a7335de189d1391c6f0ba18f7381364b7a351492300d19a0e0af7be6e67")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5747,12 +4043,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([246404974500574823u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("40a7e70d5b7138392a761e1576c6a9feffde84851beb810d9181030683d3caae")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("40a7e70d5b7138392a761e1576c6a9feffde84851beb810d9181030683d3caae")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342175u64]),
@@ -5766,12 +4056,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([226200593040335090u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("59cbeb92c71c7c63b9f68fbefb289bc4651123d85513e9696d1603b2891a88ab")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("59cbeb92c71c7c63b9f68fbefb289bc4651123d85513e9696d1603b2891a88ab")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5787,12 +4071,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([258361432376619433u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("3b46e472e682f45725509dede7659c2f69016fb6dd18abedd023f07ab2b8d799")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3b46e472e682f45725509dede7659c2f69016fb6dd18abedd023f07ab2b8d799")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342177u64]),
@@ -5806,12 +4084,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([285916506531861329u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("14ff87a8e2eff04a29c3354632fb753633c8752626028e5254611d23cecfb100")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("14ff87a8e2eff04a29c3354632fb753633c8752626028e5254611d23cecfb100")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5827,12 +4099,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([221048658255303797u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c5f6f932563f4e1ff6acff767d83d0425bfeedbc39c8abfdef09203f2aad2bd6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c5f6f932563f4e1ff6acff767d83d0425bfeedbc39c8abfdef09203f2aad2bd6")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342179u64]),
@@ -5846,12 +4112,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([250754574768820369u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f6e2dbb7063fc2366802a308bd97aab07c0183455ece21efe7a79265ed2cca9e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f6e2dbb7063fc2366802a308bd97aab07c0183455ece21efe7a79265ed2cca9e")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5867,12 +4127,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([267081934830370293u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("afb2b8774d06db3911427cc11b09f2a634c60a7916cb7037cf8f74749aa9b21c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("afb2b8774d06db3911427cc11b09f2a634c60a7916cb7037cf8f74749aa9b21c")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342181u64]),
@@ -5886,12 +4140,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([241334871589831395u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e93defefa1108c88d36300e9ac0b8417f810cb5ece741b18520833de9eaeff32")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e93defefa1108c88d36300e9ac0b8417f810cb5ece741b18520833de9eaeff32")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5907,12 +4155,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([242810821605941827u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d5a20e82c155ae93fbeed00b68372acef0bcd158b8385fbd5d0fcbd2b9b17cb6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d5a20e82c155ae93fbeed00b68372acef0bcd158b8385fbd5d0fcbd2b9b17cb6")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342183u64]),
@@ -5926,12 +4168,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([259044141649004412u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e4f7c2c4f57024057375f3d1956a232afcf6e72925a2b1889161f6c31c61f2a0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e4f7c2c4f57024057375f3d1956a232afcf6e72925a2b1889161f6c31c61f2a0")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5947,12 +4183,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([241201758290433413u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("433fa864dbfac3853fc06997a831296ba4b9b379d82783dbd69b5794799a2f9c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("433fa864dbfac3853fc06997a831296ba4b9b379d82783dbd69b5794799a2f9c")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342185u64]),
@@ -5966,12 +4196,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([222682916777213440u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9b971c4f7b4e8a8e67017a11b2feabc7955136fbb2d777a803173e64ea2d860")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9b971c4f7b4e8a8e67017a11b2feabc7955136fbb2d777a803173e64ea2d860")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -5987,12 +4211,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([217261796426468779u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("5edcbe9819204caa7980e92cbcffd1b6936ebd9239ddb6753d3d1faa3763278c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5edcbe9819204caa7980e92cbcffd1b6936ebd9239ddb6753d3d1faa3763278c")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342187u64]),
@@ -6006,12 +4224,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([254894206343712324u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0b249606e931d42b7c965f2581a57830fa9eeeb125e8c29c5d2180a4f19d7900")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0b249606e931d42b7c965f2581a57830fa9eeeb125e8c29c5d2180a4f19d7900")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6027,12 +4239,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([269335853279859322u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e4dc196a47657e29e271c3df42a932bb6b746c87f7caeb010c5c9936d9f29de3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e4dc196a47657e29e271c3df42a932bb6b746c87f7caeb010c5c9936d9f29de3")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342189u64]),
@@ -6046,12 +4252,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([243315374592764104u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f83fa27a66ca09f655662800583f8a32fc38e881ebb2aa9a703c6ec95bb1c7f1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f83fa27a66ca09f655662800583f8a32fc38e881ebb2aa9a703c6ec95bb1c7f1")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6067,12 +4267,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([221649394672837887u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("6bf8100be26f309979177b80d27a0d4071951ae3df01133f294e75744c8f99ee")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6bf8100be26f309979177b80d27a0d4071951ae3df01133f294e75744c8f99ee")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342191u64]),
@@ -6086,12 +4280,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([274464873491755598u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4912be0d9a9e618cfb5ea5941b76f70ce615dae51f797e381cabfd1078dcbe2a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4912be0d9a9e618cfb5ea5941b76f70ce615dae51f797e381cabfd1078dcbe2a")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6107,12 +4295,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([218597529839611370u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("25ba90634cfe8a17e2e87ea135cc4a7d4d981eb95b02d120c7cf4168b2b63d81")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("25ba90634cfe8a17e2e87ea135cc4a7d4d981eb95b02d120c7cf4168b2b63d81")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342193u64]),
@@ -6126,12 +4308,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([254072992248638232u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("92d23659920f3ee7b3fee3a8be76cd2f8d73cafeb1e23f3082fd84d5f2d9f8b0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("92d23659920f3ee7b3fee3a8be76cd2f8d73cafeb1e23f3082fd84d5f2d9f8b0")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6147,12 +4323,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([231608880795288518u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("af5ab59097a0ee34408383c07b3d558234e4617791c5c1dd4fcb7ad28e5756af")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("af5ab59097a0ee34408383c07b3d558234e4617791c5c1dd4fcb7ad28e5756af")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342195u64]),
@@ -6166,12 +4336,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([235003154202139166u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c1cbaa4d486be216b1d91c2468693e2875bf83e0358d2a29333b3a3af00f72aa")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c1cbaa4d486be216b1d91c2468693e2875bf83e0358d2a29333b3a3af00f72aa")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6187,12 +4351,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([287315709282995147u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("5b1596dfc32d36d25cf58994de0ae456e23369cb822907b4a7d3765ff32ab1cc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5b1596dfc32d36d25cf58994de0ae456e23369cb822907b4a7d3765ff32ab1cc")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342197u64]),
@@ -6206,12 +4364,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([264073602501248223u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1cf7c0c2f6482978c9ae7eb92afe6114aa481876b6f1a4266950206c2edeccde")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1cf7c0c2f6482978c9ae7eb92afe6114aa481876b6f1a4266950206c2edeccde")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6227,12 +4379,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([266099564853906059u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("7985bb9386b50ce4070b1bc5f3dc0e69b5abd073d84143eb57d611733a61eefd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7985bb9386b50ce4070b1bc5f3dc0e69b5abd073d84143eb57d611733a61eefd")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342199u64]),
@@ -6246,12 +4392,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([262471374079026702u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("aeca0709cdbab9f41f7bfa4af3704e8a83d5395d75a64b146d177fee31b37024")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("aeca0709cdbab9f41f7bfa4af3704e8a83d5395d75a64b146d177fee31b37024")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6267,12 +4407,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([266123942120020464u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d1c8fe3eafb5b8482ce7955706ba2db4dd9892548f3dd85d31de7e013034a95e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d1c8fe3eafb5b8482ce7955706ba2db4dd9892548f3dd85d31de7e013034a95e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342201u64]),
@@ -6286,12 +4420,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([243358307259968811u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("282f03fadaf0c6c5c7e9c80db7680c281a305e58bd7fb79d04f697f32b50e6f5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("282f03fadaf0c6c5c7e9c80db7680c281a305e58bd7fb79d04f697f32b50e6f5")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6307,12 +4435,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([288203042635754817u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c0d52e61271a5ee12cbe63dd749a5642c5ca28401357b2bd4eb60ba65efe7806")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c0d52e61271a5ee12cbe63dd749a5642c5ca28401357b2bd4eb60ba65efe7806")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342203u64]),
@@ -6326,12 +4448,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([234741962792525632u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("009d6b6f6b0b851ca3c0eb4c7fa6baf6ed69597ed7ea732e3319ceee235984c5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("009d6b6f6b0b851ca3c0eb4c7fa6baf6ed69597ed7ea732e3319ceee235984c5")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6347,12 +4463,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([218105595534125917u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e262905a7566415020446b37fb4e3fd7ef31b14f16d9a34d394f1a0afc9ef50b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e262905a7566415020446b37fb4e3fd7ef31b14f16d9a34d394f1a0afc9ef50b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342205u64]),
@@ -6366,12 +4476,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([283756415745051835u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4138595a2e1bfe636c998b96222491ddf653a4abdb11bf05ee2b44df3f3111d7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4138595a2e1bfe636c998b96222491ddf653a4abdb11bf05ee2b44df3f3111d7")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6387,12 +4491,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([231317704344664349u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("5481d35e6de0499286cd3e66cc2719d5a55309f2959e7bfe9fe6cf1981e0b782")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5481d35e6de0499286cd3e66cc2719d5a55309f2959e7bfe9fe6cf1981e0b782")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342207u64]),
@@ -6406,12 +4504,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([263139371570592131u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c192bcd1e62b3851975092d279559c240fd5e87fa8f2c18710bfe7c6513675e7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c192bcd1e62b3851975092d279559c240fd5e87fa8f2c18710bfe7c6513675e7")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6427,12 +4519,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([243597295121326610u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("2ffc5f7a21dca8e4f8d25abdb460dfa21717c9bceb9db57d3ad6dd4f877f9af5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2ffc5f7a21dca8e4f8d25abdb460dfa21717c9bceb9db57d3ad6dd4f877f9af5")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342209u64]),
@@ -6446,36 +4532,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([224937910368477577u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c7d2da754b6c88f0159643bc204974f5acbc50be97456befc0cad4af880ebe8d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c7d2da754b6c88f0159643bc204974f5acbc50be97456befc0cad4af880ebe8d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c7d2da754b6c88f0159643bc204974f5acbc50be97456befc0cad4af880ebe8d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c7d2da754b6c88f0159643bc204974f5acbc50be97456befc0cad4af880ebe8d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c7d2da754b6c88f0159643bc204974f5acbc50be97456befc0cad4af880ebe8d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c7d2da754b6c88f0159643bc204974f5acbc50be97456befc0cad4af880ebe8d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c7d2da754b6c88f0159643bc204974f5acbc50be97456befc0cad4af880ebe8d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c7d2da754b6c88f0159643bc204974f5acbc50be97456befc0cad4af880ebe8d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c7d2da754b6c88f0159643bc204974f5acbc50be97456befc0cad4af880ebe8d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c7d2da754b6c88f0159643bc204974f5acbc50be97456befc0cad4af880ebe8d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6491,12 +4547,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([253412025592394028u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("3e030cfbe7a8771a2ea8a52923c254fdaeb7bd43cd3e5ca311391201645fd969")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3e030cfbe7a8771a2ea8a52923c254fdaeb7bd43cd3e5ca311391201645fd969")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342211u64]),
@@ -6510,12 +4560,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([266699870142288898u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("179bd950eceabc95aca6c73f0795d782b577e411b199778f0d132d34e849e0ea")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("179bd950eceabc95aca6c73f0795d782b577e411b199778f0d132d34e849e0ea")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6531,12 +4575,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([223362210590952989u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("b798779795d253e875fd1361e0eadf2ff5fb3e9bcbcf0c392057c31a4dcdab43")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b798779795d253e875fd1361e0eadf2ff5fb3e9bcbcf0c392057c31a4dcdab43")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342213u64]),
@@ -6550,12 +4588,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([253144058066727495u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("43b6a12113678fe67c13b7b43adde5b0427dc212542cfe70084db3a17a2f8445")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("43b6a12113678fe67c13b7b43adde5b0427dc212542cfe70084db3a17a2f8445")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6571,12 +4603,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([286498798863943607u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("91868fd1b4d8efc7931f6d2c26da547da0a93717987aedba983f5bf576693c3f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("91868fd1b4d8efc7931f6d2c26da547da0a93717987aedba983f5bf576693c3f")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342215u64]),
@@ -6590,12 +4616,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([228714824268902056u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7383652569bdbc7a11869da84f92d9587a795be72d6d6f5e13a9c961cb50311f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7383652569bdbc7a11869da84f92d9587a795be72d6d6f5e13a9c961cb50311f")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6611,12 +4631,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([225684007586888249u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("ba1a0d92f1ac7bab95af915d5b20c8b2d6a84316b8b18beecd61ee745f17dc65")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ba1a0d92f1ac7bab95af915d5b20c8b2d6a84316b8b18beecd61ee745f17dc65")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342217u64]),
@@ -6630,12 +4644,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([238251679502907665u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c09eb1249c90225623389939ebe1e26054ab16729cbe6778a0308bc8cac91645")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c09eb1249c90225623389939ebe1e26054ab16729cbe6778a0308bc8cac91645")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6651,12 +4659,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([270859543726764305u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("3886a5171b9244c10312a9c4e13365f673cba0bc366feba88ea280878ee27f3c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3886a5171b9244c10312a9c4e13365f673cba0bc366feba88ea280878ee27f3c")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342219u64]),
@@ -6670,12 +4672,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([240078942119876147u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("93a925418219e9810b9eea4afbefe149eb34b17c36c8aef00184d3a139d5a4f3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("93a925418219e9810b9eea4afbefe149eb34b17c36c8aef00184d3a139d5a4f3")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6691,12 +4687,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([243730935995745457u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("37a11af8f38aea14a59a1dd9bc301a2c2c60ca65f375500f05bb27363b70eb3b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("37a11af8f38aea14a59a1dd9bc301a2c2c60ca65f375500f05bb27363b70eb3b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342221u64]),
@@ -6710,12 +4700,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([272312875411250957u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0955f624de7b3c7d54d89acc4995369f905afbd9e5e4c7e0c95dd22e278c2a56")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0955f624de7b3c7d54d89acc4995369f905afbd9e5e4c7e0c95dd22e278c2a56")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6731,12 +4715,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([255097981956338301u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("47ee8a56c8e7311c6cf81935cd35e7df18e49dffb550b1d1e51ab9aaa82a630a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("47ee8a56c8e7311c6cf81935cd35e7df18e49dffb550b1d1e51ab9aaa82a630a")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342223u64]),
@@ -6750,12 +4728,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([218100147650114031u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cfe6380b34135314c6dbf7bd2aa316d9e85624c0e27a29b4c605ba9f936753f5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cfe6380b34135314c6dbf7bd2aa316d9e85624c0e27a29b4c605ba9f936753f5")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6771,12 +4743,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([270891278123348979u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("dbc6329fff0a3fd220241b22da89d8bb8054ef26d2f91ff43eb9df01dfa65796")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dbc6329fff0a3fd220241b22da89d8bb8054ef26d2f91ff43eb9df01dfa65796")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342225u64]),
@@ -6790,12 +4756,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([262976192039743804u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ad3305c268d0c9811259fe9ad8eae592dcbec0bcdec471fc357792696e9d0a3d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ad3305c268d0c9811259fe9ad8eae592dcbec0bcdec471fc357792696e9d0a3d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6811,12 +4771,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([261392118357741886u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("f0491862388d2f2510c55699e30b5a4d23c0a180b7efbf67efb8bcad3cc562cf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f0491862388d2f2510c55699e30b5a4d23c0a180b7efbf67efb8bcad3cc562cf")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342227u64]),
@@ -6830,12 +4784,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([273591797185435368u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("40381535e5adf2b0ea6a7b8342ecf54b6b5b4a73e310d311ce589dbd98dcd238")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("40381535e5adf2b0ea6a7b8342ecf54b6b5b4a73e310d311ce589dbd98dcd238")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6851,12 +4799,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([266637947002483349u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("5a6a45afeddb3ce126848090856074d54cff135ab9d0867c2363654776c3bcc8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5a6a45afeddb3ce126848090856074d54cff135ab9d0867c2363654776c3bcc8")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342229u64]),
@@ -6870,12 +4812,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([217169131449408583u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dbcb382bf57ad64660f000058d203584eea344f5a9edf3f3289cbef8f6729394")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dbcb382bf57ad64660f000058d203584eea344f5a9edf3f3289cbef8f6729394")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6891,12 +4827,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([269145468349096927u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("82686d1244ef496346d6ac2dc2da283882ccf088651d5492cd09b54b28c4df07")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("82686d1244ef496346d6ac2dc2da283882ccf088651d5492cd09b54b28c4df07")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342231u64]),
@@ -6910,12 +4840,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([277863414630268382u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2de3326f5474def23379f6e383edda77a179afc1170cc38f69a51cef34f5290c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2de3326f5474def23379f6e383edda77a179afc1170cc38f69a51cef34f5290c")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6931,12 +4855,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([247657711616519378u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd87b3ed67b47b768eeec9ecd29217b4a81ee1a68d5215d8ca87826dde46b1a9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd87b3ed67b47b768eeec9ecd29217b4a81ee1a68d5215d8ca87826dde46b1a9")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342233u64]),
@@ -6950,12 +4868,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([274871228764672855u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5b602a716ec80a3a3a2a8b9588575828a9f4fcfca65df7465cddbbe9b4158e53")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5b602a716ec80a3a3a2a8b9588575828a9f4fcfca65df7465cddbbe9b4158e53")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -6971,12 +4883,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([224771679759431617u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("5eac30adb6b650209803d2ee033dc87b18822a27e1830bf01e195236c3406284")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5eac30adb6b650209803d2ee033dc87b18822a27e1830bf01e195236c3406284")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342235u64]),
@@ -6990,12 +4896,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([241437679301028811u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4e0a58b536a3e6c8faef3b0ed7ed21ab3ab6c58bff7251a1f618c67d63f3aa9a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4e0a58b536a3e6c8faef3b0ed7ed21ab3ab6c58bff7251a1f618c67d63f3aa9a")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -7011,12 +4911,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([219489701164059401u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("49703ab02535e4942855bfbf95d328baf10003a392614e6605f8d371fad9747d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49703ab02535e4942855bfbf95d328baf10003a392614e6605f8d371fad9747d")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342237u64]),
@@ -7030,57 +4924,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([257722021306215151u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49703ab02535e4942855bfbf95d328baf10003a392614e6605f8d371fad9747d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49703ab02535e4942855bfbf95d328baf10003a392614e6605f8d371fad9747d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49703ab02535e4942855bfbf95d328baf10003a392614e6605f8d371fad9747d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49703ab02535e4942855bfbf95d328baf10003a392614e6605f8d371fad9747d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49703ab02535e4942855bfbf95d328baf10003a392614e6605f8d371fad9747d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49703ab02535e4942855bfbf95d328baf10003a392614e6605f8d371fad9747d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49703ab02535e4942855bfbf95d328baf10003a392614e6605f8d371fad9747d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49703ab02535e4942855bfbf95d328baf10003a392614e6605f8d371fad9747d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49703ab02535e4942855bfbf95d328baf10003a392614e6605f8d371fad9747d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49703ab02535e4942855bfbf95d328baf10003a392614e6605f8d371fad9747d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49703ab02535e4942855bfbf95d328baf10003a392614e6605f8d371fad9747d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49703ab02535e4942855bfbf95d328baf10003a392614e6605f8d371fad9747d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49703ab02535e4942855bfbf95d328baf10003a392614e6605f8d371fad9747d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49703ab02535e4942855bfbf95d328baf10003a392614e6605f8d371fad9747d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49703ab02535e4942855bfbf95d328baf10003a392614e6605f8d371fad9747d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a0de3a61c6f9cd65e18414e813d3979b6dce43fd04a5b9c166c214065c5cbf76")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a0de3a61c6f9cd65e18414e813d3979b6dce43fd04a5b9c166c214065c5cbf76")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -7096,12 +4939,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([219277275431827041u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("02c8914105470e3f11b047223a0fd6738bd21094b77d2a6b79347bdadda365c9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("02c8914105470e3f11b047223a0fd6738bd21094b77d2a6b79347bdadda365c9")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342239u64]),
@@ -7115,12 +4952,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([222361919386697551u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f387b8d5ccc898728b292dc39130d7556d26ff5d80f024c6764ebe3f1d09db26")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f387b8d5ccc898728b292dc39130d7556d26ff5d80f024c6764ebe3f1d09db26")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -7136,12 +4967,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([280755845064527093u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("0152b8bf667db8a65b82a748fad1e5a8b888a06a3e548d71ace5fb7424261664")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0152b8bf667db8a65b82a748fad1e5a8b888a06a3e548d71ace5fb7424261664")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342241u64]),
@@ -7155,12 +4980,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([232717525062452119u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("fb60ab4a2848dde4db7da3cfdfcdb1f97ff1f02f31a679b9527c802b6b92695e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("fb60ab4a2848dde4db7da3cfdfcdb1f97ff1f02f31a679b9527c802b6b92695e")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -7176,12 +4995,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([282083394293950138u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("6a62661145ccc1f597b6a36d3baa4fe36c51423ddb84a6f86cb68bca5a020943")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6a62661145ccc1f597b6a36d3baa4fe36c51423ddb84a6f86cb68bca5a020943")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342243u64]),
@@ -7195,12 +5008,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([273710615409279830u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2a0c3401bd8c7c91a4923028730651b2b3b1e0dc5c8091f0d43131d283054ff0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2a0c3401bd8c7c91a4923028730651b2b3b1e0dc5c8091f0d43131d283054ff0")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -7216,12 +5023,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([227529710240440434u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("ae6af6bab4d706736540d8960c40ca2fdf27f661b9e0ded7fd4f02d589bcfb72")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ae6af6bab4d706736540d8960c40ca2fdf27f661b9e0ded7fd4f02d589bcfb72")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342245u64]),
@@ -7235,12 +5036,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([248317872815921232u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2d6b5f7644f641b29843defde0990b1ec34d012d3cf87aacaaa32a9b84bd03b4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2d6b5f7644f641b29843defde0990b1ec34d012d3cf87aacaaa32a9b84bd03b4")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -7256,12 +5051,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([235927672010367272u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("638649a8d9695f1005ed7de0fa51d71893cca741872cbda52bad112f0a0bdce6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("638649a8d9695f1005ed7de0fa51d71893cca741872cbda52bad112f0a0bdce6")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342247u64]),
@@ -7275,12 +5064,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([265424146301262488u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6539cb2e0ca998fd4d3a708941abb2fda496c3d6b363af2e88eaa5d5ce72cb37")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6539cb2e0ca998fd4d3a708941abb2fda496c3d6b363af2e88eaa5d5ce72cb37")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -7296,12 +5079,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([251664709283153198u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342249u64]),
@@ -7315,450 +5092,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([222412189748422379u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2eeac61271871d53791af90fbd3a890fa105ad65e00208be1cbd46188ada84a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8a7537a90f53f0545d5e5c023a0f7628eb229e02a82783abe0ecde496dd19483")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8a7537a90f53f0545d5e5c023a0f7628eb229e02a82783abe0ecde496dd19483")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8a7537a90f53f0545d5e5c023a0f7628eb229e02a82783abe0ecde496dd19483")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8a7537a90f53f0545d5e5c023a0f7628eb229e02a82783abe0ecde496dd19483")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8a7537a90f53f0545d5e5c023a0f7628eb229e02a82783abe0ecde496dd19483")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8a7537a90f53f0545d5e5c023a0f7628eb229e02a82783abe0ecde496dd19483")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8a7537a90f53f0545d5e5c023a0f7628eb229e02a82783abe0ecde496dd19483")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8a7537a90f53f0545d5e5c023a0f7628eb229e02a82783abe0ecde496dd19483")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8a7537a90f53f0545d5e5c023a0f7628eb229e02a82783abe0ecde496dd19483")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8a7537a90f53f0545d5e5c023a0f7628eb229e02a82783abe0ecde496dd19483")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8a7537a90f53f0545d5e5c023a0f7628eb229e02a82783abe0ecde496dd19483")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8a7537a90f53f0545d5e5c023a0f7628eb229e02a82783abe0ecde496dd19483")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -7774,12 +5107,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([284966254050007057u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("5ce136cff000e7a34550ae09b79f9547f20d94076030628ba32a9b8ff0aacdd7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5ce136cff000e7a34550ae09b79f9547f20d94076030628ba32a9b8ff0aacdd7")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342251u64]),
@@ -7793,12 +5120,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([245971465608439637u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cb7a12b68f891ed72e6abcf1453beca3bf1629bc24774072af1c9e20417c8ad3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cb7a12b68f891ed72e6abcf1453beca3bf1629bc24774072af1c9e20417c8ad3")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -7814,12 +5135,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([268279877006501383u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("7462a385ac8144c2dcf0e6135a4f3e18cb30b93418c3b76f2c9d7b4eb9a27e98")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7462a385ac8144c2dcf0e6135a4f3e18cb30b93418c3b76f2c9d7b4eb9a27e98")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342253u64]),
@@ -7833,12 +5148,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([271617074259405621u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f965adf4c5f7f6a3ca8d0292e162143a942ddc5a83b56add919be7846f25adad")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f965adf4c5f7f6a3ca8d0292e162143a942ddc5a83b56add919be7846f25adad")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -7854,12 +5163,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([224336287569438049u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("9800b75c12dceff11fae729a33f4079e4ace67627bf24ca3f23c9132c2e11c82")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9800b75c12dceff11fae729a33f4079e4ace67627bf24ca3f23c9132c2e11c82")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342255u64]),
@@ -7873,12 +5176,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([258095571625258195u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("865b13997a29a89c229a820233703d049d72f7df824ae252ce50446d7b880686")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("865b13997a29a89c229a820233703d049d72f7df824ae252ce50446d7b880686")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -7894,12 +5191,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([264323077124817627u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c8e5c635c96a449179a58df9b3960524fa10ba2ed7d9117dae057976b43ee387")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c8e5c635c96a449179a58df9b3960524fa10ba2ed7d9117dae057976b43ee387")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342257u64]),
@@ -7913,12 +5204,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([265446385029934779u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("fb3ecfc583cc5c1595724a16d856153464ed5ac2a5f2fc59deff75f11a0ee409")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("fb3ecfc583cc5c1595724a16d856153464ed5ac2a5f2fc59deff75f11a0ee409")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -7934,12 +5219,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([257997814886031296u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("ac387118cb3b4bc913ecf6a277084b5a806207c626d6c091ee1c2641312494fd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ac387118cb3b4bc913ecf6a277084b5a806207c626d6c091ee1c2641312494fd")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342259u64]),
@@ -7953,12 +5232,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([248925424732089219u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c4d6e37db3921066aa00e9396e23ae9cd2a444b0402d620466f8b44d0d99f45e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c4d6e37db3921066aa00e9396e23ae9cd2a444b0402d620466f8b44d0d99f45e")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -7974,12 +5247,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([287699034273672331u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342261u64]),
@@ -7993,483 +5260,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([249087079701683883u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("911b1352c57eeb7443186438ff7d0c11a24cc17334188f89f24f0802996ff24b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da4b5ec4e52aeed38bcf9912d8c5542f946e8d7040179652dceb21f650e97b46")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -8485,12 +5275,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([230098235672097902u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("bdf70df04e145bb53aab0ad358b07829b59bdca21dbd5827b11badf5fc7a0fa4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bdf70df04e145bb53aab0ad358b07829b59bdca21dbd5827b11badf5fc7a0fa4")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342263u64]),
@@ -8504,12 +5288,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([219914650414728201u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3cba453e7a01a3ba96991438d2337801c2e082f4f7b2fa5c97196c530b8c915e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3cba453e7a01a3ba96991438d2337801c2e082f4f7b2fa5c97196c530b8c915e")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -8525,12 +5303,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([270986827965047558u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("b0b62b58c07f6d6e61b132cd03895e4e972d046d4a99d9d90753994be80810b6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b0b62b58c07f6d6e61b132cd03895e4e972d046d4a99d9d90753994be80810b6")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342265u64]),
@@ -8544,12 +5316,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([236390650935196932u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a11566027de031265621afe5bbb4ad0d0021559802c01ec54c66c804f70c8c48")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a11566027de031265621afe5bbb4ad0d0021559802c01ec54c66c804f70c8c48")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -8565,12 +5331,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([230511493382543093u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("5f8cbbae78459822760030dc48484a137c036b26f2223d4790a9d3339189f432")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5f8cbbae78459822760030dc48484a137c036b26f2223d4790a9d3339189f432")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342267u64]),
@@ -8584,12 +5344,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([266072186612651050u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("76ba7649ada1a2aea07f6e0d0e0e09b9f8b8f2da590c3d3f76963942c1dfa557")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("76ba7649ada1a2aea07f6e0d0e0e09b9f8b8f2da590c3d3f76963942c1dfa557")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -8605,12 +5359,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([281195176964441477u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("375f18d3f54ce53b825160a140e97990382dbf50ddd3ebe708847f8333cfc4d9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("375f18d3f54ce53b825160a140e97990382dbf50ddd3ebe708847f8333cfc4d9")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342269u64]),
@@ -8624,12 +5372,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([272619106598860921u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("93a5abc7039362f63eb73d2c22ed06e53b01fb979df77e5c39428eeaa3eb2650")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("93a5abc7039362f63eb73d2c22ed06e53b01fb979df77e5c39428eeaa3eb2650")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -8645,12 +5387,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([242373481191651484u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("2f10bd9c21a6a5afe69ecb691906153e5d76e1f2980e1c03a680ea285779562e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2f10bd9c21a6a5afe69ecb691906153e5d76e1f2980e1c03a680ea285779562e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342271u64]),
@@ -8664,12 +5400,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([216914468494407983u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("db94549a8eae266fdb73c728367b9b1438fa1f4ce076386f034798b20544fd8a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("db94549a8eae266fdb73c728367b9b1438fa1f4ce076386f034798b20544fd8a")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -8685,12 +5415,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([282781166421041319u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342273u64]),
@@ -8704,75 +5428,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([229334048973937985u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eb54918a4d4e94189e5c301537f98636b89fc66e0ff26c850e83c48b1a1731d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a22add67409d6e2a5e1e662fbd5a1f5225bef1b7f17b7fba366a40ba05cd4a94")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a22add67409d6e2a5e1e662fbd5a1f5225bef1b7f17b7fba366a40ba05cd4a94")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -8788,12 +5443,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([216519590883555879u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a19dfdd8b0c3b6e0dd2b01896cd4ad93cea94fea660096aa8c30db91f4ba51fe")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a19dfdd8b0c3b6e0dd2b01896cd4ad93cea94fea660096aa8c30db91f4ba51fe")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342275u64]),
@@ -8807,12 +5456,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([219215385552991005u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ee375ac312e0b177f3d7e38172bec8a8c6e3830d64b56736a6ecdcf84bf504fc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ee375ac312e0b177f3d7e38172bec8a8c6e3830d64b56736a6ecdcf84bf504fc")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -8828,12 +5471,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([229522076431209092u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("6febeb6d1c7bea8ac2cb5e14b5c1ba9822a2a7a936d27a656dc1072b804b986b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6febeb6d1c7bea8ac2cb5e14b5c1ba9822a2a7a936d27a656dc1072b804b986b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342277u64]),
@@ -8847,12 +5484,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([247989877656219956u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("af3e982cb200edcaff358337c3bd583433dfa04fd99b8d574dd715702668dd4d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("af3e982cb200edcaff358337c3bd583433dfa04fd99b8d574dd715702668dd4d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -8868,12 +5499,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([257364444998214806u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("fbc026e1dda13ac9859dec441c6c50722a3707867d09e044649e0e318ec45af6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("fbc026e1dda13ac9859dec441c6c50722a3707867d09e044649e0e318ec45af6")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342279u64]),
@@ -8887,12 +5512,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([265804839572119591u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("06e685dc95d7d39c7c123da153939f40d0decd7db4d8cd4b2b86d34ccef8dd99")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("06e685dc95d7d39c7c123da153939f40d0decd7db4d8cd4b2b86d34ccef8dd99")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -8908,12 +5527,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([232287776647062397u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("0568317f7adc4571ff9fa4453189b549f67d3095941ddf66d41141ce5140d998")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0568317f7adc4571ff9fa4453189b549f67d3095941ddf66d41141ce5140d998")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342281u64]),
@@ -8927,12 +5540,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([239175183535941179u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("37c4e2b455a7670bd1390bdb2eba951f2640f21f2a8cb56afc3f17fa675b3a77")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("37c4e2b455a7670bd1390bdb2eba951f2640f21f2a8cb56afc3f17fa675b3a77")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -8948,12 +5555,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([242266819138143584u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("7227240aabeeb16bea9da66e1259194932d48270c15dbb32265c6431026ae629")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7227240aabeeb16bea9da66e1259194932d48270c15dbb32265c6431026ae629")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342283u64]),
@@ -8967,12 +5568,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([260494463481178628u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b76bad8efe0bbb366137c05722f3624f5a53c6380a772b7e45ef5ce61bd5450b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b76bad8efe0bbb366137c05722f3624f5a53c6380a772b7e45ef5ce61bd5450b")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -8988,12 +5583,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([222413452526818443u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("9d91821c40dd91dc79415188c19270184695c9b553050fb2ea8a11a7c43d9fa8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9d91821c40dd91dc79415188c19270184695c9b553050fb2ea8a11a7c43d9fa8")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342285u64]),
@@ -9007,48 +5596,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([241578088267802750u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9d91821c40dd91dc79415188c19270184695c9b553050fb2ea8a11a7c43d9fa8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9d91821c40dd91dc79415188c19270184695c9b553050fb2ea8a11a7c43d9fa8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9d91821c40dd91dc79415188c19270184695c9b553050fb2ea8a11a7c43d9fa8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9d91821c40dd91dc79415188c19270184695c9b553050fb2ea8a11a7c43d9fa8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9d91821c40dd91dc79415188c19270184695c9b553050fb2ea8a11a7c43d9fa8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9d91821c40dd91dc79415188c19270184695c9b553050fb2ea8a11a7c43d9fa8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9d91821c40dd91dc79415188c19270184695c9b553050fb2ea8a11a7c43d9fa8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9d91821c40dd91dc79415188c19270184695c9b553050fb2ea8a11a7c43d9fa8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9d91821c40dd91dc79415188c19270184695c9b553050fb2ea8a11a7c43d9fa8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9d91821c40dd91dc79415188c19270184695c9b553050fb2ea8a11a7c43d9fa8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9d91821c40dd91dc79415188c19270184695c9b553050fb2ea8a11a7c43d9fa8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9d91821c40dd91dc79415188c19270184695c9b553050fb2ea8a11a7c43d9fa8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("04e4b566e1b0b38f894817cfd70582b236cd86413e79c436433e28c9ccac9e6b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("04e4b566e1b0b38f894817cfd70582b236cd86413e79c436433e28c9ccac9e6b")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9064,12 +5611,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([266571461838358234u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("3545baa0ce4aa2abcbe93d92dd9f01155981d270bfe24a5d5a89da5d91a42c52")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3545baa0ce4aa2abcbe93d92dd9f01155981d270bfe24a5d5a89da5d91a42c52")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342287u64]),
@@ -9083,12 +5624,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([231109032999990682u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("28ba0166e3482cced8cc559922e72e48278063f7cc219af06224e111b0133b4d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("28ba0166e3482cced8cc559922e72e48278063f7cc219af06224e111b0133b4d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9104,12 +5639,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([230172112802668414u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("0b9e66a9784b2edca8edf5fc4c4a86293786a67260f2dcb8e03c3107d408956a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0b9e66a9784b2edca8edf5fc4c4a86293786a67260f2dcb8e03c3107d408956a")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342289u64]),
@@ -9123,12 +5652,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([237540647896763437u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("328f5f141ef86d353d9ef8ccbf52ef04fa4b2cbea7c5494236fad63c8eb2c7bc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("328f5f141ef86d353d9ef8ccbf52ef04fa4b2cbea7c5494236fad63c8eb2c7bc")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9144,12 +5667,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([267756494537065147u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c3bbad95741d83caca4bea6472afe368ee03a53ccc44d4eac20f612ff7f4890f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c3bbad95741d83caca4bea6472afe368ee03a53ccc44d4eac20f612ff7f4890f")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342291u64]),
@@ -9163,12 +5680,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([217986584755742568u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("98915a79e6fb340fe506fb438162b7830776c8d25cf0580938d1f94e4662656f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("98915a79e6fb340fe506fb438162b7830776c8d25cf0580938d1f94e4662656f")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9184,12 +5695,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([222581885734250630u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("9c475096f509fba983417b06db5d23c10bdbf91d99b8863e8cb4121e945ed7bd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9c475096f509fba983417b06db5d23c10bdbf91d99b8863e8cb4121e945ed7bd")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342293u64]),
@@ -9203,12 +5708,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([283086291291216839u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f8ebb6c7cf663e904406c6553bcce52a003a29f225a90b77037b34688f7ca745")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f8ebb6c7cf663e904406c6553bcce52a003a29f225a90b77037b34688f7ca745")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9224,12 +5723,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([281730647046057093u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c040feb9e675f7236497b60ee11960d04f625a2b4638f39f69e91757b06d40f5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c040feb9e675f7236497b60ee11960d04f625a2b4638f39f69e91757b06d40f5")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342295u64]),
@@ -9243,12 +5736,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([237437943153399325u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ad61361d07d564eb221f80ee12bf37d69c01ce9d3a5acb18306187e4f0f9bc61")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ad61361d07d564eb221f80ee12bf37d69c01ce9d3a5acb18306187e4f0f9bc61")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9264,12 +5751,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([219111479075381713u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("6c7821fc70ed4b0146acbb2e9c4d991c99949185d585354ae1a25736ece32ff3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6c7821fc70ed4b0146acbb2e9c4d991c99949185d585354ae1a25736ece32ff3")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342297u64]),
@@ -9283,48 +5764,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([283681077910982043u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6c7821fc70ed4b0146acbb2e9c4d991c99949185d585354ae1a25736ece32ff3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6c7821fc70ed4b0146acbb2e9c4d991c99949185d585354ae1a25736ece32ff3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6c7821fc70ed4b0146acbb2e9c4d991c99949185d585354ae1a25736ece32ff3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6c7821fc70ed4b0146acbb2e9c4d991c99949185d585354ae1a25736ece32ff3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6c7821fc70ed4b0146acbb2e9c4d991c99949185d585354ae1a25736ece32ff3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6c7821fc70ed4b0146acbb2e9c4d991c99949185d585354ae1a25736ece32ff3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6c7821fc70ed4b0146acbb2e9c4d991c99949185d585354ae1a25736ece32ff3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6c7821fc70ed4b0146acbb2e9c4d991c99949185d585354ae1a25736ece32ff3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6c7821fc70ed4b0146acbb2e9c4d991c99949185d585354ae1a25736ece32ff3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6c7821fc70ed4b0146acbb2e9c4d991c99949185d585354ae1a25736ece32ff3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6c7821fc70ed4b0146acbb2e9c4d991c99949185d585354ae1a25736ece32ff3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6c7821fc70ed4b0146acbb2e9c4d991c99949185d585354ae1a25736ece32ff3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c6477de7990bfb53d3c97655e1709e19c1f67bf38beedf0dbe8956a4403fe32b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c6477de7990bfb53d3c97655e1709e19c1f67bf38beedf0dbe8956a4403fe32b")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9340,12 +5779,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([225741299754633293u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("1285072a909ab40f03329f10333b3834b86cae09f91ad5e9effea6385dcf226b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1285072a909ab40f03329f10333b3834b86cae09f91ad5e9effea6385dcf226b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342299u64]),
@@ -9359,12 +5792,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([234016790604599056u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8cfd5bd0865d7756ae5b3c107f99b03001f51f9303bea129fbe0ac5c1ec1dc0d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8cfd5bd0865d7756ae5b3c107f99b03001f51f9303bea129fbe0ac5c1ec1dc0d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9380,12 +5807,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([219064461111458574u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("32254a00b5443482c9513dfeff81dbca569ef3dde8aa796c3075bf585738808e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("32254a00b5443482c9513dfeff81dbca569ef3dde8aa796c3075bf585738808e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342301u64]),
@@ -9399,12 +5820,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([230282058971028785u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("69d98e51c7478b113df52b031e2c72950815c76215d2d745b848227cec6c155e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("69d98e51c7478b113df52b031e2c72950815c76215d2d745b848227cec6c155e")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9420,12 +5835,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([276006934736590168u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("08612065ff20c655219b7c311395f2a6d8ed42031cc5a4de715f2fa42b45e3f5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("08612065ff20c655219b7c311395f2a6d8ed42031cc5a4de715f2fa42b45e3f5")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342303u64]),
@@ -9439,12 +5848,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([249132640221948600u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("701cd6a2af540f5b069332fc99126f188f033af13614d2996237dc143a469e15")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("701cd6a2af540f5b069332fc99126f188f033af13614d2996237dc143a469e15")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9460,12 +5863,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([240188152585685115u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("9210be9ef50f24e118788d40b807530e099a885861b7a0dd99e3f48a32cb40e1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9210be9ef50f24e118788d40b807530e099a885861b7a0dd99e3f48a32cb40e1")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342305u64]),
@@ -9479,12 +5876,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([274661007421003084u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("aa4ca973719dd743d7f72dcebaf41632e1a42461a34911a8a8e6909df936eb35")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("aa4ca973719dd743d7f72dcebaf41632e1a42461a34911a8a8e6909df936eb35")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9500,12 +5891,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([272688560259484493u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("f30cf1fdb4f5d2679bc98cef5e4446cb12d39cec87305235a2eea510c7125efb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f30cf1fdb4f5d2679bc98cef5e4446cb12d39cec87305235a2eea510c7125efb")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342307u64]),
@@ -9519,12 +5904,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([239473535072696919u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a24d2e43aedff848d6faa702db59b8822790242d3c6e6be66f497686284082a5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a24d2e43aedff848d6faa702db59b8822790242d3c6e6be66f497686284082a5")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9540,12 +5919,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([254645858378308231u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d61d14f9732d4375d8b16820e0fc71052795950395fae04241e15c92f9102cb2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d61d14f9732d4375d8b16820e0fc71052795950395fae04241e15c92f9102cb2")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342309u64]),
@@ -9559,48 +5932,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([233484746922381102u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d61d14f9732d4375d8b16820e0fc71052795950395fae04241e15c92f9102cb2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d61d14f9732d4375d8b16820e0fc71052795950395fae04241e15c92f9102cb2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d61d14f9732d4375d8b16820e0fc71052795950395fae04241e15c92f9102cb2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d61d14f9732d4375d8b16820e0fc71052795950395fae04241e15c92f9102cb2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d61d14f9732d4375d8b16820e0fc71052795950395fae04241e15c92f9102cb2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d61d14f9732d4375d8b16820e0fc71052795950395fae04241e15c92f9102cb2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d61d14f9732d4375d8b16820e0fc71052795950395fae04241e15c92f9102cb2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d61d14f9732d4375d8b16820e0fc71052795950395fae04241e15c92f9102cb2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d61d14f9732d4375d8b16820e0fc71052795950395fae04241e15c92f9102cb2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d61d14f9732d4375d8b16820e0fc71052795950395fae04241e15c92f9102cb2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d61d14f9732d4375d8b16820e0fc71052795950395fae04241e15c92f9102cb2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d61d14f9732d4375d8b16820e0fc71052795950395fae04241e15c92f9102cb2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2f53428379d6797baa55dfcd46925e9a615a38ae1d3fa00db0fbc37f935ddfd1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2f53428379d6797baa55dfcd46925e9a615a38ae1d3fa00db0fbc37f935ddfd1")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9616,12 +5947,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([249973625094697498u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("1b81093b1bed05fa3210df9433f2a4554d4713789260d878128e14cee15cc7f8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1b81093b1bed05fa3210df9433f2a4554d4713789260d878128e14cee15cc7f8")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342311u64]),
@@ -9635,12 +5960,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([232566437542373164u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("82fb887e944060e9eb6e1e7251d6972bfab6010684c2c3c1123f28b2c0d6c047")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("82fb887e944060e9eb6e1e7251d6972bfab6010684c2c3c1123f28b2c0d6c047")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9656,12 +5975,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([217443444139318901u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("28193c6f968f60a3cbd850a00df5fc77a2449a09a8610d9e0636f9ead79bb3ac")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("28193c6f968f60a3cbd850a00df5fc77a2449a09a8610d9e0636f9ead79bb3ac")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342313u64]),
@@ -9675,12 +5988,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([285441066447920858u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c94cdb79cf17e3ae0cef6c467e3b4fb25b4aa64e09ced024820250cfe2256999")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c94cdb79cf17e3ae0cef6c467e3b4fb25b4aa64e09ced024820250cfe2256999")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9696,12 +6003,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([249718012072531525u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("86f7cc14c1447e16749af0485b3fd8410c433b16134dc6d867dd9afbc4d75396")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("86f7cc14c1447e16749af0485b3fd8410c433b16134dc6d867dd9afbc4d75396")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342315u64]),
@@ -9715,12 +6016,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([220991780034792799u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c3ac739fb054e13498b5db2459e3ffb24b7bf1b0c26983e3577e1050cc4d23ff")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c3ac739fb054e13498b5db2459e3ffb24b7bf1b0c26983e3577e1050cc4d23ff")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9736,12 +6031,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([244123807494234097u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("052876aabab88dd5044d75ae077d3a8b71c8199c7b958ab1bb66e59e184053cc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("052876aabab88dd5044d75ae077d3a8b71c8199c7b958ab1bb66e59e184053cc")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342317u64]),
@@ -9755,12 +6044,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([267373799023454611u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("de9d369360382ba22a70bdedf53accc0133864ae2b883a3306372ebaf275d2b7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("de9d369360382ba22a70bdedf53accc0133864ae2b883a3306372ebaf275d2b7")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9776,12 +6059,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([281266694980389183u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("175d2c5b9abc156747a5ed3b821c8b44072283b05a312c7593342aab00c57807")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("175d2c5b9abc156747a5ed3b821c8b44072283b05a312c7593342aab00c57807")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342319u64]),
@@ -9795,12 +6072,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([287502329728128332u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d3eb79e72c53f6ee73d6ccdf5d8bac765dba26f38e7f7a6fb8b57fdbb92c0fe2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d3eb79e72c53f6ee73d6ccdf5d8bac765dba26f38e7f7a6fb8b57fdbb92c0fe2")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9816,12 +6087,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([238264983139740321u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("68af5d4bdc454e71b51056e1869728ae0986ff9bb92e335baf6a3593680859c9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("68af5d4bdc454e71b51056e1869728ae0986ff9bb92e335baf6a3593680859c9")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342321u64]),
@@ -9835,48 +6100,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([233011540401159860u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("68af5d4bdc454e71b51056e1869728ae0986ff9bb92e335baf6a3593680859c9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("68af5d4bdc454e71b51056e1869728ae0986ff9bb92e335baf6a3593680859c9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("68af5d4bdc454e71b51056e1869728ae0986ff9bb92e335baf6a3593680859c9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("68af5d4bdc454e71b51056e1869728ae0986ff9bb92e335baf6a3593680859c9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("68af5d4bdc454e71b51056e1869728ae0986ff9bb92e335baf6a3593680859c9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("68af5d4bdc454e71b51056e1869728ae0986ff9bb92e335baf6a3593680859c9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("68af5d4bdc454e71b51056e1869728ae0986ff9bb92e335baf6a3593680859c9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("68af5d4bdc454e71b51056e1869728ae0986ff9bb92e335baf6a3593680859c9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("68af5d4bdc454e71b51056e1869728ae0986ff9bb92e335baf6a3593680859c9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("68af5d4bdc454e71b51056e1869728ae0986ff9bb92e335baf6a3593680859c9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("68af5d4bdc454e71b51056e1869728ae0986ff9bb92e335baf6a3593680859c9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("68af5d4bdc454e71b51056e1869728ae0986ff9bb92e335baf6a3593680859c9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a10d6536ce45355e8211af13159e3ea50d085a2afdac91cdd5abb136c020d081")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a10d6536ce45355e8211af13159e3ea50d085a2afdac91cdd5abb136c020d081")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9892,12 +6115,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([278652063200390694u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c7930a6cdda73aebee69c6d4f1c3166c2b70a3a71b9faf1d8c0176610f496cb4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c7930a6cdda73aebee69c6d4f1c3166c2b70a3a71b9faf1d8c0176610f496cb4")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342323u64]),
@@ -9911,12 +6128,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([252096778900914358u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("46cfb3b58e1683701aeac09f193980641d318ea0c454f1c2cc2bd9c860cd9e95")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("46cfb3b58e1683701aeac09f193980641d318ea0c454f1c2cc2bd9c860cd9e95")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9932,12 +6143,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([261336346402422698u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("814d2ad9e626450bab14b1e14e640c7c53d93fe90d8510fb9ea705d59fc67229")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("814d2ad9e626450bab14b1e14e640c7c53d93fe90d8510fb9ea705d59fc67229")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342325u64]),
@@ -9951,12 +6156,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([249013053737477628u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("25f7f821ec87a5c597f74293813409c0a7da793f161e1e2170533d6a1f42088e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("25f7f821ec87a5c597f74293813409c0a7da793f161e1e2170533d6a1f42088e")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -9972,12 +6171,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([227798157854853823u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("90f3b41576e239344e3724e6e041296f0bcbca69afa17e70409d2a2da049a83c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("90f3b41576e239344e3724e6e041296f0bcbca69afa17e70409d2a2da049a83c")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342327u64]),
@@ -9991,12 +6184,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([276744185741791967u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8ab92a8a995aedca305230d54437f3f5d02e2bd0a822be068ce0427ab2f48afb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8ab92a8a995aedca305230d54437f3f5d02e2bd0a822be068ce0427ab2f48afb")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10012,12 +6199,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([249570048873211701u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("9eed25a858c599d8c129bd7238cc8219f2d7cdccdb153a0b0fab302771122abf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9eed25a858c599d8c129bd7238cc8219f2d7cdccdb153a0b0fab302771122abf")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342329u64]),
@@ -10031,12 +6212,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([233542135241340883u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("020de5bae57e9f3412c95c8e9f0e8e794d7be5603fb42dfca991c98e1139840e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("020de5bae57e9f3412c95c8e9f0e8e794d7be5603fb42dfca991c98e1139840e")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10052,12 +6227,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([251538999256000570u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c7d6e54b31a4d4b1eecf9f50bcdd48d4e6b884f1c5a5f9d91453a2d4d7691e04")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c7d6e54b31a4d4b1eecf9f50bcdd48d4e6b884f1c5a5f9d91453a2d4d7691e04")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342331u64]),
@@ -10071,12 +6240,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([248430480017328832u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b7084a068f0045c0de48300852d84e3fa9011fa24d486ba5005ef83b32d8f663")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b7084a068f0045c0de48300852d84e3fa9011fa24d486ba5005ef83b32d8f663")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10092,12 +6255,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([227647363354627643u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("837c9d0fa5fcbce57fb66ca76b5d7fe7eae7aca3f38c2f2128dccc20a32b0ad9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("837c9d0fa5fcbce57fb66ca76b5d7fe7eae7aca3f38c2f2128dccc20a32b0ad9")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342333u64]),
@@ -10111,48 +6268,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([253011398747028713u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("837c9d0fa5fcbce57fb66ca76b5d7fe7eae7aca3f38c2f2128dccc20a32b0ad9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("837c9d0fa5fcbce57fb66ca76b5d7fe7eae7aca3f38c2f2128dccc20a32b0ad9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("837c9d0fa5fcbce57fb66ca76b5d7fe7eae7aca3f38c2f2128dccc20a32b0ad9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("837c9d0fa5fcbce57fb66ca76b5d7fe7eae7aca3f38c2f2128dccc20a32b0ad9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("837c9d0fa5fcbce57fb66ca76b5d7fe7eae7aca3f38c2f2128dccc20a32b0ad9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("837c9d0fa5fcbce57fb66ca76b5d7fe7eae7aca3f38c2f2128dccc20a32b0ad9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("837c9d0fa5fcbce57fb66ca76b5d7fe7eae7aca3f38c2f2128dccc20a32b0ad9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("837c9d0fa5fcbce57fb66ca76b5d7fe7eae7aca3f38c2f2128dccc20a32b0ad9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("837c9d0fa5fcbce57fb66ca76b5d7fe7eae7aca3f38c2f2128dccc20a32b0ad9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("837c9d0fa5fcbce57fb66ca76b5d7fe7eae7aca3f38c2f2128dccc20a32b0ad9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("837c9d0fa5fcbce57fb66ca76b5d7fe7eae7aca3f38c2f2128dccc20a32b0ad9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("837c9d0fa5fcbce57fb66ca76b5d7fe7eae7aca3f38c2f2128dccc20a32b0ad9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13f648fd46ab1087b925b2e09bc7c6a362c92516bf218fbbe5b27a110d31ff1c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13f648fd46ab1087b925b2e09bc7c6a362c92516bf218fbbe5b27a110d31ff1c")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10168,12 +6283,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([238228008362362862u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("64fe5df55dd1e00ebdffc4c72f86ae8ba8cc2d5e6e44734c0cdc410ee5685086")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("64fe5df55dd1e00ebdffc4c72f86ae8ba8cc2d5e6e44734c0cdc410ee5685086")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342335u64]),
@@ -10187,12 +6296,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([245132488421378962u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3d3da66840bef6cf87576f787a9187ed25b4b04ba08de59bed071f45eaac48d6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3d3da66840bef6cf87576f787a9187ed25b4b04ba08de59bed071f45eaac48d6")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10208,12 +6311,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([216317544895078203u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("4660c30b5e992c9c5900c4a42dc669d22ec82e31b05a1c26f6ebce5249ffd853")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4660c30b5e992c9c5900c4a42dc669d22ec82e31b05a1c26f6ebce5249ffd853")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342337u64]),
@@ -10227,12 +6324,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([273039694226579934u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81102f0f04571506fd83028d963672f054b7066f3d11809ae7da907e14eda5d1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81102f0f04571506fd83028d963672f054b7066f3d11809ae7da907e14eda5d1")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10248,12 +6339,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([284631149041499502u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("9e80c2087fa7fea313efa740074a547aa7df3b7c2d23f64e77ec7d62a4207b46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9e80c2087fa7fea313efa740074a547aa7df3b7c2d23f64e77ec7d62a4207b46")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342339u64]),
@@ -10267,12 +6352,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([253370461671337409u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b59f8094c7ed6208a283daaca6df52dae315f27ea2f7320afe82ec0a984b6b26")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b59f8094c7ed6208a283daaca6df52dae315f27ea2f7320afe82ec0a984b6b26")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10288,12 +6367,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([254994173799181595u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("2225d6a526bb497e96b9ca76e51931985251d9df0e15cf7f830df0c5937eb6b6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2225d6a526bb497e96b9ca76e51931985251d9df0e15cf7f830df0c5937eb6b6")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342341u64]),
@@ -10307,12 +6380,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([250148022962967609u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a577124c0207983ab390e7d3ecd0fd6e63a9400490216fa9b0ff5b3994fc4d46")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a577124c0207983ab390e7d3ecd0fd6e63a9400490216fa9b0ff5b3994fc4d46")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10328,12 +6395,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([280840532573630645u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("1b75b45f4e6337ab9ffff2c82bacd519d38146353d3f3e1b6e97b9dd63bc5272")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1b75b45f4e6337ab9ffff2c82bacd519d38146353d3f3e1b6e97b9dd63bc5272")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342343u64]),
@@ -10347,12 +6408,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([278142819245045364u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("24f2a64e88961cdc37548b6e5e4700f5c8c2a84e029cbcdf4b0bc005dfac7334")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("24f2a64e88961cdc37548b6e5e4700f5c8c2a84e029cbcdf4b0bc005dfac7334")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10368,12 +6423,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([228380810253297640u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("5ac30e79438052360754553d1e6b61cf25ffb2c9fac539a566a65faf036b5700")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5ac30e79438052360754553d1e6b61cf25ffb2c9fac539a566a65faf036b5700")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342345u64]),
@@ -10387,48 +6436,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([276743322966818123u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5ac30e79438052360754553d1e6b61cf25ffb2c9fac539a566a65faf036b5700")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5ac30e79438052360754553d1e6b61cf25ffb2c9fac539a566a65faf036b5700")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5ac30e79438052360754553d1e6b61cf25ffb2c9fac539a566a65faf036b5700")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5ac30e79438052360754553d1e6b61cf25ffb2c9fac539a566a65faf036b5700")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5ac30e79438052360754553d1e6b61cf25ffb2c9fac539a566a65faf036b5700")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5ac30e79438052360754553d1e6b61cf25ffb2c9fac539a566a65faf036b5700")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5ac30e79438052360754553d1e6b61cf25ffb2c9fac539a566a65faf036b5700")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5ac30e79438052360754553d1e6b61cf25ffb2c9fac539a566a65faf036b5700")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5ac30e79438052360754553d1e6b61cf25ffb2c9fac539a566a65faf036b5700")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5ac30e79438052360754553d1e6b61cf25ffb2c9fac539a566a65faf036b5700")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5ac30e79438052360754553d1e6b61cf25ffb2c9fac539a566a65faf036b5700")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5ac30e79438052360754553d1e6b61cf25ffb2c9fac539a566a65faf036b5700")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7d4fc01682ce257bacbc62290fa556415dd21f99c9f5f9bc958094150945a863")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7d4fc01682ce257bacbc62290fa556415dd21f99c9f5f9bc958094150945a863")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10444,12 +6451,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([243188780269819757u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("f775406a3e9ea5ce5aa9ee52809b46e26970afd9faee1bfc4e4fe421eb4bfce9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f775406a3e9ea5ce5aa9ee52809b46e26970afd9faee1bfc4e4fe421eb4bfce9")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342347u64]),
@@ -10463,12 +6464,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([286419525299154722u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d0dc6388f43abc2599cc3cb321df4cad8bee4d091c458b7b56afe4f6e067c4f8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d0dc6388f43abc2599cc3cb321df4cad8bee4d091c458b7b56afe4f6e067c4f8")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10484,12 +6479,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([274569489605408468u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("8752caef44b9d097bd37e36b001b88228fca5eb1a43dd0a4976aadfa8e111d48")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8752caef44b9d097bd37e36b001b88228fca5eb1a43dd0a4976aadfa8e111d48")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342349u64]),
@@ -10503,12 +6492,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([268424744815667798u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49969a317debb50ade70d9985e9c2c676d685e715376a73d6cc3783e59e19782")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49969a317debb50ade70d9985e9c2c676d685e715376a73d6cc3783e59e19782")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10524,12 +6507,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([251002513800319738u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("81d80c0057a5da3041846931abfc5d8f41cc8cd08a4bcb0aea0eb4e11827c56f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81d80c0057a5da3041846931abfc5d8f41cc8cd08a4bcb0aea0eb4e11827c56f")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342351u64]),
@@ -10543,12 +6520,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([286944443896912796u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7ee93f4ca6c016447ac9913be4e39615419284b5711ded250bcbbf2dfd79b8aa")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7ee93f4ca6c016447ac9913be4e39615419284b5711ded250bcbbf2dfd79b8aa")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10564,12 +6535,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([269643564930855665u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("024dff0d1ca2bc5aee88a762863b740bf528316a3d010620dadef8cfbb991162")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("024dff0d1ca2bc5aee88a762863b740bf528316a3d010620dadef8cfbb991162")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342353u64]),
@@ -10583,12 +6548,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([240406416937610851u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f6bc94adf147440fad1b66d579eaa6a5cc335c38d86caf2b9863a542ae8f1986")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f6bc94adf147440fad1b66d579eaa6a5cc335c38d86caf2b9863a542ae8f1986")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10604,12 +6563,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([216597916544429868u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("f27a181353b5f5f849ef282b2e905879aa4db910912236b031bf02acc0bcee7e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f27a181353b5f5f849ef282b2e905879aa4db910912236b031bf02acc0bcee7e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342355u64]),
@@ -10623,12 +6576,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([279509704688201414u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7b020a6faec36d558ebb7d1269f064f3625b14845f950ec88a6a3d56d955ebec")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7b020a6faec36d558ebb7d1269f064f3625b14845f950ec88a6a3d56d955ebec")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10644,12 +6591,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([251177027834425060u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d9f8db1b466cd400f57f0a6c316aad3afcf1cd90eb56143ae3a1cb2efcced425")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d9f8db1b466cd400f57f0a6c316aad3afcf1cd90eb56143ae3a1cb2efcced425")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342357u64]),
@@ -10663,48 +6604,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([216874138794778119u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d9f8db1b466cd400f57f0a6c316aad3afcf1cd90eb56143ae3a1cb2efcced425")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d9f8db1b466cd400f57f0a6c316aad3afcf1cd90eb56143ae3a1cb2efcced425")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d9f8db1b466cd400f57f0a6c316aad3afcf1cd90eb56143ae3a1cb2efcced425")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d9f8db1b466cd400f57f0a6c316aad3afcf1cd90eb56143ae3a1cb2efcced425")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d9f8db1b466cd400f57f0a6c316aad3afcf1cd90eb56143ae3a1cb2efcced425")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d9f8db1b466cd400f57f0a6c316aad3afcf1cd90eb56143ae3a1cb2efcced425")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d9f8db1b466cd400f57f0a6c316aad3afcf1cd90eb56143ae3a1cb2efcced425")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d9f8db1b466cd400f57f0a6c316aad3afcf1cd90eb56143ae3a1cb2efcced425")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d9f8db1b466cd400f57f0a6c316aad3afcf1cd90eb56143ae3a1cb2efcced425")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d9f8db1b466cd400f57f0a6c316aad3afcf1cd90eb56143ae3a1cb2efcced425")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d9f8db1b466cd400f57f0a6c316aad3afcf1cd90eb56143ae3a1cb2efcced425")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d9f8db1b466cd400f57f0a6c316aad3afcf1cd90eb56143ae3a1cb2efcced425")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7da72c3b0fb27916808e715bb72dea48ec685897dbb02c4edec02f14327ee67d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7da72c3b0fb27916808e715bb72dea48ec685897dbb02c4edec02f14327ee67d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10720,12 +6619,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([241479376263509496u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2a9088a04dda232e587b5908dcbb3681b5f9f9e40910f0c6e2d115a3444dd77")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2a9088a04dda232e587b5908dcbb3681b5f9f9e40910f0c6e2d115a3444dd77")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342359u64]),
@@ -10739,12 +6632,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([227400690435476255u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9ba91f5b6d5b08a2a4d54d8970ee5b8452d2152659990b97372c7cc3b3e02977")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9ba91f5b6d5b08a2a4d54d8970ee5b8452d2152659990b97372c7cc3b3e02977")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10760,12 +6647,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([233123510947053110u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("bb2c8d5dbde480f0936954918f778c81918d70a4519aec861c47f96fe89666a0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bb2c8d5dbde480f0936954918f778c81918d70a4519aec861c47f96fe89666a0")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342361u64]),
@@ -10779,12 +6660,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([261159034110937848u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9f4fe5020212b0c30a0dc6a7f12e709753cc97fa9e6be7552b65d8a666045a5a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9f4fe5020212b0c30a0dc6a7f12e709753cc97fa9e6be7552b65d8a666045a5a")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10800,12 +6675,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([271653433633573342u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("ed7325e14f81f6765ee5525d13a5df5ee9c6b2b90d4a4c5ac0e0daba452958d6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ed7325e14f81f6765ee5525d13a5df5ee9c6b2b90d4a4c5ac0e0daba452958d6")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342363u64]),
@@ -10819,12 +6688,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([287865212558992366u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("963c37d32fcc472f4882ccbbbba7ba8874a9257da71717a5f979444bb64d87eb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("963c37d32fcc472f4882ccbbbba7ba8874a9257da71717a5f979444bb64d87eb")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10840,12 +6703,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([279079861336956390u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("5496412f3aca7ededcbc5fc84f06000cf674435fbbae6e8c82e2b0ba16073957")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5496412f3aca7ededcbc5fc84f06000cf674435fbbae6e8c82e2b0ba16073957")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342365u64]),
@@ -10859,12 +6716,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([221443963174252517u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e93a228ed64fa105359deffabfd8fdec79d1bca15c2e20b1012c90cac80052bd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e93a228ed64fa105359deffabfd8fdec79d1bca15c2e20b1012c90cac80052bd")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10880,12 +6731,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([233593718479683278u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c5253650757054efb4cf808b92a9b0daf5fdb33928727dbd4d000720e284ef4e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c5253650757054efb4cf808b92a9b0daf5fdb33928727dbd4d000720e284ef4e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342367u64]),
@@ -10899,12 +6744,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([239130988931297369u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3502752cc2efd4aa916a3e0d79c0489d440cd5aec1218ad0108c533d659b5e0b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3502752cc2efd4aa916a3e0d79c0489d440cd5aec1218ad0108c533d659b5e0b")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10920,12 +6759,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([243939270206442890u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("124d73a0d7a0879dcd162d87ed3cc83b3d00684c6453ac35d4984cb7c062d8bd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("124d73a0d7a0879dcd162d87ed3cc83b3d00684c6453ac35d4984cb7c062d8bd")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342369u64]),
@@ -10939,48 +6772,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([279198260030679658u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("124d73a0d7a0879dcd162d87ed3cc83b3d00684c6453ac35d4984cb7c062d8bd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("124d73a0d7a0879dcd162d87ed3cc83b3d00684c6453ac35d4984cb7c062d8bd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("124d73a0d7a0879dcd162d87ed3cc83b3d00684c6453ac35d4984cb7c062d8bd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("124d73a0d7a0879dcd162d87ed3cc83b3d00684c6453ac35d4984cb7c062d8bd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("124d73a0d7a0879dcd162d87ed3cc83b3d00684c6453ac35d4984cb7c062d8bd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("124d73a0d7a0879dcd162d87ed3cc83b3d00684c6453ac35d4984cb7c062d8bd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("124d73a0d7a0879dcd162d87ed3cc83b3d00684c6453ac35d4984cb7c062d8bd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("124d73a0d7a0879dcd162d87ed3cc83b3d00684c6453ac35d4984cb7c062d8bd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("124d73a0d7a0879dcd162d87ed3cc83b3d00684c6453ac35d4984cb7c062d8bd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("124d73a0d7a0879dcd162d87ed3cc83b3d00684c6453ac35d4984cb7c062d8bd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("124d73a0d7a0879dcd162d87ed3cc83b3d00684c6453ac35d4984cb7c062d8bd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("124d73a0d7a0879dcd162d87ed3cc83b3d00684c6453ac35d4984cb7c062d8bd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4c71e7e4623bc5a00b177db779d7f4b3fd85758ceeb22b56beffd4aede96f40c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4c71e7e4623bc5a00b177db779d7f4b3fd85758ceeb22b56beffd4aede96f40c")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -10996,12 +6787,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([250452824707528199u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("7e4313cb4a80688f40c8d65bac3c892050873d06f5b3b67e5567f9c4458b0e70")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7e4313cb4a80688f40c8d65bac3c892050873d06f5b3b67e5567f9c4458b0e70")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342371u64]),
@@ -11015,12 +6800,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([267923029915668797u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b93f4817822ef97f38096530174fd642f2bca0180d6d32c4d2b7bb93f532a9cf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b93f4817822ef97f38096530174fd642f2bca0180d6d32c4d2b7bb93f532a9cf")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11036,12 +6815,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([229638880612520376u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("dc93b78363435a9cbf5753c13bc87ed2bb23aa37b0f0fb6cc8883df7738797da")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dc93b78363435a9cbf5753c13bc87ed2bb23aa37b0f0fb6cc8883df7738797da")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342373u64]),
@@ -11055,12 +6828,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([274907285968249509u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1ec7a7cae525e0a3a0744d10f67d8ef24f3b03b236271f95dd1296e4735832f7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1ec7a7cae525e0a3a0744d10f67d8ef24f3b03b236271f95dd1296e4735832f7")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11076,12 +6843,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([252070122469928670u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("0228ba05fe8ce0a3da039b6ef311cfab2dfe95df4b128a722baa3fa4ffa47857")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0228ba05fe8ce0a3da039b6ef311cfab2dfe95df4b128a722baa3fa4ffa47857")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342375u64]),
@@ -11095,12 +6856,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([243119917035001261u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("26a51ad632967eeafa865a9f70ad02c1987b92876be870f985ad9d83e5ff772e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("26a51ad632967eeafa865a9f70ad02c1987b92876be870f985ad9d83e5ff772e")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11116,12 +6871,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([265356778620835813u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e1c63114595c11b6d608326e31a4b05c81243250a515f9525e892acd05516cfe")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e1c63114595c11b6d608326e31a4b05c81243250a515f9525e892acd05516cfe")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342377u64]),
@@ -11135,12 +6884,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([255653653230893355u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3ba25c3081e7ca4d9cf362107dda211eb1b12e2066a2d69e2649c4d7c8d29a15")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3ba25c3081e7ca4d9cf362107dda211eb1b12e2066a2d69e2649c4d7c8d29a15")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11156,12 +6899,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([227222923440808170u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("993d288e367199853f5f7c41d4eec19b72916aef96a0ca5c370c35eaa3869707")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("993d288e367199853f5f7c41d4eec19b72916aef96a0ca5c370c35eaa3869707")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342379u64]),
@@ -11175,12 +6912,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([227498400071498341u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7657df9997970e32eb3179c6370abb4ec0c304aeafa8b256edaa43b36af930a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7657df9997970e32eb3179c6370abb4ec0c304aeafa8b256edaa43b36af930a3")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11196,12 +6927,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([252752672224436020u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("54d486f531ff1f36517ec4637c863da3c201cab82442194d5228f65c266c4d70")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("54d486f531ff1f36517ec4637c863da3c201cab82442194d5228f65c266c4d70")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342381u64]),
@@ -11215,48 +6940,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([269176554225678246u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("54d486f531ff1f36517ec4637c863da3c201cab82442194d5228f65c266c4d70")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("54d486f531ff1f36517ec4637c863da3c201cab82442194d5228f65c266c4d70")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("54d486f531ff1f36517ec4637c863da3c201cab82442194d5228f65c266c4d70")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("54d486f531ff1f36517ec4637c863da3c201cab82442194d5228f65c266c4d70")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("54d486f531ff1f36517ec4637c863da3c201cab82442194d5228f65c266c4d70")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("54d486f531ff1f36517ec4637c863da3c201cab82442194d5228f65c266c4d70")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("54d486f531ff1f36517ec4637c863da3c201cab82442194d5228f65c266c4d70")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("54d486f531ff1f36517ec4637c863da3c201cab82442194d5228f65c266c4d70")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("54d486f531ff1f36517ec4637c863da3c201cab82442194d5228f65c266c4d70")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("54d486f531ff1f36517ec4637c863da3c201cab82442194d5228f65c266c4d70")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("54d486f531ff1f36517ec4637c863da3c201cab82442194d5228f65c266c4d70")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("54d486f531ff1f36517ec4637c863da3c201cab82442194d5228f65c266c4d70")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("044ceae4d76cedda65acfea34d6871141764c33d8b741431cabf0b4017998802")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("044ceae4d76cedda65acfea34d6871141764c33d8b741431cabf0b4017998802")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11272,12 +6955,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([227398461581677303u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("cecd4a5d180f32afe2ea1b5766cb8b73bca01107d3ee1a829be4fcc0df682002")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cecd4a5d180f32afe2ea1b5766cb8b73bca01107d3ee1a829be4fcc0df682002")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342383u64]),
@@ -11291,12 +6968,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([217759871271047783u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("53e15effb7ee84d70f0bc2a6dda3386a36a594a28862393e73437271442522d9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("53e15effb7ee84d70f0bc2a6dda3386a36a594a28862393e73437271442522d9")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11312,12 +6983,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([255576587679944145u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("6eb9196577d2ee43b4947d9939527aa405a5995c87feedbb4d1c278ac1c175b6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6eb9196577d2ee43b4947d9939527aa405a5995c87feedbb4d1c278ac1c175b6")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342385u64]),
@@ -11331,12 +6996,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([238378487819809208u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7174ad303512c4ad7a4660a5caeb40a464af50827baaaecb0e96862aad4788f9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7174ad303512c4ad7a4660a5caeb40a464af50827baaaecb0e96862aad4788f9")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11352,12 +7011,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([237050955584530660u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("1b3fca08f92e675eab10425d38afaf0ea21e1e8ee8c217453012d58c0e0ede8a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1b3fca08f92e675eab10425d38afaf0ea21e1e8ee8c217453012d58c0e0ede8a")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342387u64]),
@@ -11371,12 +7024,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([234198804866932021u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a490033ca8253f3489d49f0db6083a79bd064e3f01889759e0a220df38b1561a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a490033ca8253f3489d49f0db6083a79bd064e3f01889759e0a220df38b1561a")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11392,12 +7039,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([246031035800400197u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("99c5b39e093477d047a9f8b735d1d01138db80e39f750b7a1c1ec5f3ba007a9a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("99c5b39e093477d047a9f8b735d1d01138db80e39f750b7a1c1ec5f3ba007a9a")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342389u64]),
@@ -11411,12 +7052,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([224303954093340804u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ca45626ec9dd4f1e657512f885f034cc323039bee3061bde301e10ab98da0fc8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ca45626ec9dd4f1e657512f885f034cc323039bee3061bde301e10ab98da0fc8")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11432,12 +7067,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([256437826967635029u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("7473e6419fe3937ddde238dba1f6d291767720e5b694f90f8a0719e2d72df489")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7473e6419fe3937ddde238dba1f6d291767720e5b694f90f8a0719e2d72df489")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342391u64]),
@@ -11451,12 +7080,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([228756927967919350u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6302459e9980352c32492d81447ff2d9581fb32d6b543cf70621be700da89373")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6302459e9980352c32492d81447ff2d9581fb32d6b543cf70621be700da89373")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11472,12 +7095,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([271693530579185451u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("831464111a6da484bed886d760b1c3bf41b93257bfd17556bca896a5bae431c5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("831464111a6da484bed886d760b1c3bf41b93257bfd17556bca896a5bae431c5")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342393u64]),
@@ -11491,48 +7108,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([264451929382771307u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("831464111a6da484bed886d760b1c3bf41b93257bfd17556bca896a5bae431c5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("831464111a6da484bed886d760b1c3bf41b93257bfd17556bca896a5bae431c5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("831464111a6da484bed886d760b1c3bf41b93257bfd17556bca896a5bae431c5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("831464111a6da484bed886d760b1c3bf41b93257bfd17556bca896a5bae431c5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("831464111a6da484bed886d760b1c3bf41b93257bfd17556bca896a5bae431c5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("831464111a6da484bed886d760b1c3bf41b93257bfd17556bca896a5bae431c5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("831464111a6da484bed886d760b1c3bf41b93257bfd17556bca896a5bae431c5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("831464111a6da484bed886d760b1c3bf41b93257bfd17556bca896a5bae431c5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("831464111a6da484bed886d760b1c3bf41b93257bfd17556bca896a5bae431c5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("831464111a6da484bed886d760b1c3bf41b93257bfd17556bca896a5bae431c5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("831464111a6da484bed886d760b1c3bf41b93257bfd17556bca896a5bae431c5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("831464111a6da484bed886d760b1c3bf41b93257bfd17556bca896a5bae431c5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("57d0cc1cb12566044464af24ce2728c511911766c80980f562d17479030fed50")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("57d0cc1cb12566044464af24ce2728c511911766c80980f562d17479030fed50")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11548,12 +7123,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([237068670665693297u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("4232a47fd4511549da934f0d2b9b09e1522153209ec4efc15e8193ba51b6f353")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4232a47fd4511549da934f0d2b9b09e1522153209ec4efc15e8193ba51b6f353")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342395u64]),
@@ -11567,12 +7136,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([279337011437090133u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bb2606b9917e71cd035cdd9678dc77a117f3121be0cb1cc02da609a60d48ffc1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bb2606b9917e71cd035cdd9678dc77a117f3121be0cb1cc02da609a60d48ffc1")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11588,12 +7151,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([278447118351885007u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a5b7a6222285a0e6fe67072756802e50be6aa03f1b8e3c1e389b372ddcf0c922")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a5b7a6222285a0e6fe67072756802e50be6aa03f1b8e3c1e389b372ddcf0c922")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342397u64]),
@@ -11607,12 +7164,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([256285731658034831u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3d54ca17483b9d984d6aa2b58d971f8e545841c5492e700cd0665efcd38c9bd6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3d54ca17483b9d984d6aa2b58d971f8e545841c5492e700cd0665efcd38c9bd6")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11628,12 +7179,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([243180124743143503u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("32d64b9fdda165e78470dcde81d2bc2af9091c15c2d52c570c52eb85dc3e5ee9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("32d64b9fdda165e78470dcde81d2bc2af9091c15c2d52c570c52eb85dc3e5ee9")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342399u64]),
@@ -11647,12 +7192,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([219897819156265173u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1b280eecb4bb7efd6ad653ebe7a38319fcbd9486e44da11f12c1133ab0d66af7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1b280eecb4bb7efd6ad653ebe7a38319fcbd9486e44da11f12c1133ab0d66af7")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11668,12 +7207,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([278895134336674003u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("9020bb748f98ff81cb3db295c0f09c97521b225f04264cce8cd1b077445f24e0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9020bb748f98ff81cb3db295c0f09c97521b225f04264cce8cd1b077445f24e0")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342401u64]),
@@ -11687,12 +7220,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([229891962399810836u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49068c19855375536de5b833a793f8ed3fad11ea1a0db631a8ca66d03bd6e063")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49068c19855375536de5b833a793f8ed3fad11ea1a0db631a8ca66d03bd6e063")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11708,12 +7235,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([245583226902407504u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a285dc13e6fbe5d04e5425c50bffbcde637b5d48ce5709baa1b92a3d4ee4fe29")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a285dc13e6fbe5d04e5425c50bffbcde637b5d48ce5709baa1b92a3d4ee4fe29")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342403u64]),
@@ -11727,12 +7248,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([262459306597768372u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2e5ed5b083d188e922c52cef1ec9affc6771016f7f2c3bf12dc4a1498a7f5801")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2e5ed5b083d188e922c52cef1ec9affc6771016f7f2c3bf12dc4a1498a7f5801")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11748,12 +7263,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([263505405338679694u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("415ffb10c623d0ac58cebbd341665d98fb6718f50af8b647f4ae09815154a6f4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("415ffb10c623d0ac58cebbd341665d98fb6718f50af8b647f4ae09815154a6f4")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342405u64]),
@@ -11767,48 +7276,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([285409706129856247u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("415ffb10c623d0ac58cebbd341665d98fb6718f50af8b647f4ae09815154a6f4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("415ffb10c623d0ac58cebbd341665d98fb6718f50af8b647f4ae09815154a6f4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("415ffb10c623d0ac58cebbd341665d98fb6718f50af8b647f4ae09815154a6f4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("415ffb10c623d0ac58cebbd341665d98fb6718f50af8b647f4ae09815154a6f4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("415ffb10c623d0ac58cebbd341665d98fb6718f50af8b647f4ae09815154a6f4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("415ffb10c623d0ac58cebbd341665d98fb6718f50af8b647f4ae09815154a6f4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("415ffb10c623d0ac58cebbd341665d98fb6718f50af8b647f4ae09815154a6f4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("415ffb10c623d0ac58cebbd341665d98fb6718f50af8b647f4ae09815154a6f4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("415ffb10c623d0ac58cebbd341665d98fb6718f50af8b647f4ae09815154a6f4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("415ffb10c623d0ac58cebbd341665d98fb6718f50af8b647f4ae09815154a6f4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("415ffb10c623d0ac58cebbd341665d98fb6718f50af8b647f4ae09815154a6f4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("415ffb10c623d0ac58cebbd341665d98fb6718f50af8b647f4ae09815154a6f4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6bd006cf94b5e49c25f7f83b86ac7281ac3554310c373b9a940258eddf320621")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6bd006cf94b5e49c25f7f83b86ac7281ac3554310c373b9a940258eddf320621")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11824,12 +7291,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([254040873370379992u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("ef5d728d7b4e8c46720e87cd0feceffd6d4d8817bcaed3ff63a4ae73e2edcaf5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ef5d728d7b4e8c46720e87cd0feceffd6d4d8817bcaed3ff63a4ae73e2edcaf5")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342407u64]),
@@ -11843,12 +7304,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([258112011871424789u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ffd6af0a79f80c7f68471e18098138f4bae9737247fabc26f4ecd0bb6a5b81fd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ffd6af0a79f80c7f68471e18098138f4bae9737247fabc26f4ecd0bb6a5b81fd")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11864,12 +7319,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([264145784219587107u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("487cd31b7fd9f2dd0db5298b2344d6732cf3c18b17dc74c7222835ac42d92630")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("487cd31b7fd9f2dd0db5298b2344d6732cf3c18b17dc74c7222835ac42d92630")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342409u64]),
@@ -11883,12 +7332,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([223300485781040975u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("98a81e1eab03481902505db7fcb2ad35c83abc69216e6bb11aab2166f9c9b4ed")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("98a81e1eab03481902505db7fcb2ad35c83abc69216e6bb11aab2166f9c9b4ed")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11904,12 +7347,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([252815230096049810u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("3cd817a28a91786c150ca3e70df6fb411e2521bc4e2f5609a305f5327621df53")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3cd817a28a91786c150ca3e70df6fb411e2521bc4e2f5609a305f5327621df53")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342411u64]),
@@ -11923,12 +7360,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([259256110467085467u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("217569ca81b9dd7dbd76d8a85ada34a3369074e4839853a2d338fa8a6ea1b7de")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("217569ca81b9dd7dbd76d8a85ada34a3369074e4839853a2d338fa8a6ea1b7de")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11944,12 +7375,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([271696990417252092u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d80ca4260a3fc8f61761fa112899c955befd4c95db5f6f2ceaeed8f320d524b3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d80ca4260a3fc8f61761fa112899c955befd4c95db5f6f2ceaeed8f320d524b3")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342413u64]),
@@ -11963,12 +7388,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([228065986986762516u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7d8819ff238d3540e351eb72ae424ad26368a86d402ea856e66c745e06c99ac4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7d8819ff238d3540e351eb72ae424ad26368a86d402ea856e66c745e06c99ac4")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -11984,12 +7403,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([256192236524914850u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c464bb16b1eb15198a9389aeeada3f190ad97dc49cc00c67c5d9fb1f5a242005")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c464bb16b1eb15198a9389aeeada3f190ad97dc49cc00c67c5d9fb1f5a242005")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342415u64]),
@@ -12003,12 +7416,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([275154788021088450u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6d21a27befb3c45a710dda29e101765784da50abd83e596bb8deb3a448e4ca86")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6d21a27befb3c45a710dda29e101765784da50abd83e596bb8deb3a448e4ca86")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12024,12 +7431,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([256913078044652238u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("1c9cd34c2a7ac3ecd4664a0e0b8ce82a3a563e1c9052b98336d3bcf7311c3a2e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1c9cd34c2a7ac3ecd4664a0e0b8ce82a3a563e1c9052b98336d3bcf7311c3a2e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342417u64]),
@@ -12043,48 +7444,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([287552077909287478u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1c9cd34c2a7ac3ecd4664a0e0b8ce82a3a563e1c9052b98336d3bcf7311c3a2e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1c9cd34c2a7ac3ecd4664a0e0b8ce82a3a563e1c9052b98336d3bcf7311c3a2e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1c9cd34c2a7ac3ecd4664a0e0b8ce82a3a563e1c9052b98336d3bcf7311c3a2e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1c9cd34c2a7ac3ecd4664a0e0b8ce82a3a563e1c9052b98336d3bcf7311c3a2e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1c9cd34c2a7ac3ecd4664a0e0b8ce82a3a563e1c9052b98336d3bcf7311c3a2e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1c9cd34c2a7ac3ecd4664a0e0b8ce82a3a563e1c9052b98336d3bcf7311c3a2e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1c9cd34c2a7ac3ecd4664a0e0b8ce82a3a563e1c9052b98336d3bcf7311c3a2e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1c9cd34c2a7ac3ecd4664a0e0b8ce82a3a563e1c9052b98336d3bcf7311c3a2e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1c9cd34c2a7ac3ecd4664a0e0b8ce82a3a563e1c9052b98336d3bcf7311c3a2e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1c9cd34c2a7ac3ecd4664a0e0b8ce82a3a563e1c9052b98336d3bcf7311c3a2e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1c9cd34c2a7ac3ecd4664a0e0b8ce82a3a563e1c9052b98336d3bcf7311c3a2e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1c9cd34c2a7ac3ecd4664a0e0b8ce82a3a563e1c9052b98336d3bcf7311c3a2e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e2a02a5d9972e658d205690018cb36736c007dcf18d5bac9e297430b136393f7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e2a02a5d9972e658d205690018cb36736c007dcf18d5bac9e297430b136393f7")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12100,12 +7459,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([248936504590323679u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("117b5bff35bb30499d29b30132011ceee80979f8cef5197ce15122b120005764")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("117b5bff35bb30499d29b30132011ceee80979f8cef5197ce15122b120005764")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342419u64]),
@@ -12119,12 +7472,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([226844432310877423u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8eca6758d037deb81cee0d1cc01dad6d1d2f9117d08ddf7bcb661d5b760f5a94")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8eca6758d037deb81cee0d1cc01dad6d1d2f9117d08ddf7bcb661d5b760f5a94")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12140,12 +7487,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([282194343836498260u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("366e2baaf2bd1844c9711dcc4642484efbc55333018095d488eb351305091dbd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("366e2baaf2bd1844c9711dcc4642484efbc55333018095d488eb351305091dbd")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342421u64]),
@@ -12159,12 +7500,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([235266249740127142u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8d8ddd8e494cf0102edf4a4379c8f7eb2450d19fce4dae60d5584cd4a1eb1421")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8d8ddd8e494cf0102edf4a4379c8f7eb2450d19fce4dae60d5584cd4a1eb1421")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12180,12 +7515,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([252666682231931702u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("71ff3e5e95d6c5b037248950f8255d7ac985d56f0502dfff1b474fcd1ef61c38")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("71ff3e5e95d6c5b037248950f8255d7ac985d56f0502dfff1b474fcd1ef61c38")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342423u64]),
@@ -12199,12 +7528,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([232327709483840393u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("aa197975c91aedc436453317a7dc11f7f7d5da904838b7f31b74c8741242e1ae")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("aa197975c91aedc436453317a7dc11f7f7d5da904838b7f31b74c8741242e1ae")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12220,12 +7543,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([234755841436114348u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("fff8808e5c42da627a8d8f163f8ade0ff2c0eb0ed7aee25848fc18b3cbb7939f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("fff8808e5c42da627a8d8f163f8ade0ff2c0eb0ed7aee25848fc18b3cbb7939f")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342425u64]),
@@ -12239,12 +7556,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([265661319894920532u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b08e6c25cf2a161d42fda3e379f3403dbf24cff20c95672d91c1d8af8f6626ec")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b08e6c25cf2a161d42fda3e379f3403dbf24cff20c95672d91c1d8af8f6626ec")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12260,12 +7571,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([274332129359922875u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d18a375954831cce4b16a1625558f0d9e0c10ffc20c0014f434b6e39d97b440a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d18a375954831cce4b16a1625558f0d9e0c10ffc20c0014f434b6e39d97b440a")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342427u64]),
@@ -12279,12 +7584,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([244897484400460618u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5be032b0f82eb66a7d5de8b9a168e9958b92e16d6d6154fc25ef1a5901fcc4c9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5be032b0f82eb66a7d5de8b9a168e9958b92e16d6d6154fc25ef1a5901fcc4c9")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12300,12 +7599,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([272873913525526539u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("25bae3e9bfcda21e93b4ee027e5ecdcd2ef294e278c2943f9f6ee289b06cd4a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("25bae3e9bfcda21e93b4ee027e5ecdcd2ef294e278c2943f9f6ee289b06cd4a3")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342429u64]),
@@ -12319,48 +7612,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([270143834970664547u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("25bae3e9bfcda21e93b4ee027e5ecdcd2ef294e278c2943f9f6ee289b06cd4a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("25bae3e9bfcda21e93b4ee027e5ecdcd2ef294e278c2943f9f6ee289b06cd4a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("25bae3e9bfcda21e93b4ee027e5ecdcd2ef294e278c2943f9f6ee289b06cd4a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("25bae3e9bfcda21e93b4ee027e5ecdcd2ef294e278c2943f9f6ee289b06cd4a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("25bae3e9bfcda21e93b4ee027e5ecdcd2ef294e278c2943f9f6ee289b06cd4a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("25bae3e9bfcda21e93b4ee027e5ecdcd2ef294e278c2943f9f6ee289b06cd4a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("25bae3e9bfcda21e93b4ee027e5ecdcd2ef294e278c2943f9f6ee289b06cd4a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("25bae3e9bfcda21e93b4ee027e5ecdcd2ef294e278c2943f9f6ee289b06cd4a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("25bae3e9bfcda21e93b4ee027e5ecdcd2ef294e278c2943f9f6ee289b06cd4a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("25bae3e9bfcda21e93b4ee027e5ecdcd2ef294e278c2943f9f6ee289b06cd4a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("25bae3e9bfcda21e93b4ee027e5ecdcd2ef294e278c2943f9f6ee289b06cd4a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("25bae3e9bfcda21e93b4ee027e5ecdcd2ef294e278c2943f9f6ee289b06cd4a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ea20f0b119da57c083a6982c4d443355765ee2095fccef27c93db23cdef89fe9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ea20f0b119da57c083a6982c4d443355765ee2095fccef27c93db23cdef89fe9")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12376,12 +7627,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([229449342957936153u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("dbfb2d024eb7137c28fa550e8ac4883a62b847998059471e5c65f0ba35a3318f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dbfb2d024eb7137c28fa550e8ac4883a62b847998059471e5c65f0ba35a3318f")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342431u64]),
@@ -12395,12 +7640,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([262717898710027861u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f98b830db5acf64625084b9cbeb2e0b033e8c2a190f56535b8d12cf953732d72")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f98b830db5acf64625084b9cbeb2e0b033e8c2a190f56535b8d12cf953732d72")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12416,12 +7655,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([264747099487366931u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("0cff6b1cf8250cf4e74611c84c5b6aa717aef54fd954e9106539436cb6df7f2f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0cff6b1cf8250cf4e74611c84c5b6aa717aef54fd954e9106539436cb6df7f2f")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342433u64]),
@@ -12435,12 +7668,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([260633607697124628u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("44d8857231f5f6514928e137c4b51a02c902bdca67f06be0e2455af06688da65")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("44d8857231f5f6514928e137c4b51a02c902bdca67f06be0e2455af06688da65")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12456,12 +7683,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([238249517960193456u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("92aa8fd756d5b906cef5780c5defa884595ef4538b7ee60df302542b0efbdc9b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("92aa8fd756d5b906cef5780c5defa884595ef4538b7ee60df302542b0efbdc9b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342435u64]),
@@ -12475,12 +7696,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([259967876069668623u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("24dc11f6ac575cfe05a1b3f08a8dd5dda056e6347ad064c589758f8892dd31de")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("24dc11f6ac575cfe05a1b3f08a8dd5dda056e6347ad064c589758f8892dd31de")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12496,12 +7711,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([273269807081713087u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d8a9d2895396d6ade5a7bd1999fedba5d18461909529f56d362dc362f6d32a7a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d8a9d2895396d6ade5a7bd1999fedba5d18461909529f56d362dc362f6d32a7a")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342437u64]),
@@ -12515,12 +7724,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([245173944145693294u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("17d9609b56c8a4e9d35101da9c4cd872a2dd73617cbd16ae6fa673f91b8cf23d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("17d9609b56c8a4e9d35101da9c4cd872a2dd73617cbd16ae6fa673f91b8cf23d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12536,12 +7739,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([245321340948512095u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("6c606d88ebef4579b2d7f84626c19e71fc25839e3c9afd55487531390d8308c9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6c606d88ebef4579b2d7f84626c19e71fc25839e3c9afd55487531390d8308c9")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342439u64]),
@@ -12555,12 +7752,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([268132793934095164u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7ceb94e6f6890839c1c4df5d2f87e42c47e88a306340d5cc2b4038ef8d0ee3ba")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7ceb94e6f6890839c1c4df5d2f87e42c47e88a306340d5cc2b4038ef8d0ee3ba")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12576,12 +7767,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([224777298461417789u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a8e8fad7c9bc6b55038e80775a7314d7bee611e91e305cf99e3bad56f2a289d1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a8e8fad7c9bc6b55038e80775a7314d7bee611e91e305cf99e3bad56f2a289d1")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342441u64]),
@@ -12595,48 +7780,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([274120125624826958u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a8e8fad7c9bc6b55038e80775a7314d7bee611e91e305cf99e3bad56f2a289d1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a8e8fad7c9bc6b55038e80775a7314d7bee611e91e305cf99e3bad56f2a289d1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a8e8fad7c9bc6b55038e80775a7314d7bee611e91e305cf99e3bad56f2a289d1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a8e8fad7c9bc6b55038e80775a7314d7bee611e91e305cf99e3bad56f2a289d1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a8e8fad7c9bc6b55038e80775a7314d7bee611e91e305cf99e3bad56f2a289d1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a8e8fad7c9bc6b55038e80775a7314d7bee611e91e305cf99e3bad56f2a289d1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a8e8fad7c9bc6b55038e80775a7314d7bee611e91e305cf99e3bad56f2a289d1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a8e8fad7c9bc6b55038e80775a7314d7bee611e91e305cf99e3bad56f2a289d1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a8e8fad7c9bc6b55038e80775a7314d7bee611e91e305cf99e3bad56f2a289d1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a8e8fad7c9bc6b55038e80775a7314d7bee611e91e305cf99e3bad56f2a289d1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a8e8fad7c9bc6b55038e80775a7314d7bee611e91e305cf99e3bad56f2a289d1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a8e8fad7c9bc6b55038e80775a7314d7bee611e91e305cf99e3bad56f2a289d1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e319fb3c9ac73377167ae0cd13b593e7b2c98a0508d43b7d01fc11963c40465d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e319fb3c9ac73377167ae0cd13b593e7b2c98a0508d43b7d01fc11963c40465d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12652,12 +7795,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([219533142191024763u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("b7f6161e190c5f97d5102c9e2481b69e1a1b32890b9fb82a86afc1aed8777288")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b7f6161e190c5f97d5102c9e2481b69e1a1b32890b9fb82a86afc1aed8777288")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342443u64]),
@@ -12671,12 +7808,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([268486273589762702u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dc8dbdae03803aa2a4f70b297f740dad8d9bd98b8ab03626d9699a7e4b72e20c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dc8dbdae03803aa2a4f70b297f740dad8d9bd98b8ab03626d9699a7e4b72e20c")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12692,12 +7823,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([277831043626039525u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("f957bea04d0d5bc07717b034610f31658649f0902066d9e9dc6bb32dc575a33c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f957bea04d0d5bc07717b034610f31658649f0902066d9e9dc6bb32dc575a33c")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342445u64]),
@@ -12711,12 +7836,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([236253210187086401u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bacdafeca8f35825ea9a95a7d348ac1b69f8edf633b0b57d37d3d083b4fa840f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bacdafeca8f35825ea9a95a7d348ac1b69f8edf633b0b57d37d3d083b4fa840f")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12732,12 +7851,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([249614889534431750u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("2af6f71829fd40daa0bba2514bbbb30cc404ccc34ccb6680ad1f5fb3f74ae04b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2af6f71829fd40daa0bba2514bbbb30cc404ccc34ccb6680ad1f5fb3f74ae04b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342447u64]),
@@ -12751,12 +7864,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([232350393075902306u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9781f08aa9a8cce65cf12026490d741a29108fabcf58da915a550721017f7877")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9781f08aa9a8cce65cf12026490d741a29108fabcf58da915a550721017f7877")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12772,12 +7879,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([222746273965827419u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("3f6293712402ebc169ec3fd48aa1cda40a0f7e2420d094988c56b6f138737376")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3f6293712402ebc169ec3fd48aa1cda40a0f7e2420d094988c56b6f138737376")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342449u64]),
@@ -12791,12 +7892,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([239604641911710660u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9598d455e8e6e1062b9b4fca0d916ef1f9e4e48b2905384fbc202b6c3abd9e5a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9598d455e8e6e1062b9b4fca0d916ef1f9e4e48b2905384fbc202b6c3abd9e5a")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12812,12 +7907,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([235666319959171260u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("592bad6ea7fcb1d084a334d12f9682a2f1da501390da10fa37e352f1c7ec3f40")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("592bad6ea7fcb1d084a334d12f9682a2f1da501390da10fa37e352f1c7ec3f40")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342451u64]),
@@ -12831,12 +7920,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([273633558488290344u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7ec8afb3536c4e6b464bf9fa4e08fedc81ed300c0431b4be5da9680580457450")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7ec8afb3536c4e6b464bf9fa4e08fedc81ed300c0431b4be5da9680580457450")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12852,12 +7935,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([216778045952515290u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("0e130a77daa5edb5feeb272b2e9dc59ee05d7af8f9e81a6dd8c4abba854e13bb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0e130a77daa5edb5feeb272b2e9dc59ee05d7af8f9e81a6dd8c4abba854e13bb")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342453u64]),
@@ -12871,48 +7948,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([229633374763466232u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0e130a77daa5edb5feeb272b2e9dc59ee05d7af8f9e81a6dd8c4abba854e13bb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0e130a77daa5edb5feeb272b2e9dc59ee05d7af8f9e81a6dd8c4abba854e13bb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0e130a77daa5edb5feeb272b2e9dc59ee05d7af8f9e81a6dd8c4abba854e13bb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0e130a77daa5edb5feeb272b2e9dc59ee05d7af8f9e81a6dd8c4abba854e13bb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0e130a77daa5edb5feeb272b2e9dc59ee05d7af8f9e81a6dd8c4abba854e13bb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0e130a77daa5edb5feeb272b2e9dc59ee05d7af8f9e81a6dd8c4abba854e13bb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0e130a77daa5edb5feeb272b2e9dc59ee05d7af8f9e81a6dd8c4abba854e13bb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0e130a77daa5edb5feeb272b2e9dc59ee05d7af8f9e81a6dd8c4abba854e13bb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0e130a77daa5edb5feeb272b2e9dc59ee05d7af8f9e81a6dd8c4abba854e13bb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0e130a77daa5edb5feeb272b2e9dc59ee05d7af8f9e81a6dd8c4abba854e13bb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0e130a77daa5edb5feeb272b2e9dc59ee05d7af8f9e81a6dd8c4abba854e13bb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0e130a77daa5edb5feeb272b2e9dc59ee05d7af8f9e81a6dd8c4abba854e13bb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("78180d65ba87b704b35add53430f568130dc4ed4884a251b5bdc91cb308a95f6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("78180d65ba87b704b35add53430f568130dc4ed4884a251b5bdc91cb308a95f6")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12928,12 +7963,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([243476041451359607u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("1aa56f0f3ec5d935ae8e10d720cdb83efa59a5e9f4f547b8eec945e4e501abce")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1aa56f0f3ec5d935ae8e10d720cdb83efa59a5e9f4f547b8eec945e4e501abce")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342455u64]),
@@ -12947,12 +7976,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([245326382499894109u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f37e0f859c9b6861c0c774a5b65ef2f9af88de8f6f8e945f124f31be06c65e96")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f37e0f859c9b6861c0c774a5b65ef2f9af88de8f6f8e945f124f31be06c65e96")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -12968,12 +7991,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([262871154999442409u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("de6b071e12ba8af1f9416676b7ee150cc1fe0249d7f245390a66e69d874dc9b1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("de6b071e12ba8af1f9416676b7ee150cc1fe0249d7f245390a66e69d874dc9b1")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342457u64]),
@@ -12987,12 +8004,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([265508190518374183u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b84a05cd355117d4261fec41998095046e2cd757457a3dc5c24cf46c6d2c3710")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b84a05cd355117d4261fec41998095046e2cd757457a3dc5c24cf46c6d2c3710")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13008,12 +8019,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([228633166300258167u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e46b6534d8749fc2ea9b2807c3cc8a90a89e63cfd0aea1d9b245f08ffde8b8e4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e46b6534d8749fc2ea9b2807c3cc8a90a89e63cfd0aea1d9b245f08ffde8b8e4")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342459u64]),
@@ -13027,12 +8032,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([269545021628476469u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2d5df86b565f0e7d75ec1233dd58dde5c6440d1d8b89f81cbc3090e949a7c628")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2d5df86b565f0e7d75ec1233dd58dde5c6440d1d8b89f81cbc3090e949a7c628")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13048,12 +8047,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([227772508235541464u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("f49cd98c3e1f70149d6f7b019b7c449b2276617fc80a1dc1a80855c2210b4572")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f49cd98c3e1f70149d6f7b019b7c449b2276617fc80a1dc1a80855c2210b4572")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342461u64]),
@@ -13067,12 +8060,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([237634407836332716u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2c97814344cacc073b214b4a2e49005b0872dda7705bdbe13a7f9440610659a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2c97814344cacc073b214b4a2e49005b0872dda7705bdbe13a7f9440610659a3")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13088,12 +8075,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([216819124694461225u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("dc52a35df889787aa40fe579c30f985d2891d5e659d5e64f36c624760ee07f99")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dc52a35df889787aa40fe579c30f985d2891d5e659d5e64f36c624760ee07f99")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342463u64]),
@@ -13107,12 +8088,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([229846297774558573u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7d85b7f4f35bdd7397618d9ca6beeb06e3f500603551dc1620130302147b0515")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7d85b7f4f35bdd7397618d9ca6beeb06e3f500603551dc1620130302147b0515")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13128,12 +8103,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([269004803715595801u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a5050a4008e07cbd2a19749da741de45110255cc1fa52db7268675ff1ffa9d0d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a5050a4008e07cbd2a19749da741de45110255cc1fa52db7268675ff1ffa9d0d")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342465u64]),
@@ -13147,48 +8116,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([247881503551879051u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a5050a4008e07cbd2a19749da741de45110255cc1fa52db7268675ff1ffa9d0d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a5050a4008e07cbd2a19749da741de45110255cc1fa52db7268675ff1ffa9d0d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a5050a4008e07cbd2a19749da741de45110255cc1fa52db7268675ff1ffa9d0d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a5050a4008e07cbd2a19749da741de45110255cc1fa52db7268675ff1ffa9d0d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a5050a4008e07cbd2a19749da741de45110255cc1fa52db7268675ff1ffa9d0d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a5050a4008e07cbd2a19749da741de45110255cc1fa52db7268675ff1ffa9d0d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a5050a4008e07cbd2a19749da741de45110255cc1fa52db7268675ff1ffa9d0d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a5050a4008e07cbd2a19749da741de45110255cc1fa52db7268675ff1ffa9d0d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a5050a4008e07cbd2a19749da741de45110255cc1fa52db7268675ff1ffa9d0d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a5050a4008e07cbd2a19749da741de45110255cc1fa52db7268675ff1ffa9d0d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a5050a4008e07cbd2a19749da741de45110255cc1fa52db7268675ff1ffa9d0d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a5050a4008e07cbd2a19749da741de45110255cc1fa52db7268675ff1ffa9d0d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("951a287c8da7a3ffaa1c04da4382c67c5a96ea8becdfc7f21ecbb6267b7e6aa9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("951a287c8da7a3ffaa1c04da4382c67c5a96ea8becdfc7f21ecbb6267b7e6aa9")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13204,12 +8131,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([244787532556224999u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("4308ec76bbb93aefa3b92820b269747f2e6b6cb6f4a73d8893a40790950ee553")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4308ec76bbb93aefa3b92820b269747f2e6b6cb6f4a73d8893a40790950ee553")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342467u64]),
@@ -13223,12 +8144,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([281488241725653819u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a050f82cfd9907876dd81428e5c30ca49bc0afc45da96b8473a4504a0a02e69c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a050f82cfd9907876dd81428e5c30ca49bc0afc45da96b8473a4504a0a02e69c")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13244,12 +8159,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([257065578418347492u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("0044ea4bdbfd6c19d665ceec5c0f60643010b8496bc5ba5bfa87cb8cf0c6bed4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0044ea4bdbfd6c19d665ceec5c0f60643010b8496bc5ba5bfa87cb8cf0c6bed4")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342469u64]),
@@ -13263,12 +8172,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([243451408205902239u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dd5c1c7ff256dbb14a97f11ea4b1c8ddd095c4e9b03fdc324bb601bb8243a142")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dd5c1c7ff256dbb14a97f11ea4b1c8ddd095c4e9b03fdc324bb601bb8243a142")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13284,12 +8187,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([230636126832983450u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("de7f2de1cc74900c26f0036fb45391338a3e8c651245ac98f2515f046a895458")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("de7f2de1cc74900c26f0036fb45391338a3e8c651245ac98f2515f046a895458")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342471u64]),
@@ -13303,12 +8200,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([265599577565401429u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eec47f0992f5186dea6edc3ced60ae765d1f0a08a2b3c9d7a133f95ec4e59bcd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("eec47f0992f5186dea6edc3ced60ae765d1f0a08a2b3c9d7a133f95ec4e59bcd")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13324,12 +8215,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([263268647644900305u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e2d2c4e7453e68c658932aae09fe616d3377341afe4c96abc30e81928d2cdd15")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e2d2c4e7453e68c658932aae09fe616d3377341afe4c96abc30e81928d2cdd15")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342473u64]),
@@ -13343,12 +8228,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([276922381071906234u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d594b41e6c59f92124dd8bf4847587574b04c7f7cd9925d938f832ecd2756a8d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d594b41e6c59f92124dd8bf4847587574b04c7f7cd9925d938f832ecd2756a8d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13364,12 +8243,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([223603120305372226u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("9f386ac51078669fe024041cf7f29418a30cfcba91c3797cd50b7be4cdb62664")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9f386ac51078669fe024041cf7f29418a30cfcba91c3797cd50b7be4cdb62664")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342475u64]),
@@ -13383,12 +8256,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([277237549194868005u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e64e383359db8139d9bf17619a34b313adb26be9ca08c1fde313fa34d37ecbfb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e64e383359db8139d9bf17619a34b313adb26be9ca08c1fde313fa34d37ecbfb")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13404,12 +8271,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([278197807126868009u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e953a71ad0dc447bf7c5435e2c22baa86d9f6ae8db9eae26f0f934386956144d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e953a71ad0dc447bf7c5435e2c22baa86d9f6ae8db9eae26f0f934386956144d")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342477u64]),
@@ -13423,48 +8284,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([222155500445728660u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e953a71ad0dc447bf7c5435e2c22baa86d9f6ae8db9eae26f0f934386956144d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e953a71ad0dc447bf7c5435e2c22baa86d9f6ae8db9eae26f0f934386956144d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e953a71ad0dc447bf7c5435e2c22baa86d9f6ae8db9eae26f0f934386956144d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e953a71ad0dc447bf7c5435e2c22baa86d9f6ae8db9eae26f0f934386956144d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e953a71ad0dc447bf7c5435e2c22baa86d9f6ae8db9eae26f0f934386956144d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e953a71ad0dc447bf7c5435e2c22baa86d9f6ae8db9eae26f0f934386956144d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e953a71ad0dc447bf7c5435e2c22baa86d9f6ae8db9eae26f0f934386956144d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e953a71ad0dc447bf7c5435e2c22baa86d9f6ae8db9eae26f0f934386956144d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e953a71ad0dc447bf7c5435e2c22baa86d9f6ae8db9eae26f0f934386956144d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e953a71ad0dc447bf7c5435e2c22baa86d9f6ae8db9eae26f0f934386956144d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e953a71ad0dc447bf7c5435e2c22baa86d9f6ae8db9eae26f0f934386956144d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e953a71ad0dc447bf7c5435e2c22baa86d9f6ae8db9eae26f0f934386956144d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("56f8b198d16cb0b0a4ce4b68da9e4377a04bac64eca1d95ab2d1df3e4fdf7ffb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("56f8b198d16cb0b0a4ce4b68da9e4377a04bac64eca1d95ab2d1df3e4fdf7ffb")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13480,12 +8299,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([276500676020341947u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("6941e4df40511162cd6df76cb8855aa9aa87f8a7421201e8127348a9b3066858")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6941e4df40511162cd6df76cb8855aa9aa87f8a7421201e8127348a9b3066858")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342479u64]),
@@ -13499,12 +8312,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([250056268053729289u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8341d6c83605c6a05370c5b7ab4762d524ec98290316fea4824c71c5115b7ce9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8341d6c83605c6a05370c5b7ab4762d524ec98290316fea4824c71c5115b7ce9")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13520,12 +8327,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([272232103661419238u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a5b23e467683ca02f006a32fed723f113c2d6e000acd2c4cf1dd9983fedbe81f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a5b23e467683ca02f006a32fed723f113c2d6e000acd2c4cf1dd9983fedbe81f")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342481u64]),
@@ -13539,12 +8340,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([268893157132377054u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("327c86a68990b3c0972054fb4fbc9d5a7b6159a0c953259c6f82c5aacad4013f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("327c86a68990b3c0972054fb4fbc9d5a7b6159a0c953259c6f82c5aacad4013f")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13560,12 +8355,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([240046253162697902u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c24b2d7e0eecb6cc79027b99d22abcac1362bd376c1218cc62660be3f58e5f8e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c24b2d7e0eecb6cc79027b99d22abcac1362bd376c1218cc62660be3f58e5f8e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342483u64]),
@@ -13579,12 +8368,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([241306983273064775u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("008f4a835eea8f89b604726ea14e09ceaf818546c198f68e67e719466c1f6b24")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("008f4a835eea8f89b604726ea14e09ceaf818546c198f68e67e719466c1f6b24")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13600,12 +8383,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([253087019495686703u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("451dbee864ea67b6105dafbfc57ff168551c59f045aa9b2e6adf11c710894527")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("451dbee864ea67b6105dafbfc57ff168551c59f045aa9b2e6adf11c710894527")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342485u64]),
@@ -13619,12 +8396,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([256275203445766319u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7e7b9c08893ba45f8b6161a9bdc3e88683c02db54250e319082c67b9f4d3b1e0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7e7b9c08893ba45f8b6161a9bdc3e88683c02db54250e319082c67b9f4d3b1e0")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13640,12 +8411,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([221935880092468221u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d1c7048b74eacb159558ef479579ea86af3891c8b49dabc5edfd6c511c58853f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d1c7048b74eacb159558ef479579ea86af3891c8b49dabc5edfd6c511c58853f")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342487u64]),
@@ -13659,12 +8424,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([285570568852837246u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("101a319009c3b69030fb26d477698dd436c39b881d32b3d0ffd9bee349a5a0d3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("101a319009c3b69030fb26d477698dd436c39b881d32b3d0ffd9bee349a5a0d3")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13680,12 +8439,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([273054553023439009u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("413ff424fb1b547967aa945959a23cd33dd317c07b545d15632ee6e8083334f8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("413ff424fb1b547967aa945959a23cd33dd317c07b545d15632ee6e8083334f8")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342489u64]),
@@ -13699,48 +8452,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([282436367643510083u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("413ff424fb1b547967aa945959a23cd33dd317c07b545d15632ee6e8083334f8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("413ff424fb1b547967aa945959a23cd33dd317c07b545d15632ee6e8083334f8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("413ff424fb1b547967aa945959a23cd33dd317c07b545d15632ee6e8083334f8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("413ff424fb1b547967aa945959a23cd33dd317c07b545d15632ee6e8083334f8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("413ff424fb1b547967aa945959a23cd33dd317c07b545d15632ee6e8083334f8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("413ff424fb1b547967aa945959a23cd33dd317c07b545d15632ee6e8083334f8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("413ff424fb1b547967aa945959a23cd33dd317c07b545d15632ee6e8083334f8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("413ff424fb1b547967aa945959a23cd33dd317c07b545d15632ee6e8083334f8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("413ff424fb1b547967aa945959a23cd33dd317c07b545d15632ee6e8083334f8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("413ff424fb1b547967aa945959a23cd33dd317c07b545d15632ee6e8083334f8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("413ff424fb1b547967aa945959a23cd33dd317c07b545d15632ee6e8083334f8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("413ff424fb1b547967aa945959a23cd33dd317c07b545d15632ee6e8083334f8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("081970063af8986bc990fd0454a28dccafa538a2efd418b398889f8f72101ceb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("081970063af8986bc990fd0454a28dccafa538a2efd418b398889f8f72101ceb")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13756,12 +8467,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([247935415136166922u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("b4af3cf529e3910889b7019b9ae08c62f168a106b24fd586328a62b256983f31")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b4af3cf529e3910889b7019b9ae08c62f168a106b24fd586328a62b256983f31")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342491u64]),
@@ -13775,12 +8480,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([287796365671493283u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e2ed4c4c10cd2a0e5e1c43faddd8818950c89486963a0590f7f4cf0e592eb35d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e2ed4c4c10cd2a0e5e1c43faddd8818950c89486963a0590f7f4cf0e592eb35d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13796,12 +8495,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([288153723103643932u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("28678f416f1501ca089f6ccbd8791f78f6665e629f7054e64de8e93375731381")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("28678f416f1501ca089f6ccbd8791f78f6665e629f7054e64de8e93375731381")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342493u64]),
@@ -13815,12 +8508,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([248303380422113311u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4f9d5ae9062fab9a5831f33501bcbaa169c8aed29d768aeb76c4bbfb5032ba8d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4f9d5ae9062fab9a5831f33501bcbaa169c8aed29d768aeb76c4bbfb5032ba8d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13836,12 +8523,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([277695635597515692u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("38f651badef458006b01d2d07da355528e4e32fbf4a264d831ca3a0d64786d92")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("38f651badef458006b01d2d07da355528e4e32fbf4a264d831ca3a0d64786d92")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342495u64]),
@@ -13855,12 +8536,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([273726144358084956u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("68efffd25aa4ae8d10a091a94c900318390793d9d603eee7c629436789a8ef02")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("68efffd25aa4ae8d10a091a94c900318390793d9d603eee7c629436789a8ef02")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13876,12 +8551,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([220874946113698524u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("52c4c58030236037578bbf56d9848a8297da59a549683bfa241d9b8f5e6f3691")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("52c4c58030236037578bbf56d9848a8297da59a549683bfa241d9b8f5e6f3691")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342497u64]),
@@ -13895,12 +8564,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([246057618836547374u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a3c5bc94b3c3b7726678149d7f94fdab654f30b4dda20b568f0809a40a8ade20")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a3c5bc94b3c3b7726678149d7f94fdab654f30b4dda20b568f0809a40a8ade20")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13916,12 +8579,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([278014488920348353u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("54ec563e296045c50b319b18660dacc09d0c2d494918a2200854bf7815bddce6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("54ec563e296045c50b319b18660dacc09d0c2d494918a2200854bf7815bddce6")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342499u64]),
@@ -13935,12 +8592,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([219222460630119655u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f5c8f5bdc20f9ffdd8959ac110fc8ec4df47701e37d79bf90362c1e88abb47d0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f5c8f5bdc20f9ffdd8959ac110fc8ec4df47701e37d79bf90362c1e88abb47d0")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -13956,12 +8607,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([256386354892404292u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("de21bacdcffb64733324e78a4b9b7d3c2abc03f58be6186daeff450028f654cb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("de21bacdcffb64733324e78a4b9b7d3c2abc03f58be6186daeff450028f654cb")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342501u64]),
@@ -13975,48 +8620,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([248502820554448484u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("de21bacdcffb64733324e78a4b9b7d3c2abc03f58be6186daeff450028f654cb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("de21bacdcffb64733324e78a4b9b7d3c2abc03f58be6186daeff450028f654cb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("de21bacdcffb64733324e78a4b9b7d3c2abc03f58be6186daeff450028f654cb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("de21bacdcffb64733324e78a4b9b7d3c2abc03f58be6186daeff450028f654cb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("de21bacdcffb64733324e78a4b9b7d3c2abc03f58be6186daeff450028f654cb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("de21bacdcffb64733324e78a4b9b7d3c2abc03f58be6186daeff450028f654cb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("de21bacdcffb64733324e78a4b9b7d3c2abc03f58be6186daeff450028f654cb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("de21bacdcffb64733324e78a4b9b7d3c2abc03f58be6186daeff450028f654cb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("de21bacdcffb64733324e78a4b9b7d3c2abc03f58be6186daeff450028f654cb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("de21bacdcffb64733324e78a4b9b7d3c2abc03f58be6186daeff450028f654cb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("de21bacdcffb64733324e78a4b9b7d3c2abc03f58be6186daeff450028f654cb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("de21bacdcffb64733324e78a4b9b7d3c2abc03f58be6186daeff450028f654cb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("572bd584a4ab1d90cca6de412b53657ef3e97c9ad5250b6527a287601c5b996d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("572bd584a4ab1d90cca6de412b53657ef3e97c9ad5250b6527a287601c5b996d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14032,12 +8635,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([221898946884483461u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("1aac37551722a8537015348479b00e850391e2f481a966bb41f30efe47fb1b82")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1aac37551722a8537015348479b00e850391e2f481a966bb41f30efe47fb1b82")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342503u64]),
@@ -14051,12 +8648,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([271062715621328950u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a2cc7b7242ed6774585a4b9c0b4d3035ea3a14c4d9f75091d4ff0dba7a73d82d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a2cc7b7242ed6774585a4b9c0b4d3035ea3a14c4d9f75091d4ff0dba7a73d82d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14072,12 +8663,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([285246544508436172u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("80e00c2d8baee32c4fb1fbae828c6f7a6897d01d27a838a851e43ab4eb09733f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("80e00c2d8baee32c4fb1fbae828c6f7a6897d01d27a838a851e43ab4eb09733f")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342505u64]),
@@ -14091,12 +8676,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([277413711355413623u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ca8b7fab041a0d98488a2b115ff875c990a6393327ad54ab8f6de02cc5236062")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ca8b7fab041a0d98488a2b115ff875c990a6393327ad54ab8f6de02cc5236062")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14112,12 +8691,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([230852084179904721u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("cba024796710deb4c1bf886fff4074f3928fa3f21957117cedcd89a90e568e9b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cba024796710deb4c1bf886fff4074f3928fa3f21957117cedcd89a90e568e9b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342507u64]),
@@ -14131,12 +8704,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([287748724926811417u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8f954d5fbb0e0b464bd9e1651923e24be2bd04e5e7aca30511e2ed4771bf2a4b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8f954d5fbb0e0b464bd9e1651923e24be2bd04e5e7aca30511e2ed4771bf2a4b")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14152,12 +8719,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([273824929527401915u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("13028bf8062a7d532a9d25d157fc352376544aac2b61920bc29685225f74fbfc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13028bf8062a7d532a9d25d157fc352376544aac2b61920bc29685225f74fbfc")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342509u64]),
@@ -14171,12 +8732,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([281008031058789442u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f3eb0326357116f407abbddf254f92a0c98f0f8e4d93ad4a3b0c212353c39f9e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f3eb0326357116f407abbddf254f92a0c98f0f8e4d93ad4a3b0c212353c39f9e")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14192,12 +8747,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([271884979542708055u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c08a3950d716388ce3d13a2949c0ab2571ec41d4f7b54e1560b92eac1ed50280")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c08a3950d716388ce3d13a2949c0ab2571ec41d4f7b54e1560b92eac1ed50280")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342511u64]),
@@ -14211,12 +8760,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([223724613774693000u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a4740545767b01829a9a28c15c7da6068061ccc7fc9b5239f4c0f0a944be3298")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a4740545767b01829a9a28c15c7da6068061ccc7fc9b5239f4c0f0a944be3298")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14232,12 +8775,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([285762870287623515u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("0a30c4339f302e9811e4763b2053bc2f39d23105a0616e06618a2f35fe14b57a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0a30c4339f302e9811e4763b2053bc2f39d23105a0616e06618a2f35fe14b57a")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342513u64]),
@@ -14251,48 +8788,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([251141094813837286u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0a30c4339f302e9811e4763b2053bc2f39d23105a0616e06618a2f35fe14b57a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0a30c4339f302e9811e4763b2053bc2f39d23105a0616e06618a2f35fe14b57a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0a30c4339f302e9811e4763b2053bc2f39d23105a0616e06618a2f35fe14b57a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0a30c4339f302e9811e4763b2053bc2f39d23105a0616e06618a2f35fe14b57a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0a30c4339f302e9811e4763b2053bc2f39d23105a0616e06618a2f35fe14b57a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0a30c4339f302e9811e4763b2053bc2f39d23105a0616e06618a2f35fe14b57a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0a30c4339f302e9811e4763b2053bc2f39d23105a0616e06618a2f35fe14b57a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0a30c4339f302e9811e4763b2053bc2f39d23105a0616e06618a2f35fe14b57a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0a30c4339f302e9811e4763b2053bc2f39d23105a0616e06618a2f35fe14b57a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0a30c4339f302e9811e4763b2053bc2f39d23105a0616e06618a2f35fe14b57a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0a30c4339f302e9811e4763b2053bc2f39d23105a0616e06618a2f35fe14b57a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0a30c4339f302e9811e4763b2053bc2f39d23105a0616e06618a2f35fe14b57a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dfde3648594419293eb9d096ec338fba02a0d311e24a4d224595173212dba020")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dfde3648594419293eb9d096ec338fba02a0d311e24a4d224595173212dba020")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14308,12 +8803,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([279192373963112494u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("9ec852f35c9479a40ae5b2b0fcef0e25bb37d070090168685c2f8956e7048027")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9ec852f35c9479a40ae5b2b0fcef0e25bb37d070090168685c2f8956e7048027")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342515u64]),
@@ -14327,12 +8816,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([250459714230195383u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8a3e52d2ee48cdbca391809a9fe739855171b463925cb7101adc7e986e6769e5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8a3e52d2ee48cdbca391809a9fe739855171b463925cb7101adc7e986e6769e5")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14348,12 +8831,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([250661779021398259u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("90718f308b3b3c1962dfed6623faeed801469c2bae21ee3239f4c1501af8e298")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("90718f308b3b3c1962dfed6623faeed801469c2bae21ee3239f4c1501af8e298")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342517u64]),
@@ -14367,12 +8844,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([258833213662517775u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a8bffcce4948b8e464221303ea5394465d6af19d5d80959e0dc44199651f5319")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a8bffcce4948b8e464221303ea5394465d6af19d5d80959e0dc44199651f5319")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14388,12 +8859,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([248985523345621066u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("49fe4cbdec7632d0d026ba6576bf4df7f79e1bc2bbd92f39f680709402b513a7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49fe4cbdec7632d0d026ba6576bf4df7f79e1bc2bbd92f39f680709402b513a7")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342519u64]),
@@ -14407,12 +8872,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([283920005168950724u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3164a46dfdd8891c62e62124cd71e04b1a09df62c5136a5f407d016e0fe32bc0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3164a46dfdd8891c62e62124cd71e04b1a09df62c5136a5f407d016e0fe32bc0")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14428,12 +8887,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([281860244015868298u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("cbf531dd07ce72fe34347fba0eb917d7bc6009b0963ca5bfaa7c56954574ae4d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cbf531dd07ce72fe34347fba0eb917d7bc6009b0963ca5bfaa7c56954574ae4d")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342521u64]),
@@ -14447,12 +8900,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([250847830120215819u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49eee59459d4ee010e32d0296221b965a91cab7f4a3753bf37068e18b5cede01")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49eee59459d4ee010e32d0296221b965a91cab7f4a3753bf37068e18b5cede01")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14468,12 +8915,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([287415875836283779u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("5da17c7423f951870135811b75491ef7420ff9e45dee63b8743267f360994298")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5da17c7423f951870135811b75491ef7420ff9e45dee63b8743267f360994298")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342523u64]),
@@ -14487,12 +8928,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([258085179026605608u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3174a2af68abd81970bddc2565e0aaf9e8280d530ecd6eacfa3e3953c412c064")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3174a2af68abd81970bddc2565e0aaf9e8280d530ecd6eacfa3e3953c412c064")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14508,12 +8943,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([231393791837315856u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("13f2e3254ffa0c425b1e4a505577e34367db3861c4fd858fae7fa4a9148009ec")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13f2e3254ffa0c425b1e4a505577e34367db3861c4fd858fae7fa4a9148009ec")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342525u64]),
@@ -14527,48 +8956,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([270516759943944303u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13f2e3254ffa0c425b1e4a505577e34367db3861c4fd858fae7fa4a9148009ec")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13f2e3254ffa0c425b1e4a505577e34367db3861c4fd858fae7fa4a9148009ec")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13f2e3254ffa0c425b1e4a505577e34367db3861c4fd858fae7fa4a9148009ec")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13f2e3254ffa0c425b1e4a505577e34367db3861c4fd858fae7fa4a9148009ec")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13f2e3254ffa0c425b1e4a505577e34367db3861c4fd858fae7fa4a9148009ec")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13f2e3254ffa0c425b1e4a505577e34367db3861c4fd858fae7fa4a9148009ec")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13f2e3254ffa0c425b1e4a505577e34367db3861c4fd858fae7fa4a9148009ec")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13f2e3254ffa0c425b1e4a505577e34367db3861c4fd858fae7fa4a9148009ec")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13f2e3254ffa0c425b1e4a505577e34367db3861c4fd858fae7fa4a9148009ec")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13f2e3254ffa0c425b1e4a505577e34367db3861c4fd858fae7fa4a9148009ec")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13f2e3254ffa0c425b1e4a505577e34367db3861c4fd858fae7fa4a9148009ec")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13f2e3254ffa0c425b1e4a505577e34367db3861c4fd858fae7fa4a9148009ec")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e2a83892d598fffb3fc723367b01db51179886d902ad4998e0c6bb9104d97416")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e2a83892d598fffb3fc723367b01db51179886d902ad4998e0c6bb9104d97416")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14584,12 +8971,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([249585529862035525u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("af65ecf3db76ceb685725f5f79fa484f6b99f8c580e533741898033dca0227ff")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("af65ecf3db76ceb685725f5f79fa484f6b99f8c580e533741898033dca0227ff")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342527u64]),
@@ -14603,12 +8984,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([255627263985841247u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("68dce40bf03a22b9d8190659dd530546bb2739b695728093142eff2f35f77ddf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("68dce40bf03a22b9d8190659dd530546bb2739b695728093142eff2f35f77ddf")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14624,12 +8999,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([280625370551522000u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d1074038a869477064569db3ae29edef396c440412b2e4058ed94bdae0403514")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d1074038a869477064569db3ae29edef396c440412b2e4058ed94bdae0403514")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342529u64]),
@@ -14643,12 +9012,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([221659820360734962u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5b8e59228f3de6398fc6eda13949e897551334553b3da57d0a59e995355c2cb2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5b8e59228f3de6398fc6eda13949e897551334553b3da57d0a59e995355c2cb2")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14664,12 +9027,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([264494630902599249u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("2eca4f9b5fa9662f6bcc7a4b82b8902f4c51ee4b8613947b6dfe50b3c96fd4a4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2eca4f9b5fa9662f6bcc7a4b82b8902f4c51ee4b8613947b6dfe50b3c96fd4a4")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342531u64]),
@@ -14683,12 +9040,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([217382430639993386u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3bc364782029201d1c48347ff207297fb3ec379b7d79e30590b39f8a18cae341")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3bc364782029201d1c48347ff207297fb3ec379b7d79e30590b39f8a18cae341")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14704,12 +9055,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([247307309543672512u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("97e65078b0e20e3c0b24d8b438c7eedb6bca30778db98a0818fae844c7d65cba")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("97e65078b0e20e3c0b24d8b438c7eedb6bca30778db98a0818fae844c7d65cba")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342533u64]),
@@ -14723,12 +9068,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([280243067786711535u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d84df8abaed400323d0076615321f5fa53c3b626b07007af3f081fbc87d2d586")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d84df8abaed400323d0076615321f5fa53c3b626b07007af3f081fbc87d2d586")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14744,12 +9083,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([218338187956143858u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("f8462426e742ddf5766a0298881fa04fbc244030e213517272de1e98ea1f738c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f8462426e742ddf5766a0298881fa04fbc244030e213517272de1e98ea1f738c")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342535u64]),
@@ -14763,12 +9096,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([224661234982681930u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("83f8f6ef403ef3526e9396a9972c569d4208a028891136eeed24af82eb6334b0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("83f8f6ef403ef3526e9396a9972c569d4208a028891136eeed24af82eb6334b0")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14784,12 +9111,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([269266231431902274u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("315283b7ab638a517df18416d4ec0f2bfd34c9cd7af60de7ad35e4158618347c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("315283b7ab638a517df18416d4ec0f2bfd34c9cd7af60de7ad35e4158618347c")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342537u64]),
@@ -14803,48 +9124,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([226570439294903755u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("315283b7ab638a517df18416d4ec0f2bfd34c9cd7af60de7ad35e4158618347c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("315283b7ab638a517df18416d4ec0f2bfd34c9cd7af60de7ad35e4158618347c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("315283b7ab638a517df18416d4ec0f2bfd34c9cd7af60de7ad35e4158618347c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("315283b7ab638a517df18416d4ec0f2bfd34c9cd7af60de7ad35e4158618347c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("315283b7ab638a517df18416d4ec0f2bfd34c9cd7af60de7ad35e4158618347c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("315283b7ab638a517df18416d4ec0f2bfd34c9cd7af60de7ad35e4158618347c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("315283b7ab638a517df18416d4ec0f2bfd34c9cd7af60de7ad35e4158618347c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("315283b7ab638a517df18416d4ec0f2bfd34c9cd7af60de7ad35e4158618347c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("315283b7ab638a517df18416d4ec0f2bfd34c9cd7af60de7ad35e4158618347c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("315283b7ab638a517df18416d4ec0f2bfd34c9cd7af60de7ad35e4158618347c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("315283b7ab638a517df18416d4ec0f2bfd34c9cd7af60de7ad35e4158618347c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("315283b7ab638a517df18416d4ec0f2bfd34c9cd7af60de7ad35e4158618347c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c1a4d9874b1b0f4c6f4d7f0f85925f712c7ff6edeeaf3e3d5a52f9a67580bbbb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c1a4d9874b1b0f4c6f4d7f0f85925f712c7ff6edeeaf3e3d5a52f9a67580bbbb")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14860,12 +9139,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([270659607116889858u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("3b98fd413ac6ee523040360d61649a5fd0cf8d1025f2a3dd828e627affc9f5a7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3b98fd413ac6ee523040360d61649a5fd0cf8d1025f2a3dd828e627affc9f5a7")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342539u64]),
@@ -14879,12 +9152,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([280829436524257764u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5b216fbeafb6938704438c0a0d0f09ab2e23151b95175dd5e5600ddb6931d872")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5b216fbeafb6938704438c0a0d0f09ab2e23151b95175dd5e5600ddb6931d872")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14900,12 +9167,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([255893878335653563u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c93a014bfe252e7d655191227bbb93e97c862aa16047410391f92d5fc9bbf596")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c93a014bfe252e7d655191227bbb93e97c862aa16047410391f92d5fc9bbf596")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342541u64]),
@@ -14919,12 +9180,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([275408024759730419u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cde090952d3b104ed6b1ae1ffea0a5eee4710f756a797a2afe960904cec56251")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cde090952d3b104ed6b1ae1ffea0a5eee4710f756a797a2afe960904cec56251")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14940,12 +9195,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([280542296871618607u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("022426652aa752682d0c99c0e458df32e23dac51538aa21b2dbc2e5d152ff8bf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("022426652aa752682d0c99c0e458df32e23dac51538aa21b2dbc2e5d152ff8bf")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342543u64]),
@@ -14959,12 +9208,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([229954449619307018u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1278b48420bce7c5e636751222b4a1bdb3b0fcb1ae390bc2ec2b1cd1c675c29e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1278b48420bce7c5e636751222b4a1bdb3b0fcb1ae390bc2ec2b1cd1c675c29e")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -14980,12 +9223,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([262614413295831540u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("1f9e042c9281cb741304ff0665307e6b38136b64ee0a0acfc56546ccd6bfb081")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1f9e042c9281cb741304ff0665307e6b38136b64ee0a0acfc56546ccd6bfb081")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342545u64]),
@@ -14999,12 +9236,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([280275535564296640u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d33fad17e637c1606c2a4089e67e9f7af6afda6ac5661863d0df9ef0b057a410")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d33fad17e637c1606c2a4089e67e9f7af6afda6ac5661863d0df9ef0b057a410")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15020,12 +9251,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([247720254099195285u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("81826078e2aef5b003649d60522943d68d1a92644222dde497059a7ccb27d586")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81826078e2aef5b003649d60522943d68d1a92644222dde497059a7ccb27d586")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342547u64]),
@@ -15039,12 +9264,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([261669007485496425u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81df6ddba698bd8750baa4f3ca321dd334cfd6aceea2d5469a71d6fbdcbe5bc8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81df6ddba698bd8750baa4f3ca321dd334cfd6aceea2d5469a71d6fbdcbe5bc8")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15060,12 +9279,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([216182779202902645u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("31b4267eba0a277f40fb9d46bb85201e7a1c278396681d1ec9ffc511dea00fcf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("31b4267eba0a277f40fb9d46bb85201e7a1c278396681d1ec9ffc511dea00fcf")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342549u64]),
@@ -15079,48 +9292,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([279587265176032143u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("31b4267eba0a277f40fb9d46bb85201e7a1c278396681d1ec9ffc511dea00fcf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("31b4267eba0a277f40fb9d46bb85201e7a1c278396681d1ec9ffc511dea00fcf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("31b4267eba0a277f40fb9d46bb85201e7a1c278396681d1ec9ffc511dea00fcf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("31b4267eba0a277f40fb9d46bb85201e7a1c278396681d1ec9ffc511dea00fcf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("31b4267eba0a277f40fb9d46bb85201e7a1c278396681d1ec9ffc511dea00fcf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("31b4267eba0a277f40fb9d46bb85201e7a1c278396681d1ec9ffc511dea00fcf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("31b4267eba0a277f40fb9d46bb85201e7a1c278396681d1ec9ffc511dea00fcf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("31b4267eba0a277f40fb9d46bb85201e7a1c278396681d1ec9ffc511dea00fcf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("31b4267eba0a277f40fb9d46bb85201e7a1c278396681d1ec9ffc511dea00fcf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("31b4267eba0a277f40fb9d46bb85201e7a1c278396681d1ec9ffc511dea00fcf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("31b4267eba0a277f40fb9d46bb85201e7a1c278396681d1ec9ffc511dea00fcf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("31b4267eba0a277f40fb9d46bb85201e7a1c278396681d1ec9ffc511dea00fcf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("281c8c24a336bbdc6d5bcf20a08126d28428f2c43d3cf8d3cb48dbc478135451")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("281c8c24a336bbdc6d5bcf20a08126d28428f2c43d3cf8d3cb48dbc478135451")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15136,12 +9307,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([271947158613255178u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d103a00ffd990054966d898be970611ede7ce7c8399e9162ac397c059089b524")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d103a00ffd990054966d898be970611ede7ce7c8399e9162ac397c059089b524")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342551u64]),
@@ -15155,12 +9320,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([234112105179714831u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e529d938deb581f9730d214bc23f4663192ca6eef19d819591db09f3e7aed279")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e529d938deb581f9730d214bc23f4663192ca6eef19d819591db09f3e7aed279")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15176,12 +9335,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([282063364868367414u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("46925e7cf9f94b4b550c7bf136cc1d47c05d22e6623fcb4d0729f1c9b6d5fe24")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("46925e7cf9f94b4b550c7bf136cc1d47c05d22e6623fcb4d0729f1c9b6d5fe24")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342553u64]),
@@ -15195,12 +9348,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([280080517319647394u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("aadaf243e9e44cb45dafa7c61d8eada6f489fda8a53452e39e47844e917f4acf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("aadaf243e9e44cb45dafa7c61d8eada6f489fda8a53452e39e47844e917f4acf")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15216,12 +9363,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([276937703818110973u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d0bdc0bd0e30977b8bdefa65623e5fef43b8c7408b525453d5dbc9e5a15df9c0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d0bdc0bd0e30977b8bdefa65623e5fef43b8c7408b525453d5dbc9e5a15df9c0")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342555u64]),
@@ -15235,12 +9376,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([265409523921132601u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a8f849a6b78f0281734f09a0c7cfc00e2b1553db3e27da4fad34296f3c8f9511")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a8f849a6b78f0281734f09a0c7cfc00e2b1553db3e27da4fad34296f3c8f9511")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15256,12 +9391,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([250910385278353850u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("cc4c6660c393f1fb8cf1d625f1a50ebe0f5cd857591368204f6b9d22985aa989")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cc4c6660c393f1fb8cf1d625f1a50ebe0f5cd857591368204f6b9d22985aa989")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342557u64]),
@@ -15275,12 +9404,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([279884574869267143u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f6b2fbaa126c1e305110ca29504eda64509dc8d15ea8b599b6e33b6dc3aae7f3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f6b2fbaa126c1e305110ca29504eda64509dc8d15ea8b599b6e33b6dc3aae7f3")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15296,12 +9419,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([273180940805704649u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("ed47a2c825aa0f5afafbe014265c751225b3f2ceb382f93496693cc94544c88a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ed47a2c825aa0f5afafbe014265c751225b3f2ceb382f93496693cc94544c88a")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342559u64]),
@@ -15315,12 +9432,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([256355539864008903u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c02b40d595431d26d8f69ec1a191a07540c0f989a0f8e429e416e4d191fcdff0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c02b40d595431d26d8f69ec1a191a07540c0f989a0f8e429e416e4d191fcdff0")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15336,12 +9447,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([271651257153604862u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e3f6d0093515478cdd7c0bcfa9dd6cf74b3db47d60b738a50ca43ad825803991")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e3f6d0093515478cdd7c0bcfa9dd6cf74b3db47d60b738a50ca43ad825803991")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342561u64]),
@@ -15355,48 +9460,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([258414968443466691u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e3f6d0093515478cdd7c0bcfa9dd6cf74b3db47d60b738a50ca43ad825803991")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e3f6d0093515478cdd7c0bcfa9dd6cf74b3db47d60b738a50ca43ad825803991")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e3f6d0093515478cdd7c0bcfa9dd6cf74b3db47d60b738a50ca43ad825803991")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e3f6d0093515478cdd7c0bcfa9dd6cf74b3db47d60b738a50ca43ad825803991")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e3f6d0093515478cdd7c0bcfa9dd6cf74b3db47d60b738a50ca43ad825803991")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e3f6d0093515478cdd7c0bcfa9dd6cf74b3db47d60b738a50ca43ad825803991")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e3f6d0093515478cdd7c0bcfa9dd6cf74b3db47d60b738a50ca43ad825803991")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e3f6d0093515478cdd7c0bcfa9dd6cf74b3db47d60b738a50ca43ad825803991")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e3f6d0093515478cdd7c0bcfa9dd6cf74b3db47d60b738a50ca43ad825803991")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e3f6d0093515478cdd7c0bcfa9dd6cf74b3db47d60b738a50ca43ad825803991")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e3f6d0093515478cdd7c0bcfa9dd6cf74b3db47d60b738a50ca43ad825803991")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e3f6d0093515478cdd7c0bcfa9dd6cf74b3db47d60b738a50ca43ad825803991")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("21c8450faef6563f97d0edab72e67235863194592f5cb7ae2b857c807f6a9ec6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("21c8450faef6563f97d0edab72e67235863194592f5cb7ae2b857c807f6a9ec6")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15412,12 +9475,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([244538687342177764u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("9b1169dfded01698d29392933d0ca3a9bb3ea444a50cb0132c5908ba011dacff")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9b1169dfded01698d29392933d0ca3a9bb3ea444a50cb0132c5908ba011dacff")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342563u64]),
@@ -15431,12 +9488,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([226311419841094522u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8e0976c699c52da0dea801b77b9d8b528e7f8c14db90a890edf8143dea7f1ed2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8e0976c699c52da0dea801b77b9d8b528e7f8c14db90a890edf8143dea7f1ed2")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15452,12 +9503,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([246295999561185571u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("becbea467a33653a0b49835f6406b48dd4910fa6f5c43c8ff10120e5b8568dfe")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("becbea467a33653a0b49835f6406b48dd4910fa6f5c43c8ff10120e5b8568dfe")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342565u64]),
@@ -15471,12 +9516,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([236993404751584811u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0aa5bc76172221a5625426affdbe2e29b08ec0c8b33aa21d19742958721093e7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0aa5bc76172221a5625426affdbe2e29b08ec0c8b33aa21d19742958721093e7")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15492,12 +9531,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([218878640379681114u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("9135217f7cdee317f0459efd31c469252314540fd178566b8a068f450b54dd09")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9135217f7cdee317f0459efd31c469252314540fd178566b8a068f450b54dd09")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342567u64]),
@@ -15511,12 +9544,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([285367253543803872u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("82ed4e8fdbb2e3db4fb712811d68c70d88905627830af8c600ef6b9cc5abf3ee")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("82ed4e8fdbb2e3db4fb712811d68c70d88905627830af8c600ef6b9cc5abf3ee")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15532,12 +9559,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([218209189165277115u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("77a800a0640de8a955892db36ec0862af920e40942a41beb8bc45877e35e66a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("77a800a0640de8a955892db36ec0862af920e40942a41beb8bc45877e35e66a3")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342569u64]),
@@ -15551,12 +9572,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([241944260775016331u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("83c5e273f12782cdac17adcd3bb78e25501bb8798901b17c2354b164e31dffe2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("83c5e273f12782cdac17adcd3bb78e25501bb8798901b17c2354b164e31dffe2")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15572,12 +9587,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([275959886876313761u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("872ffe8218877ff1c9a817396c18d60b24430c382954727f343fc3d0a56648e5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("872ffe8218877ff1c9a817396c18d60b24430c382954727f343fc3d0a56648e5")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342571u64]),
@@ -15591,12 +9600,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([285041233512276482u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd0b1f8f1da1ac5737ff76bd31105e6b4a63bab2fe072f230062592913b3b128")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd0b1f8f1da1ac5737ff76bd31105e6b4a63bab2fe072f230062592913b3b128")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15612,12 +9615,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([224850252641501976u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c23c98d27b704c9ef6c6222106149bbc82df6c23f4e0155eb3a75b68df75af31")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c23c98d27b704c9ef6c6222106149bbc82df6c23f4e0155eb3a75b68df75af31")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342573u64]),
@@ -15631,51 +9628,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([226162952609989200u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c23c98d27b704c9ef6c6222106149bbc82df6c23f4e0155eb3a75b68df75af31")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c23c98d27b704c9ef6c6222106149bbc82df6c23f4e0155eb3a75b68df75af31")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c23c98d27b704c9ef6c6222106149bbc82df6c23f4e0155eb3a75b68df75af31")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c23c98d27b704c9ef6c6222106149bbc82df6c23f4e0155eb3a75b68df75af31")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c23c98d27b704c9ef6c6222106149bbc82df6c23f4e0155eb3a75b68df75af31")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c23c98d27b704c9ef6c6222106149bbc82df6c23f4e0155eb3a75b68df75af31")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c23c98d27b704c9ef6c6222106149bbc82df6c23f4e0155eb3a75b68df75af31")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c23c98d27b704c9ef6c6222106149bbc82df6c23f4e0155eb3a75b68df75af31")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c23c98d27b704c9ef6c6222106149bbc82df6c23f4e0155eb3a75b68df75af31")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c23c98d27b704c9ef6c6222106149bbc82df6c23f4e0155eb3a75b68df75af31")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c23c98d27b704c9ef6c6222106149bbc82df6c23f4e0155eb3a75b68df75af31")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c23c98d27b704c9ef6c6222106149bbc82df6c23f4e0155eb3a75b68df75af31")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c23c98d27b704c9ef6c6222106149bbc82df6c23f4e0155eb3a75b68df75af31")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("40f32e6a3527e75a9e204e4314487dd5f0e6a4a900f946966f53ad0dbba99d18")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("40f32e6a3527e75a9e204e4314487dd5f0e6a4a900f946966f53ad0dbba99d18")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15691,12 +9643,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([280512872856468945u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("fe14b63178cc153b5a5b2d17de5558645a3e0b515c565aaec06091badb0b0a16")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("fe14b63178cc153b5a5b2d17de5558645a3e0b515c565aaec06091badb0b0a16")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342575u64]),
@@ -15710,12 +9656,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([241959092182138408u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ce9e0ddb3d4007b19d4bb145f909be5b2027232a62df69905f2256c494d5e8b0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ce9e0ddb3d4007b19d4bb145f909be5b2027232a62df69905f2256c494d5e8b0")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15731,12 +9671,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([281341524424823360u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c6bf570513b4f57152386e6662ff20f53f889f6ff80bd07362965f4344970701")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c6bf570513b4f57152386e6662ff20f53f889f6ff80bd07362965f4344970701")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342577u64]),
@@ -15750,12 +9684,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([286412433888416423u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("943dbdba4eaab4510446668c668ae4d172e1bab1f6ff5454663c20e5b436e152")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("943dbdba4eaab4510446668c668ae4d172e1bab1f6ff5454663c20e5b436e152")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15771,12 +9699,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([223614491939151315u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("365524952b63eac1d5ccb0c174ae74379083d0cdb0ab263ffed673ce00ef54b2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("365524952b63eac1d5ccb0c174ae74379083d0cdb0ab263ffed673ce00ef54b2")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342579u64]),
@@ -15790,12 +9712,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([243452443044484217u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("891a5b1e9396f0c17fb021c97e37089bab8d3b4caf9d41a9a2c40bb8279b7aae")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("891a5b1e9396f0c17fb021c97e37089bab8d3b4caf9d41a9a2c40bb8279b7aae")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15811,12 +9727,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([280140541097659112u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e2df0e3cebf78d1753fde1f9b7a1c6ac8c62537054cd33b450d1931f321d2297")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e2df0e3cebf78d1753fde1f9b7a1c6ac8c62537054cd33b450d1931f321d2297")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342581u64]),
@@ -15830,12 +9740,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([239460615157920771u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1ddb2ac150ce70a285f50727c4f51386eac45cf88b557a1260f01f068bad4116")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1ddb2ac150ce70a285f50727c4f51386eac45cf88b557a1260f01f068bad4116")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15851,12 +9755,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([268115973650836206u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("8639667add4014c4a379f8f82249acb33bf5a1f059f8a98d1b787379aeb2e942")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8639667add4014c4a379f8f82249acb33bf5a1f059f8a98d1b787379aeb2e942")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342583u64]),
@@ -15870,12 +9768,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([224511923345297317u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d7eb437229b65930223efddbe44372e144d5f39ad6a94d2bbe28329b6e5a36a1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d7eb437229b65930223efddbe44372e144d5f39ad6a94d2bbe28329b6e5a36a1")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15891,12 +9783,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([219748785268863234u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("ef60acf496d482a51a747a865527e05efe6a618b57d176950c4b8c087b957f1e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ef60acf496d482a51a747a865527e05efe6a618b57d176950c4b8c087b957f1e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342585u64]),
@@ -15910,48 +9796,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([246654655829658783u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ef60acf496d482a51a747a865527e05efe6a618b57d176950c4b8c087b957f1e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ef60acf496d482a51a747a865527e05efe6a618b57d176950c4b8c087b957f1e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ef60acf496d482a51a747a865527e05efe6a618b57d176950c4b8c087b957f1e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ef60acf496d482a51a747a865527e05efe6a618b57d176950c4b8c087b957f1e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ef60acf496d482a51a747a865527e05efe6a618b57d176950c4b8c087b957f1e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ef60acf496d482a51a747a865527e05efe6a618b57d176950c4b8c087b957f1e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ef60acf496d482a51a747a865527e05efe6a618b57d176950c4b8c087b957f1e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ef60acf496d482a51a747a865527e05efe6a618b57d176950c4b8c087b957f1e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ef60acf496d482a51a747a865527e05efe6a618b57d176950c4b8c087b957f1e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ef60acf496d482a51a747a865527e05efe6a618b57d176950c4b8c087b957f1e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ef60acf496d482a51a747a865527e05efe6a618b57d176950c4b8c087b957f1e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ef60acf496d482a51a747a865527e05efe6a618b57d176950c4b8c087b957f1e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("92a51acc91b220a486d4f34129ece5ccbc3b491b81b82fe420db8dfb6e13869a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("92a51acc91b220a486d4f34129ece5ccbc3b491b81b82fe420db8dfb6e13869a")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -15967,12 +9811,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([226179714997021978u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c8fe2d0f4638f643bf9aa875094b4453869e4b53a1bc9a2470ba298bcf2e7d2b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c8fe2d0f4638f643bf9aa875094b4453869e4b53a1bc9a2470ba298bcf2e7d2b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342587u64]),
@@ -15986,12 +9824,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([265661089063067365u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a29799ea71cd56a962bc3b039e2ff179e09d966d5b8ade0c5bca64853bc3caff")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a29799ea71cd56a962bc3b039e2ff179e09d966d5b8ade0c5bca64853bc3caff")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16007,12 +9839,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([277664397178626945u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c8807e5c44f2e4835beb4fc756983db051c4afec8691bcb5628523561c1c4182")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c8807e5c44f2e4835beb4fc756983db051c4afec8691bcb5628523561c1c4182")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342589u64]),
@@ -16026,12 +9852,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([271355030847032562u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0d5a5eabf5b1e5b349252c9d4947056b7d1ef0d74618c39187ade17d61615572")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0d5a5eabf5b1e5b349252c9d4947056b7d1ef0d74618c39187ade17d61615572")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16047,12 +9867,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([285194299582533559u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("36e3845f25db3caf8d985b417f0bbd0531597f3a5ed406cd136511532703b8ca")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("36e3845f25db3caf8d985b417f0bbd0531597f3a5ed406cd136511532703b8ca")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342591u64]),
@@ -16066,12 +9880,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([231608496342631319u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("56b29f4e736a9c1d70a415c9899d2c2a7f11921674374c44bfd74ca93f58a6a9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("56b29f4e736a9c1d70a415c9899d2c2a7f11921674374c44bfd74ca93f58a6a9")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16087,12 +9895,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([234509104747708419u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("2796be5b2abc5a725aeaa26e5d2c8039a2615bf3ebf819a79db4a43a508710fc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2796be5b2abc5a725aeaa26e5d2c8039a2615bf3ebf819a79db4a43a508710fc")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342593u64]),
@@ -16106,12 +9908,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([272223958801338755u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a7543c43e2fba660a714ce49902baafdae37ffb3d8d2918ca3b0bd72f93f932d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a7543c43e2fba660a714ce49902baafdae37ffb3d8d2918ca3b0bd72f93f932d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16127,12 +9923,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([278435754954100716u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("391c61976084f27715084b0e463fc65ee207ee1dcbfc590c054fed539d5bba96")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("391c61976084f27715084b0e463fc65ee207ee1dcbfc590c054fed539d5bba96")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342595u64]),
@@ -16146,12 +9936,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([245751757232970878u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b484780a4b4531768ef43b00653aeb200938a25312c2d3425841cad03fbc2ce0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b484780a4b4531768ef43b00653aeb200938a25312c2d3425841cad03fbc2ce0")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16167,12 +9951,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([266016805516954574u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c6a6c689e9d79b9636188d12e2f30a53bbfffbf109013c14664a7bc0c32376a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c6a6c689e9d79b9636188d12e2f30a53bbfffbf109013c14664a7bc0c32376a3")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342597u64]),
@@ -16186,48 +9964,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([247546068018943189u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c6a6c689e9d79b9636188d12e2f30a53bbfffbf109013c14664a7bc0c32376a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c6a6c689e9d79b9636188d12e2f30a53bbfffbf109013c14664a7bc0c32376a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c6a6c689e9d79b9636188d12e2f30a53bbfffbf109013c14664a7bc0c32376a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c6a6c689e9d79b9636188d12e2f30a53bbfffbf109013c14664a7bc0c32376a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c6a6c689e9d79b9636188d12e2f30a53bbfffbf109013c14664a7bc0c32376a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c6a6c689e9d79b9636188d12e2f30a53bbfffbf109013c14664a7bc0c32376a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c6a6c689e9d79b9636188d12e2f30a53bbfffbf109013c14664a7bc0c32376a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c6a6c689e9d79b9636188d12e2f30a53bbfffbf109013c14664a7bc0c32376a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c6a6c689e9d79b9636188d12e2f30a53bbfffbf109013c14664a7bc0c32376a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c6a6c689e9d79b9636188d12e2f30a53bbfffbf109013c14664a7bc0c32376a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c6a6c689e9d79b9636188d12e2f30a53bbfffbf109013c14664a7bc0c32376a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c6a6c689e9d79b9636188d12e2f30a53bbfffbf109013c14664a7bc0c32376a3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("53c0ec91c786c7e1efd4587e44920b5580a7abd2c207bd4933760f7e1e347074")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("53c0ec91c786c7e1efd4587e44920b5580a7abd2c207bd4933760f7e1e347074")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16243,12 +9979,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([237620657181426213u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("df89d082229773a8cdb242f6acf49d76f1c98d1ec77e93a3e0b85d9faef7ca5d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("df89d082229773a8cdb242f6acf49d76f1c98d1ec77e93a3e0b85d9faef7ca5d")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342599u64]),
@@ -16262,12 +9992,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([222259657690030592u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5c5c573363e3eb1f3bd4b83643347a2c4b4af68b476c917d9fe435d220cdece8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5c5c573363e3eb1f3bd4b83643347a2c4b4af68b476c917d9fe435d220cdece8")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16283,12 +10007,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([253079890283615885u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("59a6ecb0c08bbc21f0fe6186e0d4b298751c5dfe0b1671fae2d1e85466d9b4ab")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("59a6ecb0c08bbc21f0fe6186e0d4b298751c5dfe0b1671fae2d1e85466d9b4ab")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342601u64]),
@@ -16302,12 +10020,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([282371792865344531u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9e0e7fdfead0da4c886f63d7fef03366eed2949c31fc70e81c8157665a88fa4b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9e0e7fdfead0da4c886f63d7fef03366eed2949c31fc70e81c8157665a88fa4b")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16323,12 +10035,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([268170967668028448u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("bd65e7adfcb4f0e12ebfa8f9496acaf8490150667b3075cbfb571d11238eaa48")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bd65e7adfcb4f0e12ebfa8f9496acaf8490150667b3075cbfb571d11238eaa48")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342603u64]),
@@ -16342,12 +10048,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([224970834415169890u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b7ff8406cf613aff3fefea5f8019651efdc2ed8d7e4c4c048fc721836cf184d6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b7ff8406cf613aff3fefea5f8019651efdc2ed8d7e4c4c048fc721836cf184d6")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16363,12 +10063,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([224624122561378863u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("93c2677707421d9d0d66e3e29e23f6e07006ace6de6dda9e009bc85d7e6b1f3a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("93c2677707421d9d0d66e3e29e23f6e07006ace6de6dda9e009bc85d7e6b1f3a")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342605u64]),
@@ -16382,12 +10076,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([284528274045191934u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd8990321c9b168fcd052c920eaf431600c664636a6b7878a671351e0d779ebb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd8990321c9b168fcd052c920eaf431600c664636a6b7878a671351e0d779ebb")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16403,12 +10091,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([222577813157220482u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a4db7fb373c091ff7f8564c5cc17ae02e8a6759ef08268d08bceb41ada88613a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a4db7fb373c091ff7f8564c5cc17ae02e8a6759ef08268d08bceb41ada88613a")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342607u64]),
@@ -16422,12 +10104,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([257209032061944880u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0de9fa5a602ce4f2b1d113f06a0e55da67758e726dcce7dbdb25869bd0efb13b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0de9fa5a602ce4f2b1d113f06a0e55da67758e726dcce7dbdb25869bd0efb13b")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16443,12 +10119,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([275159505867406253u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("dd22efbdf8604448a743fe3fb70e8ebaac8b9c7e9be851e5cdc701cf1ac8c5aa")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dd22efbdf8604448a743fe3fb70e8ebaac8b9c7e9be851e5cdc701cf1ac8c5aa")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342609u64]),
@@ -16462,48 +10132,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([278395223288942373u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dd22efbdf8604448a743fe3fb70e8ebaac8b9c7e9be851e5cdc701cf1ac8c5aa")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dd22efbdf8604448a743fe3fb70e8ebaac8b9c7e9be851e5cdc701cf1ac8c5aa")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dd22efbdf8604448a743fe3fb70e8ebaac8b9c7e9be851e5cdc701cf1ac8c5aa")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dd22efbdf8604448a743fe3fb70e8ebaac8b9c7e9be851e5cdc701cf1ac8c5aa")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dd22efbdf8604448a743fe3fb70e8ebaac8b9c7e9be851e5cdc701cf1ac8c5aa")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dd22efbdf8604448a743fe3fb70e8ebaac8b9c7e9be851e5cdc701cf1ac8c5aa")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dd22efbdf8604448a743fe3fb70e8ebaac8b9c7e9be851e5cdc701cf1ac8c5aa")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dd22efbdf8604448a743fe3fb70e8ebaac8b9c7e9be851e5cdc701cf1ac8c5aa")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dd22efbdf8604448a743fe3fb70e8ebaac8b9c7e9be851e5cdc701cf1ac8c5aa")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dd22efbdf8604448a743fe3fb70e8ebaac8b9c7e9be851e5cdc701cf1ac8c5aa")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dd22efbdf8604448a743fe3fb70e8ebaac8b9c7e9be851e5cdc701cf1ac8c5aa")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dd22efbdf8604448a743fe3fb70e8ebaac8b9c7e9be851e5cdc701cf1ac8c5aa")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8533acd171dce10942885210476d17fad8ffd21e4af6c9c66f3c8c962a95b599")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8533acd171dce10942885210476d17fad8ffd21e4af6c9c66f3c8c962a95b599")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16519,12 +10147,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([281732414667747994u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("49685f47aaab8aa48cafd6bc30e8178983a021d8c63b4ca7655af01339670588")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49685f47aaab8aa48cafd6bc30e8178983a021d8c63b4ca7655af01339670588")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342611u64]),
@@ -16538,12 +10160,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([285597763747304163u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("381261cdb493f446b4825cc7df107ec1e333f1b81b0cdc1e01cc4746693c5fee")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("381261cdb493f446b4825cc7df107ec1e333f1b81b0cdc1e01cc4746693c5fee")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16559,12 +10175,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([277454854557415201u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("969ac6242dac9c5736e17d32b80dbbaf707d12efd0f4be23ae8c6fdec3214385")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("969ac6242dac9c5736e17d32b80dbbaf707d12efd0f4be23ae8c6fdec3214385")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342613u64]),
@@ -16578,12 +10188,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([222419720474764169u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9d70896efb0f870542451ab353b5c514be4cd92d34d94071f187aa2e54028718")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9d70896efb0f870542451ab353b5c514be4cd92d34d94071f187aa2e54028718")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16599,12 +10203,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([259903710875751141u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("4c3003d3a2f7ed17075d443135b59074269386cdc7d3c9bcafb060457db12953")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4c3003d3a2f7ed17075d443135b59074269386cdc7d3c9bcafb060457db12953")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342615u64]),
@@ -16618,12 +10216,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([260998848559400256u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d88ac6a9c1fe822a6b8628892858dd74ca5cba63e54e9df226e9a14adcda8ede")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d88ac6a9c1fe822a6b8628892858dd74ca5cba63e54e9df226e9a14adcda8ede")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16639,12 +10231,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([243811239290262034u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c0fb2681691c6fac59f42c0c754015b34172f342c2ffef77d22c085d27422ab6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c0fb2681691c6fac59f42c0c754015b34172f342c2ffef77d22c085d27422ab6")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342617u64]),
@@ -16658,12 +10244,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([260709449518073353u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("65551545e6326a2364f3f87ba049af080b2622a242e40a01eb5f4c5be8299ec5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("65551545e6326a2364f3f87ba049af080b2622a242e40a01eb5f4c5be8299ec5")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16679,12 +10259,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([248821880729499178u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c3dbc2d87ba56c891d866610992a98429657d7ca67f93c3ed031cc6ffadfe42f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c3dbc2d87ba56c891d866610992a98429657d7ca67f93c3ed031cc6ffadfe42f")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342619u64]),
@@ -16698,12 +10272,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([240206511216193203u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("28ce569b72d016c78d551598e47528c1e423292fa473ef7de8b2bb0fc993476c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("28ce569b72d016c78d551598e47528c1e423292fa473ef7de8b2bb0fc993476c")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16719,12 +10287,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([279729408264187988u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("385906badffead78fe90b2cf45fa45a20ecec29a8132c1387bb9085ffcb1b083")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("385906badffead78fe90b2cf45fa45a20ecec29a8132c1387bb9085ffcb1b083")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342621u64]),
@@ -16738,48 +10300,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([238479041104889728u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("385906badffead78fe90b2cf45fa45a20ecec29a8132c1387bb9085ffcb1b083")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("385906badffead78fe90b2cf45fa45a20ecec29a8132c1387bb9085ffcb1b083")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("385906badffead78fe90b2cf45fa45a20ecec29a8132c1387bb9085ffcb1b083")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("385906badffead78fe90b2cf45fa45a20ecec29a8132c1387bb9085ffcb1b083")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("385906badffead78fe90b2cf45fa45a20ecec29a8132c1387bb9085ffcb1b083")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("385906badffead78fe90b2cf45fa45a20ecec29a8132c1387bb9085ffcb1b083")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("385906badffead78fe90b2cf45fa45a20ecec29a8132c1387bb9085ffcb1b083")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("385906badffead78fe90b2cf45fa45a20ecec29a8132c1387bb9085ffcb1b083")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("385906badffead78fe90b2cf45fa45a20ecec29a8132c1387bb9085ffcb1b083")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("385906badffead78fe90b2cf45fa45a20ecec29a8132c1387bb9085ffcb1b083")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("385906badffead78fe90b2cf45fa45a20ecec29a8132c1387bb9085ffcb1b083")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("385906badffead78fe90b2cf45fa45a20ecec29a8132c1387bb9085ffcb1b083")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b7195f8fd00cf1bb3a9757146cb5db3cd63a782d3daf70a08e85166d07d19022")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b7195f8fd00cf1bb3a9757146cb5db3cd63a782d3daf70a08e85166d07d19022")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16795,12 +10315,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([228249601918948967u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("915cf8cd8234cd4934a2c367c9cc2e8429ae2a7d2d3bea25fa42aa05d66727cc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("915cf8cd8234cd4934a2c367c9cc2e8429ae2a7d2d3bea25fa42aa05d66727cc")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342623u64]),
@@ -16814,12 +10328,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([265007387831784676u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("556637a17e6d11f6712b37b334640ac6cebbd0cc1cf9dbc38286b1f71e525d0f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("556637a17e6d11f6712b37b334640ac6cebbd0cc1cf9dbc38286b1f71e525d0f")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16835,12 +10343,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([249122634234820125u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("8c21de7fc99a67115c6c2ea2e5e30d476264e450cf593fff4ba6dd75f3711dac")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8c21de7fc99a67115c6c2ea2e5e30d476264e450cf593fff4ba6dd75f3711dac")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342625u64]),
@@ -16854,12 +10356,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([229998443479031854u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e570592644bcc7e0603d8ef8c4f298770e2fa8a273abef2c5933be55ec6b44a1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e570592644bcc7e0603d8ef8c4f298770e2fa8a273abef2c5933be55ec6b44a1")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16875,12 +10371,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([239989326394673603u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("22f53ce414337db2d6069d108b4b85c534e6a549bcda338f86b6470d5c3d116a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("22f53ce414337db2d6069d108b4b85c534e6a549bcda338f86b6470d5c3d116a")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342627u64]),
@@ -16894,12 +10384,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([276142200481245272u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a963f0cc6ccffd7de0d4897b968f628654305f4082823dcff0c16376647c7169")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a963f0cc6ccffd7de0d4897b968f628654305f4082823dcff0c16376647c7169")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16915,12 +10399,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([267636557468388512u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("4fcc97b58b9bdd31ca3155bc70e3dba10fe9b0e9cc3a91147a06a04f3a09abc5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4fcc97b58b9bdd31ca3155bc70e3dba10fe9b0e9cc3a91147a06a04f3a09abc5")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342629u64]),
@@ -16934,12 +10412,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([247212916461857459u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49077804938dcfdada9857914dd1aef7f913ae3b850340657e0c26b0acfe5cbd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("49077804938dcfdada9857914dd1aef7f913ae3b850340657e0c26b0acfe5cbd")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16955,12 +10427,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([260307775540608302u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("dc5999e3d7d35359c45ff5f8791fd52f6cb4574213d321cd56b5c61914459411")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("dc5999e3d7d35359c45ff5f8791fd52f6cb4574213d321cd56b5c61914459411")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342631u64]),
@@ -16974,12 +10440,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([287282473427124441u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d8ef30e62f19be86b0ddda99e61cc84bccdbdec0847b1c4f971bed0806fe0803")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d8ef30e62f19be86b0ddda99e61cc84bccdbdec0847b1c4f971bed0806fe0803")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -16995,12 +10455,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([266342239886152575u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("df4db93825d3306952f84551e5159a15d9f7361108c10fea9914b9292b4f93bf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("df4db93825d3306952f84551e5159a15d9f7361108c10fea9914b9292b4f93bf")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342633u64]),
@@ -17014,48 +10468,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([247280429305988477u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("df4db93825d3306952f84551e5159a15d9f7361108c10fea9914b9292b4f93bf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("df4db93825d3306952f84551e5159a15d9f7361108c10fea9914b9292b4f93bf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("df4db93825d3306952f84551e5159a15d9f7361108c10fea9914b9292b4f93bf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("df4db93825d3306952f84551e5159a15d9f7361108c10fea9914b9292b4f93bf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("df4db93825d3306952f84551e5159a15d9f7361108c10fea9914b9292b4f93bf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("df4db93825d3306952f84551e5159a15d9f7361108c10fea9914b9292b4f93bf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("df4db93825d3306952f84551e5159a15d9f7361108c10fea9914b9292b4f93bf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("df4db93825d3306952f84551e5159a15d9f7361108c10fea9914b9292b4f93bf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("df4db93825d3306952f84551e5159a15d9f7361108c10fea9914b9292b4f93bf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("df4db93825d3306952f84551e5159a15d9f7361108c10fea9914b9292b4f93bf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("df4db93825d3306952f84551e5159a15d9f7361108c10fea9914b9292b4f93bf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("df4db93825d3306952f84551e5159a15d9f7361108c10fea9914b9292b4f93bf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2e88dccd5ca1d155f7f3b3135ce3a5fa19aebc5f2620a4a48b53430a345cf2c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d2e88dccd5ca1d155f7f3b3135ce3a5fa19aebc5f2620a4a48b53430a345cf2c")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17071,12 +10483,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([241300217787893190u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("6c6d0836bedb3d5cece7009164b1e11ef4e35dd45694766eb0acb2a249434c45")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6c6d0836bedb3d5cece7009164b1e11ef4e35dd45694766eb0acb2a249434c45")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342635u64]),
@@ -17090,12 +10496,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([268403312960669351u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8f69792e8b5eeba3690b719ee59b85064b59d6bfeb7321b021e1f9c8e7c88805")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8f69792e8b5eeba3690b719ee59b85064b59d6bfeb7321b021e1f9c8e7c88805")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17111,12 +10511,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([225925576381364594u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("7fa36d73a29f0aeb34cc8580a96c6378e2067428c6b4eb993492fe9fb511f9e0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7fa36d73a29f0aeb34cc8580a96c6378e2067428c6b4eb993492fe9fb511f9e0")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342637u64]),
@@ -17130,12 +10524,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([246592354891900801u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("35c365a362389e7f1babee8eb93624265de73589dc555b04d684c10b72fd1343")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("35c365a362389e7f1babee8eb93624265de73589dc555b04d684c10b72fd1343")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17151,12 +10539,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([254695251973641981u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("683b4524ba10097177056b6a44c4bb67109cc3cadefd8f6175d83b08c48d410f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("683b4524ba10097177056b6a44c4bb67109cc3cadefd8f6175d83b08c48d410f")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342639u64]),
@@ -17170,12 +10552,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([233022188265994462u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13b955341d6a8e33a070d6f29ebdb508a2b40dfe81a0a055afaedabe9f5736c6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13b955341d6a8e33a070d6f29ebdb508a2b40dfe81a0a055afaedabe9f5736c6")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17191,12 +10567,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([217551100214801877u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("ec41a50d74985aea75f2bcc24814290654bb755218723f15505eb28969b485bf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ec41a50d74985aea75f2bcc24814290654bb755218723f15505eb28969b485bf")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342641u64]),
@@ -17210,12 +10580,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([271441868361397384u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6d313a1d70a93a25c2f9df36a4810ad29461be9cf355c506eeb10c5677483276")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6d313a1d70a93a25c2f9df36a4810ad29461be9cf355c506eeb10c5677483276")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17231,12 +10595,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([287096163428287515u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("cf35098d62a30b1ed65e798ca15cebddf1403c00596af7b0833b9d483e8a2966")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cf35098d62a30b1ed65e798ca15cebddf1403c00596af7b0833b9d483e8a2966")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342643u64]),
@@ -17250,12 +10608,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([216650219633565552u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("536b624252e25a241582672dc3475992540450049680affe2ac39c94370c3703")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("536b624252e25a241582672dc3475992540450049680affe2ac39c94370c3703")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17271,12 +10623,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([257384754460025133u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e5d704fef3076f3180b76c6c4643715faf37ba877672a016f167aac575f43e37")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e5d704fef3076f3180b76c6c4643715faf37ba877672a016f167aac575f43e37")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342645u64]),
@@ -17290,48 +10636,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([222412183833792662u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e5d704fef3076f3180b76c6c4643715faf37ba877672a016f167aac575f43e37")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e5d704fef3076f3180b76c6c4643715faf37ba877672a016f167aac575f43e37")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e5d704fef3076f3180b76c6c4643715faf37ba877672a016f167aac575f43e37")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e5d704fef3076f3180b76c6c4643715faf37ba877672a016f167aac575f43e37")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e5d704fef3076f3180b76c6c4643715faf37ba877672a016f167aac575f43e37")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e5d704fef3076f3180b76c6c4643715faf37ba877672a016f167aac575f43e37")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e5d704fef3076f3180b76c6c4643715faf37ba877672a016f167aac575f43e37")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e5d704fef3076f3180b76c6c4643715faf37ba877672a016f167aac575f43e37")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e5d704fef3076f3180b76c6c4643715faf37ba877672a016f167aac575f43e37")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e5d704fef3076f3180b76c6c4643715faf37ba877672a016f167aac575f43e37")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e5d704fef3076f3180b76c6c4643715faf37ba877672a016f167aac575f43e37")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e5d704fef3076f3180b76c6c4643715faf37ba877672a016f167aac575f43e37")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("304f04226818e085e827765ae799c31004cf37986d922319ec366411eb322da2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("304f04226818e085e827765ae799c31004cf37986d922319ec366411eb322da2")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17347,12 +10651,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([284609094154261643u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("672e4c1ec6e4d8c18488eb7ae7a4dc02acb1f7c45f8281639d967f009ca3f28d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("672e4c1ec6e4d8c18488eb7ae7a4dc02acb1f7c45f8281639d967f009ca3f28d")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342647u64]),
@@ -17366,12 +10664,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([222937181519063197u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ba83f7076b0e2bdb924c66ee76158699c0229936d1fb3b91de1b9c27dca9ad24")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ba83f7076b0e2bdb924c66ee76158699c0229936d1fb3b91de1b9c27dca9ad24")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17387,12 +10679,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([249470813550273948u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d785677ddc1c7d62e9d0660050b80e50fb2108bb6efeb85cb3efd88dc6584748")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d785677ddc1c7d62e9d0660050b80e50fb2108bb6efeb85cb3efd88dc6584748")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342649u64]),
@@ -17406,12 +10692,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([242730658061780093u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("429790c259c0071a796bcc25a71600ab61a6fc4cac55fc92183bd1ac693e7818")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("429790c259c0071a796bcc25a71600ab61a6fc4cac55fc92183bd1ac693e7818")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17427,12 +10707,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([227185641282385861u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("1c375ae3aafdf49c6647fcede9af3df8da995777bb7a1239890837d179408572")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1c375ae3aafdf49c6647fcede9af3df8da995777bb7a1239890837d179408572")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342651u64]),
@@ -17446,12 +10720,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([231634641587598578u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e90c0cb02884d91ca9275b5406e7a86663a44e4981c8641fe9605dea74f91cd2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e90c0cb02884d91ca9275b5406e7a86663a44e4981c8641fe9605dea74f91cd2")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17467,12 +10735,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([223004832943833083u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c4382974f2cdc586287b79b93b24e6fac5edaa81637db53a1b1e23b872f878c1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c4382974f2cdc586287b79b93b24e6fac5edaa81637db53a1b1e23b872f878c1")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342653u64]),
@@ -17486,12 +10748,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([285724190407515557u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d96f2fc8e9b92938baabc366abc8705ef300058459a548e8486daf43cfd55a21")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d96f2fc8e9b92938baabc366abc8705ef300058459a548e8486daf43cfd55a21")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17507,12 +10763,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([225546942653464919u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("23f005a67e78b743769e3e5a8d90c8a7bdd64d50bdf8bd16375e10d991fb5b0e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("23f005a67e78b743769e3e5a8d90c8a7bdd64d50bdf8bd16375e10d991fb5b0e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342655u64]),
@@ -17526,12 +10776,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([288083743031781064u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c1aa2b80a09107eb2cf1baf1419cc0ea2eee8af0d03bfde911a5af622e2a92d0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c1aa2b80a09107eb2cf1baf1419cc0ea2eee8af0d03bfde911a5af622e2a92d0")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17547,12 +10791,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([216969639343007173u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("860cb4f655c5bc2819df7e11df7c04fd82210eda83c54ddac926ce0a1c6abbfd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("860cb4f655c5bc2819df7e11df7c04fd82210eda83c54ddac926ce0a1c6abbfd")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342657u64]),
@@ -17566,48 +10804,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([268375685641204126u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("860cb4f655c5bc2819df7e11df7c04fd82210eda83c54ddac926ce0a1c6abbfd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("860cb4f655c5bc2819df7e11df7c04fd82210eda83c54ddac926ce0a1c6abbfd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("860cb4f655c5bc2819df7e11df7c04fd82210eda83c54ddac926ce0a1c6abbfd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("860cb4f655c5bc2819df7e11df7c04fd82210eda83c54ddac926ce0a1c6abbfd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("860cb4f655c5bc2819df7e11df7c04fd82210eda83c54ddac926ce0a1c6abbfd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("860cb4f655c5bc2819df7e11df7c04fd82210eda83c54ddac926ce0a1c6abbfd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("860cb4f655c5bc2819df7e11df7c04fd82210eda83c54ddac926ce0a1c6abbfd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("860cb4f655c5bc2819df7e11df7c04fd82210eda83c54ddac926ce0a1c6abbfd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("860cb4f655c5bc2819df7e11df7c04fd82210eda83c54ddac926ce0a1c6abbfd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("860cb4f655c5bc2819df7e11df7c04fd82210eda83c54ddac926ce0a1c6abbfd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("860cb4f655c5bc2819df7e11df7c04fd82210eda83c54ddac926ce0a1c6abbfd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("860cb4f655c5bc2819df7e11df7c04fd82210eda83c54ddac926ce0a1c6abbfd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9ef362aa12e50bedaafeb4ac0f7819e0c37e2e9fdedb8e1b499ca94071620ef6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9ef362aa12e50bedaafeb4ac0f7819e0c37e2e9fdedb8e1b499ca94071620ef6")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17623,12 +10819,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([222674529549874887u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("4f569c28cd9d968e79ac2072581e5c28c8db0a564d66d9b32c0e630d9d8e7f50")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4f569c28cd9d968e79ac2072581e5c28c8db0a564d66d9b32c0e630d9d8e7f50")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342659u64]),
@@ -17642,12 +10832,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([268662654216053605u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d9f94c5a293bda8d49cd12b29105d74fb811d62e2b2ba7d3b29acd0bdd8fd15a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d9f94c5a293bda8d49cd12b29105d74fb811d62e2b2ba7d3b29acd0bdd8fd15a")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17663,12 +10847,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([271659215849654730u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("ce35f64c655165e6c7bcd6386cf651c96277b47ca7f0fbe5c346dcab3a0aa7fd")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ce35f64c655165e6c7bcd6386cf651c96277b47ca7f0fbe5c346dcab3a0aa7fd")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342661u64]),
@@ -17682,12 +10860,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([254138310359559353u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2f6ac5d5fa2e160c73c8bcd7ef676209179655400811c66d5e3acefafb107fee")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2f6ac5d5fa2e160c73c8bcd7ef676209179655400811c66d5e3acefafb107fee")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17703,12 +10875,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([272006923956787152u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("bb62d0da10663d63e6f55eea64673f212a4677669d4c2aa6aa699f2ba7d02f9e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bb62d0da10663d63e6f55eea64673f212a4677669d4c2aa6aa699f2ba7d02f9e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342663u64]),
@@ -17722,12 +10888,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([277202647997121284u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bf89460e5411cad059e0549212df1b401ff7e0c8f280a0ac2d0ee9da0af2feb5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bf89460e5411cad059e0549212df1b401ff7e0c8f280a0ac2d0ee9da0af2feb5")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17743,12 +10903,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([258572210880300459u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("20d9d63cca97265ee751a4009c1a8751101884d6984852d7e9a2a36ceb40604f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("20d9d63cca97265ee751a4009c1a8751101884d6984852d7e9a2a36ceb40604f")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342665u64]),
@@ -17762,12 +10916,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([279003994612113707u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("57527b85d320c644f7c1f5c3da7f91aee3f52dc807c03eaefb2fdd068a2cd421")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("57527b85d320c644f7c1f5c3da7f91aee3f52dc807c03eaefb2fdd068a2cd421")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17783,12 +10931,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([267188446473949083u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("b0ee3e710d3963ad0403096699429e8fe57691d12be56d82488b781a0ec840a4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b0ee3e710d3963ad0403096699429e8fe57691d12be56d82488b781a0ec840a4")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342667u64]),
@@ -17802,12 +10944,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([287521751495147470u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0095103d7835a2b1f84c99a3c133be4e01b61a9dc55d3804ab0d6fd176886241")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0095103d7835a2b1f84c99a3c133be4e01b61a9dc55d3804ab0d6fd176886241")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17823,12 +10959,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([256506869590015381u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd469c0ae21821a446510759e2cfa77969d9eebe14391affaa915b427114985d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd469c0ae21821a446510759e2cfa77969d9eebe14391affaa915b427114985d")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342669u64]),
@@ -17842,48 +10972,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([282858628797237624u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd469c0ae21821a446510759e2cfa77969d9eebe14391affaa915b427114985d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd469c0ae21821a446510759e2cfa77969d9eebe14391affaa915b427114985d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd469c0ae21821a446510759e2cfa77969d9eebe14391affaa915b427114985d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd469c0ae21821a446510759e2cfa77969d9eebe14391affaa915b427114985d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd469c0ae21821a446510759e2cfa77969d9eebe14391affaa915b427114985d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd469c0ae21821a446510759e2cfa77969d9eebe14391affaa915b427114985d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd469c0ae21821a446510759e2cfa77969d9eebe14391affaa915b427114985d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd469c0ae21821a446510759e2cfa77969d9eebe14391affaa915b427114985d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd469c0ae21821a446510759e2cfa77969d9eebe14391affaa915b427114985d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd469c0ae21821a446510759e2cfa77969d9eebe14391affaa915b427114985d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd469c0ae21821a446510759e2cfa77969d9eebe14391affaa915b427114985d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd469c0ae21821a446510759e2cfa77969d9eebe14391affaa915b427114985d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13cfbab37d28523d6de1b5d9737e9331b086ba2beb78fa06228f702fd1ca34ff")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("13cfbab37d28523d6de1b5d9737e9331b086ba2beb78fa06228f702fd1ca34ff")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17899,12 +10987,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([271498410358193283u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("4dec24b1ed6ebd9a0bd90d73d222f56888c368794ab6c50b7053cf000117e1c6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4dec24b1ed6ebd9a0bd90d73d222f56888c368794ab6c50b7053cf000117e1c6")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342671u64]),
@@ -17918,12 +11000,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([281818301981421564u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2c6c9358758999e0c2b6d3da3f015a2432b245e96472175476ec7ebcaf7c888a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2c6c9358758999e0c2b6d3da3f015a2432b245e96472175476ec7ebcaf7c888a")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17939,12 +11015,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([254962659585238275u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c5d6f8a399825855742d298a148b53cb516fce225715bae0625b8b5f6897e7f7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c5d6f8a399825855742d298a148b53cb516fce225715bae0625b8b5f6897e7f7")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342673u64]),
@@ -17958,12 +11028,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([237995269944133194u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("461d618512ce5e70264bbbec98a5a48360d7a44db47ee4f53da57488715415c2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("461d618512ce5e70264bbbec98a5a48360d7a44db47ee4f53da57488715415c2")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -17979,12 +11043,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([286293334031788184u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("7d0b0f07987ebc0a6ddf525f2fff6bd324437ebf38a9155d5fc30bccc6e676d1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7d0b0f07987ebc0a6ddf525f2fff6bd324437ebf38a9155d5fc30bccc6e676d1")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342675u64]),
@@ -17998,12 +11056,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([228370616690967633u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bf73f6c890cc1f153db061cb33f1a00494ae184a101d151a15a4edcbe54f8d7c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bf73f6c890cc1f153db061cb33f1a00494ae184a101d151a15a4edcbe54f8d7c")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18019,12 +11071,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([242584440734337848u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("ff61e46f72775a9228b6b214a38764b8b87e4bcada3e79064c3e7de6a85764bb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ff61e46f72775a9228b6b214a38764b8b87e4bcada3e79064c3e7de6a85764bb")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342677u64]),
@@ -18038,12 +11084,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([217813767341025332u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("27f8ddba9743d2656c43a22c5e37f4753811d3e0809ed50bae74d3e02a3fb48a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("27f8ddba9743d2656c43a22c5e37f4753811d3e0809ed50bae74d3e02a3fb48a")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18059,12 +11099,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([281411153969446486u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d09622d4dec720c6b456bff100a738c0fe885b45d587545d0506b9381fbdd030")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d09622d4dec720c6b456bff100a738c0fe885b45d587545d0506b9381fbdd030")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342679u64]),
@@ -18078,12 +11112,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([259166399187135587u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cec83c6637a0bdbe67d30b5f407ebab050d83f4fb4be9e948d88043f30897509")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cec83c6637a0bdbe67d30b5f407ebab050d83f4fb4be9e948d88043f30897509")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18099,12 +11127,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([236578326990307040u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("1d73cd775ac839abd3f4af1e425e41ddfdcd3536cc5460b8192069affef7e50c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1d73cd775ac839abd3f4af1e425e41ddfdcd3536cc5460b8192069affef7e50c")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342681u64]),
@@ -18118,48 +11140,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([228879610079353857u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1d73cd775ac839abd3f4af1e425e41ddfdcd3536cc5460b8192069affef7e50c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1d73cd775ac839abd3f4af1e425e41ddfdcd3536cc5460b8192069affef7e50c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1d73cd775ac839abd3f4af1e425e41ddfdcd3536cc5460b8192069affef7e50c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1d73cd775ac839abd3f4af1e425e41ddfdcd3536cc5460b8192069affef7e50c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1d73cd775ac839abd3f4af1e425e41ddfdcd3536cc5460b8192069affef7e50c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1d73cd775ac839abd3f4af1e425e41ddfdcd3536cc5460b8192069affef7e50c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1d73cd775ac839abd3f4af1e425e41ddfdcd3536cc5460b8192069affef7e50c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1d73cd775ac839abd3f4af1e425e41ddfdcd3536cc5460b8192069affef7e50c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1d73cd775ac839abd3f4af1e425e41ddfdcd3536cc5460b8192069affef7e50c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1d73cd775ac839abd3f4af1e425e41ddfdcd3536cc5460b8192069affef7e50c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1d73cd775ac839abd3f4af1e425e41ddfdcd3536cc5460b8192069affef7e50c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1d73cd775ac839abd3f4af1e425e41ddfdcd3536cc5460b8192069affef7e50c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4cf71c27fb50bba3ca5e6d95d4c6d3a631209fdc32e15b52223e0d3d0a1ce037")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4cf71c27fb50bba3ca5e6d95d4c6d3a631209fdc32e15b52223e0d3d0a1ce037")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18175,12 +11155,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([228194865169302183u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d03f3fea06d63a2b7442679a8e969cf46ecb089b4430d54dcd652c2729130317")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d03f3fea06d63a2b7442679a8e969cf46ecb089b4430d54dcd652c2729130317")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342683u64]),
@@ -18194,12 +11168,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([264186215166861483u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d429f4bdf1ec039efbce63c65b720842368c722545ffbb1fb986d8589d46a741")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d429f4bdf1ec039efbce63c65b720842368c722545ffbb1fb986d8589d46a741")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18215,12 +11183,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([217746071280827470u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a72008a45ec61ba46f3f17523bae82b204fcbae887a770355e1c7f8e336195f1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a72008a45ec61ba46f3f17523bae82b204fcbae887a770355e1c7f8e336195f1")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342685u64]),
@@ -18234,12 +11196,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([285297180353573437u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2f672f50a47cd3bc65037fdac1e62ba8f66b7490023dada7811d4f2528ecb4ea")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2f672f50a47cd3bc65037fdac1e62ba8f66b7490023dada7811d4f2528ecb4ea")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18255,12 +11211,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([236008391967339833u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("05959b8f20e157363c25a08a51d8e5588027e86dc7507898dfbaba9d132f03e4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("05959b8f20e157363c25a08a51d8e5588027e86dc7507898dfbaba9d132f03e4")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342687u64]),
@@ -18274,12 +11224,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([253119093300436974u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d67e367f58be32db2066f0c2b013e0e5547e6d2276ef3b03abea0c8ff36da8f3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d67e367f58be32db2066f0c2b013e0e5547e6d2276ef3b03abea0c8ff36da8f3")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18295,12 +11239,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([218785713105209608u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("2cef3824c8c40c0b92986d1dee9f2bf36cd1b74bc1afa28433a746a8e2d7a715")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2cef3824c8c40c0b92986d1dee9f2bf36cd1b74bc1afa28433a746a8e2d7a715")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342689u64]),
@@ -18314,12 +11252,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([277788087410762577u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a42ae6e7e0747f29086208654351316b01ef3de3c35a39031e0943b2b2adbbc2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a42ae6e7e0747f29086208654351316b01ef3de3c35a39031e0943b2b2adbbc2")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18335,12 +11267,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([227096367707209168u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d992dcae5b378d4b2ee9665e9a2c0296ea0cedd05f01cb3118df019f30e7fc81")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d992dcae5b378d4b2ee9665e9a2c0296ea0cedd05f01cb3118df019f30e7fc81")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342691u64]),
@@ -18354,12 +11280,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([222880900358397446u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5b59d0ad9cbf7ae2e655f11cc898ae91018fd5dd0e25892a96e0669ee0bc9dee")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5b59d0ad9cbf7ae2e655f11cc898ae91018fd5dd0e25892a96e0669ee0bc9dee")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18375,12 +11295,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([245569470623594243u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a258e82dea976c02b27336678854dad32dad8ea4a79b17db01d987c4d727b137")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a258e82dea976c02b27336678854dad32dad8ea4a79b17db01d987c4d727b137")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342693u64]),
@@ -18394,48 +11308,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([287588054477959027u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a258e82dea976c02b27336678854dad32dad8ea4a79b17db01d987c4d727b137")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a258e82dea976c02b27336678854dad32dad8ea4a79b17db01d987c4d727b137")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a258e82dea976c02b27336678854dad32dad8ea4a79b17db01d987c4d727b137")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a258e82dea976c02b27336678854dad32dad8ea4a79b17db01d987c4d727b137")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a258e82dea976c02b27336678854dad32dad8ea4a79b17db01d987c4d727b137")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a258e82dea976c02b27336678854dad32dad8ea4a79b17db01d987c4d727b137")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a258e82dea976c02b27336678854dad32dad8ea4a79b17db01d987c4d727b137")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a258e82dea976c02b27336678854dad32dad8ea4a79b17db01d987c4d727b137")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a258e82dea976c02b27336678854dad32dad8ea4a79b17db01d987c4d727b137")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a258e82dea976c02b27336678854dad32dad8ea4a79b17db01d987c4d727b137")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a258e82dea976c02b27336678854dad32dad8ea4a79b17db01d987c4d727b137")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a258e82dea976c02b27336678854dad32dad8ea4a79b17db01d987c4d727b137")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b3ba902a472338b574230d69bfe205f25d941f8845db20df932c19ff35779a5d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b3ba902a472338b574230d69bfe205f25d941f8845db20df932c19ff35779a5d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18451,12 +11323,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([276059660646613436u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("6319aa66c62e7be24445a917fa45d9ace8d62d417deaf7022d46ba06cc7bda0e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6319aa66c62e7be24445a917fa45d9ace8d62d417deaf7022d46ba06cc7bda0e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342695u64]),
@@ -18470,12 +11336,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([220207412138419009u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b4fee8df89b10664f9888930c8a01762ceac4735db653ae33dc5d571067da930")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b4fee8df89b10664f9888930c8a01762ceac4735db653ae33dc5d571067da930")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18491,12 +11351,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([224485382044706917u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("52bb44765939fe923dbcfa3412337d81be12283e8213262bd4e6be76425a979b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("52bb44765939fe923dbcfa3412337d81be12283e8213262bd4e6be76425a979b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342697u64]),
@@ -18510,12 +11364,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([279538081746923373u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("79ae61e4462421c5f519fe1ce8e7adae31a060e417ab39b52ea954c3a69a4fd8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("79ae61e4462421c5f519fe1ce8e7adae31a060e417ab39b52ea954c3a69a4fd8")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18531,12 +11379,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([251330331678188438u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("005546c6da022746b2b49be79640bdc357945a54a5b228fb88d7fc4d0443f97b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("005546c6da022746b2b49be79640bdc357945a54a5b228fb88d7fc4d0443f97b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342699u64]),
@@ -18550,12 +11392,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([219899922439902333u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b930672b63b0ab7b0786a2941d976b290d1766171d6fa51568cd15cf18809270")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b930672b63b0ab7b0786a2941d976b290d1766171d6fa51568cd15cf18809270")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18571,12 +11407,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([285574871783747821u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("7bb4950d53da92a9cd9a652c533c16d19f878e17ab1591335f7fc8cf11e08a96")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7bb4950d53da92a9cd9a652c533c16d19f878e17ab1591335f7fc8cf11e08a96")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342701u64]),
@@ -18590,12 +11420,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([223827155521919338u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cf4f20c7e66e3427977518204f662ff5649c090eea413377714fba50f194537f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cf4f20c7e66e3427977518204f662ff5649c090eea413377714fba50f194537f")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18611,12 +11435,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([249409035982251193u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("814355cd6b966f142904d073a49e8203dc0c788e52f9624ffc830882f4c345f8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("814355cd6b966f142904d073a49e8203dc0c788e52f9624ffc830882f4c345f8")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342703u64]),
@@ -18630,12 +11448,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([234788418592480341u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9c22373ffb16fe0bbfd665367d5c983224ae69643b3063e3d6bf8a2e0c371c8e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9c22373ffb16fe0bbfd665367d5c983224ae69643b3063e3d6bf8a2e0c371c8e")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18651,12 +11463,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([266420354884666850u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("65cfd437625b4d96973c409ad7a837d16a48bb218f0bbfb07ea591197f401aee")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("65cfd437625b4d96973c409ad7a837d16a48bb218f0bbfb07ea591197f401aee")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342705u64]),
@@ -18670,48 +11476,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([262472959491059329u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("65cfd437625b4d96973c409ad7a837d16a48bb218f0bbfb07ea591197f401aee")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("65cfd437625b4d96973c409ad7a837d16a48bb218f0bbfb07ea591197f401aee")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("65cfd437625b4d96973c409ad7a837d16a48bb218f0bbfb07ea591197f401aee")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("65cfd437625b4d96973c409ad7a837d16a48bb218f0bbfb07ea591197f401aee")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("65cfd437625b4d96973c409ad7a837d16a48bb218f0bbfb07ea591197f401aee")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("65cfd437625b4d96973c409ad7a837d16a48bb218f0bbfb07ea591197f401aee")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("65cfd437625b4d96973c409ad7a837d16a48bb218f0bbfb07ea591197f401aee")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("65cfd437625b4d96973c409ad7a837d16a48bb218f0bbfb07ea591197f401aee")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("65cfd437625b4d96973c409ad7a837d16a48bb218f0bbfb07ea591197f401aee")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("65cfd437625b4d96973c409ad7a837d16a48bb218f0bbfb07ea591197f401aee")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("65cfd437625b4d96973c409ad7a837d16a48bb218f0bbfb07ea591197f401aee")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("65cfd437625b4d96973c409ad7a837d16a48bb218f0bbfb07ea591197f401aee")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0250ead03ee0a5016692aaa67785e34717b2d22b3b737c15e8271ef49e18e894")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0250ead03ee0a5016692aaa67785e34717b2d22b3b737c15e8271ef49e18e894")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18727,12 +11491,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([244940567931866924u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("2daca4ac77cdeeec98015ec4d9ba31e43ef2c6b3dc0ecfefad49dc4a4d5a4296")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2daca4ac77cdeeec98015ec4d9ba31e43ef2c6b3dc0ecfefad49dc4a4d5a4296")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342707u64]),
@@ -18746,12 +11504,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([275280234526053668u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c335e389a58847f6a74c61ced64cf2f4b96a2561fce0245ecf851c581d2b2a5b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c335e389a58847f6a74c61ced64cf2f4b96a2561fce0245ecf851c581d2b2a5b")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18767,12 +11519,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([251457059421369887u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("7e82486c50520e369c3ec4e23b9b433d43878aac67fe842ad56a2b0bea4a65e8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7e82486c50520e369c3ec4e23b9b433d43878aac67fe842ad56a2b0bea4a65e8")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342709u64]),
@@ -18786,12 +11532,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([277932533395487441u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f2da990172a096da0aa129991b3f54bc6bb31d93c76679da77f3fade85b21526")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f2da990172a096da0aa129991b3f54bc6bb31d93c76679da77f3fade85b21526")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18807,12 +11547,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([271935051047177500u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("691272511ba2f2b25107c6abbcc40ccd9e302ff82fd8d524ec4c2b996b263250")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("691272511ba2f2b25107c6abbcc40ccd9e302ff82fd8d524ec4c2b996b263250")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342711u64]),
@@ -18826,12 +11560,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([282948509305398000u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9f32f33ddea6b0f6b3b8fe104604a91d643891e55926075011d75b3afaa1b7cc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9f32f33ddea6b0f6b3b8fe104604a91d643891e55926075011d75b3afaa1b7cc")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18847,12 +11575,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([287489124477619457u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("5485438252d2192131f34ac546035968451eaff6673d375a9f96750bccc3c593")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5485438252d2192131f34ac546035968451eaff6673d375a9f96750bccc3c593")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342713u64]),
@@ -18866,12 +11588,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([242281005478699662u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f48b321346952a1a3b6bff6d699b51c10e6d23c6497001f8ad2b424821423202")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f48b321346952a1a3b6bff6d699b51c10e6d23c6497001f8ad2b424821423202")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18887,12 +11603,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([272704307146215455u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("2448bc71e00c45e586b3dfe98fd6d5808d26b213b2d318dfba91b44733840f8d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2448bc71e00c45e586b3dfe98fd6d5808d26b213b2d318dfba91b44733840f8d")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342715u64]),
@@ -18906,12 +11616,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([268381557042375913u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("314358861525979cd0d6457713b1ce685a6e7ddcb1b86388c5113bd3b0e3b8d7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("314358861525979cd0d6457713b1ce685a6e7ddcb1b86388c5113bd3b0e3b8d7")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -18927,12 +11631,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([286708236040929854u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("1acc211a9942d2402532e4888cf34ec5e8bd14143e70726572cea7b55590b720")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1acc211a9942d2402532e4888cf34ec5e8bd14143e70726572cea7b55590b720")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342717u64]),
@@ -18946,48 +11644,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([258990820911314236u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1acc211a9942d2402532e4888cf34ec5e8bd14143e70726572cea7b55590b720")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1acc211a9942d2402532e4888cf34ec5e8bd14143e70726572cea7b55590b720")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1acc211a9942d2402532e4888cf34ec5e8bd14143e70726572cea7b55590b720")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1acc211a9942d2402532e4888cf34ec5e8bd14143e70726572cea7b55590b720")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1acc211a9942d2402532e4888cf34ec5e8bd14143e70726572cea7b55590b720")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1acc211a9942d2402532e4888cf34ec5e8bd14143e70726572cea7b55590b720")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1acc211a9942d2402532e4888cf34ec5e8bd14143e70726572cea7b55590b720")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1acc211a9942d2402532e4888cf34ec5e8bd14143e70726572cea7b55590b720")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1acc211a9942d2402532e4888cf34ec5e8bd14143e70726572cea7b55590b720")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1acc211a9942d2402532e4888cf34ec5e8bd14143e70726572cea7b55590b720")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1acc211a9942d2402532e4888cf34ec5e8bd14143e70726572cea7b55590b720")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1acc211a9942d2402532e4888cf34ec5e8bd14143e70726572cea7b55590b720")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8154c2fc84818bcbdd9e05918f025f0e16c4b73cc549f93c63be6c147a414ab2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8154c2fc84818bcbdd9e05918f025f0e16c4b73cc549f93c63be6c147a414ab2")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19003,12 +11659,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([266848940435730195u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d7826b6a6205daab48ec4218b72fe44534348ae4be0c4aef1c91548c68985f62")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d7826b6a6205daab48ec4218b72fe44534348ae4be0c4aef1c91548c68985f62")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342719u64]),
@@ -19022,12 +11672,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([216414595704744269u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8744c28064884ab702cdb1e3a439732d5dac09c942971b9b0ab823b8782d1034")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8744c28064884ab702cdb1e3a439732d5dac09c942971b9b0ab823b8782d1034")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19043,12 +11687,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([230922349709289028u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a12a28c65c17081587b1ebf75c01081e2438429f8fa6a02d4545e3fa1a91a06d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a12a28c65c17081587b1ebf75c01081e2438429f8fa6a02d4545e3fa1a91a06d")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342721u64]),
@@ -19062,12 +11700,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([234967458520098046u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("75f628035eb28671a63e732458d63898264d2cfb28be8ac30bef1d841c7a86fa")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("75f628035eb28671a63e732458d63898264d2cfb28be8ac30bef1d841c7a86fa")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19083,12 +11715,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([257170142317510310u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("92c56adc0ce23c786f4b14ba5f3c3e08c9c29ec9b41bbf72c313bec4fb91a59e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("92c56adc0ce23c786f4b14ba5f3c3e08c9c29ec9b41bbf72c313bec4fb91a59e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342723u64]),
@@ -19102,12 +11728,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([271873429457129024u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8e7b52bb02e39d0981a116637f96939d002023791b65b10762b2ac3fac7ea3c8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8e7b52bb02e39d0981a116637f96939d002023791b65b10762b2ac3fac7ea3c8")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19123,12 +11743,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([252290723497608486u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("11a6f07d115217ac3f4b62962beeb293eec63c9417700665f5a8c956d2f853a5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("11a6f07d115217ac3f4b62962beeb293eec63c9417700665f5a8c956d2f853a5")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342725u64]),
@@ -19142,12 +11756,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([235136168335205872u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ac47248a247f8d7308dfeb1c4e39c393d774b39d9ad9c822c78f752b8594e3cc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ac47248a247f8d7308dfeb1c4e39c393d774b39d9ad9c822c78f752b8594e3cc")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19163,12 +11771,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([245832077314316520u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a2269824dd9ab445502013852543092b09b7178cc04dce5939b4fb65533354d2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a2269824dd9ab445502013852543092b09b7178cc04dce5939b4fb65533354d2")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342727u64]),
@@ -19182,12 +11784,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([270407852815049613u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("28d8ec6602774b1e3350d970c71511cee717a735b98700647d7301f993c251a6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("28d8ec6602774b1e3350d970c71511cee717a735b98700647d7301f993c251a6")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19203,12 +11799,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([219261836966465459u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("251d9e03e79e980d0649a1d384526a393112c06d48cb290131d938bc61349360")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("251d9e03e79e980d0649a1d384526a393112c06d48cb290131d938bc61349360")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342729u64]),
@@ -19222,48 +11812,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([273498672837469138u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("251d9e03e79e980d0649a1d384526a393112c06d48cb290131d938bc61349360")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("251d9e03e79e980d0649a1d384526a393112c06d48cb290131d938bc61349360")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("251d9e03e79e980d0649a1d384526a393112c06d48cb290131d938bc61349360")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("251d9e03e79e980d0649a1d384526a393112c06d48cb290131d938bc61349360")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("251d9e03e79e980d0649a1d384526a393112c06d48cb290131d938bc61349360")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("251d9e03e79e980d0649a1d384526a393112c06d48cb290131d938bc61349360")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("251d9e03e79e980d0649a1d384526a393112c06d48cb290131d938bc61349360")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("251d9e03e79e980d0649a1d384526a393112c06d48cb290131d938bc61349360")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("251d9e03e79e980d0649a1d384526a393112c06d48cb290131d938bc61349360")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("251d9e03e79e980d0649a1d384526a393112c06d48cb290131d938bc61349360")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("251d9e03e79e980d0649a1d384526a393112c06d48cb290131d938bc61349360")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("251d9e03e79e980d0649a1d384526a393112c06d48cb290131d938bc61349360")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("52dfb9543d27de5bdfa5b92abef68c4f956347c7b7a47dbfdf913d8464c99abc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("52dfb9543d27de5bdfa5b92abef68c4f956347c7b7a47dbfdf913d8464c99abc")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19279,12 +11827,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([253462605485437115u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a4819a96f4d2d838c9c261ba30cbba4f89c4e3b106629a1916ddcd35b61bf0e1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a4819a96f4d2d838c9c261ba30cbba4f89c4e3b106629a1916ddcd35b61bf0e1")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342731u64]),
@@ -19298,12 +11840,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([269837754001381708u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a7ca2e4229141442c0c557bcb86ec7907520f31431c2daa95358f1c8dec3d0ac")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a7ca2e4229141442c0c557bcb86ec7907520f31431c2daa95358f1c8dec3d0ac")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19319,12 +11855,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([267492521661984278u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e135cd98f7bfb03092c92274871e6b249b4bc81549ad9e9595d8b2ca2ccfc88c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e135cd98f7bfb03092c92274871e6b249b4bc81549ad9e9595d8b2ca2ccfc88c")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342733u64]),
@@ -19338,12 +11868,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([249831975461104564u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3b5aa80d93a1720c658c55a90479ae1de3a010239879a1fa5d6469b3e9d17a12")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3b5aa80d93a1720c658c55a90479ae1de3a010239879a1fa5d6469b3e9d17a12")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19359,12 +11883,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([277840575488052842u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("31a33a143305cd774c071ae3274f96ef077c1d8027e8cc2492f14d9725fcb147")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("31a33a143305cd774c071ae3274f96ef077c1d8027e8cc2492f14d9725fcb147")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342735u64]),
@@ -19378,12 +11896,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([254571123526340679u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("495692cccc1bd70d2b5a5994000d5c7e8c2dd2262cdb1a28cde8f95d334f6660")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("495692cccc1bd70d2b5a5994000d5c7e8c2dd2262cdb1a28cde8f95d334f6660")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19399,12 +11911,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([270630432019274723u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("6174719f90a8e291bad0fc876347c25bf3c8a84d2cf3958f778ef28e619b7894")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6174719f90a8e291bad0fc876347c25bf3c8a84d2cf3958f778ef28e619b7894")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342737u64]),
@@ -19418,12 +11924,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([272360880781803295u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("04a93ef3db59cb398daabd3e8c8737f62deec43e8aa47ef91725a3c989583d96")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("04a93ef3db59cb398daabd3e8c8737f62deec43e8aa47ef91725a3c989583d96")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19439,12 +11939,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([233419417911624763u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9259a4fb2d120aec09958c366cd5fd6c8b1dfdd41f5fd0887a80d62f42f1346")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9259a4fb2d120aec09958c366cd5fd6c8b1dfdd41f5fd0887a80d62f42f1346")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342739u64]),
@@ -19458,12 +11952,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([251099410573660769u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f77216ece4d2e4194ae56a302a2a553cc96439ffb1a11fb1a011fe909075f50c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f77216ece4d2e4194ae56a302a2a553cc96439ffb1a11fb1a011fe909075f50c")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19479,12 +11967,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([242793934618570240u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c01161818233aa1f3afe562398ee44cdb99d01b792ac526445d083d5dacadfdc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c01161818233aa1f3afe562398ee44cdb99d01b792ac526445d083d5dacadfdc")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342741u64]),
@@ -19498,48 +11980,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([218487251565151913u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c01161818233aa1f3afe562398ee44cdb99d01b792ac526445d083d5dacadfdc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c01161818233aa1f3afe562398ee44cdb99d01b792ac526445d083d5dacadfdc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c01161818233aa1f3afe562398ee44cdb99d01b792ac526445d083d5dacadfdc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c01161818233aa1f3afe562398ee44cdb99d01b792ac526445d083d5dacadfdc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c01161818233aa1f3afe562398ee44cdb99d01b792ac526445d083d5dacadfdc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c01161818233aa1f3afe562398ee44cdb99d01b792ac526445d083d5dacadfdc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c01161818233aa1f3afe562398ee44cdb99d01b792ac526445d083d5dacadfdc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c01161818233aa1f3afe562398ee44cdb99d01b792ac526445d083d5dacadfdc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c01161818233aa1f3afe562398ee44cdb99d01b792ac526445d083d5dacadfdc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c01161818233aa1f3afe562398ee44cdb99d01b792ac526445d083d5dacadfdc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c01161818233aa1f3afe562398ee44cdb99d01b792ac526445d083d5dacadfdc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c01161818233aa1f3afe562398ee44cdb99d01b792ac526445d083d5dacadfdc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("03e66e85dafcc42b3dc9dfd8b978595217feee8c1625ac5d4161fdd3763ab65f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("03e66e85dafcc42b3dc9dfd8b978595217feee8c1625ac5d4161fdd3763ab65f")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19555,12 +11995,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([260374896458776464u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e265181d5ea8ff5cedf8b8011205b3a6f2d413d9738ea7e923ed80247280259a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e265181d5ea8ff5cedf8b8011205b3a6f2d413d9738ea7e923ed80247280259a")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342743u64]),
@@ -19574,12 +12008,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([264621014458399067u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5ed4ce146d750c03188a023c7143cfdf9045a5002e65c9a41a0a58c52b50e412")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5ed4ce146d750c03188a023c7143cfdf9045a5002e65c9a41a0a58c52b50e412")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19595,12 +12023,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([227014904354918270u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("1056e740829aaf643482e544171c55c3699683df2dd709eba289d4cc143c5227")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1056e740829aaf643482e544171c55c3699683df2dd709eba289d4cc143c5227")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342745u64]),
@@ -19614,12 +12036,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([268809261052482035u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7427808c4ceba3bba88642eef2e868e2a17b5a519902afbd38f700ffd454ab3f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7427808c4ceba3bba88642eef2e868e2a17b5a519902afbd38f700ffd454ab3f")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19635,12 +12051,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([229721425283645097u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("ba7943e9ae78f3e51010707c0e09e7580f7b3fa817704dfe37fe19fc035c0b50")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ba7943e9ae78f3e51010707c0e09e7580f7b3fa817704dfe37fe19fc035c0b50")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342747u64]),
@@ -19654,12 +12064,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([236010101111264634u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1f7af29a8e4307454128234c60be1827a5d1d98ddf16331eb27ac06b257245b8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1f7af29a8e4307454128234c60be1827a5d1d98ddf16331eb27ac06b257245b8")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19675,12 +12079,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([284549746156976586u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("083835c96a2ce8a643e05c130da52c334bf0c16791d50828be9d45422c37add0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("083835c96a2ce8a643e05c130da52c334bf0c16791d50828be9d45422c37add0")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342749u64]),
@@ -19694,12 +12092,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([221327137103067644u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a992de00ba56f8daf49b1b5b1a76ad2497df6c1de8490a201acacd21ba0be1c8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a992de00ba56f8daf49b1b5b1a76ad2497df6c1de8490a201acacd21ba0be1c8")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19715,12 +12107,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([252705353196569414u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("52c6060a543ccfc319d4a807d36be1c6673152b91711dfe575898b45a6c5e540")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("52c6060a543ccfc319d4a807d36be1c6673152b91711dfe575898b45a6c5e540")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342751u64]),
@@ -19734,12 +12120,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([233563972217057348u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("def260579ce294a22fe5c3eb82674519091b2c45bf31f55d14829d3254bbb5b4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("def260579ce294a22fe5c3eb82674519091b2c45bf31f55d14829d3254bbb5b4")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19755,12 +12135,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([286246011089629627u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("40e0a1c83dff5648efd9605701ce31d5b98aea4df732f27c9cba5c48b5750f5e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("40e0a1c83dff5648efd9605701ce31d5b98aea4df732f27c9cba5c48b5750f5e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342753u64]),
@@ -19774,48 +12148,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([283370847026644011u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("40e0a1c83dff5648efd9605701ce31d5b98aea4df732f27c9cba5c48b5750f5e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("40e0a1c83dff5648efd9605701ce31d5b98aea4df732f27c9cba5c48b5750f5e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("40e0a1c83dff5648efd9605701ce31d5b98aea4df732f27c9cba5c48b5750f5e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("40e0a1c83dff5648efd9605701ce31d5b98aea4df732f27c9cba5c48b5750f5e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("40e0a1c83dff5648efd9605701ce31d5b98aea4df732f27c9cba5c48b5750f5e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("40e0a1c83dff5648efd9605701ce31d5b98aea4df732f27c9cba5c48b5750f5e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("40e0a1c83dff5648efd9605701ce31d5b98aea4df732f27c9cba5c48b5750f5e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("40e0a1c83dff5648efd9605701ce31d5b98aea4df732f27c9cba5c48b5750f5e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("40e0a1c83dff5648efd9605701ce31d5b98aea4df732f27c9cba5c48b5750f5e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("40e0a1c83dff5648efd9605701ce31d5b98aea4df732f27c9cba5c48b5750f5e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("40e0a1c83dff5648efd9605701ce31d5b98aea4df732f27c9cba5c48b5750f5e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("40e0a1c83dff5648efd9605701ce31d5b98aea4df732f27c9cba5c48b5750f5e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("21f5dc71c5936f71ab0b1c44dd872ceeb8f8645c8a440b7b6f3b92b441acb563")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("21f5dc71c5936f71ab0b1c44dd872ceeb8f8645c8a440b7b6f3b92b441acb563")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19831,12 +12163,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([278571497279565005u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("0a4eb15ea612c025d47de7a27eb35a0d099a3afa83fadd159a108f20c19bd936")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0a4eb15ea612c025d47de7a27eb35a0d099a3afa83fadd159a108f20c19bd936")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342755u64]),
@@ -19850,12 +12176,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([287344641134420491u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("58650e9a84087be403fd6bb49ff91b57b08daa71cf5caac57e33a5cae7978a85")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("58650e9a84087be403fd6bb49ff91b57b08daa71cf5caac57e33a5cae7978a85")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19871,12 +12191,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([245729402518720891u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("7c134772c20548db3ca5c061abee460ac9c85cc9415b401f7acc8779d15fb78c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7c134772c20548db3ca5c061abee460ac9c85cc9415b401f7acc8779d15fb78c")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342757u64]),
@@ -19890,12 +12204,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([266991125583147836u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("20592586a1d50de859d817b8dd82c3694ec16fdb4b55c6c51d46d6aa28e3e483")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("20592586a1d50de859d817b8dd82c3694ec16fdb4b55c6c51d46d6aa28e3e483")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19911,12 +12219,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([237795140786771605u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("52d9032cc90953f67ac4ed7af834ded86913f44e768447ae7ec1b854252bbfbb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("52d9032cc90953f67ac4ed7af834ded86913f44e768447ae7ec1b854252bbfbb")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342759u64]),
@@ -19930,12 +12232,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([216346259374844548u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8ae4f2cde151fcd3d774e3d9ef7d45b401edcb688d6e382d853e13328e144f54")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8ae4f2cde151fcd3d774e3d9ef7d45b401edcb688d6e382d853e13328e144f54")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19951,12 +12247,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([286069832855371232u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("f0dc75ee5ab643febdac0c19f22f781fc1eedc121f5535f94403474791e8d982")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f0dc75ee5ab643febdac0c19f22f781fc1eedc121f5535f94403474791e8d982")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342761u64]),
@@ -19970,12 +12260,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([227006887557034500u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8fb01961c1d17571fe60a7b7b9d93bf9a7ecb05bc295f20466b9f5369094b2a2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8fb01961c1d17571fe60a7b7b9d93bf9a7ecb05bc295f20466b9f5369094b2a2")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -19991,12 +12275,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([250534371015934653u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9f9948e03ad80eadf3e0bc0b256d99b5eb40376e449709b342cca4d33d9f82d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9f9948e03ad80eadf3e0bc0b256d99b5eb40376e449709b342cca4d33d9f82d")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342763u64]),
@@ -20010,12 +12288,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([221885301838495263u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c3ca4772432491d7cb232151ccb8016b9545e77422eab98982161d5e073b7e07")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c3ca4772432491d7cb232151ccb8016b9545e77422eab98982161d5e073b7e07")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20031,12 +12303,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([228971575401652977u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("41956a820c8fb4e30f51dc41411c97fba0dd2a84df4f485a21de54910f20e862")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("41956a820c8fb4e30f51dc41411c97fba0dd2a84df4f485a21de54910f20e862")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342765u64]),
@@ -20050,48 +12316,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([242584530141040744u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("41956a820c8fb4e30f51dc41411c97fba0dd2a84df4f485a21de54910f20e862")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("41956a820c8fb4e30f51dc41411c97fba0dd2a84df4f485a21de54910f20e862")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("41956a820c8fb4e30f51dc41411c97fba0dd2a84df4f485a21de54910f20e862")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("41956a820c8fb4e30f51dc41411c97fba0dd2a84df4f485a21de54910f20e862")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("41956a820c8fb4e30f51dc41411c97fba0dd2a84df4f485a21de54910f20e862")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("41956a820c8fb4e30f51dc41411c97fba0dd2a84df4f485a21de54910f20e862")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("41956a820c8fb4e30f51dc41411c97fba0dd2a84df4f485a21de54910f20e862")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("41956a820c8fb4e30f51dc41411c97fba0dd2a84df4f485a21de54910f20e862")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("41956a820c8fb4e30f51dc41411c97fba0dd2a84df4f485a21de54910f20e862")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("41956a820c8fb4e30f51dc41411c97fba0dd2a84df4f485a21de54910f20e862")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("41956a820c8fb4e30f51dc41411c97fba0dd2a84df4f485a21de54910f20e862")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("41956a820c8fb4e30f51dc41411c97fba0dd2a84df4f485a21de54910f20e862")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4fadc1ee2e499ce3ab2854c1bf592c09337d617fd95eb8f874b4add77168d4e5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4fadc1ee2e499ce3ab2854c1bf592c09337d617fd95eb8f874b4add77168d4e5")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20107,12 +12331,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([242491391881948173u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("5679b90d70d01c665578ec73bdcf665e39bd41670c7d2f0efb6a262efbcd59e2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5679b90d70d01c665578ec73bdcf665e39bd41670c7d2f0efb6a262efbcd59e2")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342767u64]),
@@ -20126,12 +12344,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([245309519583999269u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("89acf0bfea1f8bac89c522750f9b5bd3a42b82e9bbeb05d0ac11a366c22d6643")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("89acf0bfea1f8bac89c522750f9b5bd3a42b82e9bbeb05d0ac11a366c22d6643")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20147,12 +12359,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([265724028273392675u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("3f69ab6073a023a21f00079ea1d0b32bef7155af0d310eb77d64157380862743")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3f69ab6073a023a21f00079ea1d0b32bef7155af0d310eb77d64157380862743")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342769u64]),
@@ -20166,12 +12372,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([248670262391985670u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f1b11b686aadf722ba365c36df5a10a5467eafdbca4e83472f90abc160ccbe5b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f1b11b686aadf722ba365c36df5a10a5467eafdbca4e83472f90abc160ccbe5b")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20187,12 +12387,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([236927180480028413u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("56b8f3a4bba047f3497ce45733a3af01150f56a7159fa0d19424597ca0409d80")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("56b8f3a4bba047f3497ce45733a3af01150f56a7159fa0d19424597ca0409d80")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342771u64]),
@@ -20206,12 +12400,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([273797769575972986u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7e399b68f7580caa704a63cfd6f2671dc24e2c8772b2bd1fd810aaba2165a71d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7e399b68f7580caa704a63cfd6f2671dc24e2c8772b2bd1fd810aaba2165a71d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20227,12 +12415,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([285875029675342036u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("18ed651055e108b53f42c258b537c5c8f27516ccbe01386607d76cc5758e1dc7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("18ed651055e108b53f42c258b537c5c8f27516ccbe01386607d76cc5758e1dc7")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342773u64]),
@@ -20246,12 +12428,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([219555748713063889u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("62d404f0bc076ef83e04313ae6365c9ea9440f9420ea5ea45193596bd2a8fd2c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("62d404f0bc076ef83e04313ae6365c9ea9440f9420ea5ea45193596bd2a8fd2c")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20267,12 +12443,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([279684513991128882u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("222c153950129866b2fa7ebd888cd70fa9240e8fda6ea05aae2dcdbc40ee886a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("222c153950129866b2fa7ebd888cd70fa9240e8fda6ea05aae2dcdbc40ee886a")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342775u64]),
@@ -20286,12 +12456,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([273762350580949649u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd0a6383336d7379d56426df5f0fce852359912528666e688ac3b9ad2992e5cf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("cd0a6383336d7379d56426df5f0fce852359912528666e688ac3b9ad2992e5cf")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20307,12 +12471,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([259223571748384661u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("a2024538e9e610ee4f226ce771b435866a1281b60cd24a65adaff2863c3760d2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a2024538e9e610ee4f226ce771b435866a1281b60cd24a65adaff2863c3760d2")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342777u64]),
@@ -20326,48 +12484,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([246023922605685659u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a2024538e9e610ee4f226ce771b435866a1281b60cd24a65adaff2863c3760d2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a2024538e9e610ee4f226ce771b435866a1281b60cd24a65adaff2863c3760d2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a2024538e9e610ee4f226ce771b435866a1281b60cd24a65adaff2863c3760d2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a2024538e9e610ee4f226ce771b435866a1281b60cd24a65adaff2863c3760d2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a2024538e9e610ee4f226ce771b435866a1281b60cd24a65adaff2863c3760d2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a2024538e9e610ee4f226ce771b435866a1281b60cd24a65adaff2863c3760d2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a2024538e9e610ee4f226ce771b435866a1281b60cd24a65adaff2863c3760d2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a2024538e9e610ee4f226ce771b435866a1281b60cd24a65adaff2863c3760d2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a2024538e9e610ee4f226ce771b435866a1281b60cd24a65adaff2863c3760d2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a2024538e9e610ee4f226ce771b435866a1281b60cd24a65adaff2863c3760d2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a2024538e9e610ee4f226ce771b435866a1281b60cd24a65adaff2863c3760d2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a2024538e9e610ee4f226ce771b435866a1281b60cd24a65adaff2863c3760d2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2de1da8b53ab2d3c43fc14534169d76df02e1b668538f8dfc4d30b01f2a1693c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2de1da8b53ab2d3c43fc14534169d76df02e1b668538f8dfc4d30b01f2a1693c")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20383,12 +12499,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([241242298897455212u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("1937e74b067fe647f6713193698cf8bf12326be3250a7df3d329fe90c642076d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1937e74b067fe647f6713193698cf8bf12326be3250a7df3d329fe90c642076d")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342779u64]),
@@ -20402,12 +12512,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([264613458432145963u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("249a6acc5d585c9cb5b2fce0b9f105dc1425b517f9c0f8057c95628355bbf3d8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("249a6acc5d585c9cb5b2fce0b9f105dc1425b517f9c0f8057c95628355bbf3d8")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20423,12 +12527,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([245680291056284737u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("478fed8fee07931e92e57ec823298163c8189eb8905f2681f57ad08d40c8a8da")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("478fed8fee07931e92e57ec823298163c8189eb8905f2681f57ad08d40c8a8da")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342781u64]),
@@ -20442,12 +12540,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([284814047460812424u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("914c8f1b75d2b5f0301e9529c0f5ecc3a34ac9cfc40bd225f7e0a268ce5333ab")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("914c8f1b75d2b5f0301e9529c0f5ecc3a34ac9cfc40bd225f7e0a268ce5333ab")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20463,12 +12555,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([232101645932972561u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("b02ce9fd3de6f06b009f5a80af98aa65a0b43cd0e1e2475bff5212aa1d3a4bab")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b02ce9fd3de6f06b009f5a80af98aa65a0b43cd0e1e2475bff5212aa1d3a4bab")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342783u64]),
@@ -20482,12 +12568,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([247520865346546343u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9fe3f1605d5225a990e4fa627420f22cd87d18f8bb1b14c4d69d31e9ce73e205")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9fe3f1605d5225a990e4fa627420f22cd87d18f8bb1b14c4d69d31e9ce73e205")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20503,12 +12583,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([287039959874930322u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e870d8b1f375fa12536c47de38c87611f6b838b67e9593f13097ef9dc9b3cb12")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e870d8b1f375fa12536c47de38c87611f6b838b67e9593f13097ef9dc9b3cb12")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342785u64]),
@@ -20522,12 +12596,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([278854751752851639u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2d5d4ad5c005e2a57ad63aad294ccf7b30de24692c4944255f9d6d8380261be6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2d5d4ad5c005e2a57ad63aad294ccf7b30de24692c4944255f9d6d8380261be6")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20543,12 +12611,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([277797210372841350u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c0a6d41c822816dd84a9310d386cf518cfcbad8e31744f7d50403b76412f7c1b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c0a6d41c822816dd84a9310d386cf518cfcbad8e31744f7d50403b76412f7c1b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342787u64]),
@@ -20562,12 +12624,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([275018610325852669u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7a0cb4f0dd19e110dca34af6de49ae8dda7062e0347bd28dc58065af9346ce45")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7a0cb4f0dd19e110dca34af6de49ae8dda7062e0347bd28dc58065af9346ce45")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20583,12 +12639,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([285786562462988964u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("326b012e6c4c029ff7d5cc79e44740c57991ed62a2c64cd68e56c0f63115040c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("326b012e6c4c029ff7d5cc79e44740c57991ed62a2c64cd68e56c0f63115040c")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342789u64]),
@@ -20602,48 +12652,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([230275388188091764u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("326b012e6c4c029ff7d5cc79e44740c57991ed62a2c64cd68e56c0f63115040c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("326b012e6c4c029ff7d5cc79e44740c57991ed62a2c64cd68e56c0f63115040c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("326b012e6c4c029ff7d5cc79e44740c57991ed62a2c64cd68e56c0f63115040c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("326b012e6c4c029ff7d5cc79e44740c57991ed62a2c64cd68e56c0f63115040c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("326b012e6c4c029ff7d5cc79e44740c57991ed62a2c64cd68e56c0f63115040c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("326b012e6c4c029ff7d5cc79e44740c57991ed62a2c64cd68e56c0f63115040c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("326b012e6c4c029ff7d5cc79e44740c57991ed62a2c64cd68e56c0f63115040c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("326b012e6c4c029ff7d5cc79e44740c57991ed62a2c64cd68e56c0f63115040c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("326b012e6c4c029ff7d5cc79e44740c57991ed62a2c64cd68e56c0f63115040c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("326b012e6c4c029ff7d5cc79e44740c57991ed62a2c64cd68e56c0f63115040c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("326b012e6c4c029ff7d5cc79e44740c57991ed62a2c64cd68e56c0f63115040c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("326b012e6c4c029ff7d5cc79e44740c57991ed62a2c64cd68e56c0f63115040c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3e3f35bf01fa38638d5b6d578217261cc9f3a938b017a5e216c917b1da96dd53")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3e3f35bf01fa38638d5b6d578217261cc9f3a938b017a5e216c917b1da96dd53")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20659,12 +12667,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([253287165884072763u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d52205ea5610971a7d6a397ca19a52208d543d8fe6a2d4bc26c3f3bb43f5dd54")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d52205ea5610971a7d6a397ca19a52208d543d8fe6a2d4bc26c3f3bb43f5dd54")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342791u64]),
@@ -20678,12 +12680,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([276695337098086036u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("985b08839d285cc038600cd4e240447375bcb2392beb28cdc6e753fb6932e8c7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("985b08839d285cc038600cd4e240447375bcb2392beb28cdc6e753fb6932e8c7")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20699,12 +12695,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([237533426481216511u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("24e82a87cc79c14a8f0e72a927f65c7323b968cbd51b5134b42888137c9c4599")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("24e82a87cc79c14a8f0e72a927f65c7323b968cbd51b5134b42888137c9c4599")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342793u64]),
@@ -20718,12 +12708,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([279442817801120061u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a94d4af2ae085e8b6ca52c2ba50e7e9be21eefe30d86fd089e14fe2563431c6d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a94d4af2ae085e8b6ca52c2ba50e7e9be21eefe30d86fd089e14fe2563431c6d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20739,12 +12723,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([236496039787013588u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("2df18dfb3bd4d2c7c860d410337284805d398416bb2aff5366c31503d285fa5e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2df18dfb3bd4d2c7c860d410337284805d398416bb2aff5366c31503d285fa5e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342795u64]),
@@ -20758,12 +12736,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([225212655952203002u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5081050d13c8bc78314fb79d9c5bc0120521b930026cbaeb0ff7b48c1fd61129")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5081050d13c8bc78314fb79d9c5bc0120521b930026cbaeb0ff7b48c1fd61129")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20779,12 +12751,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([240382164450433121u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("da52ccac56c59ff9e5384467d1a6065e86b104f53549fabc7a06b1d6dfe2ce49")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("da52ccac56c59ff9e5384467d1a6065e86b104f53549fabc7a06b1d6dfe2ce49")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342797u64]),
@@ -20798,12 +12764,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([282420785973346384u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("922bc801c5cc333e4f5fd377f81c332ee66e327e61828c87482d38c19a143a11")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("922bc801c5cc333e4f5fd377f81c332ee66e327e61828c87482d38c19a143a11")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20819,12 +12779,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([235320702613846534u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("21862f882f815a770fba644f5aeff6cf676467e1acb2eeabfcd0d19ac28af33b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("21862f882f815a770fba644f5aeff6cf676467e1acb2eeabfcd0d19ac28af33b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342799u64]),
@@ -20838,12 +12792,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([282227350647716189u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("be6f6e181dae37c4681e374a9acc87b18233c1d641ec38bb54d22e28ac8a8907")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("be6f6e181dae37c4681e374a9acc87b18233c1d641ec38bb54d22e28ac8a8907")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20859,12 +12807,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([279361523423838245u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("1bcdd9bac0ab77c8e029fb86191a96e93747b82ea34aa8d52f7c6f0e53efbea9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1bcdd9bac0ab77c8e029fb86191a96e93747b82ea34aa8d52f7c6f0e53efbea9")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342801u64]),
@@ -20878,48 +12820,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([222109256912675180u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1bcdd9bac0ab77c8e029fb86191a96e93747b82ea34aa8d52f7c6f0e53efbea9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1bcdd9bac0ab77c8e029fb86191a96e93747b82ea34aa8d52f7c6f0e53efbea9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1bcdd9bac0ab77c8e029fb86191a96e93747b82ea34aa8d52f7c6f0e53efbea9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1bcdd9bac0ab77c8e029fb86191a96e93747b82ea34aa8d52f7c6f0e53efbea9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1bcdd9bac0ab77c8e029fb86191a96e93747b82ea34aa8d52f7c6f0e53efbea9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1bcdd9bac0ab77c8e029fb86191a96e93747b82ea34aa8d52f7c6f0e53efbea9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1bcdd9bac0ab77c8e029fb86191a96e93747b82ea34aa8d52f7c6f0e53efbea9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1bcdd9bac0ab77c8e029fb86191a96e93747b82ea34aa8d52f7c6f0e53efbea9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1bcdd9bac0ab77c8e029fb86191a96e93747b82ea34aa8d52f7c6f0e53efbea9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1bcdd9bac0ab77c8e029fb86191a96e93747b82ea34aa8d52f7c6f0e53efbea9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1bcdd9bac0ab77c8e029fb86191a96e93747b82ea34aa8d52f7c6f0e53efbea9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1bcdd9bac0ab77c8e029fb86191a96e93747b82ea34aa8d52f7c6f0e53efbea9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5f130510c9ffaa727eea04fc01d24279579986fd4943d6f817581b204c16a870")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5f130510c9ffaa727eea04fc01d24279579986fd4943d6f817581b204c16a870")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20935,12 +12835,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([238447991087595393u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("5b845cfbd4c326c881c38ffe34a631df8b85f29b21595a1821662a42efb72d5d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5b845cfbd4c326c881c38ffe34a631df8b85f29b21595a1821662a42efb72d5d")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342803u64]),
@@ -20954,12 +12848,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([229593736362635413u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6dba59f43ca3a57d4fc8ccf135e097344d71d64aca58954fd3979f1ed028131b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6dba59f43ca3a57d4fc8ccf135e097344d71d64aca58954fd3979f1ed028131b")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -20975,12 +12863,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([232628111578613091u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("6250ff13b014d320686a8b9329773b0480e4b585055490fd0a32023dcd74426e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6250ff13b014d320686a8b9329773b0480e4b585055490fd0a32023dcd74426e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342805u64]),
@@ -20994,12 +12876,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([239769769408899299u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("738c5c96357ff3e11dac039f30b71243495cf02b3ad25535caf2e26b4d4d4c32")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("738c5c96357ff3e11dac039f30b71243495cf02b3ad25535caf2e26b4d4d4c32")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21015,12 +12891,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([284266117456520741u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("000c1d51c79fa0b16b56f8d1e072206fd6c94aa61de4f287593e180e302f3140")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("000c1d51c79fa0b16b56f8d1e072206fd6c94aa61de4f287593e180e302f3140")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342807u64]),
@@ -21034,12 +12904,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([278239117810221346u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("868f4c1220ad17db0201be459f71da0aac7fdd47bd42f428897b535f11dcdbe7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("868f4c1220ad17db0201be459f71da0aac7fdd47bd42f428897b535f11dcdbe7")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21055,12 +12919,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([231766149721658918u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("3f0ed8dafe0e5cc279bc4b20b1f4dadc78b252037964dabb193685ce0d842385")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("3f0ed8dafe0e5cc279bc4b20b1f4dadc78b252037964dabb193685ce0d842385")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342809u64]),
@@ -21074,12 +12932,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([217728751936537497u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4cc8d7de14f12b698f159d5923a25f196d181ebb857d9cd6a23aee052e82e5c2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4cc8d7de14f12b698f159d5923a25f196d181ebb857d9cd6a23aee052e82e5c2")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21095,12 +12947,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([225858602582472796u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("53270a4c285c84fdb450903b14124804b6ecfc36b52550eb1c0fb016b255c725")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("53270a4c285c84fdb450903b14124804b6ecfc36b52550eb1c0fb016b255c725")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342811u64]),
@@ -21114,12 +12960,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([283796613895504668u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("349337c222d49d0f9517fd980ce5b0c47b4e0653e74037d34d2453b18ba30451")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("349337c222d49d0f9517fd980ce5b0c47b4e0653e74037d34d2453b18ba30451")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21135,12 +12975,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([217495832347312325u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d8f40c2ee9c2c2eb351a290939883607f8259e6824158a6ce5c82b9fd2c445e6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d8f40c2ee9c2c2eb351a290939883607f8259e6824158a6ce5c82b9fd2c445e6")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342813u64]),
@@ -21154,48 +12988,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([265217803446248268u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d8f40c2ee9c2c2eb351a290939883607f8259e6824158a6ce5c82b9fd2c445e6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d8f40c2ee9c2c2eb351a290939883607f8259e6824158a6ce5c82b9fd2c445e6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d8f40c2ee9c2c2eb351a290939883607f8259e6824158a6ce5c82b9fd2c445e6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d8f40c2ee9c2c2eb351a290939883607f8259e6824158a6ce5c82b9fd2c445e6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d8f40c2ee9c2c2eb351a290939883607f8259e6824158a6ce5c82b9fd2c445e6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d8f40c2ee9c2c2eb351a290939883607f8259e6824158a6ce5c82b9fd2c445e6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d8f40c2ee9c2c2eb351a290939883607f8259e6824158a6ce5c82b9fd2c445e6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d8f40c2ee9c2c2eb351a290939883607f8259e6824158a6ce5c82b9fd2c445e6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d8f40c2ee9c2c2eb351a290939883607f8259e6824158a6ce5c82b9fd2c445e6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d8f40c2ee9c2c2eb351a290939883607f8259e6824158a6ce5c82b9fd2c445e6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d8f40c2ee9c2c2eb351a290939883607f8259e6824158a6ce5c82b9fd2c445e6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d8f40c2ee9c2c2eb351a290939883607f8259e6824158a6ce5c82b9fd2c445e6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7040cb184454e2a345be76b33deb005972eafeff91556a72f69c315e091b3bf4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7040cb184454e2a345be76b33deb005972eafeff91556a72f69c315e091b3bf4")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21211,12 +13003,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([260157132039900765u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("0012e5ccb679aeeb6501e1140810d0d05b47ec87897da71709a8f1ce496df2c7")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0012e5ccb679aeeb6501e1140810d0d05b47ec87897da71709a8f1ce496df2c7")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342815u64]),
@@ -21230,12 +13016,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([256916970453334895u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bbdf1d84a7dae8776c786d98fe6137161c511550cd8bec6c8bf70c9422c4b3b0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("bbdf1d84a7dae8776c786d98fe6137161c511550cd8bec6c8bf70c9422c4b3b0")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21251,12 +13031,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([279514489063909365u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("ca8812aa1b333a251d370ecddd59f24d74d1be173df44072047cfe3a042a3deb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ca8812aa1b333a251d370ecddd59f24d74d1be173df44072047cfe3a042a3deb")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342817u64]),
@@ -21270,12 +13044,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([218691875155440281u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5bb36964727ad4638f0d25384bb9b47bd2d77fbc9e36c0af31cc43cb0ce3c972")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5bb36964727ad4638f0d25384bb9b47bd2d77fbc9e36c0af31cc43cb0ce3c972")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21291,12 +13059,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([221827572481490602u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("89edd61ede6e85e21967a1d50a635d101bbc499f4c9ce2d853677afe935a6e24")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("89edd61ede6e85e21967a1d50a635d101bbc499f4c9ce2d853677afe935a6e24")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342819u64]),
@@ -21310,12 +13072,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([229413412256359231u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("04845827ca594df29c1109e5df908e9464ed64d1c5da210f4eb2210fde785b7b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("04845827ca594df29c1109e5df908e9464ed64d1c5da210f4eb2210fde785b7b")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21331,12 +13087,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([218860462916018921u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("f9b802bb618eb585d3a822ad61a8e87e4950b5136575ac80a27c295fa0bc04c2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f9b802bb618eb585d3a822ad61a8e87e4950b5136575ac80a27c295fa0bc04c2")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342821u64]),
@@ -21350,12 +13100,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([221276902586027970u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0ca1773982f4ab0091871a57cf3dca2b1e8c9d2efd9cad5e51680b5fb92c68fb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("0ca1773982f4ab0091871a57cf3dca2b1e8c9d2efd9cad5e51680b5fb92c68fb")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21371,12 +13115,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([268161895888661644u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("2c3b0038ffdb430e567eed41c6e5ac3758f319c5ec1ea4683cf236b7b4affc01")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2c3b0038ffdb430e567eed41c6e5ac3758f319c5ec1ea4683cf236b7b4affc01")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342823u64]),
@@ -21390,12 +13128,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([228359605961402033u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("fcb61cd6e49832f67e08d2175abace422d2d081ef7eb129f1c051489ece9194e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("fcb61cd6e49832f67e08d2175abace422d2d081ef7eb129f1c051489ece9194e")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21411,12 +13143,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([284105534627968947u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("7ff3c856df044d5ca5b494c4349fbab5e7bc1b355d0c6b03a597bf57a70d5e58")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7ff3c856df044d5ca5b494c4349fbab5e7bc1b355d0c6b03a597bf57a70d5e58")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342825u64]),
@@ -21430,48 +13156,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([217000487545111470u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7ff3c856df044d5ca5b494c4349fbab5e7bc1b355d0c6b03a597bf57a70d5e58")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7ff3c856df044d5ca5b494c4349fbab5e7bc1b355d0c6b03a597bf57a70d5e58")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7ff3c856df044d5ca5b494c4349fbab5e7bc1b355d0c6b03a597bf57a70d5e58")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7ff3c856df044d5ca5b494c4349fbab5e7bc1b355d0c6b03a597bf57a70d5e58")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7ff3c856df044d5ca5b494c4349fbab5e7bc1b355d0c6b03a597bf57a70d5e58")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7ff3c856df044d5ca5b494c4349fbab5e7bc1b355d0c6b03a597bf57a70d5e58")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7ff3c856df044d5ca5b494c4349fbab5e7bc1b355d0c6b03a597bf57a70d5e58")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7ff3c856df044d5ca5b494c4349fbab5e7bc1b355d0c6b03a597bf57a70d5e58")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7ff3c856df044d5ca5b494c4349fbab5e7bc1b355d0c6b03a597bf57a70d5e58")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7ff3c856df044d5ca5b494c4349fbab5e7bc1b355d0c6b03a597bf57a70d5e58")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7ff3c856df044d5ca5b494c4349fbab5e7bc1b355d0c6b03a597bf57a70d5e58")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7ff3c856df044d5ca5b494c4349fbab5e7bc1b355d0c6b03a597bf57a70d5e58")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1cf608c8b3f8b7119e097f197d5384c40cde5a8fcfc92f387ee6c04bcb48a0c2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1cf608c8b3f8b7119e097f197d5384c40cde5a8fcfc92f387ee6c04bcb48a0c2")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21487,12 +13171,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([287020056868445695u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("86f6d83fe432c691eb8610c1771bf78aae2dc7bf4b4845bda7a21fff96cc61d5")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("86f6d83fe432c691eb8610c1771bf78aae2dc7bf4b4845bda7a21fff96cc61d5")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342827u64]),
@@ -21506,12 +13184,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([277540938132252128u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("87eadc156d1eb38193d514d41019dc22818867effe2d9161ca76c15380296cc3")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("87eadc156d1eb38193d514d41019dc22818867effe2d9161ca76c15380296cc3")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21527,12 +13199,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([253931406315608181u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("b3512e996b8df5c25e96a7e10c9b69d1a5ba679ba3eed67955233178ec6ec556")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b3512e996b8df5c25e96a7e10c9b69d1a5ba679ba3eed67955233178ec6ec556")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342829u64]),
@@ -21546,12 +13212,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([279241632162753734u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("561f592acd2c0566f2262f323061bbea49f865a1eff3587649e63a5c68660497")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("561f592acd2c0566f2262f323061bbea49f865a1eff3587649e63a5c68660497")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21567,12 +13227,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([271550724857557110u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c5878049e4674135ce07a8c5f2b74f067e700c8408b9458f5147e1838d11eaa6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c5878049e4674135ce07a8c5f2b74f067e700c8408b9458f5147e1838d11eaa6")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342831u64]),
@@ -21586,12 +13240,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([274261651854691610u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5cc55337a535ee1c4450146542e620cf13af62bf697eca33a5b2a9eb650f826e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5cc55337a535ee1c4450146542e620cf13af62bf697eca33a5b2a9eb650f826e")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21607,12 +13255,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([228562873115715350u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("af58d980847076a018cd8aa509e2dc4a1e645c8a6388e426e0f0bb9e09354702")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("af58d980847076a018cd8aa509e2dc4a1e645c8a6388e426e0f0bb9e09354702")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342833u64]),
@@ -21626,12 +13268,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([235811435750290270u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("16522f6848f5d2cf8378bfd6238c3c45f3bb6616177c837d6115867483ceb5e6")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("16522f6848f5d2cf8378bfd6238c3c45f3bb6616177c837d6115867483ceb5e6")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21647,12 +13283,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([231280042019327923u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("706f5f7371125d2ae5499c0fe472ed02423884d5d1f2bbbf22f26a717e31c20b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("706f5f7371125d2ae5499c0fe472ed02423884d5d1f2bbbf22f26a717e31c20b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342835u64]),
@@ -21666,12 +13296,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([216668667680664591u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d6c023b85949e75f9222445dd1b578318c44c108ab07c7476f8ec2244bac8751")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d6c023b85949e75f9222445dd1b578318c44c108ab07c7476f8ec2244bac8751")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21687,12 +13311,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([254748936349121151u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9232cb8e5486bb1a1fd1fbf1842bb4c4d2c0dd888fd5e0eb9b6c5eeda73d77d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9232cb8e5486bb1a1fd1fbf1842bb4c4d2c0dd888fd5e0eb9b6c5eeda73d77d")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342837u64]),
@@ -21706,48 +13324,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([229506286360840677u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9232cb8e5486bb1a1fd1fbf1842bb4c4d2c0dd888fd5e0eb9b6c5eeda73d77d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9232cb8e5486bb1a1fd1fbf1842bb4c4d2c0dd888fd5e0eb9b6c5eeda73d77d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9232cb8e5486bb1a1fd1fbf1842bb4c4d2c0dd888fd5e0eb9b6c5eeda73d77d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9232cb8e5486bb1a1fd1fbf1842bb4c4d2c0dd888fd5e0eb9b6c5eeda73d77d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9232cb8e5486bb1a1fd1fbf1842bb4c4d2c0dd888fd5e0eb9b6c5eeda73d77d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9232cb8e5486bb1a1fd1fbf1842bb4c4d2c0dd888fd5e0eb9b6c5eeda73d77d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9232cb8e5486bb1a1fd1fbf1842bb4c4d2c0dd888fd5e0eb9b6c5eeda73d77d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9232cb8e5486bb1a1fd1fbf1842bb4c4d2c0dd888fd5e0eb9b6c5eeda73d77d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9232cb8e5486bb1a1fd1fbf1842bb4c4d2c0dd888fd5e0eb9b6c5eeda73d77d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9232cb8e5486bb1a1fd1fbf1842bb4c4d2c0dd888fd5e0eb9b6c5eeda73d77d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9232cb8e5486bb1a1fd1fbf1842bb4c4d2c0dd888fd5e0eb9b6c5eeda73d77d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9232cb8e5486bb1a1fd1fbf1842bb4c4d2c0dd888fd5e0eb9b6c5eeda73d77d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("15a9f7242830ea63d3e596aedb422a02712e59a2dae517444448adf57f718236")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("15a9f7242830ea63d3e596aedb422a02712e59a2dae517444448adf57f718236")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21763,12 +13339,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([250399171812703083u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("4d1fbe776f16ce48a1c540c9b06160de946dbbd148ff2998fb24cbd93fd94e0e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4d1fbe776f16ce48a1c540c9b06160de946dbbd148ff2998fb24cbd93fd94e0e")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342839u64]),
@@ -21782,12 +13352,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([254921913230376797u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("36ebf752a41b093b4056f8b9c68a96e5fa19e235cc66cf99bdb3cd527cf63bc2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("36ebf752a41b093b4056f8b9c68a96e5fa19e235cc66cf99bdb3cd527cf63bc2")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21803,12 +13367,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([286069849038305948u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d4f20e8bdb2bde4aa6ab2e5059c696247f1149bc46a7089cd6db139a08a57b17")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d4f20e8bdb2bde4aa6ab2e5059c696247f1149bc46a7089cd6db139a08a57b17")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342841u64]),
@@ -21822,12 +13380,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([281997809689234557u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8b740f5b7a20bef9540a16bd49ac31baf207b63e57f7f5ce8bbd69dfce0ca3ee")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8b740f5b7a20bef9540a16bd49ac31baf207b63e57f7f5ce8bbd69dfce0ca3ee")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21843,12 +13395,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([232435270190468742u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("786afb5d5f8171dcd663febf22f280e861d95b11d4bbe4d1db74849d8585c9cc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("786afb5d5f8171dcd663febf22f280e861d95b11d4bbe4d1db74849d8585c9cc")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342843u64]),
@@ -21862,12 +13408,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([257856131313983988u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("aecc274dbb5bed575aebdcbdb35e8920c27502c0481d46e4ca4e9eae23407a3a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("aecc274dbb5bed575aebdcbdb35e8920c27502c0481d46e4ca4e9eae23407a3a")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21883,12 +13423,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([264878717505516433u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("43c6394d18e3324caa86bc08dc09e7573276546041dfeecba3f544007e32cec4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("43c6394d18e3324caa86bc08dc09e7573276546041dfeecba3f544007e32cec4")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342845u64]),
@@ -21902,12 +13436,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([262703605935185164u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("75bb00f31f104571aa74edfe695e095546840f9cff9a5e92eb5e35ba90ccf4c1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("75bb00f31f104571aa74edfe695e095546840f9cff9a5e92eb5e35ba90ccf4c1")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21923,12 +13451,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([225261686336113887u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c19e55b01c3e3718ebe1404fad811886918e16acd1b24e4398db727ed14b788c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c19e55b01c3e3718ebe1404fad811886918e16acd1b24e4398db727ed14b788c")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342847u64]),
@@ -21942,12 +13464,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([238004304327902840u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c5d42de5c2bf5ed6e4e13ffd5fefe669096589fd3949fd04a79a5dc02b88b80f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c5d42de5c2bf5ed6e4e13ffd5fefe669096589fd3949fd04a79a5dc02b88b80f")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -21963,12 +13479,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([243874263602747474u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("d76e27f827020fd7af210a717ef37fb26bff4d423763805d26fc9170a8477d3d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d76e27f827020fd7af210a717ef37fb26bff4d423763805d26fc9170a8477d3d")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342849u64]),
@@ -21982,48 +13492,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([287354337057342933u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d76e27f827020fd7af210a717ef37fb26bff4d423763805d26fc9170a8477d3d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d76e27f827020fd7af210a717ef37fb26bff4d423763805d26fc9170a8477d3d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d76e27f827020fd7af210a717ef37fb26bff4d423763805d26fc9170a8477d3d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d76e27f827020fd7af210a717ef37fb26bff4d423763805d26fc9170a8477d3d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d76e27f827020fd7af210a717ef37fb26bff4d423763805d26fc9170a8477d3d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d76e27f827020fd7af210a717ef37fb26bff4d423763805d26fc9170a8477d3d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d76e27f827020fd7af210a717ef37fb26bff4d423763805d26fc9170a8477d3d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d76e27f827020fd7af210a717ef37fb26bff4d423763805d26fc9170a8477d3d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d76e27f827020fd7af210a717ef37fb26bff4d423763805d26fc9170a8477d3d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d76e27f827020fd7af210a717ef37fb26bff4d423763805d26fc9170a8477d3d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d76e27f827020fd7af210a717ef37fb26bff4d423763805d26fc9170a8477d3d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d76e27f827020fd7af210a717ef37fb26bff4d423763805d26fc9170a8477d3d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e20cca3d5c55e4c473f6378e9670d4b373899b4a2faa7267358de3ddd5f90482")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e20cca3d5c55e4c473f6378e9670d4b373899b4a2faa7267358de3ddd5f90482")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -22039,12 +13507,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([218894648252856560u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9a8e4bb1e40c42a59fcb856ce28a372d8a5a867167feb8735d67680e72d714b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e9a8e4bb1e40c42a59fcb856ce28a372d8a5a867167feb8735d67680e72d714b")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342851u64]),
@@ -22058,12 +13520,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([269470154030764015u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8db464fea104f95053f3c2924c97dbdf86c47957fa10275e1a5e589cc95af624")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("8db464fea104f95053f3c2924c97dbdf86c47957fa10275e1a5e589cc95af624")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -22079,12 +13535,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([280342182892827306u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("f51c8749a18fad22121375ed12db078b193013113b760bbe3cda0146682c05ab")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("f51c8749a18fad22121375ed12db078b193013113b760bbe3cda0146682c05ab")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342853u64]),
@@ -22098,12 +13548,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([232579946340050108u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a30e6bebf8bf61da3b24f07a9a8b730dad3b086b373d41d1fe7c853ba53943f4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a30e6bebf8bf61da3b24f07a9a8b730dad3b086b373d41d1fe7c853ba53943f4")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -22119,12 +13563,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([252186719059305527u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("1ca300622fc858e4f53493d5019e9b371bcfc98175668182987610b379a3d01d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("1ca300622fc858e4f53493d5019e9b371bcfc98175668182987610b379a3d01d")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342855u64]),
@@ -22138,12 +13576,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([236496545693658227u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ba5bb72906f9209346404791ff6cd6bd13e2bba078bb8d535074e2f35669a01d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ba5bb72906f9209346404791ff6cd6bd13e2bba078bb8d535074e2f35669a01d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -22159,12 +13591,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([229024781520423059u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("b029f8624ef25e8289998bf7df32b7b47b4190f8be900f4afaa163ea655285db")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b029f8624ef25e8289998bf7df32b7b47b4190f8be900f4afaa163ea655285db")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342857u64]),
@@ -22178,12 +13604,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([272127935137560719u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6a45b04b6769ba040a74c56a1ed210458f1b928dcf6c221132c01479b36549fe")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6a45b04b6769ba040a74c56a1ed210458f1b928dcf6c221132c01479b36549fe")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -22199,12 +13619,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([278426405418800369u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("7e8e967eef88ed8d83a340ae76f90eed9f56f10c4cc94a5bf049cbc2b419ad54")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("7e8e967eef88ed8d83a340ae76f90eed9f56f10c4cc94a5bf049cbc2b419ad54")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342859u64]),
@@ -22218,12 +13632,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([225320981121791578u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("133038de016dabce92d0406af5c0c5e56793266fdd47df109b2234c2a76baa3d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("133038de016dabce92d0406af5c0c5e56793266fdd47df109b2234c2a76baa3d")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -22239,12 +13647,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([269174685742020286u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("81eb03e937373147f81fbb89332bee7eb20c7eb41a89573707b48b8511f7163c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81eb03e937373147f81fbb89332bee7eb20c7eb41a89573707b48b8511f7163c")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342861u64]),
@@ -22258,48 +13660,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([286853403672183293u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81eb03e937373147f81fbb89332bee7eb20c7eb41a89573707b48b8511f7163c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81eb03e937373147f81fbb89332bee7eb20c7eb41a89573707b48b8511f7163c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81eb03e937373147f81fbb89332bee7eb20c7eb41a89573707b48b8511f7163c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81eb03e937373147f81fbb89332bee7eb20c7eb41a89573707b48b8511f7163c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81eb03e937373147f81fbb89332bee7eb20c7eb41a89573707b48b8511f7163c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81eb03e937373147f81fbb89332bee7eb20c7eb41a89573707b48b8511f7163c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81eb03e937373147f81fbb89332bee7eb20c7eb41a89573707b48b8511f7163c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81eb03e937373147f81fbb89332bee7eb20c7eb41a89573707b48b8511f7163c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81eb03e937373147f81fbb89332bee7eb20c7eb41a89573707b48b8511f7163c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81eb03e937373147f81fbb89332bee7eb20c7eb41a89573707b48b8511f7163c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81eb03e937373147f81fbb89332bee7eb20c7eb41a89573707b48b8511f7163c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("81eb03e937373147f81fbb89332bee7eb20c7eb41a89573707b48b8511f7163c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9221efcab7e906b5d834516222c88f07f8315fe9c0fe7b19939b0bb0bf771280")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9221efcab7e906b5d834516222c88f07f8315fe9c0fe7b19939b0bb0bf771280")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -22315,12 +13675,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([255164386328184066u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("4def8d586a3f43bce237d4199c6df244fe2607e17b1510f20c9d738104712fdf")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("4def8d586a3f43bce237d4199c6df244fe2607e17b1510f20c9d738104712fdf")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342863u64]),
@@ -22334,12 +13688,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([254941058932147593u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a3c15bb3999795a63e1f8a084e2007305d9405cd6579b86ffda7143ccf56c67c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a3c15bb3999795a63e1f8a084e2007305d9405cd6579b86ffda7143ccf56c67c")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -22355,12 +13703,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([272191280430698339u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("36a82ffe158881c6920bb90edcd3d11cc3361975ff9afcc9c0e61d06157648d2")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("36a82ffe158881c6920bb90edcd3d11cc3361975ff9afcc9c0e61d06157648d2")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342865u64]),
@@ -22374,12 +13716,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([251556975997482448u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b2784a75215ec25705366a14cb8e56e8a3bdff257ec39f81f5a1ff55abc4f764")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("b2784a75215ec25705366a14cb8e56e8a3bdff257ec39f81f5a1ff55abc4f764")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -22395,12 +13731,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([232242066889867720u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("88ce03c9a238778cce300961add127f810af564484e2775b22d24a1baa2adbcc")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("88ce03c9a238778cce300961add127f810af564484e2775b22d24a1baa2adbcc")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342867u64]),
@@ -22414,12 +13744,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([226463771382355652u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("303a3733bbc641228e285be554799c5fb355110640c75f5f4691a3f14fa85337")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("303a3733bbc641228e285be554799c5fb355110640c75f5f4691a3f14fa85337")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -22435,12 +13759,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([270379491783002605u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c65150bd1d48376cd2ef889e465ecfabbf59cf810d2090e4e30df6d8632a2cde")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c65150bd1d48376cd2ef889e465ecfabbf59cf810d2090e4e30df6d8632a2cde")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342869u64]),
@@ -22454,12 +13772,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([253076049123058172u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d818daecb7d616719c3016ed1398f3f46ec20e0913878073c04b0650dd5427db")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("d818daecb7d616719c3016ed1398f3f46ec20e0913878073c04b0650dd5427db")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -22475,12 +13787,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([258547773248536339u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("2c5da46ff37cd38681879eb4193e07baf96bc542f8cd1369ef7f8efe03056365")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("2c5da46ff37cd38681879eb4193e07baf96bc542f8cd1369ef7f8efe03056365")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342871u64]),
@@ -22494,12 +13800,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([230712451883351992u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("590214f0f02aebc904fd1080625985c017362110002316121e04c1e4044ff9d9")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("590214f0f02aebc904fd1080625985c017362110002316121e04c1e4044ff9d9")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -22515,12 +13815,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([220351151165635966u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("ae4371a23fb64531cab2818564eb48dff364b4351198dea26dbf337d8a9f166d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ae4371a23fb64531cab2818564eb48dff364b4351198dea26dbf337d8a9f166d")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342873u64]),
@@ -22534,48 +13828,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([268009127598131230u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ae4371a23fb64531cab2818564eb48dff364b4351198dea26dbf337d8a9f166d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ae4371a23fb64531cab2818564eb48dff364b4351198dea26dbf337d8a9f166d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ae4371a23fb64531cab2818564eb48dff364b4351198dea26dbf337d8a9f166d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ae4371a23fb64531cab2818564eb48dff364b4351198dea26dbf337d8a9f166d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ae4371a23fb64531cab2818564eb48dff364b4351198dea26dbf337d8a9f166d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ae4371a23fb64531cab2818564eb48dff364b4351198dea26dbf337d8a9f166d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ae4371a23fb64531cab2818564eb48dff364b4351198dea26dbf337d8a9f166d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ae4371a23fb64531cab2818564eb48dff364b4351198dea26dbf337d8a9f166d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ae4371a23fb64531cab2818564eb48dff364b4351198dea26dbf337d8a9f166d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ae4371a23fb64531cab2818564eb48dff364b4351198dea26dbf337d8a9f166d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ae4371a23fb64531cab2818564eb48dff364b4351198dea26dbf337d8a9f166d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ae4371a23fb64531cab2818564eb48dff364b4351198dea26dbf337d8a9f166d")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9a8607daaba5c41e558e6864f931905c8396fc326f45fdc2d3ceb7d7c25b45b0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("9a8607daaba5c41e558e6864f931905c8396fc326f45fdc2d3ceb7d7c25b45b0")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -22591,12 +13843,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([276930328285108079u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("61a809bd1ed1f0ad0bfb8d7fbacfb6b5b175214dd1f0796bb2493a0931340e0a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("61a809bd1ed1f0ad0bfb8d7fbacfb6b5b175214dd1f0796bb2493a0931340e0a")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342875u64]),
@@ -22610,12 +13856,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([232714394529108833u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("19c9db7677965ce939794a698dfbecbd30c838ef5c1d21cb7f923058f5f606f8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("19c9db7677965ce939794a698dfbecbd30c838ef5c1d21cb7f923058f5f606f8")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -22631,12 +13871,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([259156986363888653u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("c9d5c549ed8ed68b69cee1252fe7d6adf77a22a159fd184b53f13f9fe43ec7f4")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("c9d5c549ed8ed68b69cee1252fe7d6adf77a22a159fd184b53f13f9fe43ec7f4")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342877u64]),
@@ -22650,12 +13884,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([267619141652174863u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("71947fb76d9d50a594026040e24eb6a0c961399eb4d0dbae3ec1ca51ad88b22b")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("71947fb76d9d50a594026040e24eb6a0c961399eb4d0dbae3ec1ca51ad88b22b")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -22671,12 +13899,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([246987679148538548u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("ddb535c6140755fc42c4c58f81d2e5adf86e1341d5a17fed35a55dc95cf9cde0")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ddb535c6140755fc42c4c58f81d2e5adf86e1341d5a17fed35a55dc95cf9cde0")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342879u64]),
@@ -22690,12 +13912,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([218089492842206417u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ff281988985a65f452cf3ffc411ce00673c47dc5206a6b1af89c8b2a42bb094a")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ff281988985a65f452cf3ffc411ce00673c47dc5206a6b1af89c8b2a42bb094a")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -22711,12 +13927,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([247717811614824555u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("25af1fbb99d343c4880e4224ee54eafa5e600e02519eed3e34fdc8a575b65b2f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("25af1fbb99d343c4880e4224ee54eafa5e600e02519eed3e34fdc8a575b65b2f")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342881u64]),
@@ -22730,12 +13940,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([267833605796036550u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("07cb11a2468269aff5289304d9ca94d501806329ded7830f315e7bae51a73623")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("07cb11a2468269aff5289304d9ca94d501806329ded7830f315e7bae51a73623")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -22751,12 +13955,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([255586696661802444u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("ad651deb8175401758765a802e85c1d61176f9d4a4eb68503eaa1fedfaa06dcb")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("ad651deb8175401758765a802e85c1d61176f9d4a4eb68503eaa1fedfaa06dcb")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342883u64]),
@@ -22770,12 +13968,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([228528088112055008u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5938cc625fda73905bbfa69ce5ab4614475701bf1e6f8aa45b738301284015e8")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5938cc625fda73905bbfa69ce5ab4614475701bf1e6f8aa45b738301284015e8")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -22791,12 +13983,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([248232674431486517u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("75f4510fc428c01afd6ce313fb8e23789c0eb352405e399d632ad92e8b99bd87")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("75f4510fc428c01afd6ce313fb8e23789c0eb352405e399d632ad92e8b99bd87")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342885u64]),
@@ -22810,48 +13996,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([238257858475066353u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("75f4510fc428c01afd6ce313fb8e23789c0eb352405e399d632ad92e8b99bd87")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("75f4510fc428c01afd6ce313fb8e23789c0eb352405e399d632ad92e8b99bd87")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("75f4510fc428c01afd6ce313fb8e23789c0eb352405e399d632ad92e8b99bd87")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("75f4510fc428c01afd6ce313fb8e23789c0eb352405e399d632ad92e8b99bd87")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("75f4510fc428c01afd6ce313fb8e23789c0eb352405e399d632ad92e8b99bd87")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("75f4510fc428c01afd6ce313fb8e23789c0eb352405e399d632ad92e8b99bd87")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("75f4510fc428c01afd6ce313fb8e23789c0eb352405e399d632ad92e8b99bd87")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("75f4510fc428c01afd6ce313fb8e23789c0eb352405e399d632ad92e8b99bd87")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("75f4510fc428c01afd6ce313fb8e23789c0eb352405e399d632ad92e8b99bd87")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("75f4510fc428c01afd6ce313fb8e23789c0eb352405e399d632ad92e8b99bd87")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("75f4510fc428c01afd6ce313fb8e23789c0eb352405e399d632ad92e8b99bd87")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("75f4510fc428c01afd6ce313fb8e23789c0eb352405e399d632ad92e8b99bd87")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e4c9bde7e84c47589faaeafa2950e73c9cccc23a744459577bd3e755ccaa335e")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("e4c9bde7e84c47589faaeafa2950e73c9cccc23a744459577bd3e755ccaa335e")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -22867,12 +14011,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([263568485377775511u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("00ba960bfe4526781ca3740773f5da4e4f9a3448fcf7e327ca920174f07bf85f")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("00ba960bfe4526781ca3740773f5da4e4f9a3448fcf7e327ca920174f07bf85f")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342887u64]),
@@ -22886,12 +14024,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([231698459501105199u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5affadec12f6f924a16bed55f70f0cde52b6b283a82b382fad74fa1cca1061b1")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("5affadec12f6f924a16bed55f70f0cde52b6b283a82b382fad74fa1cca1061b1")),
         },
         StartBlockBuild {
             payload_attributes: Payload {
@@ -22907,12 +14039,6 @@ pub fn blocks_1000() -> Box<[Command]> {
             },
             payload_id: PayloadId::from_limbs([277040494054433608u64]),
         },
-        UpdateHead {
-            block_hash: B256::new(hex!("6cce274d17e8122c05bfd64ddc31cda1c653e52d77b6009853fddaddd89d238c")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("6cce274d17e8122c05bfd64ddc31cda1c653e52d77b6009853fddaddd89d238c")),
-        },
         StartBlockBuild {
             payload_attributes: Payload {
                 timestamp: U64::from_limbs([1745342889u64]),
@@ -22926,12 +14052,6 @@ pub fn blocks_1000() -> Box<[Command]> {
                 gas_limit: U64::from_limbs([30000000u64]),
             },
             payload_id: PayloadId::from_limbs([263914255547055214u64]),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a53819c0f169f58f7d08ecda146e0d824a3199af1eb13215a4ebb68bf31c0a91")),
-        },
-        UpdateHead {
-            block_hash: B256::new(hex!("a53819c0f169f58f7d08ecda146e0d824a3199af1eb13215a4ebb68bf31c0a91")),
         },
     ])
 }

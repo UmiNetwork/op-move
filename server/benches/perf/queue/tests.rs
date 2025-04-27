@@ -53,13 +53,12 @@ fn bench_build_1000_blocks_with_queue_size(bencher: &mut Criterion) -> impl Term
         10000,
         6000,
         5000,
-        *input::BLOCKS_1000_LEN as u32,
         1000,
         500,
         200,
         100,
         1,
-    ] {
+    ].into_iter().rev() {
         let app = initialize_app(GenesisConfig::default());
         let app = Arc::new(RwLock::new(app));
 
