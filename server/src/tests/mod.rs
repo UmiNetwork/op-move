@@ -1,3 +1,4 @@
+mod evm_contracts;
 mod get_proof;
 mod integration;
 mod test_context;

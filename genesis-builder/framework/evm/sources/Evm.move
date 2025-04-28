@@ -6,8 +6,12 @@ module Evm::evm {
     use std::error;
     use std::signer;
 
+    /// Call to `system_evm_create` failed because the EVM execution was
+    /// not successful.
+    const EDEPLOYMENT_FAILED: u64 = 1;
+
     /// Solidity FixedBytes must have length between 1 and 32 (inclusive).
-    const EINVALID_FIXED_BYTES_SIZE: u64 = 1;
+    const EINVALID_FIXED_BYTES_SIZE: u64 = 2;
 
     const OWNER: address = @evm_admin;
 
@@ -119,6 +123,11 @@ module Evm::evm {
         SolidityFixedArray { elements }
     }
 
+    /// Emit the EVM logs to MoveVM logging system
+    public fun emit_evm_logs(result: &EvmResult) {
+        event::emit(EvmLogsEvent { logs: result.logs });
+    }
+
     /// Same as `evm_call`, but with the type signature modified to follow the rules of
     /// entry functions (namely: `value` must be zero because `FungibleAsset` cannot
     /// be exernally constructed, and there cannot be a return value).
@@ -127,7 +136,8 @@ module Evm::evm {
     ) {
         let eth_metadata = get_metadata();
         let value = fungible_asset_u256::zero(eth_metadata);
-        evm_call(caller, to, value, data);
+        let result = evm_call(caller, to, value, data);
+        emit_evm_logs(&result);
     }
 
     public fun evm_call(
@@ -172,11 +182,6 @@ module Evm::evm {
         result.output
     }
 
-    /// Emit the EVM logs to MoveVM logging system
-    public fun emit_evm_logs(result: &EvmResult) {
-        event::emit(EvmLogsEvent { logs: result.logs });
-    }
-
     fun get_asset_value(f: FungibleAsset): u256 {
         let amount = fungible_asset_u256::amount(&f);
         if (amount == 0) {
@@ -187,6 +192,29 @@ module Evm::evm {
         let store = ensure_primary_store_exists(OWNER, eth_metadata);
         fungible_asset_u256::deposit(store, f);
         amount
+    }
+
+    // A private function used by the system to deploy an EVM contract as
+    // requested by a user. Note this function does spend the user's tokens
+    // if `value` is non-zero.
+    fun system_evm_create(
+        caller: &signer,
+        value: u256,
+        data: vector<u8>
+    ): EvmResult {
+        let eth_metadata = get_metadata();
+        let payment = if (value == 0) {
+            fungible_asset_u256::zero(eth_metadata)
+        } else {
+            let caller_addr = signer::address_of(caller);
+            let store = ensure_primary_store_exists(caller_addr, eth_metadata);
+            fungible_asset_u256::withdraw(caller, store, value)
+        };
+        let result = evm_create(caller, payment, data);
+
+        assert!(result.is_success, error::aborted(EDEPLOYMENT_FAILED));
+
+        result
     }
 
     // A private function used by the system to call the EVM native.

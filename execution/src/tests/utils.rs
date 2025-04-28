@@ -646,7 +646,7 @@ impl TestContext {
             .compile()
             .unwrap();
         let script = Script::new(script_code, Vec::new(), args);
-        bcs::to_bytes(&ScriptOrModule::Script(script)).unwrap()
+        bcs::to_bytes(&ScriptOrDeployment::Script(script)).unwrap()
     }
 }
 
@@ -658,7 +658,7 @@ impl TestContext {
 /// # Returns
 /// Serialized transaction payload
 pub fn module_bytes_to_tx_data(module_bytes: Vec<u8>) -> Vec<u8> {
-    bcs::to_bytes(&ScriptOrModule::Module(Module::new(module_bytes))).unwrap()
+    bcs::to_bytes(&ScriptOrDeployment::Module(Module::new(module_bytes))).unwrap()
 }
 
 /// Creates a test transaction for a Move entry function

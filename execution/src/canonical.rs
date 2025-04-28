@@ -3,19 +3,22 @@ use {
     crate::{
         CanonicalExecutionInput, Logs, create_vm_session,
         eth_token::{self, BaseTokenAccounts, TransferArgs},
-        execute::{deploy_module, execute_entry_function, execute_l2_contract, execute_script},
+        execute::{
+            deploy_evm_contract, deploy_module, execute_entry_function, execute_l2_contract,
+            execute_script,
+        },
         gas::{new_gas_meter, total_gas_used},
         nonces::check_nonce,
         session_id::SessionId,
         transaction::{
-            Changes, NormalizedEthTransaction, ScriptOrModule, TransactionData,
+            Changes, NormalizedEthTransaction, ScriptOrDeployment, TransactionData,
             TransactionExecutionOutcome,
         },
     },
     alloy::primitives::U256,
     aptos_gas_meter::{AptosGasMeter, StandardGasAlgebra, StandardGasMeter},
     aptos_table_natives::TableResolver,
-    move_core_types::effects::ChangeSet,
+    move_core_types::{effects::ChangeSet, language_storage::ModuleId},
     move_vm_runtime::{
         AsUnsyncCodeStorage, ModuleStorage,
         module_traversal::{TraversalContext, TraversalStorage},
@@ -23,6 +26,7 @@ use {
     },
     move_vm_types::{gas::UnmeteredGasMeter, resolver::MoveResolver},
     moved_evm_ext::{
+        EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
         events::EthTransfersLogger,
         state::{BlockHashLookup, StorageTrieRepository},
     },
@@ -182,7 +186,7 @@ pub(super) fn execute_canonical_transaction<
             verify_input.gas_meter,
             &code_storage,
         ),
-        TransactionData::ScriptOrModule(ScriptOrModule::Script(script)) => execute_script(
+        TransactionData::ScriptOrDeployment(ScriptOrDeployment::Script(script)) => execute_script(
             script,
             &sender_move_address,
             verify_input.session,
@@ -190,7 +194,7 @@ pub(super) fn execute_canonical_transaction<
             verify_input.gas_meter,
             &code_storage,
         ),
-        TransactionData::ScriptOrModule(ScriptOrModule::Module(module)) => {
+        TransactionData::ScriptOrDeployment(ScriptOrDeployment::Module(module)) => {
             // TODO: gas for module deploy
             let module_id = deploy_module(module, sender_move_address, &code_storage);
             module_id.map(|(id, writes)| {
@@ -198,6 +202,23 @@ pub(super) fn execute_canonical_transaction<
                 deploy_changes
                     .squash(writes)
                     .expect("Move module deployment changes should be compatible");
+            })
+        }
+        TransactionData::ScriptOrDeployment(ScriptOrDeployment::EvmContract(bytecode)) => {
+            let address = deploy_evm_contract(
+                bytecode,
+                input.tx.value,
+                sender_move_address,
+                verify_input.session,
+                verify_input.traversal_context,
+                verify_input.gas_meter,
+                &code_storage,
+            );
+            address.map(|a| {
+                deployment = Some((
+                    a.to_move_address(),
+                    ModuleId::new(EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE.into()),
+                ))
             })
         }
         TransactionData::EoaBaseTokenTransfer(to) => {

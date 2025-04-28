@@ -8,7 +8,8 @@ use {
         quick_get_nonce,
         session_id::SessionId,
         transaction::{
-            NormalizedEthTransaction, ScriptOrModule, TransactionData, TransactionExecutionOutcome,
+            NormalizedEthTransaction, ScriptOrDeployment, TransactionData,
+            TransactionExecutionOutcome,
         },
     },
     alloy::rpc::types::TransactionRequest,
@@ -132,7 +133,7 @@ pub fn call_transaction(
                     .collect::<Vec<_>>(),
             )?)
         }
-        TransactionData::ScriptOrModule(ScriptOrModule::Script(script)) => {
+        TransactionData::ScriptOrDeployment(ScriptOrDeployment::Script(script)) => {
             crate::execute::execute_script(
                 script,
                 &tx.signer.to_move_address(),

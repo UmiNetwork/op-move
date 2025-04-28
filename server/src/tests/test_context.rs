@@ -1,12 +1,16 @@
 use {
     crate::{dependency, initialize_app},
-    alloy::primitives::{hex, B256},
+    alloy::{
+        consensus::transaction::TxEnvelope,
+        eips::Encodable2718,
+        primitives::{hex, B256},
+    },
     moved_api::schema::{
         ForkchoiceUpdatedResponseV1, GetBlockResponse, GetPayloadResponseV3, PayloadStatusV1,
         Status,
     },
     moved_app::{Application, CommandQueue, Dependencies},
-    moved_blockchain::payload::StatePayloadId,
+    moved_blockchain::{payload::StatePayloadId, receipt::TransactionReceipt},
     moved_genesis::config::GenesisConfig,
     serde::de::DeserializeOwned,
     std::sync::Arc,
@@ -16,6 +20,7 @@ use {
 const DEPOSIT_TX: &[u8] = &hex!("7ef8f8a032595a51f0561028c684fbeeb46c7221a34be9a2eedda60a93069dd77320407e94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000000000000000000000000000000000000000006807cdc800000000000000220000000000000000000000000000000000000000000000000000000000a68a3a000000000000000000000000000000000000000000000000000000000000000198663a8bf712c08273a02876877759b43dc4df514214cc2f6008870b9a8503380000000000000000000000008c67a7b8624044f8f672e9ec374dfa596f01afb9");
 
 pub struct TestContext {
+    pub genesis_config: GenesisConfig,
     pub queue: CommandQueue,
     pub app: Arc<RwLock<Application<dependency::Dependency>>>,
     head: B256,
@@ -26,7 +31,7 @@ pub struct TestContext {
 impl TestContext {
     pub async fn new() -> anyhow::Result<Self> {
         let genesis_config = GenesisConfig::default();
-        let app = initialize_app(genesis_config);
+        let app = initialize_app(genesis_config.clone());
         let app = Arc::new(RwLock::new(app));
         let (queue, state) = moved_app::create(app.clone(), 10);
 
@@ -62,6 +67,7 @@ impl TestContext {
         assert_eq!(response.payload_status.status, Status::Valid);
 
         Ok(Self {
+            genesis_config,
             queue,
             app,
             state_task,
@@ -130,6 +136,47 @@ impl TestContext {
 
         self.head = response.latest_valid_hash.unwrap();
         Ok(self.head)
+    }
+
+    pub async fn send_raw_transaction(&self, tx: TxEnvelope) -> anyhow::Result<B256> {
+        let bytes = tx.encoded_2718();
+        let request = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 10,
+            "method": "eth_sendRawTransaction",
+            "params": [
+                format!("0x{}", hex::encode(bytes)),
+            ]
+        });
+        let tx_hash: B256 = handle_request(request, &self.queue, &self.app).await?;
+        Ok(tx_hash)
+    }
+
+    pub async fn get_transaction_receipt(
+        &self,
+        tx_hash: B256,
+    ) -> anyhow::Result<Option<TransactionReceipt>> {
+        let request = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 10,
+            "method": "eth_getTransactionReceipt",
+            "params": [
+                format!("{tx_hash:?}"),
+            ]
+        });
+        let receipt = handle_request(request, &self.queue, &self.app).await?;
+        Ok(receipt)
+    }
+
+    pub async fn execute_transaction(
+        &mut self,
+        tx: TxEnvelope,
+    ) -> anyhow::Result<TransactionReceipt> {
+        let tx_hash = self.send_raw_transaction(tx).await?;
+        let block_hash = self.produce_block().await?;
+        let receipt = self.get_transaction_receipt(tx_hash).await?.unwrap();
+        assert_eq!(receipt.inner.block_hash.unwrap(), block_hash);
+        Ok(receipt)
     }
 
     pub async fn get_block_by_number(&self, number: u64) -> anyhow::Result<GetBlockResponse> {
