@@ -213,6 +213,7 @@ module Evm::evm {
         let result = evm_create(caller, payment, data);
 
         assert!(result.is_success, error::aborted(EDEPLOYMENT_FAILED));
+        emit_evm_logs(&result);
 
         result
     }
