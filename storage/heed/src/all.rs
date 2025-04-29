@@ -46,6 +46,14 @@ impl<Key, Value> HeedDb<Key, Value> {
         self.0.get(txn, key)
     }
 
+    pub fn last<'txn>(&self, txn: &'txn RoTxn) -> heed::Result<Option<(Key::DItem, Value::DItem)>>
+    where
+        Key: BytesDecode<'txn>,
+        Value: BytesDecode<'txn>,
+    {
+        self.0.last(txn)
+    }
+
     pub fn lazily_decode_data(&self) -> HeedDb<Key, LazyDecode<Value>> {
         HeedDb(self.0.lazily_decode_data())
     }

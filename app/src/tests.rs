@@ -70,7 +70,12 @@ fn create_app_with_given_queries<SQ: StateQueries + Send + Sync + 'static>(
 
     let mut memory = SharedMemory::new();
     let mut repository = InMemoryBlockRepository::new();
-    repository.add(&mut memory, genesis_block).unwrap();
+
+    for i in 0..=height {
+        let mut block = genesis_block.clone();
+        block.block.header.number = i;
+        repository.add(&mut memory, block).unwrap();
+    }
 
     let mut state = InMemoryState::new();
     let mut evm_storage = InMemoryStorageTrieRepository::new();
@@ -86,8 +91,6 @@ fn create_app_with_given_queries<SQ: StateQueries + Send + Sync + 'static>(
 
     Application {
         mem_pool: Default::default(),
-        head: head_hash,
-        height,
         genesis_config,
         base_token: MovedBaseTokenAccounts::new(AccountAddress::ONE),
         block_hash: MovedBlockHash,
@@ -156,7 +159,6 @@ fn create_app_with_fake_queries(
     let head_hash = B256::new(hex!(
         "e56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d"
     ));
-    let height = 0;
     let genesis_block = Block::default().with_hash(head_hash).with_value(U256::ZERO);
 
     let mut memory = SharedMemory::new();
@@ -177,8 +179,6 @@ fn create_app_with_fake_queries(
 
     Application::<TestDependencies> {
         mem_pool: Default::default(),
-        head: head_hash,
-        height,
         genesis_config,
         base_token: MovedBaseTokenAccounts::new(AccountAddress::ONE),
         block_hash: MovedBlockHash,

@@ -1,7 +1,7 @@
 use {
     heed::{
         BoxedError, BytesDecode, BytesEncode,
-        byteorder::LittleEndian,
+        byteorder::BigEndian,
         types::{Bytes, U64},
     },
     moved_shared::primitives::{Address, B256},
@@ -47,7 +47,7 @@ impl<'item> BytesDecode<'item> for EncodableAddress {
     }
 }
 
-pub type EncodableU64 = U64<LittleEndian>;
+pub type EncodableU64 = U64<BigEndian>;
 pub type EncodableBytes = Bytes;
 
 /// Describes a type that is [`Serialize`]/[`Deserialize`] and uses `serde_json` to do so.

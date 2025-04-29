@@ -33,8 +33,8 @@ pub mod tests {
         },
         moved_blockchain::{
             block::{
-                Block, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
-                InMemoryBlockRepository, MovedBlockHash,
+                Block, BlockQueries, BlockRepository, BlockResponse, Eip1559GasFee,
+                InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash,
             },
             in_memory::SharedMemory,
             payload::InMemoryPayloadQueries,
@@ -50,7 +50,7 @@ pub mod tests {
         moved_genesis::config::{CHAIN_ID, GenesisConfig},
         moved_shared::primitives::{Address, B256, U64, U256},
         moved_state::InMemoryState,
-        std::sync::Arc,
+        std::{convert::Infallible, sync::Arc},
         tokio::sync::{RwLock, mpsc::Sender},
     };
 
@@ -84,9 +84,7 @@ pub mod tests {
 
         Arc::new(RwLock::new(Application {
             mem_pool: Default::default(),
-            head: head_hash,
             genesis_config,
-            height: 0,
             gas_fee: Eip1559GasFee::default(),
             base_token: MovedBaseTokenAccounts::new(AccountAddress::ONE),
             l1_fee: U256::ZERO,
@@ -177,21 +175,47 @@ pub mod tests {
         address: AccountAddress,
         height: u64,
     ) -> Arc<RwLock<Application<impl DependenciesThreadSafe<State = InMemoryState>>>> {
+        #[derive(Debug)]
+        struct StubLatest(u64);
+
+        impl BlockQueries for StubLatest {
+            type Err = Infallible;
+            type Storage = ();
+
+            fn by_hash(
+                &self,
+                _: &Self::Storage,
+                _: B256,
+                _: bool,
+            ) -> Result<Option<BlockResponse>, Self::Err> {
+                unimplemented!("Unexpected call to `by_hash`")
+            }
+
+            fn by_height(
+                &self,
+                _: &Self::Storage,
+                _: u64,
+                _: bool,
+            ) -> Result<Option<BlockResponse>, Self::Err> {
+                unimplemented!("Unexpected call to `by_height`")
+            }
+
+            fn latest(&self, _: &Self::Storage) -> Result<Option<u64>, Self::Err> {
+                Ok(Some(self.0))
+            }
+        }
+
         Arc::new(RwLock::new(Application::<
             TestDependencies<_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _>,
         > {
             genesis_config: GenesisConfig::default(),
-            height,
-            head: B256::new(hex!(
-                "e56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d"
-            )),
             mem_pool: Default::default(),
             gas_fee: Eip1559GasFee::default(),
             base_token: MovedBaseTokenAccounts::new(AccountAddress::ONE),
             l1_fee: U256::ZERO,
             l2_fee: U256::ZERO,
             block_hash: MovedBlockHash,
-            block_queries: (),
+            block_queries: StubLatest(height),
             block_repository: (),
             on_payload: CommandActor::on_payload_noop(),
             on_tx: CommandActor::on_tx_noop(),

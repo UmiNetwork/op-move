@@ -1,6 +1,5 @@
 use {
     crate::dependency::shared::*,
-    move_core_types::effects::ChangeSet,
     moved_app::{Application, CommandActor},
     moved_genesis::config::GenesisConfig,
     moved_state::State,

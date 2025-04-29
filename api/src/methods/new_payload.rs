@@ -287,8 +287,6 @@ mod tests {
 
         let app = Arc::new(RwLock::new(Application::<TestDependencies<_, _, _, _>> {
             mem_pool: Default::default(),
-            head: head_hash,
-            height: 0,
             genesis_config,
             gas_fee: Eip1559GasFee::default(),
             base_token: (),

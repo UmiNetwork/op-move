@@ -23,6 +23,8 @@ pub trait BlockQueries: Debug {
         height: u64,
         include_transactions: bool,
     ) -> Result<Option<BlockResponse>, Self::Err>;
+
+    fn latest(&self, storage: &Self::Storage) -> Result<Option<u64>, Self::Err>;
 }
 
 pub trait BlockRepository: Debug {
@@ -38,6 +40,8 @@ pub trait BlockRepository: Debug {
         storage: &Self::Storage,
         hash: B256,
     ) -> Result<Option<ExtendedBlock>, Self::Err>;
+
+    fn latest(&self, storage: &Self::Storage) -> Result<Option<ExtendedBlock>, Self::Err>;
 }
 
 pub type Header = alloy::consensus::Header;

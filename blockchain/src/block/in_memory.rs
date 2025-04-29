@@ -57,6 +57,10 @@ impl BlockMemory {
         let index = *self.heights.get(&height)?;
         self.blocks.get(index).cloned()
     }
+
+    pub fn last(&self) -> Option<&ExtendedBlock> {
+        self.blocks.last()
+    }
 }
 
 /// Block repository that works with in memory backing store [`BlockMemory`].
@@ -86,6 +90,10 @@ impl BlockRepository for InMemoryBlockRepository {
 
     fn by_hash(&self, mem: &Self::Storage, hash: B256) -> Result<Option<ExtendedBlock>, Self::Err> {
         Ok(mem.block_memory.by_hash(hash))
+    }
+
+    fn latest(&self, mem: &Self::Storage) -> Result<Option<ExtendedBlock>, Self::Err> {
+        Ok(mem.block_memory.last().cloned())
     }
 }
 
@@ -134,6 +142,10 @@ impl BlockQueries for InMemoryBlockQueries {
                 .map(BlockResponse::from_block_with_transaction_hashes)
         })
     }
+
+    fn latest(&self, mem: &Self::Storage) -> Result<Option<u64>, Self::Err> {
+        Ok(mem.block_memory.last().map(|v| v.block.header.number))
+    }
 }
 
 #[cfg(any(feature = "test-doubles", test))]
@@ -161,6 +173,10 @@ mod test_doubles {
         ) -> Result<Option<BlockResponse>, Self::Err> {
             Ok(None)
         }
+
+        fn latest(&self, _: &Self::Storage) -> Result<Option<u64>, Self::Err> {
+            Ok(None)
+        }
     }
 
     impl BlockRepository for () {
@@ -172,6 +188,10 @@ mod test_doubles {
         }
 
         fn by_hash(&self, _: &Self::Storage, _: B256) -> Result<Option<ExtendedBlock>, Self::Err> {
+            Ok(None)
+        }
+
+        fn latest(&self, _: &Self::Storage) -> Result<Option<ExtendedBlock>, Self::Err> {
             Ok(None)
         }
     }

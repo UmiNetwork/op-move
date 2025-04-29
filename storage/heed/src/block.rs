@@ -52,6 +52,20 @@ impl BlockRepository for HeedBlockRepository {
 
         response
     }
+
+    fn latest(&self, env: &Self::Storage) -> Result<Option<ExtendedBlock>, Self::Err> {
+        let transaction = env.read_txn()?;
+
+        let db = env.block_height_database(&transaction)?;
+
+        let response = db
+            .last(&transaction)?
+            .map(|(_height, hash)| env.block_database(&transaction)?.get(&transaction, &hash));
+
+        transaction.commit()?;
+
+        Ok(response.transpose()?.flatten())
+    }
 }
 
 #[derive(Debug)]
@@ -115,6 +129,18 @@ impl BlockQueries for HeedBlockQueries {
                 self.by_hash(env, hash, include_transactions)
             })
             .unwrap_or(Ok(None))
+    }
+
+    fn latest(&self, env: &Self::Storage) -> Result<Option<u64>, Self::Err> {
+        let transaction = env.read_txn()?;
+
+        let db = env.block_height_database(&transaction)?;
+
+        let pair = db.last(&transaction)?;
+
+        transaction.commit()?;
+
+        Ok(pair.map(|(height, _hash)| height))
     }
 }
 

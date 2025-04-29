@@ -54,7 +54,7 @@ impl<D: Dependencies> Application<D> {
             .collect::<Vec<_>>();
         let parent = self
             .block_repository
-            .by_hash(&self.storage, self.head)
+            .latest(&self.storage)
             .unwrap()
             .expect("Parent block should exist");
         let base_fee = self.gas_fee.base_fee_per_gas(
@@ -64,7 +64,7 @@ impl<D: Dependencies> Application<D> {
         );
 
         let header_for_execution = HeaderForExecution {
-            number: self.height + 1,
+            number: parent.block.header.number + 1,
             timestamp: attributes.timestamp.as_limbs()[0],
             prev_randao: attributes.prev_randao,
         };
@@ -89,7 +89,7 @@ impl<D: Dependencies> Application<D> {
         let total_tip = execution_outcome.total_tip;
 
         let header = Header {
-            parent_hash: self.head,
+            parent_hash: parent.hash,
             number: header_for_execution.number,
             transactions_root,
             withdrawals_root: Some(withdrawals_root),
@@ -142,9 +142,6 @@ impl<D: Dependencies> Application<D> {
 
         self.block_repository.add(&mut self.storage, block).unwrap();
 
-        self.height = self.height.max(block_number);
-        self.head = block_hash;
-
         (self.on_payload)(self, id, block_hash);
     }
 
@@ -158,7 +155,6 @@ impl<D: Dependencies> Application<D> {
     }
 
     pub fn genesis_update(&mut self, block: ExtendedBlock) {
-        self.head = block.hash;
         self.block_repository.add(&mut self.storage, block).unwrap();
     }
 

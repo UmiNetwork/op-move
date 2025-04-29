@@ -107,8 +107,6 @@ mod tests {
         let app = Arc::new(RwLock::new(Application::<TestDependencies<_, _, _, _>> {
             mem_pool: Default::default(),
             genesis_config,
-            head: head_hash,
-            height: 0,
             state,
             block_hash: head_hash,
             block_repository: repository,

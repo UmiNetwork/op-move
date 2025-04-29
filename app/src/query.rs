@@ -32,7 +32,7 @@ impl<D: Dependencies> Application<D> {
             self.state.db(),
             &self.evm_storage,
             address.to_move_address(),
-            self.resolve_height(height),
+            self.resolve_height(height)?,
         )
     }
 
@@ -41,7 +41,7 @@ impl<D: Dependencies> Application<D> {
             self.state.db(),
             &self.evm_storage,
             address.to_move_address(),
-            self.resolve_height(height),
+            self.resolve_height(height)?,
         )
     }
 
@@ -59,14 +59,14 @@ impl<D: Dependencies> Application<D> {
         self.block_queries
             .by_height(
                 &self.storage,
-                self.resolve_height(height),
+                self.resolve_height(height)?,
                 include_transactions,
             )
             .unwrap()
     }
 
     pub fn block_number(&self) -> u64 {
-        self.height
+        self.block_queries.latest(&self.storage).unwrap().unwrap()
     }
 
     pub fn fee_history(
@@ -87,7 +87,11 @@ impl<D: Dependencies> Application<D> {
         // TODO: Support gas estimation from arbitrary blocks
         let block_height = match block_number {
             Number(height) => height,
-            Finalized | Pending | Latest | Safe => self.height,
+            Finalized | Pending | Latest | Safe => self
+                .block_queries
+                .latest(&self.storage)
+                .unwrap()
+                .expect("Blocks should be non-empty"),
             Earliest => 0,
         };
         let block_hash_lookup = StorageBasedProvider::new(&self.storage, &self.block_queries);
@@ -165,17 +169,19 @@ impl<D: Dependencies> Application<D> {
             .flatten()
     }
 
-    fn resolve_height(&self, height: BlockNumberOrTag) -> u64 {
-        match height {
+    fn resolve_height(&self, height: BlockNumberOrTag) -> Option<u64> {
+        Some(match height {
             Number(height) => height,
-            Finalized | Pending | Latest | Safe => self.height,
+            Finalized | Pending | Latest | Safe => {
+                self.block_queries.latest(&self.storage).ok()??
+            }
             Earliest => 0,
-        }
+        })
     }
 
     fn height_from_block_id(&self, id: BlockId) -> Option<u64> {
         Some(match id {
-            BlockId::Number(height) => self.resolve_height(height),
+            BlockId::Number(height) => self.resolve_height(height)?,
             BlockId::Hash(h) => {
                 self.block_queries
                     .by_hash(&self.storage, h.block_hash, false)

@@ -12,8 +12,6 @@ use {
 
 pub struct Application<D: Dependencies> {
     pub genesis_config: GenesisConfig,
-    pub head: B256,
-    pub height: u64,
     pub mem_pool: HashMap<B256, (ExtendedTxEnvelope, L1GasFeeInput)>,
     pub gas_fee: D::BaseGasFee,
     pub base_token: D::BaseTokenAccounts,
@@ -41,8 +39,6 @@ impl<D: Dependencies> Application<D> {
     pub fn new(_: D, genesis_config: &GenesisConfig) -> Self {
         Self {
             genesis_config: genesis_config.clone(),
-            head: Default::default(),
-            height: 0,
             mem_pool: Default::default(),
             gas_fee: D::base_gas_fee(),
             base_token: D::base_token_accounts(genesis_config),

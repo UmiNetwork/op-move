@@ -1,6 +1,6 @@
 use {
     crate::{
-        generic::{FromValue, ToKey, ToValue},
+        generic::{FromKey, FromValue, ToKey, ToValue},
         transaction,
     },
     moved_blockchain::{
@@ -8,7 +8,7 @@ use {
         transaction::ExtendedTransaction,
     },
     moved_shared::primitives::B256,
-    rocksdb::{AsColumnFamilyRef, DB as RocksDb, WriteBatchWithTransaction},
+    rocksdb::{AsColumnFamilyRef, DB as RocksDb, IteratorMode, WriteBatchWithTransaction},
 };
 
 pub const BLOCK_COLUMN_FAMILY: &str = "block";
@@ -38,6 +38,16 @@ impl BlockRepository for RocksDbBlockRepository {
         Ok(db
             .get_pinned_cf(&block_cf(db), hash)?
             .map(|bytes| ExtendedBlock::from_value(bytes.as_ref())))
+    }
+
+    fn latest(&self, db: &Self::Storage) -> Result<Option<ExtendedBlock>, Self::Err> {
+        Ok(db
+            .iterator_cf(&height_cf(db), IteratorMode::End)
+            .next()
+            .transpose()?
+            .map(|(_, hash)| self.by_hash(db, B256::new(hash.as_ref().try_into().unwrap())))
+            .transpose()?
+            .flatten())
     }
 }
 
@@ -89,6 +99,14 @@ impl BlockQueries for RocksDbBlockQueries {
             .map(|hash| B256::new(hash.as_ref().try_into().unwrap()))
             .map(|hash| self.by_hash(db, hash, include_transactions))
             .unwrap_or(Ok(None))
+    }
+
+    fn latest(&self, db: &Self::Storage) -> Result<Option<u64>, Self::Err> {
+        Ok(db
+            .iterator_cf(&height_cf(db), IteratorMode::End)
+            .next()
+            .transpose()?
+            .map(|(height, _)| u64::from_key(height.as_ref())))
     }
 }
 
