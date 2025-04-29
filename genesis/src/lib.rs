@@ -12,7 +12,7 @@ use {
     move_core_types::effects::ChangeSet,
     move_table_extension::TableChangeSet,
     moved_evm_ext::state::{StorageTrieRepository, StorageTriesChanges},
-    moved_state::State,
+    moved_state::{InMemoryState, State},
 };
 
 pub mod config;
@@ -27,15 +27,15 @@ mod vm;
 pub fn build(
     vm: &MovedVm,
     config: &GenesisConfig,
-    state: &mut impl State,
     storage_trie: &impl StorageTrieRepository,
 ) -> (ChangeSet, TableChangeSet, StorageTriesChanges) {
+    let mut state = InMemoryState::new();
     // Deploy Move/Aptos/Sui frameworks
-    let changes_framework = framework::init_state(vm, state);
+    let changes_framework = framework::init_state(vm, &mut state);
 
     // Deploy OP stack L2 contracts
     let mut changes_l2 =
-        l2_contracts::init_state(config.l2_contract_genesis.clone(), state, storage_trie);
+        l2_contracts::init_state(config.l2_contract_genesis.clone(), &state, storage_trie);
 
     // Deploy additional bridged tokens (if any)
     if !config.token_list.is_empty() {
@@ -87,7 +87,7 @@ pub fn build_and_apply(
     state: &mut impl State,
     storage_trie: &mut impl StorageTrieRepository,
 ) {
-    let (changes, table_changes, evm_storage) = build(vm, config, state, storage_trie);
+    let (changes, table_changes, evm_storage) = build(vm, config, storage_trie);
     apply(
         changes,
         table_changes,

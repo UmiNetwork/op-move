@@ -190,8 +190,7 @@ fn deploy_aptos_framework(
                 let staged_module_storage =
                     StagingModuleStorage::create(&sender, &module_storage, vec![code.into()])?;
                 let bundle = staged_module_storage.release_verified_module_bundle();
-                let l2_single_module_writes =
-                    convert_bundle_into_module_ops(bundle, &module_storage)?;
+                let l2_single_module_writes = convert_bundle_into_module_ops(bundle)?;
                 l2_writes.squash(l2_single_module_writes).unwrap();
             }
             l2_writes
@@ -219,7 +218,7 @@ fn deploy_aptos_framework(
             let staged_module_storage =
                 StagingModuleStorage::create(&sender, &module_storage, code)?;
             let bundle = staged_module_storage.release_verified_module_bundle();
-            convert_bundle_into_module_ops(bundle, &module_storage)?
+            convert_bundle_into_module_ops(bundle)?
         };
         // We need to add changes on a package-by-package basis so that other packages in the framework
         // can link against previous ones, but also pass it outside for genesis image generation
@@ -281,7 +280,7 @@ fn deploy_sui_framework(state: &mut impl State, moved_vm: &MovedVm) -> Result<Ch
             .collect(),
     )?;
     let bundle = staged_stdlib_storage.release_verified_module_bundle();
-    let stdlib_writes = convert_bundle_into_module_ops(bundle, &module_storage)?;
+    let stdlib_writes = convert_bundle_into_module_ops(bundle)?;
     state.apply(stdlib_writes.clone()).unwrap();
     total_writes
         .squash(stdlib_writes)
@@ -304,7 +303,7 @@ fn deploy_sui_framework(state: &mut impl State, moved_vm: &MovedVm) -> Result<Ch
             .collect(),
     )?;
     let bundle = staged_framework_storage.release_verified_module_bundle();
-    let framework_writes = convert_bundle_into_module_ops(bundle, &module_storage)?;
+    let framework_writes = convert_bundle_into_module_ops(bundle)?;
     state.apply(framework_writes.clone()).unwrap();
     total_writes
         .squash(framework_writes)
@@ -315,20 +314,10 @@ fn deploy_sui_framework(state: &mut impl State, moved_vm: &MovedVm) -> Result<Ch
 
 fn convert_bundle_into_module_ops(
     bundle: VerifiedModuleBundle<ModuleId, Bytes>,
-    module_storage: &impl ModuleStorage,
 ) -> Result<ChangeSet, VMError> {
     let mut writes = ChangeSet::new();
     for (module_id, bytes) in bundle.into_iter() {
-        let addr = module_id.address();
-        let name = module_id.name();
-
-        let module_exists = module_storage.check_module_exists(addr, name)?;
-        let op = if module_exists {
-            Op::Modify(bytes)
-        } else {
-            Op::New(bytes)
-        };
-        writes.add_module_op(module_id, op).unwrap();
+        writes.add_module_op(module_id, Op::New(bytes)).unwrap();
     }
     Ok(writes)
 }
