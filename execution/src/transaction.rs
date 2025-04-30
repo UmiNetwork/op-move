@@ -5,8 +5,7 @@ use {
             TxLegacy,
         },
         eips::eip2930::AccessList,
-        primitives::{Address, B256, Bloom, Bytes, Log, LogData, TxKind, U64, U256, address},
-        rlp::{Buf, Decodable, Encodable, RlpDecodable, RlpEncodable},
+        primitives::{Address, B256, Bloom, Bytes, Log, LogData, TxKind, U256, address},
         rpc::types::TransactionRequest,
     },
     aptos_types::transaction::{EntryFunction, Module, Script},
@@ -18,168 +17,46 @@ use {
         primitives::ToMoveAddress,
     },
     op_alloy::consensus::{
-        OpDepositReceipt, OpDepositReceiptWithBloom, OpReceiptEnvelope, OpTxEnvelope,
+        OpDepositReceipt, OpDepositReceiptWithBloom, OpReceiptEnvelope, OpTxEnvelope, TxDeposit,
     },
-    revm::primitives::keccak256,
     serde::{Deserialize, Serialize},
 };
 
-const DEPOSITED_TYPE_BYTE: u8 = 0x7e;
 pub const L2_LOWEST_ADDRESS: Address = address!("4200000000000000000000000000000000000000");
 pub const L2_HIGHEST_ADDRESS: Address = address!("42000000000000000000000000000000000000ff");
+pub const DEPOSIT_RECEIPT_VERSION: u64 = 1;
 
-/// OP-stack special transactions defined in
-/// https://specs.optimism.io/protocol/deposits.html#the-deposited-transaction-type
-#[derive(Debug, PartialEq, Eq, Clone, Deserialize, Serialize, RlpDecodable, RlpEncodable)]
-pub struct DepositedTx {
-    pub source_hash: B256,
-    pub from: Address,
-    pub to: Address,
-    pub mint: U256,
-    pub value: U256,
-    pub gas: U64,
-    pub is_system_tx: bool,
-    pub data: Bytes,
+pub trait WrapReceipt {
+    fn wrap_receipt(&self, receipt: Receipt, bloom: Bloom) -> OpReceiptEnvelope;
 }
 
-/// Same as `alloy_consensus::TxEnvelope` except extended to
-/// include the new Deposited transaction defined in OP-stack.
-#[derive(Debug, PartialEq, Eq, Clone, Deserialize, Serialize)]
-#[serde(untagged)]
-pub enum ExtendedTxEnvelope {
-    Canonical(TxEnvelope),
-    DepositedTx(DepositedTx),
-}
-
-impl ExtendedTxEnvelope {
-    pub fn compute_hash(&self) -> B256 {
-        let mut buf = Vec::with_capacity(self.length());
-        self.encode(&mut buf);
-        keccak256(&mut buf)
-    }
-
-    pub fn sender(&self) -> Option<Address> {
+impl WrapReceipt for OpTxEnvelope {
+    fn wrap_receipt(&self, receipt: Receipt, bloom: Bloom) -> OpReceiptEnvelope {
         match self {
-            Self::Canonical(tx) => tx.recover_signer().ok(),
-            Self::DepositedTx(tx) => Some(tx.from),
-        }
-    }
-
-    /// In case this transaction is a deposit, returns `Some` containing a reference to the
-    /// underlying [`DepositedTx`]. Otherwise, returns `None`.
-    pub fn as_deposited(&self) -> Option<&DepositedTx> {
-        if let Self::DepositedTx(deposited_tx) = self {
-            Some(deposited_tx)
-        } else {
-            None
-        }
-    }
-
-    pub fn wrap_receipt(&self, receipt: Receipt, bloom: Bloom) -> OpReceiptEnvelope {
-        match self {
-            ExtendedTxEnvelope::Canonical(TxEnvelope::Legacy(_)) => {
-                OpReceiptEnvelope::Legacy(ReceiptWithBloom {
-                    receipt,
-                    logs_bloom: bloom,
-                })
-            }
-            ExtendedTxEnvelope::Canonical(TxEnvelope::Eip1559(_)) => {
-                OpReceiptEnvelope::Eip1559(ReceiptWithBloom {
-                    receipt,
-                    logs_bloom: bloom,
-                })
-            }
-            ExtendedTxEnvelope::Canonical(TxEnvelope::Eip2930(_)) => {
-                OpReceiptEnvelope::Eip2930(ReceiptWithBloom {
-                    receipt,
-                    logs_bloom: bloom,
-                })
-            }
-            ExtendedTxEnvelope::DepositedTx(_) => {
+            Self::Legacy(_) => OpReceiptEnvelope::Legacy(ReceiptWithBloom {
+                receipt,
+                logs_bloom: bloom,
+            }),
+            Self::Eip1559(_) => OpReceiptEnvelope::Eip1559(ReceiptWithBloom {
+                receipt,
+                logs_bloom: bloom,
+            }),
+            Self::Eip2930(_) => OpReceiptEnvelope::Eip2930(ReceiptWithBloom {
+                receipt,
+                logs_bloom: bloom,
+            }),
+            Self::Deposit(dep) => {
                 OpReceiptEnvelope::Deposit(OpDepositReceiptWithBloom {
                     receipt: OpDepositReceipt {
                         inner: receipt,
-                        // TODO: what are these fields supposed to be?
-                        deposit_nonce: None,
-                        deposit_receipt_version: None,
+                        // Per OP stack spec <https://specs.optimism.io/protocol/deposits.html#execution>
+                        deposit_nonce: Some(dep.nonce()),
+                        deposit_receipt_version: Some(DEPOSIT_RECEIPT_VERSION),
                     },
                     logs_bloom: bloom,
                 })
             }
-            ExtendedTxEnvelope::Canonical(_) => unreachable!("Not supported"),
-        }
-    }
-}
-
-impl From<ExtendedTxEnvelope> for OpTxEnvelope {
-    fn from(value: ExtendedTxEnvelope) -> Self {
-        match value {
-            ExtendedTxEnvelope::Canonical(TxEnvelope::Legacy(tx)) => OpTxEnvelope::Legacy(tx),
-            ExtendedTxEnvelope::Canonical(TxEnvelope::Eip1559(tx)) => OpTxEnvelope::Eip1559(tx),
-            ExtendedTxEnvelope::Canonical(TxEnvelope::Eip2930(tx)) => OpTxEnvelope::Eip2930(tx),
-            ExtendedTxEnvelope::Canonical(TxEnvelope::Eip7702(tx)) => OpTxEnvelope::Eip7702(tx),
-            ExtendedTxEnvelope::DepositedTx(tx) => {
-                let mint = if tx.mint.is_zero() {
-                    None
-                } else {
-                    Some(tx.mint.saturating_to())
-                };
-                let deposit_tx = op_alloy::consensus::TxDeposit {
-                    source_hash: tx.source_hash,
-                    from: tx.from,
-                    to: TxKind::Call(tx.to),
-                    mint,
-                    value: tx.value,
-                    gas_limit: tx.gas.saturating_to(),
-                    is_system_transaction: tx.is_system_tx,
-                    input: tx.data,
-                };
-                deposit_tx.into()
-            }
-            ExtendedTxEnvelope::Canonical(_) => unreachable!("Not supported"),
-        }
-    }
-}
-
-impl Encodable for ExtendedTxEnvelope {
-    fn length(&self) -> usize {
-        match self {
-            Self::Canonical(tx) => tx.length(),
-            Self::DepositedTx(tx) => tx.length() + 1,
-        }
-    }
-
-    fn encode(&self, out: &mut dyn alloy::rlp::BufMut) {
-        match self {
-            Self::Canonical(tx) => {
-                // For some reason Alloy double encodes the transaction
-                // by default. So we use their default method then decode
-                // one level.
-                let mut buf = Vec::with_capacity(tx.length());
-                tx.encode(&mut buf);
-                let bytes = Bytes::decode(&mut buf.as_slice()).expect("Must be RLP decodable");
-                out.put_slice(&bytes);
-            }
-            Self::DepositedTx(tx) => {
-                out.put_u8(DEPOSITED_TYPE_BYTE);
-                tx.encode(out);
-            }
-        }
-    }
-}
-
-impl Decodable for ExtendedTxEnvelope {
-    fn decode(buf: &mut &[u8]) -> alloy::rlp::Result<Self> {
-        match buf.first().copied() {
-            Some(DEPOSITED_TYPE_BYTE) => {
-                buf.advance(1);
-                let tx = DepositedTx::decode(buf)?;
-                Ok(Self::DepositedTx(tx))
-            }
-            _ => {
-                let tx = TxEnvelope::decode(buf)?;
-                Ok(Self::Canonical(tx))
-            }
+            _ => unreachable!("Wrapping of other tx types not supported"),
         }
     }
 }
@@ -187,18 +64,19 @@ impl Decodable for ExtendedTxEnvelope {
 #[derive(Debug, Clone)]
 pub enum NormalizedExtendedTxEnvelope {
     Canonical(NormalizedEthTransaction),
-    DepositedTx(DepositedTx),
+    DepositedTx(TxDeposit),
 }
 
-impl TryFrom<ExtendedTxEnvelope> for NormalizedExtendedTxEnvelope {
+impl TryFrom<OpTxEnvelope> for NormalizedExtendedTxEnvelope {
     type Error = Error;
 
-    fn try_from(value: ExtendedTxEnvelope) -> Result<Self, Self::Error> {
+    fn try_from(value: OpTxEnvelope) -> Result<Self, Self::Error> {
         Ok(match value {
-            ExtendedTxEnvelope::Canonical(tx) => {
-                NormalizedExtendedTxEnvelope::Canonical(NormalizedEthTransaction::try_from(tx)?)
-            }
-            ExtendedTxEnvelope::DepositedTx(tx) => NormalizedExtendedTxEnvelope::DepositedTx(tx),
+            OpTxEnvelope::Eip1559(tx) => NormalizedExtendedTxEnvelope::Canonical(tx.try_into()?),
+            OpTxEnvelope::Eip2930(tx) => NormalizedExtendedTxEnvelope::Canonical(tx.try_into()?),
+            OpTxEnvelope::Legacy(tx) => NormalizedExtendedTxEnvelope::Canonical(tx.try_into()?),
+            OpTxEnvelope::Deposit(tx) => NormalizedExtendedTxEnvelope::DepositedTx(tx.unseal()),
+            _ => Err(InvalidTransactionCause::UnsupportedType)?,
         })
     }
 }
@@ -495,49 +373,28 @@ mod tests {
     use {
         super::*,
         alloy::{
+            consensus::Sealed,
             primitives::{address, hex},
-            rlp::{Decodable, Encodable},
         },
     };
 
     #[test]
     fn test_deposited_tx_hash() {
-        let tx = ExtendedTxEnvelope::DepositedTx(DepositedTx {
+        let tx = OpTxEnvelope::Deposit(Sealed::new(TxDeposit{
             source_hash: B256::new(hex!("ad2cd5c72f8d6b25e4da049d76790993af597050965f2aee87e12f98f8c2427f")),
             from: address!("4a04a3191b7a44a99bfd3184f0d2c2c82b98b939"),
-            to: address!("4200000000000000000000000000000000000007"),
-            mint: U256::from(0x56bc75e2d63100000_u128),
+            to: TxKind::Call(address!("4200000000000000000000000000000000000007")),
+            mint: Some(0x56bc75e2d63100000_u128),
             value: U256::from(0x56bc75e2d63100000_u128),
-            gas: U64::from(0x77d2e_u64),
-            is_system_tx: false,
-            data: hex!("d764ad0b0001000000000000000000000000000000000000000000000000000000000000000000000000000000000000c8088d0362bb4ac757ca77e211c30503d39cef4800000000000000000000000042000000000000000000000000000000000000100000000000000000000000000000000000000000000000056bc75e2d631000000000000000000000000000000000000000000000000000000000000000030d4000000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000000a41635f5fd00000000000000000000000084a124e4ec6f0f9914b49dcc71669a8cac556ad600000000000000000000000084a124e4ec6f0f9914b49dcc71669a8cac556ad60000000000000000000000000000000000000000000000056bc75e2d631000000000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000").into(),
-        });
+            gas_limit: 0x77d2e_u64,
+            is_system_transaction: false,
+            input: hex!("d764ad0b0001000000000000000000000000000000000000000000000000000000000000000000000000000000000000c8088d0362bb4ac757ca77e211c30503d39cef4800000000000000000000000042000000000000000000000000000000000000100000000000000000000000000000000000000000000000056bc75e2d631000000000000000000000000000000000000000000000000000000000000000030d4000000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000000a41635f5fd00000000000000000000000084a124e4ec6f0f9914b49dcc71669a8cac556ad600000000000000000000000084a124e4ec6f0f9914b49dcc71669a8cac556ad60000000000000000000000000000000000000000000000056bc75e2d631000000000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000").into(),
+        }));
         assert_eq!(
-            tx.compute_hash(),
+            tx.tx_hash(),
             B256::new(hex!(
                 "ab9985077953a6544cd83c3c2a0ade7de83c19254124a74f5e9644ee8be4fc2f"
             ))
         );
-    }
-
-    #[test]
-    fn test_extended_tx_envelope_rlp() {
-        // Deposited Transaction
-        rlp_roundtrip(&Bytes::from_static(&hex!(
-            "7ef8f8a0672dfee56b1754d9fb99b11dae8eab6dfb7246470f6f7354d7acab837eab12b294deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000000558000c5fc50000000000000004000000006672f4bd000000000000020e00000000000000000000000000000000000000000000000000000000000000070000000000000000000000000000000000000000000000000000000000000001bc6d63f57e9fd865ae9a204a4db7fe1cff654377442541b06d020ddab88c2eeb000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425"
-        )));
-
-        // Canonical Transaction
-        rlp_roundtrip(&Bytes::from_static(&hex!(
-            "02f86f82a45580808346a8928252089465d08a056c17ae13370565b04cf77d2afa1cb9fa8806f05b59d3b2000080c080a0dd50efde9a4d2f01f5248e1a983165c8cfa5f193b07b4b094f4078ad4717c1e4a017db1be1e8751b09e033bcffca982d0fe4919ff6b8594654e06647dee9292750"
-        )));
-    }
-
-    fn rlp_roundtrip(encoded: &[u8]) {
-        let mut re_encoded = Vec::with_capacity(encoded.len());
-        let mut slice = encoded;
-        let tx = ExtendedTxEnvelope::decode(&mut slice).unwrap();
-        tx.encode(&mut re_encoded);
-        assert_eq!(re_encoded, encoded);
     }
 }

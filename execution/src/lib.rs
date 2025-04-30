@@ -35,9 +35,10 @@ use {
     },
     moved_genesis::config::GenesisConfig,
     moved_shared::primitives::{B256, ToEthAddress},
+    op_alloy::consensus::TxDeposit,
     session_id::SessionId,
     std::ops::Deref,
-    transaction::{DepositedTx, NormalizedEthTransaction, TransactionExecutionOutcome},
+    transaction::{NormalizedEthTransaction, TransactionExecutionOutcome},
 };
 
 pub mod session_id;
@@ -114,7 +115,7 @@ pub enum TransactionExecutionInput<'input, S, ST, F, B, H> {
 
 #[derive(Debug)]
 pub struct DepositExecutionInput<'input, S, ST, H> {
-    pub tx: &'input DepositedTx,
+    pub tx: &'input TxDeposit,
     pub tx_hash: &'input B256,
     pub state: &'input S,
     pub storage_trie: &'input ST,

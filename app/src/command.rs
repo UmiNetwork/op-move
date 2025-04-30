@@ -7,7 +7,7 @@ use {
     alloy::{
         consensus::{Receipt, Transaction, TxEnvelope},
         eips::eip2718::Encodable2718,
-        primitives::{Bloom, TxKind, keccak256},
+        primitives::{Bloom, keccak256},
         rlp::{Decodable, Encodable},
     },
     moved_blockchain::{
@@ -20,7 +20,7 @@ use {
     moved_execution::{
         CanonicalExecutionInput, CreateL1GasFee, CreateL2GasFee, DepositExecutionInput, L1GasFee,
         L1GasFeeInput, L2GasFeeInput, LogsBloom, execute_transaction,
-        transaction::{ExtendedTxEnvelope, NormalizedExtendedTxEnvelope},
+        transaction::{NormalizedExtendedTxEnvelope, WrapReceipt},
     },
     moved_shared::{
         error::Error::{InvalidTransaction, InvariantViolation, User},
@@ -33,13 +33,13 @@ use {
 impl<D: Dependencies> Application<D> {
     pub fn start_block_build(&mut self, attributes: Payload, id: PayloadId) {
         // Include transactions from both `payload_attributes` and internal mem-pool
-        let transactions = attributes
+        let transactions_with_metadata = attributes
             .transactions
             .iter()
             .filter_map(|tx_bytes| {
                 let mut slice: &[u8] = tx_bytes.as_ref();
                 let tx_hash = B256::new(keccak256(slice).0);
-                let tx = ExtendedTxEnvelope::decode(&mut slice)
+                let tx = OpTxEnvelope::decode(&mut slice)
                     .inspect_err(|_| {
                         println!("WARN: Failed to RLP decode transaction in payload_attributes")
                     })
@@ -68,22 +68,19 @@ impl<D: Dependencies> Application<D> {
             timestamp: attributes.timestamp.as_limbs()[0],
             prev_randao: attributes.prev_randao,
         };
-        let op_transactions: Vec<_> = transactions
+        let transactions: Vec<_> = transactions_with_metadata
             .iter()
-            .map(|(_, (tx, _))| OpTxEnvelope::from(tx.clone()))
+            .map(|(_, (tx, _))| tx.clone())
             .collect();
         let (execution_outcome, receipts) = self.execute_transactions(
-            transactions
+            transactions_with_metadata
                 .into_iter()
                 .map(|(tx_hash, (tx, bytes))| (tx_hash, tx, bytes)),
             base_fee,
             &header_for_execution,
         );
 
-        let transactions_root =
-            alloy_trie::root::ordered_trie_root_with_encoder(&op_transactions, |tx, buf| {
-                tx.encode_2718(buf)
-            });
+        let transactions_root = alloy_trie::root::ordered_trie_root(&transactions);
         // TODO: is this the correct withdrawals root calculation?
         let withdrawals_root = alloy_trie::root::ordered_trie_root(&attributes.withdrawals);
         let total_tip = execution_outcome.total_tip;
@@ -103,12 +100,9 @@ impl<D: Dependencies> Application<D> {
 
         let block_hash = self.block_hash.block_hash(&header);
 
-        let block = Block::new(
-            header,
-            op_transactions.iter().map(|v| v.trie_hash()).collect(),
-        )
-        .with_hash(block_hash)
-        .with_value(total_tip);
+        let block = Block::new(header, transactions.iter().map(|v| v.trie_hash()).collect())
+            .with_hash(block_hash)
+            .with_value(total_tip);
 
         let block_number = block.block.header.number;
         let base_fee = block.block.header.base_fee_per_gas;
@@ -125,7 +119,7 @@ impl<D: Dependencies> Application<D> {
         self.transaction_repository
             .extend(
                 &mut self.storage,
-                op_transactions
+                transactions
                     .into_iter()
                     .enumerate()
                     .map(|(transaction_index, inner)| {
@@ -150,8 +144,14 @@ impl<D: Dependencies> Application<D> {
         let mut encoded = Vec::new();
         tx.encode(&mut encoded);
         let encoded = encoded.as_slice().into();
-        self.mem_pool
-            .insert(tx_hash, (ExtendedTxEnvelope::Canonical(tx), encoded));
+        self.mem_pool.insert(
+            tx_hash,
+            (
+                OpTxEnvelope::try_from_eth_envelope(tx)
+                    .unwrap_or_else(|_| unreachable!("EIP-4844 not supported")),
+                encoded,
+            ),
+        );
     }
 
     pub fn genesis_update(&mut self, block: ExtendedBlock) {
@@ -160,7 +160,7 @@ impl<D: Dependencies> Application<D> {
 
     fn execute_transactions(
         &mut self,
-        transactions: impl Iterator<Item = (B256, ExtendedTxEnvelope, L1GasFeeInput)>,
+        transactions: impl Iterator<Item = (B256, OpTxEnvelope, L1GasFeeInput)>,
         base_fee: U256,
         block_header: &HeaderForExecution,
     ) -> (ExecutionOutcome, Vec<ExtendedReceipt>) {
@@ -175,8 +175,8 @@ impl<D: Dependencies> Application<D> {
         // https://github.com/ethereum-optimism/specs/blob/9dbc6b0/specs/protocol/deposits.md#kinds-of-deposited-transactions
         let l1_fee = transactions
             .peek()
-            .and_then(|(_, v, _)| v.as_deposited())
-            .map(|tx| self.l1_fee.for_deposit(tx.data.as_ref()));
+            .and_then(|(_, v, _)| v.as_deposit())
+            .map(|tx| self.l1_fee.for_deposit(tx.input.as_ref()));
         let l2_fee = self.l2_fee.with_default_gas_fee_multiplier();
 
         // TODO: parallel transaction processing?
@@ -267,19 +267,13 @@ impl<D: Dependencies> Application<D> {
             );
 
             let (to, from) = match &normalized_tx {
-                NormalizedExtendedTxEnvelope::Canonical(tx) => {
-                    let to = match tx.to {
-                        TxKind::Call(to) => Some(to),
-                        TxKind::Create => None,
-                    };
-                    (to, tx.signer)
-                }
-                NormalizedExtendedTxEnvelope::DepositedTx(tx) => (Some(tx.to), tx.from),
+                NormalizedExtendedTxEnvelope::Canonical(tx) => (tx.to.to(), tx.signer),
+                NormalizedExtendedTxEnvelope::DepositedTx(tx) => (tx.to.to(), tx.from),
             };
 
             receipts.push(ExtendedReceipt {
                 transaction_hash: tx_hash,
-                to,
+                to: to.copied(),
                 from,
                 receipt,
                 l1_block_info,

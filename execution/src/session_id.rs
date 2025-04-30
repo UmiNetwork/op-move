@@ -1,11 +1,12 @@
 use {
-    crate::transaction::{DepositedTx, NormalizedEthTransaction},
+    crate::transaction::NormalizedEthTransaction,
     alloy::primitives::U256,
     aptos_types::transaction::EntryFunction,
     aptos_vm::move_vm_ext::UserTransactionContext,
     moved_evm_ext::HeaderForExecution,
     moved_genesis::config::{CHAIN_ID, GenesisConfig},
     moved_shared::primitives::{B256, ToMoveAddress},
+    op_alloy::consensus::TxDeposit,
 };
 
 /// This struct represents a unique identifier for the current session of the MoveVM.
@@ -53,7 +54,7 @@ impl SessionId {
     }
 
     pub fn new_from_deposited(
-        tx: &DepositedTx,
+        tx: &TxDeposit,
         tx_hash: &B256,
         genesis_config: &GenesisConfig,
         block_header: HeaderForExecution,
@@ -64,7 +65,7 @@ impl SessionId {
             sender,
             Vec::new(),
             sender,
-            tx.gas.into_limbs()[0],
+            tx.gas_limit,
             0,
             chain_id,
             None,

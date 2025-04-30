@@ -1,18 +1,16 @@
-use std::collections::HashMap;
 #[cfg(any(feature = "test-doubles", test))]
 pub use test_doubles::TestDependencies;
+use {op_alloy::consensus::OpTxEnvelope, std::collections::HashMap};
 
 use {
-    move_core_types::effects::ChangeSet,
-    moved_blockchain::payload::PayloadId,
-    moved_execution::{L1GasFeeInput, transaction::ExtendedTxEnvelope},
-    moved_genesis::config::GenesisConfig,
+    move_core_types::effects::ChangeSet, moved_blockchain::payload::PayloadId,
+    moved_execution::L1GasFeeInput, moved_genesis::config::GenesisConfig,
     moved_shared::primitives::B256,
 };
 
 pub struct Application<D: Dependencies> {
     pub genesis_config: GenesisConfig,
-    pub mem_pool: HashMap<B256, (ExtendedTxEnvelope, L1GasFeeInput)>,
+    pub mem_pool: HashMap<B256, (OpTxEnvelope, L1GasFeeInput)>,
     pub gas_fee: D::BaseGasFee,
     pub base_token: D::BaseTokenAccounts,
     pub l1_fee: D::CreateL1GasFee,

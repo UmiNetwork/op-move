@@ -20,7 +20,7 @@ pub mod send_raw_transaction;
 pub mod tests {
     use {
         alloy::{
-            consensus::{SignableTransaction, TxEip1559, TxEnvelope},
+            consensus::{Sealed, SignableTransaction, TxEip1559},
             hex::FromHex,
             network::TxSignerSync,
             primitives::{Bytes, FixedBytes, TxKind, hex, utils::parse_ether},
@@ -43,13 +43,11 @@ pub mod tests {
             transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
         },
         moved_evm_ext::state::InMemoryStorageTrieRepository,
-        moved_execution::{
-            MovedBaseTokenAccounts,
-            transaction::{DepositedTx, ExtendedTxEnvelope},
-        },
+        moved_execution::MovedBaseTokenAccounts,
         moved_genesis::config::{CHAIN_ID, GenesisConfig},
         moved_shared::primitives::{Address, B256, U64, U256},
         moved_state::InMemoryState,
+        op_alloy::consensus::{OpTxEnvelope, TxDeposit},
         std::{convert::Infallible, sync::Arc},
         tokio::sync::{RwLock, mpsc::Sender},
     };
@@ -111,16 +109,16 @@ pub mod tests {
     pub async fn deposit_eth(to: &str, channel: &Sender<Command>) {
         let to = Address::from_hex(to).unwrap();
         let amount = parse_ether("1").unwrap();
-        let tx = ExtendedTxEnvelope::DepositedTx(DepositedTx {
-            to,
+        let tx = OpTxEnvelope::Deposit(Sealed::new(TxDeposit {
+            to: TxKind::Call(to),
             value: amount,
             source_hash: FixedBytes::default(),
             from: to,
-            mint: amount,
-            gas: U64::from(u64::MAX),
-            is_system_tx: false,
-            data: Vec::new().into(),
-        });
+            mint: Some(amount.try_into().unwrap()),
+            gas_limit: u64::MAX,
+            is_system_transaction: false,
+            input: Vec::new().into(),
+        }));
 
         let mut encoded = Vec::new();
         tx.encode(&mut encoded);
@@ -152,8 +150,8 @@ pub mod tests {
 
         let signer = PrivateKeySigner::from_bytes(&PRIVATE_KEY.into()).unwrap();
         let signature = signer.sign_transaction_sync(&mut tx).unwrap();
-        let signed_tx = TxEnvelope::Eip1559(tx.into_signed(signature));
-        let tx = ExtendedTxEnvelope::Canonical(signed_tx);
+        let signed_tx = tx.into_signed(signature);
+        let tx = OpTxEnvelope::Eip1559(signed_tx);
 
         let mut encoded = Vec::new();
         tx.encode(&mut encoded);

@@ -86,6 +86,12 @@ impl ToMoveU256 for U256 {
     }
 }
 
+impl ToMoveU256 for u128 {
+    fn to_move_u256(self) -> MoveU256 {
+        MoveU256::from(self)
+    }
+}
+
 pub fn with_rpc_logs(
     receipt: &OpReceiptEnvelope,
     logs: Vec<alloy::rpc::types::Log>,

@@ -57,23 +57,24 @@ pub(super) fn execute_deposited_transaction<
     let mut traversal_context = TraversalContext::new(&traversal_storage);
     // The type of `tx.gas` is essentially `[u64; 1]` so taking the 0th element
     // is a 1:1 mapping to `u64`.
-    let mut gas_meter = new_gas_meter(input.genesis_config, input.tx.gas.as_limbs()[0]);
+    let mut gas_meter = new_gas_meter(input.genesis_config, input.tx.gas_limit);
 
     let module = ModuleId::new(EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE.into());
     let function_name = EVM_CALL_FN_NAME;
     // Unwraps in serialization are safe because the layouts match the types.
+    let to_address = match input.tx.to {
+        revm::primitives::TxKind::Call(addr) => addr.to_move_address(),
+        _ => unimplemented!("Contract creation through deposit tx not yet supported"),
+    };
     let args: Vec<Vec<u8>> = [
         (
             Value::address(input.tx.from.to_move_address()),
             &ADDRESS_LAYOUT,
         ),
-        (
-            Value::address(input.tx.to.to_move_address()),
-            &ADDRESS_LAYOUT,
-        ),
+        (Value::address(to_address), &ADDRESS_LAYOUT),
         (Value::u256(input.tx.value.to_move_u256()), &U256_LAYOUT),
         (
-            Value::vector_u8(input.tx.data.iter().copied()),
+            Value::vector_u8(input.tx.input.iter().copied()),
             &CODE_LAYOUT,
         ),
     ]
@@ -107,10 +108,11 @@ pub(super) fn execute_deposited_transaction<
             // The tokens will then be distributed to the correct
             // accounts according to the transfers that happened
             // during EVM execution.
-            if !input.tx.mint.is_zero() {
+            let mint_amount = input.tx.mint.unwrap_or_default();
+            if mint_amount != 0 {
                 eth_token::mint_eth(
                     &EVM_NATIVE_ADDRESS,
-                    input.tx.mint,
+                    U256::from(input.tx.mint.unwrap()),
                     &mut session,
                     &mut traversal_context,
                     &mut gas_meter,
