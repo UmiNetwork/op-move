@@ -86,7 +86,9 @@ pub fn deploy_bridged_tokens(
     let trie_storage = InMemoryStorageTrieRepository::new();
     trie_storage.apply(l2_changes.storage.clone())?;
     let block_header = HeaderForExecution::default();
-    let mut ctx = NativeEVMContext::new(&resolver, &trie_storage, &(), block_header);
+    // The `OptimismMintableERC20Factory` does not use the `BLOCKHASH` opcode therefore
+    // it is safe to put the no-op impl here for block hash lookup.
+    let mut ctx = NativeEVMContext::new(&resolver, &trie_storage, &(), block_header, &());
     for token in tokens {
         let data = encode_params(token);
         let outcome = evm_transact_with_native(

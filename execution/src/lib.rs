@@ -31,7 +31,7 @@ use {
         events::{
             EVM_LOGS_EVENT_LAYOUT, EVM_LOGS_EVENT_TAG, EthTransferLog, evm_logs_event_to_log,
         },
-        state::StorageTrieRepository,
+        state::{BlockHashLookup, StorageTrieRepository},
     },
     moved_genesis::config::GenesisConfig,
     moved_shared::primitives::{B256, ToEthAddress},
@@ -58,16 +58,18 @@ mod tests;
 const ADDRESS_LAYOUT: MoveTypeLayout = MoveTypeLayout::Address;
 const U256_LAYOUT: MoveTypeLayout = MoveTypeLayout::U256;
 
-pub fn create_vm_session<'l, 'r, S, L>(
+pub fn create_vm_session<'l, 'r, S, L, B>(
     vm: &'l MoveVM,
     state: &'r S,
     session_id: SessionId,
     storage_trie: &'r impl StorageTrieRepository,
     eth_transfers_log: &'r L,
+    block_hash_lookup: &'r B,
 ) -> Session<'r, 'l>
 where
     S: MoveResolver + TableResolver,
     L: EthTransferLog,
+    B: BlockHashLookup,
 {
     let txn_hash = session_id.txn_hash;
     let mut native_extensions = NativeContextExtensions::default();
@@ -98,37 +100,39 @@ where
         storage_trie,
         eth_transfers_log,
         session_id.block_header,
+        block_hash_lookup,
     ));
 
     vm.new_session_with_extensions(state, native_extensions)
 }
 
 #[derive(Debug)]
-pub enum TransactionExecutionInput<'input, S, ST, F, B> {
-    Deposit(DepositExecutionInput<'input, S, ST>),
-    Canonical(CanonicalExecutionInput<'input, S, ST, F, B>),
+pub enum TransactionExecutionInput<'input, S, ST, F, B, H> {
+    Deposit(DepositExecutionInput<'input, S, ST, H>),
+    Canonical(CanonicalExecutionInput<'input, S, ST, F, B, H>),
 }
 
 #[derive(Debug)]
-pub struct DepositExecutionInput<'input, S, ST> {
+pub struct DepositExecutionInput<'input, S, ST, H> {
     pub tx: &'input DepositedTx,
     pub tx_hash: &'input B256,
     pub state: &'input S,
     pub storage_trie: &'input ST,
     pub genesis_config: &'input GenesisConfig,
     pub block_header: HeaderForExecution,
+    pub block_hash_lookup: &'input H,
 }
 
-impl<'input, S, ST, F, B> From<DepositExecutionInput<'input, S, ST>>
-    for TransactionExecutionInput<'input, S, ST, F, B>
+impl<'input, S, ST, F, B, H> From<DepositExecutionInput<'input, S, ST, H>>
+    for TransactionExecutionInput<'input, S, ST, F, B, H>
 {
-    fn from(value: DepositExecutionInput<'input, S, ST>) -> Self {
+    fn from(value: DepositExecutionInput<'input, S, ST, H>) -> Self {
         Self::Deposit(value)
     }
 }
 
 #[derive(Debug)]
-pub struct CanonicalExecutionInput<'input, S, ST, F, B> {
+pub struct CanonicalExecutionInput<'input, S, ST, F, B, H> {
     pub tx: &'input NormalizedEthTransaction,
     pub tx_hash: &'input B256,
     pub state: &'input S,
@@ -139,12 +143,13 @@ pub struct CanonicalExecutionInput<'input, S, ST, F, B> {
     pub l2_input: L2GasFeeInput,
     pub base_token: &'input B,
     pub block_header: HeaderForExecution,
+    pub block_hash_lookup: &'input H,
 }
 
-impl<'input, S, ST, F, B> From<CanonicalExecutionInput<'input, S, ST, F, B>>
-    for TransactionExecutionInput<'input, S, ST, F, B>
+impl<'input, S, ST, F, B, H> From<CanonicalExecutionInput<'input, S, ST, F, B, H>>
+    for TransactionExecutionInput<'input, S, ST, F, B, H>
 {
-    fn from(value: CanonicalExecutionInput<'input, S, ST, F, B>) -> Self {
+    fn from(value: CanonicalExecutionInput<'input, S, ST, F, B, H>) -> Self {
         Self::Canonical(value)
     }
 }
@@ -154,8 +159,9 @@ pub fn execute_transaction<
     ST: StorageTrieRepository,
     F: L2GasFee,
     B: BaseTokenAccounts,
+    H: BlockHashLookup,
 >(
-    input: TransactionExecutionInput<S, ST, F, B>,
+    input: TransactionExecutionInput<S, ST, F, B, H>,
 ) -> moved_shared::error::Result<TransactionExecutionOutcome> {
     match input {
         TransactionExecutionInput::Deposit(input) => execute_deposited_transaction(input),

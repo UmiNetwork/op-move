@@ -8,7 +8,8 @@ use {
         quick_get_nonce,
         session_id::SessionId,
         transaction::{
-            NormalizedEthTransaction, ScriptOrModule, TransactionData, TransactionExecutionOutcome,
+            NormalizedEthTransaction, ScriptOrDeployment, TransactionData,
+            TransactionExecutionOutcome,
         },
     },
     alloy::rpc::types::TransactionRequest,
@@ -18,7 +19,10 @@ use {
         module_traversal::{TraversalContext, TraversalStorage},
     },
     move_vm_types::resolver::MoveResolver,
-    moved_evm_ext::{HeaderForExecution, state::StorageTrieRepository},
+    moved_evm_ext::{
+        HeaderForExecution,
+        state::{BlockHashLookup, StorageTrieRepository},
+    },
     moved_genesis::{CreateMoveVm, MovedVm, config::GenesisConfig},
     moved_shared::{
         error::{Error::InvalidTransaction, InvalidTransactionCause},
@@ -35,6 +39,7 @@ pub fn simulate_transaction(
     genesis_config: &GenesisConfig,
     base_token: &impl BaseTokenAccounts,
     block_height: u64,
+    block_hash_lookup: &impl BlockHashLookup,
 ) -> moved_shared::error::Result<TransactionExecutionOutcome> {
     let mut tx = NormalizedEthTransaction::from(request.clone());
     if request.from.is_some() && request.nonce.is_none() {
@@ -63,6 +68,7 @@ pub fn simulate_transaction(
         l2_input,
         base_token,
         block_header,
+        block_hash_lookup,
     };
 
     execute_transaction(input.into())
@@ -74,6 +80,7 @@ pub fn call_transaction(
     storage_trie: &impl StorageTrieRepository,
     genesis_config: &GenesisConfig,
     base_token: &impl BaseTokenAccounts,
+    block_hash_lookup: &impl BlockHashLookup,
 ) -> moved_shared::error::Result<Vec<u8>> {
     let mut tx = NormalizedEthTransaction::from(request.clone());
     if request.from.is_some() && request.nonce.is_none() {
@@ -86,7 +93,8 @@ pub fn call_transaction(
     let module_storage_bytes = ResolverBasedModuleBytesStorage::new(state);
     let code_storage = module_storage_bytes.as_unsync_code_storage(&moved_vm);
     let session_id = SessionId::default();
-    let mut session = create_vm_session(&vm, state, session_id, storage_trie, &());
+    let mut session =
+        create_vm_session(&vm, state, session_id, storage_trie, &(), block_hash_lookup);
     let traversal_storage = TraversalStorage::new();
     let mut traversal_context = TraversalContext::new(&traversal_storage);
     let mut gas_meter = new_gas_meter(genesis_config, tx.gas_limit());
@@ -125,7 +133,7 @@ pub fn call_transaction(
                     .collect::<Vec<_>>(),
             )?)
         }
-        TransactionData::ScriptOrModule(ScriptOrModule::Script(script)) => {
+        TransactionData::ScriptOrDeployment(ScriptOrDeployment::Script(script)) => {
             crate::execute::execute_script(
                 script,
                 &tx.signer.to_move_address(),

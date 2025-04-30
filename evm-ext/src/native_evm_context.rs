@@ -5,7 +5,7 @@ use {
     },
     crate::{
         events::EthTransferLog,
-        state::{self, StorageTrieRepository},
+        state::{self, BlockHashLookup, StorageTrieRepository},
     },
     alloy::primitives::map::HashMap,
     aptos_types::vm_status::StatusCode,
@@ -52,12 +52,18 @@ impl<'a> NativeEVMContext<'a> {
         storage_trie: &'a impl StorageTrieRepository,
         transfer_logs: &'a dyn EthTransferLog,
         block_header: HeaderForExecution,
+        block_hash_lookup: &'a dyn BlockHashLookup,
     ) -> Self {
         Self {
             resolver: state,
             storage_trie,
             transfer_logs,
-            db: CacheDB::new(ResolverBackedDB::new(storage_trie, state)),
+            db: CacheDB::new(ResolverBackedDB::new(
+                storage_trie,
+                state,
+                block_hash_lookup,
+                block_header.number,
+            )),
             state_changes: Vec::new(),
             block_header,
         }
@@ -68,16 +74,22 @@ impl<'a> NativeEVMContext<'a> {
 pub struct ResolverBackedDB<'a> {
     storage_trie: &'a dyn StorageTrieRepository,
     resolver: &'a dyn MoveResolver,
+    block_hash_lookup: &'a dyn BlockHashLookup,
+    current_block_number: u64,
 }
 
 impl<'a> ResolverBackedDB<'a> {
     pub fn new(
         storage_trie: &'a dyn StorageTrieRepository,
         resolver: &'a dyn MoveResolver,
+        block_hash_lookup: &'a dyn BlockHashLookup,
+        current_block_number: u64,
     ) -> Self {
         Self {
             storage_trie,
             resolver,
+            block_hash_lookup,
+            current_block_number,
         }
     }
 
@@ -173,11 +185,18 @@ impl DatabaseRef for ResolverBackedDB<'_> {
         Ok(value.unwrap_or_default())
     }
 
-    fn block_hash_ref(&self, _number: u64) -> Result<B256, Self::Error> {
-        // Complication: Move doesn't support this API out of the box.
-        // We could build it out ourselves, but maybe it's not needed
-        // for the contracts we want to support?
+    fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
+        // `number` must be in the range [self.current_block_number - 256, self.current_block_number).
+        let lower_bound = self.current_block_number.saturating_sub(256);
+        let upper_bound = self.current_block_number;
 
-        unimplemented!("EVM block hash API not implemented")
+        if lower_bound <= number && number < upper_bound {
+            return Ok(self
+                .block_hash_lookup
+                .hash_by_number(number)
+                .unwrap_or(B256::ZERO));
+        }
+
+        Ok(B256::ZERO)
     }
 }

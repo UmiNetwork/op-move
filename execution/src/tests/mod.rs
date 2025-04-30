@@ -6,7 +6,7 @@ use {
         eth_token::quick_get_eth_balance,
         tests::signer::Signer,
         transaction::{
-            DepositedTx, ExtendedTxEnvelope, NormalizedExtendedTxEnvelope, ScriptOrModule,
+            DepositedTx, ExtendedTxEnvelope, NormalizedExtendedTxEnvelope, ScriptOrDeployment,
             TransactionData,
         },
     },

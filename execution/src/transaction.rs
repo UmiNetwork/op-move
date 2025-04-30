@@ -404,16 +404,17 @@ impl TryFrom<Signed<TxLegacy>> for NormalizedEthTransaction {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Deserialize, Serialize)]
-pub enum ScriptOrModule {
+pub enum ScriptOrDeployment {
     Script(Script),
     Module(Module),
+    EvmContract(Vec<u8>),
 }
 
 /// Possible parsings of transaction data from a non-deposit transaction.
 #[derive(Debug, PartialEq, Eq, Clone, Deserialize, Serialize)]
 pub enum TransactionData {
     EoaBaseTokenTransfer(Address),
-    ScriptOrModule(ScriptOrModule),
+    ScriptOrDeployment(ScriptOrDeployment),
     // Entry function should be the 3rd option to match the SDK TransactionPayload
     EntryFunction(EntryFunction),
     L2Contract(Address),
@@ -445,8 +446,8 @@ impl TransactionData {
             }
             TxKind::Create => {
                 // Assume EVM create type transactions are either scripts or module deployments
-                let script_or_module: ScriptOrModule = bcs::from_bytes(&tx.data)?;
-                Ok(Self::ScriptOrModule(script_or_module))
+                let script_or_module: ScriptOrDeployment = bcs::from_bytes(&tx.data)?;
+                Ok(Self::ScriptOrDeployment(script_or_module))
             }
         }
     }
@@ -460,7 +461,7 @@ impl TransactionData {
     }
 
     pub fn script_hash(&self) -> Option<B256> {
-        if let Self::ScriptOrModule(ScriptOrModule::Script(script)) = self {
+        if let Self::ScriptOrDeployment(ScriptOrDeployment::Script(script)) = self {
             let bytes = bcs::to_bytes(script).expect("Script must serialize");
             let hash = alloy::primitives::keccak256(bytes);
             Some(hash)

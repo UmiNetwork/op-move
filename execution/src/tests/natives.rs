@@ -31,6 +31,7 @@ fn test_execute_tables_contract() {
         SessionId::default(),
         &ctx.evm_storage,
         &(),
+        &(),
     );
     let mut traversal_context = TraversalContext::new(&traversal_storage);
 

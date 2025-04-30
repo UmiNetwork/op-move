@@ -16,7 +16,7 @@ use {
     aptos_types::transaction::{EntryFunction, Module},
     move_binary_format::CompiledModule,
     move_core_types::{ident_str, language_storage::ModuleId, value::MoveValue},
-    moved_execution::transaction::{ScriptOrModule, TransactionData},
+    moved_execution::transaction::{ScriptOrDeployment, TransactionData},
     moved_shared::primitives::ToMoveAddress,
     openssl::rand::rand_bytes,
     serde_json::Value,
@@ -554,8 +554,8 @@ async fn deploy_move_counter() -> Result<()> {
 
 // Ensure the self-address of the module to deploy matches the given address
 fn set_module_address(bytecode: Vec<u8>, address: Address) -> Vec<u8> {
-    let module: ScriptOrModule = bcs::from_bytes(&bytecode).unwrap();
-    if let ScriptOrModule::Module(module) = module {
+    let module: ScriptOrDeployment = bcs::from_bytes(&bytecode).unwrap();
+    if let ScriptOrDeployment::Module(module) = module {
         let mut code = module.into_inner();
         let mut compiled_module = CompiledModule::deserialize(&code).unwrap();
         let self_module_index = compiled_module.self_module_handle_idx.0 as usize;
@@ -564,7 +564,7 @@ fn set_module_address(bytecode: Vec<u8>, address: Address) -> Vec<u8> {
         compiled_module.address_identifiers[self_address_index] = address.to_move_address();
         code.clear();
         compiled_module.serialize(&mut code).unwrap();
-        bcs::to_bytes(&ScriptOrModule::Module(Module::new(code))).unwrap()
+        bcs::to_bytes(&ScriptOrDeployment::Module(Module::new(code))).unwrap()
     } else {
         bytecode
     }

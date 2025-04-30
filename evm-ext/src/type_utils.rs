@@ -65,9 +65,20 @@ pub fn evm_log_to_move_value(log: Log) -> Value {
 }
 
 pub fn evm_result_to_move_value(result: ExecutionResult) -> Value {
+    // In the case of create, set the output equal to the address of
+    // the newly deployed contract (for convenience).
+    let output = result.created_address().map_or_else(
+        || {
+            result
+                .output()
+                .map(|bytes| bytes.to_vec())
+                .unwrap_or_default()
+        },
+        |address| address.to_vec(),
+    );
     let fields = [
         Value::bool(result.is_success()),
-        Value::vector_u8(result.output().cloned().unwrap_or_default()),
+        Value::vector_u8(output),
         // TODO: this method says it's for testing only, but it seems
         // to be the only way to make a Vector of Structs.
         Value::vector_for_testing_only(result.into_logs().into_iter().map(evm_log_to_move_value)),

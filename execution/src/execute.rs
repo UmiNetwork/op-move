@@ -1,7 +1,7 @@
 use {
     super::tag_validation::{validate_entry_type_tag, validate_entry_value},
     crate::{ADDRESS_LAYOUT, U256_LAYOUT, eth_token::burn_eth, layout::has_value_invariants},
-    alloy::primitives::{Log, LogData},
+    alloy::primitives::{Address, Log, LogData},
     aptos_types::transaction::{EntryFunction, Module, Script},
     move_binary_format::CompiledModule,
     move_core_types::{
@@ -19,7 +19,8 @@ use {
         values::Value,
     },
     moved_evm_ext::{
-        CODE_LAYOUT, EVM_CALL_FN_NAME, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE, extract_evm_result,
+        CODE_LAYOUT, EVM_CALL_FN_NAME, EVM_CREATE_FN_NAME, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
+        extract_evm_result,
     },
     moved_shared::{
         error::{
@@ -127,6 +128,52 @@ pub(super) fn execute_script<G: GasMeter, CS: CodeStorage>(
         code_storage,
     )?;
     Ok(())
+}
+
+pub(super) fn deploy_evm_contract<G: GasMeter, MS: ModuleStorage>(
+    bytecode: Vec<u8>,
+    value: U256,
+    signer: AccountAddress,
+    session: &mut Session,
+    traversal_context: &mut TraversalContext,
+    gas_meter: &mut G,
+    module_storage: &MS,
+) -> moved_shared::error::Result<Address> {
+    let module = ModuleId::new(EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE.into());
+    let function_name = EVM_CREATE_FN_NAME;
+    let args = vec![
+        MoveValue::Signer(signer)
+            .simple_serialize()
+            .unwrap_or_default(),
+        MoveValue::U256(value.to_move_u256())
+            .simple_serialize()
+            .unwrap_or_default(),
+        MoveValue::vector_u8(bytecode)
+            .simple_serialize()
+            .unwrap_or_default(),
+    ];
+    let outcome = session
+        .execute_function_bypass_visibility(
+            &module,
+            function_name,
+            Vec::new(),
+            args,
+            gas_meter,
+            traversal_context,
+            module_storage,
+        )
+        .map_err(|e| User(UserError::Vm(e)))?;
+
+    let evm_outcome = extract_evm_result(outcome);
+
+    if !evm_outcome.is_success {
+        return Err(User(UserError::EvmContractCreationFailure));
+    }
+
+    // Safety: this call does not panic because the EVM output
+    // is set equal to the created address.
+    let address = Address::from_slice(&evm_outcome.output);
+    Ok(address)
 }
 
 // TODO(#329): group MoveVM elements (session, traversal_context,

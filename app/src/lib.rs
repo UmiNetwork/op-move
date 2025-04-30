@@ -3,6 +3,7 @@ pub mod factory;
 pub(crate) mod input;
 
 mod actor;
+mod block_hash;
 mod command;
 mod dependency;
 mod query;

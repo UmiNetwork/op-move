@@ -35,6 +35,7 @@ use {
 };
 
 pub const EVM_CALL_FN_NAME: &IdentStr = ident_str!("system_evm_call");
+pub const EVM_CREATE_FN_NAME: &IdentStr = ident_str!("system_evm_create");
 
 // Scale factor relating EVM gas units to MoveVM internal gas units.
 // We make the following assumptions:

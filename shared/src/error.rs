@@ -74,6 +74,8 @@ pub enum UserError {
     DepositFailure(Vec<u8>),
     #[error("L2 contract call failure")]
     L2ContractCallFailure,
+    #[error("EVM contract creation failure")]
+    EvmContractCreationFailure,
 }
 
 /// The error caused by invalid transaction input parameter.

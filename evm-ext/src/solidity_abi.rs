@@ -119,7 +119,7 @@ fn inner_abi_encode_params(
 
 /// Decode the Solidity ABI bytes to native value
 fn inner_abi_decode_params(value: &[u8], layout: &MoveTypeLayout) -> Result<Value, Error> {
-    let sol_type = layout_to_sol_type(layout);
+    let sol_type = layout_to_sol_type(layout)?;
     let sol_value = sol_type.abi_decode_params(value)?;
     Ok(sol_to_value(sol_value))
 }
@@ -220,8 +220,8 @@ fn move_value_to_sol_value(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> 
     }
 }
 
-fn layout_to_sol_type(layout: &MoveTypeLayout) -> DynSolType {
-    match layout {
+fn layout_to_sol_type(layout: &MoveTypeLayout) -> Result<DynSolType, Error> {
+    let sol_type = match layout {
         MoveTypeLayout::Bool => DynSolType::Bool,
         MoveTypeLayout::U8 => DynSolType::Uint(8),
         MoveTypeLayout::U16 => DynSolType::Uint(16),
@@ -233,9 +233,9 @@ fn layout_to_sol_type(layout: &MoveTypeLayout) -> DynSolType {
         MoveTypeLayout::Vector(vector_layout) => {
             // Special case for byte arrays
             if **vector_layout == MoveTypeLayout::U8 {
-                return DynSolType::Bytes;
+                return Ok(DynSolType::Bytes);
             }
-            DynSolType::Array(Box::new(layout_to_sol_type(vector_layout)))
+            DynSolType::Array(Box::new(layout_to_sol_type(vector_layout)?))
         }
         MoveTypeLayout::Struct(struct_layout) => {
             let (struct_tag, field_layouts) = match struct_layout {
@@ -251,7 +251,7 @@ fn layout_to_sol_type(layout: &MoveTypeLayout) -> DynSolType {
             {
                 // The generic argument encodes actual size at the type level
                 let bytes_size = type_args_to_usize(&struct_tag.type_args);
-                return DynSolType::FixedBytes(bytes_size);
+                return Ok(DynSolType::FixedBytes(bytes_size));
             }
 
             // Equality check like fixed bytes will not work because the type tags will not match.
@@ -261,11 +261,13 @@ fn layout_to_sol_type(layout: &MoveTypeLayout) -> DynSolType {
             {
                 // Fixed size vs dynamic array are defined e.g. as `uint[3]` vs `uint[]` in Solidity.
                 // Move doesn't support fixed size vectors, hence we don't know the actual size beforehand.
-                unimplemented!("Fixed size arrays are not supported in move");
+                return Err(Error::SolTypes(alloy::sol_types::Error::custom(
+                    "Fixed size arrays are not supported in move",
+                )));
             }
 
             if STRING_TAG.eq(struct_tag) {
-                return DynSolType::String;
+                return Ok(DynSolType::String);
             }
 
             // All other struct types are tuples in Solidity
@@ -273,11 +275,12 @@ fn layout_to_sol_type(layout: &MoveTypeLayout) -> DynSolType {
                 field_layouts
                     .iter()
                     .map(|field_layout| layout_to_sol_type(&field_layout.layout))
-                    .collect(),
+                    .collect::<Result<Vec<DynSolType>, Error>>()?,
             )
         }
-        MoveTypeLayout::Native(_, native_layout) => layout_to_sol_type(native_layout),
-    }
+        MoveTypeLayout::Native(_, native_layout) => layout_to_sol_type(native_layout)?,
+    };
+    Ok(sol_type)
 }
 
 fn sol_to_value(sv: DynSolValue) -> Value {

@@ -1,5 +1,5 @@
 use {
-    crate::{Application, Dependencies},
+    crate::{Application, Dependencies, block_hash::StorageBasedProvider},
     alloy::{
         eips::{
             BlockId,
@@ -90,6 +90,7 @@ impl<D: Dependencies> Application<D> {
             Finalized | Pending | Latest | Safe => self.height,
             Earliest => 0,
         };
+        let block_hash_lookup = StorageBasedProvider::new(&self.storage, &self.block_queries);
         let outcome = simulate_transaction(
             transaction,
             self.state.resolver(),
@@ -97,6 +98,7 @@ impl<D: Dependencies> Application<D> {
             &self.genesis_config,
             &self.base_token,
             block_height,
+            &block_hash_lookup,
         );
 
         outcome.map(|outcome| {
@@ -111,12 +113,14 @@ impl<D: Dependencies> Application<D> {
         _block_number: BlockNumberOrTag,
     ) -> Result<Vec<u8>> {
         // TODO: Support transaction call from arbitrary blocks
+        let block_hash_lookup = StorageBasedProvider::new(&self.storage, &self.block_queries);
         call_transaction(
             transaction,
             self.state.resolver(),
             &self.evm_storage,
             &self.genesis_config,
             &self.base_token,
+            &block_hash_lookup,
         )
     }
 
