@@ -2,10 +2,18 @@ use {
     super::{EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE},
     crate::native_evm_context::FRAMEWORK_ADDRESS,
     alloy::dyn_abi::{DynSolType, DynSolValue, Error},
+    aptos_gas_algebra::{GasExpression, InternalGasUnit},
+    aptos_gas_schedule::{
+        NativeGasParameters,
+        gas_params::natives::aptos_framework::{TYPE_INFO_TYPE_OF_BASE, UTIL_FROM_BYTES_PER_BYTE},
+    },
     aptos_native_interface::{
         SafeNativeContext, SafeNativeError, SafeNativeResult, safely_pop_arg, safely_pop_type_arg,
     },
+    aptos_types::vm_status::StatusCode,
+    move_binary_format::errors::PartialVMError,
     move_core_types::{
+        gas_algebra::NumBytes,
         ident_str,
         language_storage::{StructTag, TypeTag},
         value::{MoveStructLayout, MoveTypeLayout, MoveValue},
@@ -69,11 +77,23 @@ pub fn abi_encode_params(
     let prefix = args.pop_back().unwrap().value_as::<Vec<u8>>()?;
     let ty_arg = safely_pop_type_arg!(ty_args);
 
-    // TODO: need to figure out how much gas to charge for these operations.
+    // Charge for the lookup of the type (twice because we need to get annotated and not).
+    context.charge(TYPE_INFO_TYPE_OF_BASE)?;
+    context.charge(TYPE_INFO_TYPE_OF_BASE)?;
 
     let undecorated_layout = context.type_to_type_layout(&ty_arg)?;
     let annotated_layout = context.type_to_fully_annotated_layout(&ty_arg)?;
-    let encoding = inner_abi_encode_params(value, &undecorated_layout, &annotated_layout);
+
+    // It's not possible to construct a `MoveValue` using the annotated layout
+    // (the aptos code panics), so we use the undecorated layout to construct the value
+    // and then pass in the annotated layout to make use of when converting to a
+    // Solidity value.
+    let mv = value.as_move_value(&undecorated_layout);
+
+    // Charge gas for encoding. It is important to charge _before_ we do the work.
+    context.charge(abi_encode_gas_cost(&mv)?)?;
+
+    let encoding = inner_abi_encode_params(mv, &annotated_layout);
 
     let result = Value::vector_u8(prefix.into_iter().chain(encoding));
     Ok(smallvec![result])
@@ -94,7 +114,10 @@ pub fn abi_decode_params(
     let value = safely_pop_arg!(args, Vec<u8>);
     let ty_arg = safely_pop_type_arg!(ty_args);
 
-    // TODO: need to figure out how much gas to charge for these operations.
+    // Charge for the lookup of the type.
+    context.charge(TYPE_INFO_TYPE_OF_BASE)?;
+    // Charge gas for decoding. It is important to charge _before_ we do the work.
+    context.charge(abi_decode_gas_cost(&value))?;
 
     let annotated_layout = context.type_to_fully_annotated_layout(&ty_arg)?;
     let result = inner_abi_decode_params(&value, &annotated_layout)
@@ -102,18 +125,35 @@ pub fn abi_decode_params(
     Ok(smallvec![result])
 }
 
+fn abi_encode_gas_cost(
+    mv: &MoveValue,
+) -> SafeNativeResult<impl GasExpression<NativeGasParameters, Unit = InternalGasUnit>> {
+    // Charge for encoding the value based on its bcs-serialized size.
+    // We don't charge based on the ABI-encoded size because we must charge for gas
+    // before we do the work.
+    let size = bcs::serialized_size(&mv).map_err(|e| {
+        PartialVMError::new(StatusCode::VALUE_SERIALIZATION_ERROR).with_message(format!(
+            "failed to compute serialized size of a value: {e:?}"
+        ))
+    })?;
+    // Assume constructing the ABI-encoding is a similar amount of work to
+    // constructing a Move value from bcs-encoded bytes. Both involve recursively
+    // traversing a structure.
+    Ok(UTIL_FROM_BYTES_PER_BYTE * NumBytes::new(size as u64))
+}
+
+fn abi_decode_gas_cost(
+    value: &[u8],
+) -> impl GasExpression<NativeGasParameters, Unit = InternalGasUnit> {
+    let size = value.len();
+    // Assume ABI decoding is a similar cost to bcs decoding because
+    // both involve constructing a Move value from bytes.
+    UTIL_FROM_BYTES_PER_BYTE * NumBytes::new(size as u64)
+}
+
 /// Encode the move value into bytes using the Solidity ABI
 /// such that it would be suitable for passing to a Solidity contract's function.
-fn inner_abi_encode_params(
-    value: Value,
-    undecorated_layout: &MoveTypeLayout,
-    annotated_layout: &MoveTypeLayout,
-) -> Vec<u8> {
-    // It's not possible to construct a `MoveValue` using the annotated layout
-    // (the aptos code panics), so we use the undecorated layout to construct the value
-    // and then pass in the annotated layout to make use of when converting to a
-    // Solidity value.
-    let mv = value.as_move_value(undecorated_layout);
+fn inner_abi_encode_params(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> Vec<u8> {
     move_value_to_sol_value(mv, annotated_layout).abi_encode_params()
 }
 

@@ -7583,6 +7583,7 @@ dependencies = [
  "alloy",
  "anyhow",
  "aptos-gas-algebra",
+ "aptos-gas-schedule",
  "aptos-native-interface",
  "aptos-types",
  "auto_impl",
