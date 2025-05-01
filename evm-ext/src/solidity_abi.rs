@@ -154,6 +154,36 @@ fn abi_decode_gas_cost(
 /// Encode the move value into bytes using the Solidity ABI
 /// such that it would be suitable for passing to a Solidity contract's function.
 fn inner_abi_encode_params(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> Vec<u8> {
+    // A couple special cases that we can handle easily
+    match &mv {
+        MoveValue::U8(x) => {
+            let mut result = vec![0; 32];
+            result[31] = *x;
+            return result;
+        }
+        MoveValue::U16(x) => {
+            let mut result = vec![0; 32];
+            let [a, b] = x.to_be_bytes();
+            result[30] = a;
+            result[31] = b;
+            return result;
+        }
+        MoveValue::U32(x) => {
+            let mut result = vec![0; 32];
+            let [a, b, c, d] = x.to_be_bytes();
+            result[28] = a;
+            result[29] = b;
+            result[30] = c;
+            result[31] = d;
+            return result;
+        }
+        MoveValue::Vector(inner) if inner.is_empty() => {
+            let mut result = vec![0; 64];
+            result[31] = 32;
+            return result;
+        }
+        _ => (),
+    }
     move_value_to_sol_value(mv, annotated_layout).abi_encode_params()
 }
 
@@ -161,7 +191,7 @@ fn inner_abi_encode_params(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> 
 fn inner_abi_decode_params(value: &[u8], layout: &MoveTypeLayout) -> Result<Value, Error> {
     let sol_type = layout_to_sol_type(layout)?;
     let sol_value = sol_type.abi_decode_params(value)?;
-    Ok(sol_to_value(sol_value))
+    Ok(sol_to_value(sol_value, layout))
 }
 
 fn move_value_to_sol_value(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> DynSolValue {
@@ -323,7 +353,7 @@ fn layout_to_sol_type(layout: &MoveTypeLayout) -> Result<DynSolType, Error> {
     Ok(sol_type)
 }
 
-fn sol_to_value(sv: DynSolValue) -> Value {
+fn sol_to_value(sv: DynSolValue, layout: &MoveTypeLayout) -> Value {
     match sv {
         DynSolValue::Bool(b) => Value::bool(b),
         DynSolValue::Uint(u, size) => match size {
@@ -339,18 +369,50 @@ fn sol_to_value(sv: DynSolValue) -> Value {
         DynSolValue::FixedBytes(w, _size) => {
             Value::struct_(Struct::pack(vec![Value::vector_u8(w.to_vec())]))
         }
-        DynSolValue::Address(a) => Value::address(a.to_move_address()),
+        DynSolValue::Address(a) => match layout {
+            MoveTypeLayout::Address => Value::address(a.to_move_address()),
+            MoveTypeLayout::Signer => Value::master_signer(a.to_move_address()),
+            _ => unreachable!("Solidity address is either Move address or signer"),
+        },
         DynSolValue::Bytes(b) => Value::vector_u8(b),
         DynSolValue::String(s) => {
             Value::struct_(Struct::pack(vec![Value::vector_u8(s.into_bytes())]))
         }
-        DynSolValue::Array(a) => Value::vector_for_testing_only(
+        DynSolValue::Array(a) => {
+            let MoveTypeLayout::Vector(inner_layout) = layout else {
+                unreachable!("Solidity arrays are Move vectors");
+            };
             // TODO: Make sure all the vector elements are of the same type
-            a.into_iter().map(sol_to_value).collect::<Vec<_>>(),
-        ),
-        DynSolValue::Tuple(t) => Value::struct_(Struct::pack(
-            t.into_iter().map(sol_to_value).collect::<Vec<_>>(),
-        )),
+            Value::vector_for_testing_only(
+                a.into_iter()
+                    .map(|sv| sol_to_value(sv, inner_layout))
+                    .collect::<Vec<_>>(),
+            )
+        }
+        DynSolValue::Tuple(t) => {
+            let MoveTypeLayout::Struct(struct_layout) = layout else {
+                unreachable!("Solidity tuples are Move structs");
+            };
+            let fields = match struct_layout {
+                MoveStructLayout::Runtime(move_type_layouts) => move_type_layouts.clone(),
+                MoveStructLayout::WithFields(move_field_layouts) => move_field_layouts
+                    .iter()
+                    .map(|f| f.layout.clone())
+                    .collect(),
+                MoveStructLayout::WithTypes { fields, .. } => {
+                    fields.iter().map(|f| f.layout.clone()).collect()
+                }
+                MoveStructLayout::WithVariants(_) | MoveStructLayout::RuntimeVariants(_) => {
+                    unreachable!("Non-variant layouts are used")
+                }
+            };
+            Value::struct_(Struct::pack(
+                t.into_iter()
+                    .zip(fields)
+                    .map(|(sv, layout)| sol_to_value(sv, &layout))
+                    .collect::<Vec<_>>(),
+            ))
+        }
         _ => unreachable!("Int, FixedArray, Function and CustomStruct are not supported"),
     }
 }
@@ -393,5 +455,222 @@ fn force_to_u8(mv: MoveValue) -> u8 {
         x
     } else {
         unreachable!("Only call force_to_u8 with MoveValue::U8")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use {
+        super::*,
+        alloy::primitives::Address,
+        aptos_gas_schedule::{InitialGasSchedule, LATEST_GAS_FEATURE_VERSION},
+        arbitrary::Unstructured,
+        move_core_types::value::{MoveFieldLayout, MoveStruct},
+        rand::{Rng, RngCore, rngs::ThreadRng, seq::SliceRandom},
+        std::time::{Duration, Instant},
+    };
+
+    #[test]
+    fn test_gas_costs() {
+        let gas_params = NativeGasParameters::initial();
+        let mut rng = rand::thread_rng();
+        let values = construct_move_values(&mut rng);
+        for mv in values {
+            let (abi_encoding, layout) = bench_abi_encode(&gas_params, mv.clone(), &mut rng);
+            let round_trip_mv = bench_abi_decode(&gas_params, &abi_encoding, layout);
+            assert_eq!(round_trip_mv, mv);
+        }
+    }
+
+    fn bench_abi_encode(
+        gas_params: &NativeGasParameters,
+        mv: MoveValue,
+        rng: &mut ThreadRng,
+    ) -> (Vec<u8>, MoveTypeLayout) {
+        let annotated_layout = construct_annotated_layout(&mv, rng);
+        let gas_cost: u64 = abi_encode_gas_cost(&mv)
+            .ok()
+            .unwrap()
+            .evaluate(LATEST_GAS_FEATURE_VERSION, gas_params)
+            .into();
+        let message = format!("Took too long to encode value: {mv:#?}");
+        let now = Instant::now();
+        let abi_encoded = inner_abi_encode_params(mv, &annotated_layout);
+        let duration = now.elapsed();
+
+        assert_sufficient_gas(gas_cost, duration, message);
+
+        (abi_encoded, annotated_layout)
+    }
+
+    fn bench_abi_decode(
+        gas_params: &NativeGasParameters,
+        value: &[u8],
+        annotated_layout: MoveTypeLayout,
+    ) -> MoveValue {
+        let gas_cost: u64 = abi_decode_gas_cost(value)
+            .evaluate(LATEST_GAS_FEATURE_VERSION, gas_params)
+            .into();
+
+        let message = format!(
+            "Took too long to decode value: {}",
+            alloy::hex::encode(value)
+        );
+        let now = Instant::now();
+        let value = inner_abi_decode_params(value, &annotated_layout).unwrap();
+        let duration = now.elapsed();
+
+        assert_sufficient_gas(gas_cost, duration, message);
+
+        let undecorated_layout = undecorate_layout(annotated_layout);
+        value.as_move_value(&undecorated_layout)
+    }
+
+    // Ensure enough gas was charged for the amount of computation done.
+    fn assert_sufficient_gas(gas_cost: u64, duration: Duration, message: String) {
+        let ns = duration.as_nanos();
+        // 1 InternalGasUnit ~= 100 nanoseconds
+        // (conversion from
+        // https://github.com/aptos-labs/aptos-core/blob/aptos-node-v1.27.2/aptos-move/aptos-gas-schedule/src/gas_schedule/transaction.rs#L212)
+        assert!(
+            (gas_cost as u128) * 100 >= ns,
+            "gas={gas_cost} time={ns} {message}"
+        );
+    }
+
+    fn rand_bytes(rng: &mut ThreadRng, size: usize) -> Vec<u8> {
+        let mut buf = vec![0; size];
+        rng.fill_bytes(&mut buf);
+        buf
+    }
+
+    // We have this function instead of using the `Arbitrary` for `MoveValue`
+    // to ensure we get a good spread of the different possible values.
+    fn construct_move_values(rng: &mut ThreadRng) -> Vec<MoveValue> {
+        // Include basic values
+        let mut result = construct_basic_move_values(rng);
+        let mut vector_values = vec![Vec::new(); result.len()];
+
+        // Include empty vector
+        result.push(MoveValue::Vector(Vec::new()));
+
+        // Include a vector of each basic value
+        for _ in 0..8 {
+            for (acc, mv) in vector_values
+                .iter_mut()
+                .zip(construct_basic_move_values(rng))
+            {
+                acc.push(mv);
+            }
+        }
+        for collection in &vector_values {
+            result.push(MoveValue::Vector(collection.clone()));
+        }
+
+        // Include a nested vector of vectors for each basic value
+        for collection in &vector_values {
+            result.push(MoveValue::Vector(vec![
+                MoveValue::Vector(collection.clone()),
+                MoveValue::Vector(collection.clone()),
+            ]));
+        }
+
+        // Include structs with different combinations of basic values
+        for _ in 0..8 {
+            result.push(construct_simple_move_struct(rng));
+        }
+
+        // Include structs with vector fields
+        for _ in 0..8 {
+            let mut fields = Vec::with_capacity(3);
+            for _ in 0..fields.capacity() {
+                fields.push(MoveValue::Vector(
+                    vector_values.choose(rng).unwrap().clone(),
+                ));
+            }
+            result.push(MoveValue::Struct(MoveStruct::Runtime(fields)));
+        }
+
+        // Include nested struct
+        result.push(MoveValue::Struct(MoveStruct::Runtime(vec![
+            construct_simple_move_struct(rng),
+            construct_simple_move_struct(rng),
+            construct_simple_move_struct(rng),
+        ])));
+
+        result
+    }
+
+    fn construct_simple_move_struct(rng: &mut ThreadRng) -> MoveValue {
+        let mut fields = construct_basic_move_values(rng);
+        fields.shuffle(rng);
+        fields.truncate(rng.gen_range(3..7));
+        MoveValue::Struct(MoveStruct::Runtime(fields))
+    }
+
+    fn construct_basic_move_values(rng: &mut ThreadRng) -> Vec<MoveValue> {
+        vec![
+            MoveValue::U8(rng.r#gen()),
+            MoveValue::U16(rng.r#gen()),
+            MoveValue::U32(rng.r#gen()),
+            MoveValue::U64(rng.r#gen()),
+            MoveValue::U128(rng.r#gen()),
+            MoveValue::U256(rng.r#gen()),
+            MoveValue::Bool(rng.r#gen()),
+            MoveValue::Signer(Address::from_slice(&rand_bytes(rng, 20)).to_move_address()),
+            MoveValue::Address(Address::from_slice(&rand_bytes(rng, 20)).to_move_address()),
+        ]
+    }
+
+    fn construct_annotated_layout(mv: &MoveValue, rng: &mut ThreadRng) -> MoveTypeLayout {
+        match mv {
+            MoveValue::U8(_) => MoveTypeLayout::U8,
+            MoveValue::U64(_) => MoveTypeLayout::U64,
+            MoveValue::U128(_) => MoveTypeLayout::U128,
+            MoveValue::Bool(_) => MoveTypeLayout::Bool,
+            MoveValue::Address(_) => MoveTypeLayout::Address,
+            MoveValue::Signer(_) => MoveTypeLayout::Signer,
+            MoveValue::U16(_) => MoveTypeLayout::U16,
+            MoveValue::U32(_) => MoveTypeLayout::U32,
+            MoveValue::U256(_) => MoveTypeLayout::U256,
+            MoveValue::Vector(move_values) => match move_values.first() {
+                Some(mv) => MoveTypeLayout::Vector(Box::new(construct_annotated_layout(mv, rng))),
+                None => {
+                    let bytes = rand_bytes(rng, 8);
+                    let mut unstructured = Unstructured::new(&bytes);
+                    let inner: MoveTypeLayout = unstructured.arbitrary().unwrap();
+                    MoveTypeLayout::Vector(Box::new(inner))
+                }
+            },
+            MoveValue::Struct(move_struct) => {
+                let (_, fields) = move_struct.clone().into_optional_variant_and_fields();
+                let field_layouts = fields
+                    .iter()
+                    .map(|f| {
+                        let layout = construct_annotated_layout(f, rng);
+                        MoveFieldLayout::new(ident_str!("field_name").into(), layout)
+                    })
+                    .collect();
+                let bytes = rand_bytes(rng, 1024);
+                let mut unstructured = Unstructured::new(&bytes);
+                let struct_tag: StructTag = unstructured.arbitrary().unwrap();
+                MoveTypeLayout::Struct(MoveStructLayout::WithTypes {
+                    type_: struct_tag,
+                    fields: field_layouts,
+                })
+            }
+        }
+    }
+
+    // Remove struct type information from the layout.
+    fn undecorate_layout(layout: MoveTypeLayout) -> MoveTypeLayout {
+        if let MoveTypeLayout::Struct(struct_layout) = layout {
+            let fields = struct_layout.into_fields(None);
+            return MoveTypeLayout::Struct(MoveStructLayout::Runtime(
+                fields.into_iter().map(undecorate_layout).collect(),
+            ));
+        }
+
+        layout
     }
 }

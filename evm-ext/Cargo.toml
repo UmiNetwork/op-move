@@ -28,3 +28,8 @@ moved-trie.workspace = true
 revm.workspace = true
 smallvec.workspace = true
 thiserror.workspace = true
+
+[dev-dependencies]
+arbitrary.workspace = true
+move-core-types = { workspace = true, features = ["fuzzing"] }
+rand.workspace = true
