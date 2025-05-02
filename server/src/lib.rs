@@ -6,7 +6,7 @@ use {
     moved_api::method_name::MethodName,
     moved_app::{Application, Command, CommandQueue, Dependencies},
     moved_blockchain::{
-        block::{Block, BlockHash, ExtendedBlock, Header},
+        block::{Block, BlockHash, BlockQueries, ExtendedBlock, Header},
         payload::{NewPayloadId, StatePayloadId},
     },
     moved_genesis::config::GenesisConfig,
@@ -138,32 +138,34 @@ pub async fn run(max_buffered_commands: u32, max_concurrent_queries: u32) {
 pub fn initialize_app(genesis_config: GenesisConfig) -> Application<dependency::Dependency> {
     let mut app = dependency::create(&genesis_config);
 
-    let (genesis_changes, table_changes, evm_storage_changes) = {
-        #[cfg(test)]
-        {
-            moved_genesis_image::load()
-        }
-        #[cfg(not(test))]
-        {
-            moved_genesis::build(
-                &moved_genesis::MovedVm::new(&genesis_config),
-                &genesis_config,
-                &app.evm_storage,
-            )
-        }
-    };
-    moved_genesis::apply(
-        genesis_changes,
-        table_changes,
-        evm_storage_changes,
-        &genesis_config,
-        &mut app.state,
-        &mut app.evm_storage,
-    );
+    if app.block_queries.latest(&app.storage).unwrap().is_none() {
+        let (genesis_changes, table_changes, evm_storage_changes) = {
+            #[cfg(test)]
+            {
+                moved_genesis_image::load()
+            }
+            #[cfg(not(test))]
+            {
+                moved_genesis::build(
+                    &moved_genesis::MovedVm::new(&genesis_config),
+                    &genesis_config,
+                    &app.evm_storage,
+                )
+            }
+        };
+        moved_genesis::apply(
+            genesis_changes,
+            table_changes,
+            evm_storage_changes,
+            &genesis_config,
+            &mut app.state,
+            &mut app.evm_storage,
+        );
 
-    let genesis_block = create_genesis_block(&app.block_hash, &genesis_config);
+        let genesis_block = create_genesis_block(&app.block_hash, &genesis_config);
 
-    app.genesis_update(genesis_block);
+        app.genesis_update(genesis_block);
+    }
 
     app
 }

@@ -117,11 +117,7 @@ fn create_db() -> moved_storage_heed::Env {
 
     let path = "db";
 
-    if std::fs::exists(path).unwrap() {
-        std::fs::remove_dir_all(path)
-            .expect("Removing non-empty database directory should succeed");
-    }
-    std::fs::create_dir(path).unwrap();
+    let _ = std::fs::create_dir(path);
 
     let env = unsafe {
         EnvOpenOptions::new()

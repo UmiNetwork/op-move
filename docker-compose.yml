@@ -89,6 +89,7 @@ services:
       - localnet
     volumes:
       - ./docker/volumes/shared:/volume/shared
+      - ./docker/volumes/db:/volume/db
     ports:
       - "8545:8545"
 
