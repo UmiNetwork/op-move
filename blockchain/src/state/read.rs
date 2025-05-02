@@ -1,7 +1,7 @@
 use {
     alloy::{
         primitives::keccak256,
-        rpc::types::{EIP1186AccountProofResponse, EIP1186StorageProof},
+        rpc::types::{EIP1186AccountProofResponse, EIP1186StorageProof, TransactionRequest},
     },
     aptos_types::state_store::{state_key::StateKey, state_value::StateValue},
     bytes::Bytes,
@@ -18,13 +18,18 @@ use {
     move_vm_types::resolver::{ModuleResolver, MoveResolver, ResourceResolver},
     moved_evm_ext::{
         ResolverBackedDB,
-        state::{self, StorageTrieRepository},
+        state::{self, BlockHashLookup, StorageTrieRepository},
     },
     moved_execution::{
-        quick_get_eth_balance, quick_get_nonce,
+        BaseTokenAccounts, quick_get_eth_balance, quick_get_nonce,
+        simulate::{call_transaction, simulate_transaction},
         transaction::{L2_HIGHEST_ADDRESS, L2_LOWEST_ADDRESS},
     },
-    moved_shared::primitives::{Address, B256, KeyHashable, ToEthAddress, U256},
+    moved_genesis::config::GenesisConfig,
+    moved_shared::{
+        error::Error,
+        primitives::{Address, B256, KeyHashable, ToEthAddress, U256},
+    },
     moved_state::{
         IN_MEMORY_EXPECT_MSG, evm_key_address, is_evm_storage_or_account_key, nodes::TreeKey,
     },
@@ -33,6 +38,7 @@ use {
 
 pub type ProofResponse = EIP1186AccountProofResponse;
 pub type StorageProof = EIP1186StorageProof;
+pub type CallResponse = Vec<u8>;
 
 /// A non-negative integer for indicating the amount of base token on an account.
 pub type Balance = U256;
@@ -85,6 +91,30 @@ pub trait StateQueries {
         storage_slots: &[U256],
         height: BlockHeight,
     ) -> Option<ProofResponse>;
+
+    #[allow(clippy::too_many_arguments)]
+    fn call_at(
+        &self,
+        db: Arc<impl DB>,
+        evm_storage: &impl StorageTrieRepository,
+        height: BlockHeight,
+        transaction: TransactionRequest,
+        genesis_config: &GenesisConfig,
+        base_token: &impl BaseTokenAccounts,
+        block_hash_lookup: &impl BlockHashLookup,
+    ) -> Result<CallResponse, Error>;
+
+    #[allow(clippy::too_many_arguments)]
+    fn gas_at(
+        &self,
+        db: Arc<impl DB>,
+        evm_storage: &impl StorageTrieRepository,
+        height: BlockHeight,
+        transaction: TransactionRequest,
+        genesis_config: &GenesisConfig,
+        base_token: &impl BaseTokenAccounts,
+        block_hash_lookup: &impl BlockHashLookup,
+    ) -> Result<u64, Error>;
 }
 
 #[derive(Debug)]
@@ -244,6 +274,61 @@ impl StateQueries for InMemoryStateQueries {
 
         proof_from_trie_and_resolver(address, storage_slots, &mut tree, &resolver, evm_storage)
     }
+
+    fn call_at(
+        &self,
+        db: Arc<impl DB>,
+        evm_storage: &impl StorageTrieRepository,
+        height: BlockHeight,
+        transaction: TransactionRequest,
+        genesis_config: &GenesisConfig,
+        base_token: &impl BaseTokenAccounts,
+        block_hash_lookup: &impl BlockHashLookup,
+    ) -> Result<CallResponse, Error> {
+        let resolver = self
+            .storage
+            .resolver(db.clone(), height)
+            .expect("Block height argument has been verified to be legal");
+        call_transaction(
+            transaction,
+            &resolver,
+            evm_storage,
+            genesis_config,
+            base_token,
+            block_hash_lookup,
+        )
+    }
+
+    fn gas_at(
+        &self,
+        db: Arc<impl DB>,
+        evm_storage: &impl StorageTrieRepository,
+        height: BlockHeight,
+        transaction: TransactionRequest,
+        genesis_config: &GenesisConfig,
+        base_token: &impl BaseTokenAccounts,
+        block_hash_lookup: &impl BlockHashLookup,
+    ) -> Result<u64, Error> {
+        let resolver = self
+            .storage
+            .resolver(db.clone(), height)
+            .expect("Block height argument has been verified to be legal");
+
+        let outcome = simulate_transaction(
+            transaction,
+            &resolver,
+            evm_storage,
+            genesis_config,
+            base_token,
+            height,
+            block_hash_lookup,
+        );
+
+        outcome.map(|outcome| {
+            // Add 33% extra gas as a buffer.
+            outcome.gas_used + (outcome.gas_used / 3)
+        })
+    }
 }
 
 /// This is a [`MoveResolver`] that accesses blockchain state via [`EthTrie`].
@@ -374,6 +459,32 @@ pub mod test_doubles {
             _height: BlockHeight,
         ) -> Option<ProofResponse> {
             None
+        }
+
+        fn call_at(
+            &self,
+            _db: Arc<impl DB>,
+            _evm_storage: &impl StorageTrieRepository,
+            _height: BlockHeight,
+            _transaction: TransactionRequest,
+            _genesis_config: &GenesisConfig,
+            _base_token: &impl BaseTokenAccounts,
+            _block_hash_lookup: &impl BlockHashLookup,
+        ) -> Result<CallResponse, moved_shared::error::Error> {
+            Ok(vec![])
+        }
+
+        fn gas_at(
+            &self,
+            _db: Arc<impl DB>,
+            _evm_storage: &impl StorageTrieRepository,
+            _height: BlockHeight,
+            _transaction: TransactionRequest,
+            _genesis_config: &GenesisConfig,
+            _base_token: &impl BaseTokenAccounts,
+            _block_hash_lookup: &impl BlockHashLookup,
+        ) -> Result<u64, Error> {
+            Ok(0)
         }
     }
 }

@@ -4,19 +4,22 @@ use {
         generic::{FromKey, ToKey},
         trie::FromOptRoot,
     },
+    alloy::rpc::types::TransactionRequest,
     eth_trie::{DB, EthTrie, TrieError},
     move_core_types::{account_address::AccountAddress, effects::ChangeSet},
     move_table_extension::{TableChangeSet, TableResolver},
     move_vm_types::resolver::MoveResolver,
     moved_blockchain::state::{
-        Balance, BlockHeight, EthTrieResolver, Nonce, ProofResponse, StateQueries,
+        Balance, BlockHeight, CallResponse, EthTrieResolver, Nonce, ProofResponse, StateQueries,
         proof_from_trie_and_resolver,
     },
-    moved_evm_ext::state::StorageTrieRepository,
+    moved_evm_ext::state::{BlockHashLookup, StorageTrieRepository},
     moved_execution::{
-        quick_get_eth_balance, quick_get_nonce,
+        BaseTokenAccounts, quick_get_eth_balance, quick_get_nonce,
+        simulate::{call_transaction, simulate_transaction},
         transaction::{L2_HIGHEST_ADDRESS, L2_LOWEST_ADDRESS},
     },
+    moved_genesis::config::GenesisConfig,
     moved_shared::primitives::{B256, ToEthAddress, U256},
     moved_state::{InsertChangeSetIntoMerkleTrie, State},
     rocksdb::{AsColumnFamilyRef, WriteBatchWithTransaction},
@@ -204,5 +207,57 @@ impl StateQueries for RocksDbStateQueries<'_> {
         let resolver = self.resolver(db, height).ok()?;
 
         proof_from_trie_and_resolver(address, storage_slots, &mut tree, &resolver, evm_storage)
+    }
+
+    fn call_at(
+        &self,
+        db: Arc<impl DB>,
+        evm_storage: &impl StorageTrieRepository,
+        height: BlockHeight,
+        transaction: TransactionRequest,
+        genesis_config: &GenesisConfig,
+        base_token: &impl BaseTokenAccounts,
+        block_hash_lookup: &impl BlockHashLookup,
+    ) -> Result<CallResponse, moved_shared::error::Error> {
+        let resolver = self
+            .resolver(db, height)
+            .expect("Block height argument has been verified to be legal");
+        call_transaction(
+            transaction,
+            &resolver,
+            evm_storage,
+            genesis_config,
+            base_token,
+            block_hash_lookup,
+        )
+    }
+
+    fn gas_at(
+        &self,
+        db: Arc<impl DB>,
+        evm_storage: &impl StorageTrieRepository,
+        height: BlockHeight,
+        transaction: TransactionRequest,
+        genesis_config: &GenesisConfig,
+        base_token: &impl BaseTokenAccounts,
+        block_hash_lookup: &impl BlockHashLookup,
+    ) -> Result<u64, moved_shared::error::Error> {
+        let resolver = self
+            .resolver(db, height)
+            .expect("Block height argument has been verified to be legal");
+        let outcome = simulate_transaction(
+            transaction,
+            &resolver,
+            evm_storage,
+            genesis_config,
+            base_token,
+            height,
+            block_hash_lookup,
+        );
+
+        outcome.map(|outcome| {
+            // Add 33% extra gas as a buffer.
+            outcome.gas_used + (outcome.gas_used / 3)
+        })
     }
 }

@@ -1,5 +1,8 @@
 use {
-    crate::{json_utils, jsonrpc::JsonRpcError},
+    crate::{
+        json_utils::{self, transaction_error},
+        jsonrpc::JsonRpcError,
+    },
     alloy::eips::BlockNumberOrTag,
     moved_app::{Application, Dependencies},
     std::sync::Arc,
@@ -15,7 +18,8 @@ pub async fn execute(
     let response = app
         .read()
         .await
-        .fee_history(block_count, block_number, reward_percentiles);
+        .fee_history(block_count, block_number, reward_percentiles)
+        .map_err(transaction_error)?;
 
     Ok(serde_json::to_value(response).expect("Must be able to JSON-serialize response"))
 }
