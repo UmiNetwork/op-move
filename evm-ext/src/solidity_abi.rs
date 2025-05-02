@@ -191,7 +191,7 @@ fn inner_abi_encode_params(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> 
 fn inner_abi_decode_params(value: &[u8], layout: &MoveTypeLayout) -> Result<Value, Error> {
     let sol_type = layout_to_sol_type(layout)?;
     let sol_value = sol_type.abi_decode_params(value)?;
-    Ok(sol_to_value(sol_value, layout))
+    sol_to_value(sol_value, layout)
 }
 
 fn move_value_to_sol_value(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> DynSolValue {
@@ -353,46 +353,48 @@ fn layout_to_sol_type(layout: &MoveTypeLayout) -> Result<DynSolType, Error> {
     Ok(sol_type)
 }
 
-fn sol_to_value(sv: DynSolValue, layout: &MoveTypeLayout) -> Value {
-    match sv {
-        DynSolValue::Bool(b) => Value::bool(b),
-        DynSolValue::Uint(u, size) => match size {
-            8 => Value::u8(u.to_move_u256().unchecked_as_u8()),
-            16 => Value::u16(u.to_move_u256().unchecked_as_u16()),
-            32 => Value::u32(u.to_move_u256().unchecked_as_u32()),
-            64 => Value::u64(u.to_move_u256().unchecked_as_u64()),
-            128 => Value::u128(u.to_move_u256().unchecked_as_u128()),
-            256 => Value::u256(u.to_move_u256()),
-            _ => unreachable!("Only 8, 16, 32, 64, 128 and 256 bit uints are supported by move"),
+fn sol_to_value(sv: DynSolValue, layout: &MoveTypeLayout) -> Result<Value, Error> {
+    let value = match (sv, layout) {
+        (DynSolValue::Bool(b), MoveTypeLayout::Bool) => Value::bool(b),
+        (DynSolValue::Uint(u, size), _) => match (size, layout) {
+            (8, MoveTypeLayout::U8) => Value::u8(u.to_move_u256().unchecked_as_u8()),
+            (16, MoveTypeLayout::U16) => Value::u16(u.to_move_u256().unchecked_as_u16()),
+            (32, MoveTypeLayout::U32) => Value::u32(u.to_move_u256().unchecked_as_u32()),
+            (64, MoveTypeLayout::U64) => Value::u64(u.to_move_u256().unchecked_as_u64()),
+            (128, MoveTypeLayout::U128) => Value::u128(u.to_move_u256().unchecked_as_u128()),
+            (256, MoveTypeLayout::U256) => Value::u256(u.to_move_u256()),
+            _ => {
+                return Err(Error::custom(
+                    "Only 8, 16, 32, 64, 128 and 256 bit uints are supported by move",
+                ));
+            }
         },
         // Packing it back into type-erased `SolidityFixedBytes`
-        DynSolValue::FixedBytes(w, _size) => {
+        (DynSolValue::FixedBytes(w, _size), MoveTypeLayout::Struct(_)) => {
             Value::struct_(Struct::pack(vec![Value::vector_u8(w.to_vec())]))
         }
-        DynSolValue::Address(a) => match layout {
-            MoveTypeLayout::Address => Value::address(a.to_move_address()),
-            MoveTypeLayout::Signer => Value::master_signer(a.to_move_address()),
-            _ => unreachable!("Solidity address is either Move address or signer"),
-        },
-        DynSolValue::Bytes(b) => Value::vector_u8(b),
-        DynSolValue::String(s) => {
+        (DynSolValue::Address(a), MoveTypeLayout::Address) => Value::address(a.to_move_address()),
+        (DynSolValue::Address(_), MoveTypeLayout::Signer) => {
+            // The reason this is not allowed is because if it were then
+            // signatures could be forged for any address.
+            return Err(Error::custom("Decoding signer type not allowed"));
+        }
+        (DynSolValue::Bytes(b), MoveTypeLayout::Vector(inner_layout))
+            if matches!(inner_layout.as_ref(), MoveTypeLayout::U8) =>
+        {
+            Value::vector_u8(b)
+        }
+        (DynSolValue::String(s), MoveTypeLayout::Struct(_)) => {
             Value::struct_(Struct::pack(vec![Value::vector_u8(s.into_bytes())]))
         }
-        DynSolValue::Array(a) => {
-            let MoveTypeLayout::Vector(inner_layout) = layout else {
-                unreachable!("Solidity arrays are Move vectors");
-            };
-            // TODO: Make sure all the vector elements are of the same type
+        (DynSolValue::Array(a), MoveTypeLayout::Vector(inner_layout)) => {
             Value::vector_for_testing_only(
                 a.into_iter()
                     .map(|sv| sol_to_value(sv, inner_layout))
-                    .collect::<Vec<_>>(),
+                    .collect::<Result<Vec<_>, Error>>()?,
             )
         }
-        DynSolValue::Tuple(t) => {
-            let MoveTypeLayout::Struct(struct_layout) = layout else {
-                unreachable!("Solidity tuples are Move structs");
-            };
+        (DynSolValue::Tuple(t), MoveTypeLayout::Struct(struct_layout)) => {
             let fields = match struct_layout {
                 MoveStructLayout::Runtime(move_type_layouts) => move_type_layouts.clone(),
                 MoveStructLayout::WithFields(move_field_layouts) => move_field_layouts
@@ -403,18 +405,23 @@ fn sol_to_value(sv: DynSolValue, layout: &MoveTypeLayout) -> Value {
                     fields.iter().map(|f| f.layout.clone()).collect()
                 }
                 MoveStructLayout::WithVariants(_) | MoveStructLayout::RuntimeVariants(_) => {
-                    unreachable!("Non-variant layouts are used")
+                    return Err(Error::custom("Variant-type layouts are unsupported"));
                 }
             };
             Value::struct_(Struct::pack(
                 t.into_iter()
                     .zip(fields)
                     .map(|(sv, layout)| sol_to_value(sv, &layout))
-                    .collect::<Vec<_>>(),
+                    .collect::<Result<Vec<_>, Error>>()?,
             ))
         }
-        _ => unreachable!("Int, FixedArray, Function and CustomStruct are not supported"),
-    }
+        _ => {
+            return Err(Error::custom(
+                "Unrecognized and/or mismatched types. Note: Int, FixedArray, Function and CustomStruct are not supported",
+            ));
+        }
+    };
+    Ok(value)
 }
 
 fn type_args_to_usize(type_args: &[TypeTag]) -> usize {
@@ -477,8 +484,15 @@ mod tests {
         let values = construct_move_values(&mut rng);
         for mv in values {
             let (abi_encoding, layout) = bench_abi_encode(&gas_params, mv.clone(), &mut rng);
-            let round_trip_mv = bench_abi_decode(&gas_params, &abi_encoding, layout);
-            assert_eq!(round_trip_mv, mv);
+            match bench_abi_decode(&gas_params, &abi_encoding, layout.clone()) {
+                Ok(round_trip_mv) => {
+                    assert_eq!(round_trip_mv, mv);
+                }
+                Err(e) => {
+                    assert!(format!("{e:?}").contains("signer type not allowed"));
+                    assert!(layout_contains_signer(&layout));
+                }
+            }
         }
     }
 
@@ -507,7 +521,7 @@ mod tests {
         gas_params: &NativeGasParameters,
         value: &[u8],
         annotated_layout: MoveTypeLayout,
-    ) -> MoveValue {
+    ) -> Result<MoveValue, Error> {
         let gas_cost: u64 = abi_decode_gas_cost(value)
             .evaluate(LATEST_GAS_FEATURE_VERSION, gas_params)
             .into();
@@ -517,13 +531,13 @@ mod tests {
             alloy::hex::encode(value)
         );
         let now = Instant::now();
-        let value = inner_abi_decode_params(value, &annotated_layout).unwrap();
+        let value = inner_abi_decode_params(value, &annotated_layout);
         let duration = now.elapsed();
 
         assert_sufficient_gas(gas_cost, duration, message);
 
         let undecorated_layout = undecorate_layout(annotated_layout);
-        value.as_move_value(&undecorated_layout)
+        value.map(|v| v.as_move_value(&undecorated_layout))
     }
 
     // Ensure enough gas was charged for the amount of computation done.
@@ -672,5 +686,21 @@ mod tests {
         }
 
         layout
+    }
+
+    fn layout_contains_signer(layout: &MoveTypeLayout) -> bool {
+        match layout {
+            MoveTypeLayout::Signer => true,
+            MoveTypeLayout::Vector(inner) => layout_contains_signer(inner),
+            MoveTypeLayout::Struct(struct_layout) => match struct_layout {
+                MoveStructLayout::Runtime(fields) => fields.iter().any(layout_contains_signer),
+                MoveStructLayout::WithTypes { fields, .. }
+                | MoveStructLayout::WithFields(fields) => {
+                    fields.iter().any(|f| layout_contains_signer(&f.layout))
+                }
+                _ => panic!("Unexpected struct layout variant"),
+            },
+            _ => false,
+        }
     }
 }
