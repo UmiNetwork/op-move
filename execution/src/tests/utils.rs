@@ -1,5 +1,6 @@
 use {
     super::*,
+    alloy::consensus::Sealed,
     move_binary_format::errors::VMError,
     move_compiler::{
         compiled_unit::AnnotatedCompiledUnit,
@@ -15,6 +16,7 @@ use {
     },
     moved_genesis::{CreateMoveVm, MovedVm, config::CHAIN_ID},
     moved_state::ResolverBasedModuleBytesStorage,
+    op_alloy::consensus::OpTxEnvelope,
     regex::Regex,
     std::{
         collections::{BTreeMap, BTreeSet},
@@ -355,16 +357,16 @@ impl TestContext {
     /// * `amount` - Amount of ETH to deposit
     pub fn deposit_eth(&mut self, to: Address, amount: U256) {
         let balance_before = self.get_balance(to);
-        let tx = ExtendedTxEnvelope::DepositedTx(DepositedTx {
-            to,
+        let tx = OpTxEnvelope::Deposit(Sealed::new(TxDeposit {
+            to: TxKind::Call(to),
             value: U256::from(amount),
             source_hash: FixedBytes::default(),
             from: to,
-            mint: U256::from(amount),
-            gas: U64::from(u64::MAX),
-            is_system_tx: false,
-            data: Vec::new().into(),
-        });
+            mint: Some(amount.saturating_to()),
+            gas_limit: u64::MAX,
+            is_system_transaction: false,
+            input: Vec::new().into(),
+        }));
         let tx_hash = {
             let capacity = tx.length();
             let mut bytes = Vec::with_capacity(capacity);
@@ -423,7 +425,7 @@ impl TestContext {
     /// * `address` - Address to check balance for
     ///
     /// # Returns
-    /// The balance as a u64
+    /// The balance as a u256
     pub fn get_balance(&self, address: Address) -> U256 {
         quick_get_eth_balance(
             &address.to_move_address(),

@@ -5,10 +5,7 @@ use {
     crate::{
         eth_token::quick_get_eth_balance,
         tests::signer::Signer,
-        transaction::{
-            DepositedTx, ExtendedTxEnvelope, NormalizedExtendedTxEnvelope, ScriptOrDeployment,
-            TransactionData,
-        },
+        transaction::{NormalizedExtendedTxEnvelope, ScriptOrDeployment, TransactionData},
     },
     alloy::{
         consensus::{SignableTransaction, TxEnvelope, transaction::TxEip1559},
@@ -37,7 +34,7 @@ use {
     },
     move_vm_runtime::module_traversal::{TraversalContext, TraversalStorage},
     move_vm_types::{gas::UnmeteredGasMeter, resolver::ModuleResolver},
-    moved_shared::primitives::{B256, ToMoveAddress, ToMoveU256, U64, U256},
+    moved_shared::primitives::{B256, ToMoveAddress, ToMoveU256, U256},
     moved_state::{InMemoryState, State},
     serde::de::DeserializeOwned,
     std::path::Path,

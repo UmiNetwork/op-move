@@ -7547,6 +7547,7 @@ dependencies = [
  "moved-genesis-image",
  "moved-shared",
  "moved-state",
+ "op-alloy",
  "serde",
  "serde_json",
  "test-case",
