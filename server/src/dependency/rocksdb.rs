@@ -116,9 +116,8 @@ fn db() -> &'static moved_storage_rocksdb::RocksDb {
 fn create_db() -> moved_storage_rocksdb::RocksDb {
     let path = "db";
 
-    if std::fs::exists(path).unwrap() {
-        std::fs::remove_dir_all(path)
-            .expect("Removing non-empty database directory should succeed");
+    if std::env::var("PURGE").as_ref().map(String::as_str) == Ok("1") {
+        let _ = std::fs::remove_dir_all(path);
     }
 
     let mut options = moved_storage_rocksdb::rocksdb::Options::default();

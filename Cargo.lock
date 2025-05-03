@@ -3725,6 +3725,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "dearbitrary"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "708ee6091d6965eb85c69f7a707303dcc48cc55fd937fb30e531909a10b314d4"
+dependencies = [
+ "derive_dearbitrary",
+]
+
+[[package]]
 name = "der"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3832,6 +3841,17 @@ checksum = "ab63b0e2bf4d5928aff72e83a7dace85d7bba5fe12dcc3c5a572d78caffd3f3c"
 dependencies = [
  "derive_builder_core",
  "syn 2.0.100",
+]
+
+[[package]]
+name = "derive_dearbitrary"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "afdf9e6fb6c8a925c6b19b78ec3a80152e7a46dc7811be5f1fa64568e7c7b6c0"
+dependencies = [
+ "proc-macro2 1.0.94",
+ "quote 1.0.40",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -6792,14 +6812,18 @@ version = "0.0.4"
 source = "git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.27.2#4ace64edcc41878fe348c07238cfe497a5cb6714"
 dependencies = [
  "anyhow",
+ "arbitrary",
  "bcs 0.1.4",
  "bytes",
+ "dearbitrary",
  "ethnum",
  "hashbrown 0.14.5",
  "hex",
  "num 0.4.3",
  "once_cell",
  "primitive-types 0.10.1",
+ "proptest",
+ "proptest-derive 0.4.0",
  "rand 0.8.5",
  "ref-cast",
  "serde",
@@ -7584,8 +7608,10 @@ dependencies = [
  "alloy",
  "anyhow",
  "aptos-gas-algebra",
+ "aptos-gas-schedule",
  "aptos-native-interface",
  "aptos-types",
+ "arbitrary",
  "auto_impl",
  "bcs 0.1.3",
  "better_any",
@@ -7596,6 +7622,7 @@ dependencies = [
  "move-vm-types 0.1.0 (git+https://github.com/aptos-labs/aptos-core?tag=aptos-node-v1.27.2)",
  "moved-shared",
  "moved-trie",
+ "rand 0.8.5",
  "revm",
  "smallvec",
  "thiserror 1.0.69",
@@ -9352,6 +9379,17 @@ dependencies = [
  "proc-macro2 0.4.30",
  "quote 0.6.13",
  "syn 0.15.44",
+]
+
+[[package]]
+name = "proptest-derive"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9cf16337405ca084e9c78985114633b6827711d22b9e6ef6c6c0d665eb3f0b6e"
+dependencies = [
+ "proc-macro2 1.0.94",
+ "quote 1.0.40",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -11460,7 +11498,7 @@ dependencies = [
  "parking_lot",
  "prometheus",
  "proptest",
- "proptest-derive",
+ "proptest-derive 0.3.0",
  "rand 0.8.5",
  "roaring",
  "schemars",
