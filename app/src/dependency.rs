@@ -40,16 +40,16 @@ impl<D: Dependencies> Clone for ApplicationReader<D> {
 }
 
 impl<D: Dependencies> ApplicationReader<D> {
-    pub fn new(_: D, genesis_config: &GenesisConfig) -> Self {
+    pub fn new(deps: D, genesis_config: &GenesisConfig) -> Self {
         Self {
             genesis_config: genesis_config.clone(),
             base_token: D::base_token_accounts(genesis_config),
             block_queries: D::block_queries(),
             payload_queries: D::payload_queries(),
             receipt_queries: D::receipt_queries(),
-            receipt_memory: D::receipt_memory_reader(),
-            storage: D::shared_storage_reader(),
-            state_queries: D::state_queries(genesis_config),
+            receipt_memory: deps.receipt_memory_reader(),
+            storage: deps.shared_storage_reader(),
+            state_queries: deps.state_queries(),
             evm_storage: D::storage_trie_repository(),
             transaction_queries: D::transaction_queries(),
         }
@@ -84,7 +84,7 @@ pub struct Application<D: Dependencies> {
 }
 
 impl<D: Dependencies> Application<D> {
-    pub fn new(_: D, genesis_config: &GenesisConfig) -> Self {
+    pub fn new(mut deps: D, genesis_config: &GenesisConfig) -> Self {
         Self {
             genesis_config: genesis_config.clone(),
             mem_pool: Default::default(),
@@ -101,12 +101,12 @@ impl<D: Dependencies> Application<D> {
             payload_queries: D::payload_queries(),
             receipt_queries: D::receipt_queries(),
             receipt_repository: D::receipt_repository(),
-            receipt_memory: D::receipt_memory(),
-            storage: D::shared_storage(),
-            receipt_memory_reader: D::receipt_memory_reader(),
-            storage_reader: D::shared_storage_reader(),
-            state: D::state(),
-            state_queries: D::state_queries(genesis_config),
+            receipt_memory: deps.receipt_memory(),
+            storage: deps.shared_storage(),
+            receipt_memory_reader: deps.receipt_memory_reader(),
+            storage_reader: deps.shared_storage_reader(),
+            state: deps.state(),
+            state_queries: deps.state_queries(),
             evm_storage: D::storage_trie_repository(),
             transaction_queries: D::transaction_queries(),
             transaction_repository: D::transaction_repository(),
@@ -232,17 +232,17 @@ pub trait Dependencies {
 
     fn receipt_repository() -> Self::ReceiptRepository;
 
-    fn receipt_memory() -> Self::ReceiptStorage;
+    fn receipt_memory(&mut self) -> Self::ReceiptStorage;
 
-    fn shared_storage() -> Self::SharedStorage;
+    fn shared_storage(&mut self) -> Self::SharedStorage;
 
-    fn receipt_memory_reader() -> Self::ReceiptStorageReader;
+    fn receipt_memory_reader(&self) -> Self::ReceiptStorageReader;
 
-    fn shared_storage_reader() -> Self::SharedStorageReader;
+    fn shared_storage_reader(&self) -> Self::SharedStorageReader;
 
-    fn state() -> Self::State;
+    fn state(&self) -> Self::State;
 
-    fn state_queries(genesis_config: &GenesisConfig) -> Self::StateQueries;
+    fn state_queries(&self) -> Self::StateQueries;
 
     fn storage_trie_repository() -> Self::StorageTrieRepository;
 
@@ -415,27 +415,27 @@ mod test_doubles {
             unimplemented!("Dependencies are created manually in tests")
         }
 
-        fn receipt_memory() -> Self::ReceiptStorage {
+        fn receipt_memory(&mut self) -> Self::ReceiptStorage {
             unimplemented!("Dependencies are created manually in tests")
         }
 
-        fn shared_storage() -> Self::SharedStorage {
+        fn shared_storage(&mut self) -> Self::SharedStorage {
             unimplemented!("Dependencies are created manually in tests")
         }
 
-        fn receipt_memory_reader() -> Self::ReceiptStorageReader {
+        fn receipt_memory_reader(&self) -> Self::ReceiptStorageReader {
             unimplemented!("Dependencies are created manually in tests")
         }
 
-        fn shared_storage_reader() -> Self::SharedStorageReader {
+        fn shared_storage_reader(&self) -> Self::SharedStorageReader {
             unimplemented!("Dependencies are created manually in tests")
         }
 
-        fn state() -> Self::State {
+        fn state(&self) -> Self::State {
             unimplemented!("Dependencies are created manually in tests")
         }
 
-        fn state_queries(_: &GenesisConfig) -> Self::StateQueries {
+        fn state_queries(&self) -> Self::StateQueries {
             unimplemented!("Dependencies are created manually in tests")
         }
 

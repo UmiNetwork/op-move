@@ -1,12 +1,8 @@
 use {
     crate::dependency::shared::*,
     moved_app::{Application, ApplicationReader, CommandActor},
-    moved_blockchain::{in_memory::shared_memory, receipt::receipt_memory},
     moved_genesis::config::GenesisConfig,
-    std::{
-        iter,
-        sync::{Arc, Mutex},
-    },
+    std::sync::Arc,
 };
 
 pub type Dependency = InMemoryDependencies;
@@ -17,13 +13,51 @@ pub fn create(
     Application<InMemoryDependencies>,
     ApplicationReader<InMemoryDependencies>,
 ) {
+    let deps = InMemoryDependencies::new();
+    let reader_deps = deps.reader();
+
     (
-        Application::new(InMemoryDependencies, genesis_config),
-        ApplicationReader::new(InMemoryDependencies, genesis_config),
+        Application::new(deps, genesis_config),
+        ApplicationReader::new(reader_deps, genesis_config),
     )
 }
 
-pub struct InMemoryDependencies;
+pub struct InMemoryDependencies {
+    memory_reader: moved_blockchain::in_memory::SharedMemoryReader,
+    memory: Option<moved_blockchain::in_memory::SharedMemory>,
+    receipt_memory_reader: moved_blockchain::receipt::ReceiptMemoryReader,
+    receipt_memory: Option<moved_blockchain::receipt::ReceiptMemory>,
+    trie_db: Arc<moved_state::InMemoryTrieDb>,
+}
+
+impl InMemoryDependencies {
+    pub fn new() -> Self {
+        let (memory_reader, memory) = moved_blockchain::in_memory::shared_memory::new();
+        let (receipt_memory_reader, receipt_memory) =
+            moved_blockchain::receipt::receipt_memory::new();
+
+        Self {
+            memory_reader,
+            memory: Some(memory),
+            receipt_memory_reader,
+            receipt_memory: Some(receipt_memory),
+            trie_db: moved_state::InMemoryState::create_db(),
+        }
+    }
+
+    /// Creates a set of dependencies appropriate for usage in reader.
+    ///
+    /// All reader handles are connected to write handles in `self`, but there are no write handles.
+    pub fn reader(&self) -> Self {
+        Self {
+            memory_reader: self.memory_reader.clone(),
+            memory: None,
+            receipt_memory_reader: self.receipt_memory_reader.clone(),
+            receipt_memory: None,
+            trie_db: self.trie_db.clone(),
+        }
+    }
+}
 
 impl moved_app::Dependencies for InMemoryDependencies {
     type BlockQueries = moved_blockchain::block::InMemoryBlockQueries;
@@ -76,50 +110,34 @@ impl moved_app::Dependencies for InMemoryDependencies {
         moved_blockchain::receipt::InMemoryReceiptRepository::new()
     }
 
-    fn receipt_memory() -> Self::ReceiptStorage {
-        RECEIPT_MEM
-            .lock()
-            .unwrap()
-            .1
+    fn receipt_memory(&mut self) -> Self::ReceiptStorage {
+        self.receipt_memory
             .take()
-            .expect("Should be called once")
+            .expect("Writer cannot be taken more than once")
     }
 
-    fn shared_storage() -> Self::SharedStorage {
-        SHARED_MEM
-            .lock()
-            .unwrap()
-            .1
+    fn shared_storage(&mut self) -> Self::SharedStorage {
+        self.memory
             .take()
-            .expect("Should be called once")
+            .expect("Writer cannot be taken more than once")
     }
 
-    fn receipt_memory_reader() -> Self::ReceiptStorageReader {
-        RECEIPT_MEM
-            .lock()
-            .unwrap()
-            .0
-            .pop()
-            .expect("Should be called once")
+    fn receipt_memory_reader(&self) -> Self::ReceiptStorageReader {
+        self.receipt_memory_reader.clone()
     }
 
-    fn shared_storage_reader() -> Self::SharedStorageReader {
-        SHARED_MEM
-            .lock()
-            .unwrap()
-            .0
-            .pop()
-            .expect("Should be called once")
+    fn shared_storage_reader(&self) -> Self::SharedStorageReader {
+        self.memory_reader.clone()
     }
 
-    fn state() -> Self::State {
-        moved_state::InMemoryState::new(TRIE_DB.clone())
+    fn state(&self) -> Self::State {
+        moved_state::InMemoryState::new(self.trie_db.clone())
     }
 
-    fn state_queries(_genesis_config: &GenesisConfig) -> Self::StateQueries {
+    fn state_queries(&self) -> Self::StateQueries {
         moved_blockchain::state::InMemoryStateQueries::new(
-            Self::shared_storage_reader(),
-            TRIE_DB.clone(),
+            self.shared_storage_reader(),
+            self.trie_db.clone(),
         )
     }
 
@@ -136,24 +154,4 @@ impl moved_app::Dependencies for InMemoryDependencies {
     }
 
     impl_shared!();
-}
-
-lazy_static::lazy_static! {
-    static ref TRIE_DB: Arc<moved_state::InMemoryTrieDb> = moved_state::InMemoryState::create_db();
-    static ref SHARED_MEM: Mutex<(
-        Vec<moved_blockchain::in_memory::SharedMemoryReader>,
-        Option<moved_blockchain::in_memory::SharedMemory>,
-    )> = {
-        let (memory_reader, memory) = shared_memory::new();
-
-        Mutex::new((iter::repeat_n(memory_reader, 4).collect(), Some(memory)))
-    };
-    static ref RECEIPT_MEM: Mutex<(
-        Vec<moved_blockchain::receipt::ReceiptMemoryReader>,
-        Option<moved_blockchain::receipt::ReceiptMemory>,
-    )> = {
-        let (memory_reader, memory) = receipt_memory::new();
-
-        Mutex::new((iter::repeat_n(memory_reader, 3).collect(), Some(memory)))
-    };
 }
