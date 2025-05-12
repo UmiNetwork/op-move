@@ -163,7 +163,6 @@ impl<'db> RocksDbStateQueries<'db> {
 impl StateQueries for RocksDbStateQueries<'_> {
     fn balance_at(
         &self,
-        db: Arc<impl DB>,
         evm_storage: &impl StorageTrieRepository,
         account: AccountAddress,
         height: BlockHeight,
@@ -175,7 +174,6 @@ impl StateQueries for RocksDbStateQueries<'_> {
 
     fn nonce_at(
         &self,
-        db: Arc<impl DB>,
         evm_storage: &impl StorageTrieRepository,
         account: AccountAddress,
         height: BlockHeight,
@@ -187,7 +185,6 @@ impl StateQueries for RocksDbStateQueries<'_> {
 
     fn proof_at(
         &self,
-        db: Arc<impl DB>,
         evm_storage: &impl StorageTrieRepository,
         account: AccountAddress,
         storage_slots: &[U256],
@@ -204,5 +201,9 @@ impl StateQueries for RocksDbStateQueries<'_> {
         let resolver = self.resolver(db, height).ok()?;
 
         proof_from_trie_and_resolver(address, storage_slots, &mut tree, &resolver, evm_storage)
+    }
+
+    fn resolver_at<'a>(&'a self, height: BlockHeight) -> impl MoveResolver + TableResolver + 'a {
+        todo!()
     }
 }
