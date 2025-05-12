@@ -98,15 +98,16 @@ pub struct RocksDbStateQueries<'db> {
 }
 
 impl<'db> RocksDbStateQueries<'db> {
-    pub fn new(db: &'db RocksDb) -> Self {
-        Self {
-            db,
-            trie_db: Arc::new(RocksEthTrieDb::new(db)),
-        }
+    pub fn new(db: &'db RocksDb, trie_db: Arc<RocksEthTrieDb<'db>>) -> Self {
+        Self { db, trie_db }
     }
 
-    pub fn from_genesis(db: &'db RocksDb, genesis_state_root: B256) -> Self {
-        let this = Self::new(db);
+    pub fn from_genesis(
+        db: &'db RocksDb,
+        trie_db: Arc<RocksEthTrieDb<'db>>,
+        genesis_state_root: B256,
+    ) -> Self {
+        let this = Self::new(db, trie_db);
         this.push_state_root(genesis_state_root).unwrap();
         this
     }
