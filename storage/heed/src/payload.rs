@@ -16,7 +16,7 @@ pub type Db = heed::Database<Key, Value>;
 
 pub const DB: &str = "payload";
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct HeedPayloadQueries {
     env: &'static heed::Env,
 }

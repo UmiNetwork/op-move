@@ -41,7 +41,7 @@ impl TransactionRepository for HeedTransactionRepository {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct HeedTransactionQueries;
 
 impl TransactionQueries for HeedTransactionQueries {

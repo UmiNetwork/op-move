@@ -98,6 +98,7 @@ impl State for HeedState<'_> {
     }
 }
 
+#[derive(Clone)]
 pub struct HeedStateQueries<'db> {
     env: &'db heed::Env,
     trie_db: Arc<HeedEthTrieDb<'db>>,

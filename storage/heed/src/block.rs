@@ -68,7 +68,7 @@ impl BlockRepository for HeedBlockRepository {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct HeedBlockQueries;
 
 impl BlockQueries for HeedBlockQueries {

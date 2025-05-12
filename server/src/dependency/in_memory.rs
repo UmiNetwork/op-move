@@ -134,7 +134,7 @@ impl moved_app::Dependencies for InMemoryDependencies {
         moved_state::InMemoryState::new(self.trie_db.clone())
     }
 
-    fn state_queries(&self) -> Self::StateQueries {
+    fn state_queries(&self, _: &GenesisConfig) -> Self::StateQueries {
         moved_blockchain::state::InMemoryStateQueries::new(
             self.shared_storage_reader(),
             self.trie_db.clone(),
