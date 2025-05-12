@@ -91,18 +91,21 @@ impl State for RocksDbState<'_> {
     }
 }
 
-#[derive(Debug)]
 pub struct RocksDbStateQueries<'db> {
     db: &'db RocksDb,
+    trie_db: Arc<RocksEthTrieDb<'db>>,
 }
 
 impl<'db> RocksDbStateQueries<'db> {
     pub fn new(db: &'db RocksDb) -> Self {
-        Self { db }
+        Self {
+            db,
+            trie_db: Arc::new(RocksEthTrieDb::new(db)),
+        }
     }
 
     pub fn from_genesis(db: &'db RocksDb, genesis_state_root: B256) -> Self {
-        let this = Self { db };
+        let this = Self::new(db);
         this.push_state_root(genesis_state_root).unwrap();
         this
     }
@@ -132,19 +135,20 @@ impl<'db> RocksDbStateQueries<'db> {
             .map(|v| B256::new(v.as_ref().try_into().unwrap())))
     }
 
-    fn tree<D: DB>(&self, db: Arc<D>, height: u64) -> Result<EthTrie<D>, rocksdb::Error> {
+    fn tree(&self, height: u64) -> Result<EthTrie<RocksEthTrieDb<'db>>, rocksdb::Error> {
         Ok(match self.root_by_height(height)? {
-            Some(root) => EthTrie::from(db, root).expect("State root should be valid"),
-            None => EthTrie::new(db),
+            Some(root) => {
+                EthTrie::from(self.trie_db.clone(), root).expect("State root should be valid")
+            }
+            None => EthTrie::new(self.trie_db.clone()),
         })
     }
 
-    fn resolver<'a>(
+    fn resolver(
         &self,
-        db: Arc<impl DB + 'a>,
         height: BlockHeight,
-    ) -> Result<impl MoveResolver + TableResolver + 'a, rocksdb::Error> {
-        Ok(EthTrieResolver::new(self.tree(db, height)?))
+    ) -> Result<impl MoveResolver + TableResolver, rocksdb::Error> {
+        Ok(EthTrieResolver::new(self.tree(height)?))
     }
 
     fn height_cf(&self) -> impl AsColumnFamilyRef + use<'_> {
@@ -167,7 +171,7 @@ impl StateQueries for RocksDbStateQueries<'_> {
         account: AccountAddress,
         height: BlockHeight,
     ) -> Option<Balance> {
-        let resolver = self.resolver(db, height).ok()?;
+        let resolver = self.resolver(height).ok()?;
 
         Some(quick_get_eth_balance(&account, &resolver, evm_storage))
     }
@@ -178,7 +182,7 @@ impl StateQueries for RocksDbStateQueries<'_> {
         account: AccountAddress,
         height: BlockHeight,
     ) -> Option<Nonce> {
-        let resolver = self.resolver(db, height).ok()?;
+        let resolver = self.resolver(height).ok()?;
 
         Some(quick_get_nonce(&account, &resolver, evm_storage))
     }
@@ -197,13 +201,13 @@ impl StateQueries for RocksDbStateQueries<'_> {
             return None;
         }
 
-        let mut tree = self.tree(db.clone(), height).ok()?;
-        let resolver = self.resolver(db, height).ok()?;
+        let mut tree = self.tree(height).ok()?;
+        let resolver = self.resolver(height).ok()?;
 
         proof_from_trie_and_resolver(address, storage_slots, &mut tree, &resolver, evm_storage)
     }
 
     fn resolver_at<'a>(&'a self, height: BlockHeight) -> impl MoveResolver + TableResolver + 'a {
-        todo!()
+        self.resolver(height).unwrap()
     }
 }
