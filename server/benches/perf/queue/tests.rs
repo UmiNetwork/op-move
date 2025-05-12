@@ -7,14 +7,14 @@ use {
     moved_app::{Application, DependenciesThreadSafe},
     moved_genesis::config::GenesisConfig,
     moved_server::initialize_app,
-    std::{process::Termination, sync::Arc},
-    tokio::{runtime::Runtime, sync::RwLock},
+    std::process::Termination,
+    tokio::runtime::Runtime,
 };
 
 fn build_1000_blocks(
     current: &Runtime,
     bencher: &mut BenchmarkGroup<WallTime>,
-    app: Arc<RwLock<Application<impl DependenciesThreadSafe>>>,
+    app: Box<Application<impl DependenciesThreadSafe>>,
     buffer_size: u32,
 ) {
     bencher.throughput(Throughput::Elements(*input::BLOCKS_1000_LEN));
@@ -23,7 +23,7 @@ fn build_1000_blocks(
         |b, _size| {
             b.iter_batched(
                 || {
-                    let (queue, actor) = moved_app::create(app.clone(), buffer_size);
+                    let (queue, actor) = moved_app::create(app, buffer_size);
 
                     let handle = current.spawn(async move { actor.spawn().await.unwrap() });
 
@@ -52,11 +52,11 @@ fn bench_build_1000_blocks_with_queue_size(bencher: &mut Criterion) -> impl Term
         .into_iter()
         .rev()
     {
-        let mut app = initialize_app(GenesisConfig::default());
+        let (mut app, _app_reader) = initialize_app(GenesisConfig::default());
 
         app.genesis_update(input::GENESIS);
 
-        let app = Arc::new(RwLock::new(app));
+        let app = Box::new(app);
 
         build_1000_blocks(&current, &mut group, app, buffer_size);
     }
