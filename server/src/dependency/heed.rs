@@ -1,6 +1,6 @@
 use {
     crate::dependency::shared::*,
-    moved_app::{Application, CommandActor},
+    moved_app::{Application, ApplicationReader, CommandActor},
     moved_genesis::config::GenesisConfig,
     moved_state::State,
     moved_storage_heed::{
@@ -11,8 +11,16 @@ use {
 
 pub type Dependency = HeedDependencies;
 
-pub fn create(genesis_config: &GenesisConfig) -> Application<HeedDependencies> {
-    Application::new(HeedDependencies, genesis_config)
+pub fn create(
+    genesis_config: &GenesisConfig,
+) -> (
+    Application<HeedDependencies>,
+    ApplicationReader<HeedDependencies>,
+) {
+    (
+        Application::new(HeedDependencies, genesis_config),
+        ApplicationReader::new(HeedDependencies, genesis_config),
+    )
 }
 
 pub struct HeedDependencies;
@@ -28,6 +36,8 @@ impl moved_app::Dependencies for HeedDependencies {
     type ReceiptRepository = receipt::HeedReceiptRepository;
     type ReceiptStorage = &'static moved_storage_heed::Env;
     type SharedStorage = &'static moved_storage_heed::Env;
+    type ReceiptStorageReader = &'static moved_storage_heed::Env;
+    type SharedStorageReader = &'static moved_storage_heed::Env;
     type State = state::HeedState<'static>;
     type StateQueries = state::HeedStateQueries<'static>;
     type StorageTrieRepository = evm::HeedStorageTrieRepository;
@@ -71,19 +81,27 @@ impl moved_app::Dependencies for HeedDependencies {
         receipt::HeedReceiptRepository
     }
 
-    fn receipt_memory() -> Self::ReceiptStorage {
+    fn receipt_memory(&mut self) -> Self::ReceiptStorage {
         db()
     }
 
-    fn shared_storage() -> Self::SharedStorage {
+    fn shared_storage(&mut self) -> Self::SharedStorage {
         db()
     }
 
-    fn state() -> Self::State {
+    fn receipt_memory_reader(&self) -> Self::ReceiptStorageReader {
+        db()
+    }
+
+    fn shared_storage_reader(&self) -> Self::SharedStorageReader {
+        db()
+    }
+
+    fn state(&self) -> Self::State {
         state::HeedState::new(std::sync::Arc::new(trie::HeedEthTrieDb::new(db())))
     }
 
-    fn state_queries(genesis_config: &GenesisConfig) -> Self::StateQueries {
+    fn state_queries(&self, genesis_config: &GenesisConfig) -> Self::StateQueries {
         state::HeedStateQueries::from_genesis(db(), genesis_config.initial_state_root)
     }
 
