@@ -115,7 +115,9 @@ impl<'db> HeedStateQueries<'db> {
         genesis_state_root: B256,
     ) -> Self {
         let this = Self::new(env, trie_db);
-        this.push_state_root(genesis_state_root).unwrap();
+        if this.height().unwrap() == 0 {
+            this.push_state_root(genesis_state_root).unwrap();
+        }
         this
     }
 
