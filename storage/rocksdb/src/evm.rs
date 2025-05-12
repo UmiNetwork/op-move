@@ -11,6 +11,7 @@ use {
     },
 };
 
+#[derive(Clone)]
 pub struct RocksDbStorageTrieRepository {
     db: &'static rocksdb::DB,
 }

@@ -51,7 +51,7 @@ impl BlockRepository for RocksDbBlockRepository {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RocksDbBlockQueries;
 
 impl BlockQueries for RocksDbBlockQueries {

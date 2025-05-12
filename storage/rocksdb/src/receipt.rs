@@ -39,7 +39,7 @@ impl ReceiptRepository for RocksDbReceiptRepository {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RocksDbReceiptQueries;
 
 impl ReceiptQueries for RocksDbReceiptQueries {
