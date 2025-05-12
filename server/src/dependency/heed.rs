@@ -98,11 +98,15 @@ impl moved_app::Dependencies for HeedDependencies {
     }
 
     fn state(&self) -> Self::State {
-        state::HeedState::new(std::sync::Arc::new(trie::HeedEthTrieDb::new(db())))
+        state::HeedState::new(TRIE_DB.clone())
     }
 
     fn state_queries(&self, genesis_config: &GenesisConfig) -> Self::StateQueries {
-        state::HeedStateQueries::from_genesis(db(), genesis_config.initial_state_root)
+        state::HeedStateQueries::from_genesis(
+            db(),
+            TRIE_DB.clone(),
+            genesis_config.initial_state_root,
+        )
     }
 
     fn storage_trie_repository() -> Self::StorageTrieRepository {
@@ -123,6 +127,9 @@ impl moved_app::Dependencies for HeedDependencies {
 lazy_static::lazy_static! {
     static ref Database: moved_storage_heed::Env = {
         create_db()
+    };
+    static ref TRIE_DB: std::sync::Arc<trie::HeedEthTrieDb<'static>> = {
+        std::sync::Arc::new(trie::HeedEthTrieDb::new(db()))
     };
 }
 

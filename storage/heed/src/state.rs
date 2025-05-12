@@ -105,15 +105,16 @@ pub struct HeedStateQueries<'db> {
 }
 
 impl<'db> HeedStateQueries<'db> {
-    pub fn new(env: &'db heed::Env) -> Self {
-        Self {
-            env,
-            trie_db: Arc::new(HeedEthTrieDb::new(env)),
-        }
+    pub fn new(env: &'db heed::Env, trie_db: Arc<HeedEthTrieDb<'db>>) -> Self {
+        Self { env, trie_db }
     }
 
-    pub fn from_genesis(env: &'db heed::Env, genesis_state_root: B256) -> Self {
-        let this = Self::new(env);
+    pub fn from_genesis(
+        env: &'db heed::Env,
+        trie_db: Arc<HeedEthTrieDb<'db>>,
+        genesis_state_root: B256,
+    ) -> Self {
+        let this = Self::new(env, trie_db);
         this.push_state_root(genesis_state_root).unwrap();
         this
     }
