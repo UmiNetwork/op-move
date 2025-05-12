@@ -1,14 +1,22 @@
 use {
     crate::dependency::shared::*,
-    moved_app::{Application, CommandActor},
+    moved_app::{Application, ApplicationReader, CommandActor},
     moved_genesis::config::GenesisConfig,
     moved_state::State,
 };
 
 pub type Dependency = RocksDbDependencies;
 
-pub fn create(genesis_config: &GenesisConfig) -> Application<RocksDbDependencies> {
-    Application::new(RocksDbDependencies, genesis_config)
+pub fn create(
+    genesis_config: &GenesisConfig,
+) -> (
+    Application<RocksDbDependencies>,
+    ApplicationReader<RocksDbDependencies>,
+) {
+    (
+        Application::new(RocksDbDependencies, genesis_config),
+        ApplicationReader::new(RocksDbDependencies, genesis_config),
+    )
 }
 
 pub struct RocksDbDependencies;
@@ -24,6 +32,8 @@ impl moved_app::Dependencies for RocksDbDependencies {
     type ReceiptRepository = moved_storage_rocksdb::receipt::RocksDbReceiptRepository;
     type ReceiptStorage = &'static moved_storage_rocksdb::RocksDb;
     type SharedStorage = &'static moved_storage_rocksdb::RocksDb;
+    type ReceiptStorageReader = &'static moved_storage_rocksdb::RocksDb;
+    type SharedStorageReader = &'static moved_storage_rocksdb::RocksDb;
     type State = moved_storage_rocksdb::RocksDbState<'static>;
     type StateQueries = moved_storage_rocksdb::RocksDbStateQueries<'static>;
     type StorageTrieRepository = moved_storage_rocksdb::evm::RocksDbStorageTrieRepository;
@@ -67,23 +77,30 @@ impl moved_app::Dependencies for RocksDbDependencies {
         moved_storage_rocksdb::receipt::RocksDbReceiptRepository
     }
 
-    fn receipt_memory() -> Self::ReceiptStorage {
+    fn receipt_memory(&mut self) -> Self::ReceiptStorage {
         db()
     }
 
-    fn shared_storage() -> Self::SharedStorage {
+    fn shared_storage(&mut self) -> Self::SharedStorage {
         db()
     }
 
-    fn state() -> Self::State {
-        moved_storage_rocksdb::RocksDbState::new(std::sync::Arc::new(
-            moved_storage_rocksdb::RocksEthTrieDb::new(db()),
-        ))
+    fn receipt_memory_reader(&self) -> Self::ReceiptStorageReader {
+        db()
     }
 
-    fn state_queries(genesis_config: &GenesisConfig) -> Self::StateQueries {
+    fn shared_storage_reader(&self) -> Self::SharedStorageReader {
+        db()
+    }
+
+    fn state(&self) -> Self::State {
+        moved_storage_rocksdb::RocksDbState::new(TRIE_DB.clone())
+    }
+
+    fn state_queries(&self, genesis_config: &GenesisConfig) -> Self::StateQueries {
         moved_storage_rocksdb::RocksDbStateQueries::from_genesis(
             db(),
+            TRIE_DB.clone(),
             genesis_config.initial_state_root,
         )
     }
@@ -106,6 +123,11 @@ impl moved_app::Dependencies for RocksDbDependencies {
 lazy_static::lazy_static! {
     static ref Database: moved_storage_rocksdb::RocksDb = {
         create_db()
+    };
+    static ref TRIE_DB: std::sync::Arc<moved_storage_rocksdb::RocksEthTrieDb<'static>> = {
+        std::sync::Arc::new(
+            moved_storage_rocksdb::RocksEthTrieDb::new(db()),
+        )
     };
 }
 

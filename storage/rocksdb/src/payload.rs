@@ -21,7 +21,7 @@ impl ToKey for PayloadId {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RocksDbPayloadQueries {
     db: &'static RocksDb,
 }
