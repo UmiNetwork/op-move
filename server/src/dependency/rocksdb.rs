@@ -94,14 +94,13 @@ impl moved_app::Dependencies for RocksDbDependencies {
     }
 
     fn state(&self) -> Self::State {
-        moved_storage_rocksdb::RocksDbState::new(std::sync::Arc::new(
-            moved_storage_rocksdb::RocksEthTrieDb::new(db()),
-        ))
+        moved_storage_rocksdb::RocksDbState::new(TRIE_DB.clone())
     }
 
     fn state_queries(&self, genesis_config: &GenesisConfig) -> Self::StateQueries {
         moved_storage_rocksdb::RocksDbStateQueries::from_genesis(
             db(),
+            TRIE_DB.clone(),
             genesis_config.initial_state_root,
         )
     }
@@ -124,6 +123,11 @@ impl moved_app::Dependencies for RocksDbDependencies {
 lazy_static::lazy_static! {
     static ref Database: moved_storage_rocksdb::RocksDb = {
         create_db()
+    };
+    static ref TRIE_DB: std::sync::Arc<moved_storage_rocksdb::RocksEthTrieDb<'static>> = {
+        std::sync::Arc::new(
+            moved_storage_rocksdb::RocksEthTrieDb::new(db()),
+        )
     };
 }
 
