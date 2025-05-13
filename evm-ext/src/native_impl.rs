@@ -19,12 +19,12 @@ use {
     move_vm_types::{loaded_data::runtime_types::Type, values::Value},
     moved_shared::primitives::{ToEthAddress, ToMoveAddress, ToU256},
     revm::{
-        Journal, JournalEntry, MainBuilder, MainContext,
+        Database, ExecuteEvm, Journal, JournalEntry, MainBuilder, MainContext,
         context::{BlockEnv, CfgEnv, Context, Evm, TxEnv, result::ResultAndState},
-        context_interface::{block::BlobExcessGasAndPrice, result::EVMError},
+        context_interface::result::EVMError,
         database::in_memory_db::CacheDB,
         handler::{
-            EthFrame, EthPrecompiles, FrameResult, Handler, MainnetHandler,
+            EthFrame, EthPrecompiles, FrameResult, Handler, MainnetContext, MainnetHandler,
             instructions::EthInstructions,
         },
         interpreter::{InitialAndFloorGas, interpreter::EthInterpreter},
@@ -69,34 +69,62 @@ pub fn append_evm_natives(natives: &mut NativeFunctionTable, builder: &SafeNativ
 
     push_native(ident_str!("native_evm_call").into(), evm_call);
     push_native(ident_str!("native_evm_create").into(), evm_create);
+    push_native(ident_str!("native_evm_view").into(), evm_view);
     push_native(ident_str!("abi_encode_params").into(), abi_encode_params);
     push_native(ident_str!("abi_decode_params").into(), abi_decode_params);
+}
+
+fn evm_view(
+    context: &mut SafeNativeContext,
+    ty_args: Vec<Type>,
+    args: VecDeque<Value>,
+) -> SafeNativeResult<SmallVec<[Value; 1]>> {
+    debug_assert!(ty_args.is_empty(), "No ty_args in EVM native");
+
+    let EvmCallArgs {
+        caller,
+        to,
+        value,
+        data,
+    } = pop_evm_args(args)?;
+
+    let gas_limit: u64 = get_gas_limit(context);
+    let evm_native_ctx = context.extensions().get::<NativeEVMContext>();
+
+    let outcome = evm_view_with_native(
+        evm_native_ctx,
+        caller.to_eth_address(),
+        to.to_eth_address(),
+        value.to_u256(),
+        data,
+        gas_limit,
+    )?;
+
+    let gas_used = EvmGasUsed::new(outcome.result.gas_used());
+    context.charge(gas_used)?;
+
+    let result = outcome.result;
+    Ok(smallvec::smallvec![evm_result_to_move_value(result)])
 }
 
 fn evm_call(
     context: &mut SafeNativeContext,
     ty_args: Vec<Type>,
-    mut args: VecDeque<Value>,
+    args: VecDeque<Value>,
 ) -> SafeNativeResult<SmallVec<[Value; 1]>> {
     debug_assert!(ty_args.is_empty(), "No ty_args in EVM native");
-    debug_assert_eq!(
-        args.len(),
-        4,
-        "EVM native args should be from, to, value, data"
-    );
 
-    // Safety: unwrap is safe because of the length check above
-    // Note: the `safely_pop_vec_arg` macro does not work well for `Vec<u8>`
-    // because it has a special runtime representation.
-    let data = args.pop_back().unwrap().value_as::<Vec<u8>>()?;
-    let value = safely_pop_arg!(args, move_core_types::u256::U256);
-    let transact_to = safely_pop_arg!(args, AccountAddress);
-    let caller = safely_pop_arg!(args, AccountAddress);
+    let EvmCallArgs {
+        caller,
+        to,
+        value,
+        data,
+    } = pop_evm_args(args)?;
 
     evm_transact_inner(
         context,
         caller.to_eth_address(),
-        TxKind::Call(transact_to.to_eth_address()),
+        TxKind::Call(to.to_eth_address()),
         value.to_u256(),
         data,
     )
@@ -138,13 +166,7 @@ fn evm_transact_inner(
     value: U256,
     data: Vec<u8>,
 ) -> SafeNativeResult<SmallVec<[Value; 1]>> {
-    let gas_limit: u64 = {
-        let internal_units: u64 = context.gas_balance().into();
-        internal_units
-            .saturating_div(EVM_SCALE_FACTOR)
-            .saturating_add(EVM_BASE_GAS)
-    };
-
+    let gas_limit: u64 = get_gas_limit(context);
     let evm_native_ctx = context.extensions_mut().get_mut::<NativeEVMContext>();
 
     let outcome =
@@ -155,6 +177,21 @@ fn evm_transact_inner(
 
     let result = outcome.result;
     Ok(smallvec::smallvec![evm_result_to_move_value(result)])
+}
+
+pub fn evm_view_with_native(
+    evm_native_ctx: &NativeEVMContext,
+    caller: Address,
+    to: Address,
+    value: U256,
+    data: Vec<u8>,
+    gas_limit: u64,
+) -> SafeNativeResult<ResultAndState> {
+    let transact_to = TxKind::Call(to);
+    let block_env = evm_native_ctx.block_env();
+    let db = CacheDB::new(&evm_native_ctx.db);
+    let mut evm = build_evm(db, block_env, caller, transact_to, value, data, gas_limit);
+    evm.replay().map_err(evm_error)
 }
 
 pub fn evm_transact_with_native(
@@ -168,9 +205,72 @@ pub fn evm_transact_with_native(
     evm_native_ctx
         .transfer_logs
         .add_tx_origin(caller.to_move_address(), value);
+    let block_env = evm_native_ctx.block_env();
     let db = &mut evm_native_ctx.db;
+    let mut evm = build_evm(db, block_env, caller, transact_to, value, data, gas_limit);
 
-    let mut evm = Context::mainnet()
+    let mut handler = WrappedMainnetHandler {
+        inner: InnerMainnetHandler::default(),
+        transfer_logs: evm_native_ctx.transfer_logs,
+    };
+    let outcome = handler.run(&mut evm).map_err(evm_error)?;
+
+    // Capture changes in native context so that they can be
+    // converted into Move changes when the session is finalized
+    evm_native_ctx.state_changes.push(outcome.state.clone());
+
+    Ok(outcome)
+}
+
+fn pop_evm_args(mut args: VecDeque<Value>) -> SafeNativeResult<EvmCallArgs> {
+    debug_assert_eq!(
+        args.len(),
+        4,
+        "EVM native args should be from, to, value, data"
+    );
+
+    // Safety: unwrap is safe because of the length check above
+    // Note: the `safely_pop_vec_arg` macro does not work well for `Vec<u8>`
+    // because it has a special runtime representation.
+    let data = args.pop_back().unwrap().value_as::<Vec<u8>>()?;
+    let value = safely_pop_arg!(args, move_core_types::u256::U256);
+    let to = safely_pop_arg!(args, AccountAddress);
+    let caller = safely_pop_arg!(args, AccountAddress);
+
+    Ok(EvmCallArgs {
+        caller,
+        to,
+        value,
+        data,
+    })
+}
+
+fn get_gas_limit(context: &SafeNativeContext) -> u64 {
+    let internal_units: u64 = context.gas_balance().into();
+    internal_units
+        .saturating_div(EVM_SCALE_FACTOR)
+        .saturating_add(EVM_BASE_GAS)
+}
+
+fn evm_error(e: EVMError<DbError>) -> SafeNativeError {
+    match e {
+        EVMError::Database(e) => SafeNativeError::InvariantViolation(e.inner),
+        other => SafeNativeError::InvariantViolation(
+            PartialVMError::new(StatusCode::ABORTED).with_message(format!("EVM Error: {other:?}")),
+        ),
+    }
+}
+
+fn build_evm<DB: Database>(
+    db: DB,
+    block_env: BlockEnv,
+    caller: Address,
+    transact_to: TxKind,
+    value: U256,
+    data: Vec<u8>,
+    gas_limit: u64,
+) -> revm::MainnetEvm<MainnetContext<DB>> {
+    Context::mainnet()
         .with_db(db)
         .with_tx(TxEnv {
             caller,
@@ -195,19 +295,7 @@ pub fn evm_transact_with_native(
             max_fee_per_blob_gas: 0,
             authorization_list: Vec::new(),
         })
-        .with_block(BlockEnv {
-            number: evm_native_ctx.block_header.number,
-            beneficiary: Address::ZERO,
-            timestamp: evm_native_ctx.block_header.timestamp,
-            gas_limit: u64::MAX,
-            basefee: 0,
-            difficulty: U256::ZERO,
-            prevrandao: Some(evm_native_ctx.block_header.prev_randao),
-            blob_excess_gas_and_price: Some(BlobExcessGasAndPrice {
-                excess_blob_gas: 0,
-                blob_gasprice: 0,
-            }),
-        })
+        .with_block(block_env)
         .modify_cfg_chained(|env| {
             // We can safely disable the transaction-level check because
             // the Move side ensures the funds for `value` were present.
@@ -215,24 +303,14 @@ pub fn evm_transact_with_native(
             // Nonce can be ignored because replay attacks are prevented by MoveVM.
             env.disable_nonce_check = true;
         })
-        .build_mainnet();
+        .build_mainnet()
+}
 
-    let mut handler = WrappedMainnetHandler {
-        inner: InnerMainnetHandler::default(),
-        transfer_logs: evm_native_ctx.transfer_logs,
-    };
-    let outcome = handler.run(&mut evm).map_err(|e| match e {
-        EVMError::Database(e) => SafeNativeError::InvariantViolation(e.inner),
-        other => SafeNativeError::InvariantViolation(
-            PartialVMError::new(StatusCode::ABORTED).with_message(format!("EVM Error: {other:?}")),
-        ),
-    })?;
-
-    // Capture changes in native context so that they can be
-    // converted into Move changes when the session is finalized
-    evm_native_ctx.state_changes.push(outcome.state.clone());
-
-    Ok(outcome)
+struct EvmCallArgs {
+    caller: AccountAddress,
+    to: AccountAddress,
+    value: move_core_types::u256::U256,
+    data: Vec<u8>,
 }
 
 // Type aliases to make the `revm` types more tractable
