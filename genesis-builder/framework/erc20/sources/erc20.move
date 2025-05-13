@@ -1,10 +1,12 @@
 module Erc20::erc20 {
     use aptos_framework::fungible_asset_u256::zero;
     use EthToken::eth_token::get_metadata;
-    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, is_result_success, EvmResult};
+    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, evm_view, is_result_success, EvmResult};
     use std::error;
 
     const ENOT_SUCCESS: u64 = 1;
+
+    const ZERO_ADDRESS: address = @0x0;
 
     const BALANCE_OF_SELECTOR: vector<u8> = vector[0x70, 0xa0, 0x82, 0x31]; // balanceOf(address)
     const TRANSFER_SELECTOR: vector<u8> = vector[0xa9, 0x05, 0x9c, 0xbb]; // transfer(address,uint256)
@@ -21,7 +23,6 @@ module Erc20::erc20 {
     }
 
     public fun balance_of(
-        caller: &signer,
         token: address,
         account: address,
     ): EvmResult {
@@ -34,8 +35,8 @@ module Erc20::erc20 {
             args,
         );
 
-        let value = zero(get_metadata());
-        let result = evm_call(caller, token, value, data);
+        let value = 0;
+        let result = evm_view(ZERO_ADDRESS, token, value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         result
     }
@@ -46,7 +47,6 @@ module Erc20::erc20 {
     }
 
     public fun allowance(
-        caller: &signer,
         token: address,
         owner: address,
         spender: address,
@@ -61,8 +61,8 @@ module Erc20::erc20 {
             args,
         );
 
-        let value = zero(get_metadata());
-        let result = evm_call(caller, token, value, data);
+        let value = 0;
+        let result = evm_view(ZERO_ADDRESS, token, value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         result
     }    
@@ -175,49 +175,45 @@ module Erc20::erc20 {
     }    
     
     public fun total_supply(
-        caller: &signer,
         token: address,
     ): EvmResult {
         let data = TOTAL_SUPPLY_SELECTOR;
 
-        let value = zero(get_metadata());
-        let result = evm_call(caller, token, value, data);
+        let value = 0;
+        let result = evm_view(ZERO_ADDRESS, token, value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         result
     }
 
     public fun name(
-        caller: &signer,
         token: address,
     ): EvmResult {
         let data = NAME_SELECTOR;
 
-        let value = zero(get_metadata());
-        let result = evm_call(caller, token, value, data);
+        let value = 0;
+        let result = evm_view(ZERO_ADDRESS, token, value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         result
     }
 
     public fun symbol(
-        caller: &signer,
         token: address,
     ): EvmResult {
         let data = SYMBOL_SELECTOR;
 
-        let value = zero(get_metadata());
-        let result = evm_call(caller, token, value, data);
+        let value = 0;
+        let result = evm_view(ZERO_ADDRESS, token, value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         result
     }
 
     public fun decimals(
-        caller: &signer,
         token: address,
     ): EvmResult {
         let data = DECIMALS_SELECTOR;
 
-        let value = zero(get_metadata());
-        let result = evm_call(caller, token, value, data);
+        let value = 0;
+        let result = evm_view(ZERO_ADDRESS, token, value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         result
     }

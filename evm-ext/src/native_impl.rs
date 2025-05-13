@@ -69,7 +69,7 @@ pub fn append_evm_natives(natives: &mut NativeFunctionTable, builder: &SafeNativ
 
     push_native(ident_str!("native_evm_call").into(), evm_call);
     push_native(ident_str!("native_evm_create").into(), evm_create);
-    push_native(ident_str!("native_evm_view").into(), evm_view);
+    push_native(ident_str!("evm_view").into(), evm_view);
     push_native(ident_str!("abi_encode_params").into(), abi_encode_params);
     push_native(ident_str!("abi_decode_params").into(), abi_decode_params);
 }

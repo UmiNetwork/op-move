@@ -168,7 +168,14 @@ module Evm::evm {
     /// any changes `caller` is not required to be a `signer` (there is no
     /// security risk of "forging" a signature). Similarly, `value` is allowed
     /// to be specified as a raw number instead of being a `FungibleAsset`.
-    public native fun native_evm_view(
+    /// 
+    /// Note: even though you are free to specify any address for `caller`,
+    /// the EVM will still validate if it is an externally owned address (EOA),
+    /// this means if you pass the address of a contract your transaction will
+    /// fail with an error `RejectCallerWithCode`. If the `caller` does not
+    /// matter to the view call then it is recommended you simply use the zero
+    /// address `@0x0` to avoid this error.
+    public native fun evm_view(
         caller: address,
         to: address,
         value: u256,
