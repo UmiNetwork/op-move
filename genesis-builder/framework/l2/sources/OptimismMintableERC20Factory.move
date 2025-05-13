@@ -1,19 +1,17 @@
 module OptimismMintableERC20Factory::optimism_mintable_erc20_factory {
     use aptos_framework::fungible_asset_u256::zero;
     use EthToken::eth_token::get_metadata;
-    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, is_result_success, EvmResult};
+    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, evm_view, is_result_success, EvmResult};
     use std::error;
 
     const ENOT_SUCCESS: u64 = 1;
 
 
     public fun bridge(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[238, 154, 49, 162];
 
-        let result = evm_call(caller, @OptimismMintableERC20Factory, _value, data);
+        let result = evm_view(@0x0, @OptimismMintableERC20Factory, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -138,12 +136,10 @@ module OptimismMintableERC20Factory::optimism_mintable_erc20_factory {
 
 
     public fun version(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[84, 253, 77, 80];
 
-        let result = evm_call(caller, @OptimismMintableERC20Factory, _value, data);
+        let result = evm_view(@0x0, @OptimismMintableERC20Factory, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result

@@ -1,19 +1,17 @@
 module L2ToL2CrossDomainMessenger::l2_to_l2_cross_domain_messenger {
-    use aptos_framework::fungible_asset_u256::{FungibleAsset, zero};
-    use EthToken::eth_token::get_metadata;
-    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, is_result_success, EvmResult};
+    use aptos_framework::fungible_asset_u256::FungibleAsset;
+    
+    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, evm_view, is_result_success, EvmResult};
     use std::error;
 
     const ENOT_SUCCESS: u64 = 1;
 
 
     public fun cross_domain_message_sender(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[56, 255, 222, 24];
 
-        let result = evm_call(caller, @L2ToL2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2ToL2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -21,12 +19,10 @@ module L2ToL2CrossDomainMessenger::l2_to_l2_cross_domain_messenger {
 
 
     public fun cross_domain_message_source(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[36, 121, 68, 98];
 
-        let result = evm_call(caller, @L2ToL2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2ToL2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -34,12 +30,10 @@ module L2ToL2CrossDomainMessenger::l2_to_l2_cross_domain_messenger {
 
 
     public fun message_nonce(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[236, 199, 4, 40];
 
-        let result = evm_call(caller, @L2ToL2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2ToL2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -47,12 +41,10 @@ module L2ToL2CrossDomainMessenger::l2_to_l2_cross_domain_messenger {
 
 
     public fun message_version(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[82, 97, 127, 60];
 
-        let result = evm_call(caller, @L2ToL2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2ToL2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -132,10 +124,8 @@ module L2ToL2CrossDomainMessenger::l2_to_l2_cross_domain_messenger {
     }
 
     public fun successful_messages(
-        caller: &signer,
         key: Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let arg_struct = SuccessfulMessagesArgs {
             key,
         };
@@ -145,7 +135,7 @@ module L2ToL2CrossDomainMessenger::l2_to_l2_cross_domain_messenger {
             arg_struct,
         );
 
-        let result = evm_call(caller, @L2ToL2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2ToL2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -153,12 +143,10 @@ module L2ToL2CrossDomainMessenger::l2_to_l2_cross_domain_messenger {
 
 
     public fun version(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[84, 253, 77, 80];
 
-        let result = evm_call(caller, @L2ToL2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2ToL2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result

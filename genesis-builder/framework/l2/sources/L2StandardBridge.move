@@ -1,19 +1,17 @@
 module L2StandardBridge::l2_standard_bridge {
     use aptos_framework::fungible_asset_u256::{FungibleAsset, zero};
     use EthToken::eth_token::get_metadata;
-    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, is_result_success, EvmResult};
+    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, evm_view, is_result_success, EvmResult};
     use std::error;
 
     const ENOT_SUCCESS: u64 = 1;
 
 
     public fun messenger(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[146, 126, 222, 45];
 
-        let result = evm_call(caller, @L2StandardBridge, _value, data);
+        let result = evm_view(@0x0, @L2StandardBridge, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -21,12 +19,10 @@ module L2StandardBridge::l2_standard_bridge {
 
 
     public fun other_bridge(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[127, 70, 221, 178];
 
-        let result = evm_call(caller, @L2StandardBridge, _value, data);
+        let result = evm_view(@0x0, @L2StandardBridge, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -170,11 +166,9 @@ module L2StandardBridge::l2_standard_bridge {
     }
 
     public fun deposits(
-        caller: &signer,
         key: address,
         key_2: address,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let arg_struct = DepositsArgs {
             key,
             key_2,
@@ -185,7 +179,7 @@ module L2StandardBridge::l2_standard_bridge {
             arg_struct,
         );
 
-        let result = evm_call(caller, @L2StandardBridge, _value, data);
+        let result = evm_view(@0x0, @L2StandardBridge, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -289,12 +283,10 @@ module L2StandardBridge::l2_standard_bridge {
 
 
     public fun l1_token_bridge(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[54, 199, 23, 193];
 
-        let result = evm_call(caller, @L2StandardBridge, _value, data);
+        let result = evm_view(@0x0, @L2StandardBridge, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -302,12 +294,10 @@ module L2StandardBridge::l2_standard_bridge {
 
 
     public fun paused(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[92, 151, 90, 187];
 
-        let result = evm_call(caller, @L2StandardBridge, _value, data);
+        let result = evm_view(@0x0, @L2StandardBridge, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -315,12 +305,10 @@ module L2StandardBridge::l2_standard_bridge {
 
 
     public fun version(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[84, 253, 77, 80];
 
-        let result = evm_call(caller, @L2StandardBridge, _value, data);
+        let result = evm_view(@0x0, @L2StandardBridge, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result

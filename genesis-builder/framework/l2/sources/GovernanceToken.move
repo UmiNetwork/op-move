@@ -1,19 +1,17 @@
 module GovernanceToken::governance_token {
     use aptos_framework::fungible_asset_u256::zero;
     use EthToken::eth_token::get_metadata;
-    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, is_result_success, EvmResult};
+    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, evm_view, is_result_success, EvmResult};
     use std::error;
 
     const ENOT_SUCCESS: u64 = 1;
 
 
     public fun domain_separator(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[54, 68, 229, 21];
 
-        let result = evm_call(caller, @GovernanceToken, _value, data);
+        let result = evm_view(@0x0, @GovernanceToken, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -25,11 +23,9 @@ module GovernanceToken::governance_token {
     }
 
     public fun allowance(
-        caller: &signer,
         owner: address,
         spender: address,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let arg_struct = AllowanceArgs {
             owner,
             spender,
@@ -40,7 +36,7 @@ module GovernanceToken::governance_token {
             arg_struct,
         );
 
-        let result = evm_call(caller, @GovernanceToken, _value, data);
+        let result = evm_view(@0x0, @GovernanceToken, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -78,10 +74,8 @@ module GovernanceToken::governance_token {
     }
 
     public fun balance_of(
-        caller: &signer,
         account: address,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let arg_struct = BalanceOfArgs {
             account,
         };
@@ -91,7 +85,7 @@ module GovernanceToken::governance_token {
             arg_struct,
         );
 
-        let result = evm_call(caller, @GovernanceToken, _value, data);
+        let result = evm_view(@0x0, @GovernanceToken, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -154,11 +148,9 @@ module GovernanceToken::governance_token {
     }
 
     public fun checkpoints(
-        caller: &signer,
         account: address,
         pos: u32,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let arg_struct = CheckpointsArgs {
             account,
             pos,
@@ -169,7 +161,7 @@ module GovernanceToken::governance_token {
             arg_struct,
         );
 
-        let result = evm_call(caller, @GovernanceToken, _value, data);
+        let result = evm_view(@0x0, @GovernanceToken, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -177,12 +169,10 @@ module GovernanceToken::governance_token {
 
 
     public fun decimals(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[49, 60, 229, 103];
 
-        let result = evm_call(caller, @GovernanceToken, _value, data);
+        let result = evm_view(@0x0, @GovernanceToken, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -283,10 +273,8 @@ module GovernanceToken::governance_token {
     }
 
     public fun delegates(
-        caller: &signer,
         account: address,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let arg_struct = DelegatesArgs {
             account,
         };
@@ -296,7 +284,7 @@ module GovernanceToken::governance_token {
             arg_struct,
         );
 
-        let result = evm_call(caller, @GovernanceToken, _value, data);
+        let result = evm_view(@0x0, @GovernanceToken, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -307,10 +295,8 @@ module GovernanceToken::governance_token {
     }
 
     public fun get_past_total_supply(
-        caller: &signer,
         block_number: u256,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let arg_struct = GetPastTotalSupplyArgs {
             block_number,
         };
@@ -320,7 +306,7 @@ module GovernanceToken::governance_token {
             arg_struct,
         );
 
-        let result = evm_call(caller, @GovernanceToken, _value, data);
+        let result = evm_view(@0x0, @GovernanceToken, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -332,11 +318,9 @@ module GovernanceToken::governance_token {
     }
 
     public fun get_past_votes(
-        caller: &signer,
         account: address,
         block_number: u256,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let arg_struct = GetPastVotesArgs {
             account,
             block_number,
@@ -347,7 +331,7 @@ module GovernanceToken::governance_token {
             arg_struct,
         );
 
-        let result = evm_call(caller, @GovernanceToken, _value, data);
+        let result = evm_view(@0x0, @GovernanceToken, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -358,10 +342,8 @@ module GovernanceToken::governance_token {
     }
 
     public fun get_votes(
-        caller: &signer,
         account: address,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let arg_struct = GetVotesArgs {
             account,
         };
@@ -371,7 +353,7 @@ module GovernanceToken::governance_token {
             arg_struct,
         );
 
-        let result = evm_call(caller, @GovernanceToken, _value, data);
+        let result = evm_view(@0x0, @GovernanceToken, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -433,12 +415,10 @@ module GovernanceToken::governance_token {
 
 
     public fun name(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[6, 253, 222, 3];
 
-        let result = evm_call(caller, @GovernanceToken, _value, data);
+        let result = evm_view(@0x0, @GovernanceToken, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -449,10 +429,8 @@ module GovernanceToken::governance_token {
     }
 
     public fun nonces(
-        caller: &signer,
         owner: address,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let arg_struct = NoncesArgs {
             owner,
         };
@@ -462,7 +440,7 @@ module GovernanceToken::governance_token {
             arg_struct,
         );
 
-        let result = evm_call(caller, @GovernanceToken, _value, data);
+        let result = evm_view(@0x0, @GovernanceToken, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -473,10 +451,8 @@ module GovernanceToken::governance_token {
     }
 
     public fun num_checkpoints(
-        caller: &signer,
         account: address,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let arg_struct = NumCheckpointsArgs {
             account,
         };
@@ -486,7 +462,7 @@ module GovernanceToken::governance_token {
             arg_struct,
         );
 
-        let result = evm_call(caller, @GovernanceToken, _value, data);
+        let result = evm_view(@0x0, @GovernanceToken, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -494,12 +470,10 @@ module GovernanceToken::governance_token {
 
 
     public fun owner(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[141, 165, 203, 91];
 
-        let result = evm_call(caller, @GovernanceToken, _value, data);
+        let result = evm_view(@0x0, @GovernanceToken, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -562,12 +536,10 @@ module GovernanceToken::governance_token {
 
 
     public fun symbol(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[149, 216, 155, 65];
 
-        let result = evm_call(caller, @GovernanceToken, _value, data);
+        let result = evm_view(@0x0, @GovernanceToken, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -575,12 +547,10 @@ module GovernanceToken::governance_token {
 
 
     public fun total_supply(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[24, 22, 13, 221];
 
-        let result = evm_call(caller, @GovernanceToken, _value, data);
+        let result = evm_view(@0x0, @GovernanceToken, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result

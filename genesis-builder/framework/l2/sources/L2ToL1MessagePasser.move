@@ -1,19 +1,17 @@
 module L2ToL1MessagePasser::l2_to_l1_message_passer {
     use aptos_framework::fungible_asset_u256::{FungibleAsset, zero};
     use EthToken::eth_token::get_metadata;
-    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, is_result_success, EvmResult};
+    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, evm_view, is_result_success, EvmResult};
     use std::error;
 
     const ENOT_SUCCESS: u64 = 1;
 
 
     public fun message_version(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[63, 130, 122, 90];
 
-        let result = evm_call(caller, @L2ToL1MessagePasser, _value, data);
+        let result = evm_view(@0x0, @L2ToL1MessagePasser, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -64,12 +62,10 @@ module L2ToL1MessagePasser::l2_to_l1_message_passer {
 
 
     public fun message_nonce(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[236, 199, 4, 40];
 
-        let result = evm_call(caller, @L2ToL1MessagePasser, _value, data);
+        let result = evm_view(@0x0, @L2ToL1MessagePasser, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -80,10 +76,8 @@ module L2ToL1MessagePasser::l2_to_l1_message_passer {
     }
 
     public fun sent_messages(
-        caller: &signer,
         key: Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let arg_struct = SentMessagesArgs {
             key,
         };
@@ -93,7 +87,7 @@ module L2ToL1MessagePasser::l2_to_l1_message_passer {
             arg_struct,
         );
 
-        let result = evm_call(caller, @L2ToL1MessagePasser, _value, data);
+        let result = evm_view(@0x0, @L2ToL1MessagePasser, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -101,12 +95,10 @@ module L2ToL1MessagePasser::l2_to_l1_message_passer {
 
 
     public fun version(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[84, 253, 77, 80];
 
-        let result = evm_call(caller, @L2ToL1MessagePasser, _value, data);
+        let result = evm_view(@0x0, @L2ToL1MessagePasser, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
