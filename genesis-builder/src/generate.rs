@@ -19,7 +19,6 @@ struct L2Module {
     has_fungible_asset: bool,
     has_non_empty_args: bool,
     has_evm_call: bool,
-    has_evm_view: bool,
     has_eth_token_metadata: bool,
 }
 
@@ -74,9 +73,6 @@ pub fn l2_abi_to_move() -> anyhow::Result<()> {
         // To determine if importing `evm_call` is needed
         let mut has_evm_call = false;
 
-        // To determine if importing `evm_view` is needed
-        let mut has_evm_view = false;
-
         // To determine if importing `EthToken::eth_token::get_metadata` is needed
         let mut has_eth_token_metadata = false;
 
@@ -105,7 +101,6 @@ pub fn l2_abi_to_move() -> anyhow::Result<()> {
                         has_fungible_asset = true;
                     }
                     StateMutability::View | StateMutability::Pure => {
-                        has_evm_view = true;
                         function.is_view = true;
                     }
                     _ => {
@@ -179,7 +174,6 @@ pub fn l2_abi_to_move() -> anyhow::Result<()> {
             has_fungible_asset,
             has_non_empty_args,
             has_evm_call,
-            has_evm_view,
             has_eth_token_metadata,
         };
         handlebars.render_to_write("move", &module, &mut output_file)?;

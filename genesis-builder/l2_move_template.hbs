@@ -10,7 +10,7 @@ module {{name}}::{{snake name}} {
     {{/if}}
     {{#if has_eth_token_metadata}}use EthToken::eth_token::get_metadata;{{/if}}
     use Evm::evm::{
-    {{~#if has_non_empty_args}}abi_encode_params, {{/if}}emit_evm_logs, {{#if has_evm_call}}evm_call, {{/if}}{{#if has_evm_view}}evm_view, {{/if}}is_result_success, EvmResult};
+    {{~#if has_non_empty_args}}abi_encode_params, {{/if}}emit_evm_logs, {{#if has_evm_call}}evm_call, {{/if}}evm_view, is_result_success, EvmResult};
     use std::error;
 
     const ENOT_SUCCESS: u64 = 1;
