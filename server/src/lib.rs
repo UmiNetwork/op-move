@@ -171,9 +171,9 @@ pub fn initialize_app(
             &mut app.evm_storage,
         );
 
-        let genesis_block = create_genesis_block(&app.block_hash, &genesis_config);
-
-        app.genesis_update(genesis_block);
+        // let genesis_block = create_genesis_block(&app.block_hash, &genesis_config);
+        //
+        // app.genesis_update(genesis_block);
     }
 
     (app, app_reader)

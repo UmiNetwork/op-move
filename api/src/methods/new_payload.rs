@@ -279,6 +279,7 @@ mod tests {
             &mut evm_storage,
         );
         let (receipt_memory_reader, receipt_memory) = receipt_memory::new();
+        let genesis_state_root = genesis_config.initial_state_root;
 
         let app = Application::<TestDependencies<_, _, _, _>> {
             mem_pool: Default::default(),
@@ -305,7 +306,11 @@ mod tests {
             state,
             evm_storage: evm_storage.clone(),
             transaction_queries: InMemoryTransactionQueries::new(),
-            state_queries: InMemoryStateQueries::new(memory_reader.clone(), trie_db.clone()),
+            state_queries: InMemoryStateQueries::new(
+                memory_reader.clone(),
+                trie_db.clone(),
+                genesis_state_root,
+            ),
             transaction_repository: InMemoryTransactionRepository::new(),
         };
         let reader = ApplicationReader::<
@@ -335,7 +340,7 @@ mod tests {
             base_token: (),
             block_queries: InMemoryBlockQueries,
             storage: memory_reader.clone(),
-            state_queries: InMemoryStateQueries::new(memory_reader, trie_db),
+            state_queries: InMemoryStateQueries::new(memory_reader, trie_db, genesis_state_root),
             transaction_queries: InMemoryTransactionQueries::new(),
             receipt_memory: receipt_memory_reader,
             receipt_queries: InMemoryReceiptQueries::new(),

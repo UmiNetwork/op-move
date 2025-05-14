@@ -12,7 +12,7 @@ use {
     },
     moved_blockchain::{
         block::{BaseGasFee, Block, BlockHash, BlockRepository, ExtendedBlock, Header},
-        payload::PayloadId,
+        payload::{PayloadId, PayloadQueries},
         receipt::{ExtendedReceipt, ReceiptRepository},
         transaction::{ExtendedTransaction, TransactionRepository},
     },
@@ -32,6 +32,15 @@ use {
 
 impl<D: Dependencies> Application<D> {
     pub fn start_block_build(&mut self, attributes: Payload, id: PayloadId) {
+        if self
+            .payload_queries
+            .by_id(&self.storage_reader, id)
+            .unwrap()
+            .is_some()
+        {
+            return;
+        }
+
         // Include transactions from both `payload_attributes` and internal mem-pool
         let transactions_with_metadata = attributes
             .transactions

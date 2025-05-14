@@ -95,23 +95,20 @@ impl State for RocksDbState<'_> {
 pub struct RocksDbStateQueries<'db> {
     db: &'db RocksDb,
     trie_db: Arc<RocksEthTrieDb<'db>>,
+    genesis_state_root: B256,
 }
 
 impl<'db> RocksDbStateQueries<'db> {
-    pub fn new(db: &'db RocksDb, trie_db: Arc<RocksEthTrieDb<'db>>) -> Self {
-        Self { db, trie_db }
-    }
-
-    pub fn from_genesis(
+    pub fn new(
         db: &'db RocksDb,
         trie_db: Arc<RocksEthTrieDb<'db>>,
         genesis_state_root: B256,
     ) -> Self {
-        let this = Self::new(db, trie_db);
-        if this.height().unwrap() == 0 {
-            this.push_state_root(genesis_state_root).unwrap();
+        Self {
+            db,
+            trie_db,
+            genesis_state_root,
         }
-        this
     }
 
     pub fn push_state_root(&self, state_root: B256) -> Result<(), rocksdb::Error> {
@@ -129,10 +126,15 @@ impl<'db> RocksDbStateQueries<'db> {
             .db
             .get_pinned_cf(&self.height_cf(), HEIGHT_KEY)?
             .map(|v| u64::from_key(v.as_ref()))
-            .unwrap_or(0))
+            .unwrap_or(0)
+            .max(1))
     }
 
     fn root_by_height(&self, height: u64) -> Result<Option<B256>, rocksdb::Error> {
+        if height == 0 {
+            return Ok(Some(self.genesis_state_root));
+        }
+
         Ok(self
             .db
             .get_pinned_cf(&self.cf(), height.to_key())?

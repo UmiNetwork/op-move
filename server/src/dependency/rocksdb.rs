@@ -98,7 +98,7 @@ impl moved_app::Dependencies for RocksDbDependencies {
     }
 
     fn state_queries(&self, genesis_config: &GenesisConfig) -> Self::StateQueries {
-        moved_storage_rocksdb::RocksDbStateQueries::from_genesis(
+        moved_storage_rocksdb::RocksDbStateQueries::new(
             db(),
             TRIE_DB.clone(),
             genesis_config.initial_state_root,
@@ -138,7 +138,7 @@ fn db() -> &'static moved_storage_rocksdb::RocksDb {
 fn create_db() -> moved_storage_rocksdb::RocksDb {
     let path = "db";
 
-    if std::env::var("PURGE").as_ref().map(String::as_str) == Ok("1") {
+    if std::env::var("PURGE").as_ref().map(String::as_str) == Ok("1") || cfg!(test) {
         let _ = std::fs::remove_dir_all(path);
     }
 

@@ -203,7 +203,11 @@ fn create_app_with_fake_queries(
 
     let (receipt_reader, receipt_memory) = receipt_memory::new();
 
-    let state_queries = InMemoryStateQueries::new(memory_reader.clone(), trie_db);
+    let state_queries = InMemoryStateQueries::new(
+        memory_reader.clone(),
+        trie_db,
+        genesis_config.initial_state_root,
+    );
 
     (
         ApplicationReader {

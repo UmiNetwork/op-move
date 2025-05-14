@@ -1,5 +1,5 @@
 use {
-    crate::{dependency, initialize_app},
+    crate::{create_genesis_block, dependency, initialize_app},
     alloy::{
         consensus::transaction::TxEnvelope,
         eips::Encodable2718,
@@ -30,48 +30,21 @@ pub struct TestContext {
 impl TestContext {
     pub async fn new() -> anyhow::Result<Self> {
         let genesis_config = GenesisConfig::default();
-        let (app, reader) = initialize_app(genesis_config.clone());
+        let (mut app, reader) = initialize_app(genesis_config.clone());
+        let genesis_block = create_genesis_block(&app.block_hash, &genesis_config);
+        let head = genesis_block.hash;
+        let timestamp = genesis_block.block.header.timestamp;
+        app.genesis_update(genesis_block);
         let (queue, state) = moved_app::create(Box::new(app), 10);
 
         let state_task = state.spawn();
-
-        let request = serde_json::json!({
-            "jsonrpc": "2.0",
-            "id": 2,
-            "method": "eth_getBlockByNumber",
-            "params": [
-                "0x0",
-                true
-            ]
-        });
-        let genesis_block: GetBlockResponse =
-            handle_request(request, &queue, reader.clone()).await?;
-        let genesis_hash = genesis_block.0.header.hash;
-        let timestamp = genesis_block.0.header.timestamp;
-
-        let request = serde_json::json!({
-            "jsonrpc": "2.0",
-            "id": 6,
-            "method": "engine_forkchoiceUpdatedV3",
-            "params": [
-                {
-                    "headBlockHash": format!("{}", genesis_hash),
-                    "safeBlockHash": format!("{}", genesis_hash),
-                    "finalizedBlockHash": format!("{}", genesis_hash)
-                },
-                null
-            ]
-        });
-        let response: ForkchoiceUpdatedResponseV1 =
-            handle_request(request, &queue, reader.clone()).await?;
-        assert_eq!(response.payload_status.status, Status::Valid);
 
         Ok(Self {
             genesis_config,
             queue,
             app: reader,
             state_task,
-            head: genesis_hash,
+            head,
             timestamp,
         })
     }
