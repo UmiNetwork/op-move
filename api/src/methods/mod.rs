@@ -89,7 +89,11 @@ pub mod tests {
             &mut state,
             &mut evm_storage,
         );
-        let state_queries = InMemoryStateQueries::new(memory_reader.clone(), trie_db);
+        let state_queries = InMemoryStateQueries::new(
+            memory_reader.clone(),
+            trie_db,
+            genesis_config.initial_state_root,
+        );
         let (receipt_memory_reader, receipt_memory) = receipt_memory::new();
 
         (

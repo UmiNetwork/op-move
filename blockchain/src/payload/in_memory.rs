@@ -23,7 +23,7 @@ impl InMemoryPayloadQueries {
         Self
     }
 
-    fn convert(storage: &SharedMemoryReader, block: ExtendedBlock) -> PayloadResponse {
+    fn block_into_payload(storage: &SharedMemoryReader, block: ExtendedBlock) -> PayloadResponse {
         let transactions = storage
             .transaction_memory
             .by_hashes(block.transaction_hashes())
@@ -46,7 +46,7 @@ impl PayloadQueries for InMemoryPayloadQueries {
         Ok(storage
             .block_memory
             .by_hash(block_hash)
-            .map(|block| Self::convert(storage, block)))
+            .map(|block| Self::block_into_payload(storage, block)))
     }
 
     fn by_id(
@@ -57,6 +57,6 @@ impl PayloadQueries for InMemoryPayloadQueries {
         Ok(storage
             .block_memory
             .by_payload_id(id)
-            .map(|block| Self::convert(storage, block)))
+            .map(|block| Self::block_into_payload(storage, block)))
     }
 }

@@ -1,6 +1,7 @@
 mod evm_contracts;
 mod get_proof;
 mod integration;
+mod payload;
 mod test_context;
 
 use {

@@ -6,7 +6,10 @@ use {
     moved_blockchain::payload::{BlobsBundle, ExecutionPayload, PayloadResponse, Withdrawal},
     moved_shared::primitives::{Address, B256, B2048, Bytes, U64, U256},
     serde::{Deserialize, Serialize},
-    std::str::FromStr,
+    std::{
+        fmt::{Display, Formatter},
+        str::FromStr,
+    },
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -60,9 +63,21 @@ pub struct PayloadAttributesV3 {
     pub gas_limit: U64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(into = "String")]
 pub struct PayloadId(pub U64);
+
+impl PayloadId {
+    pub const fn new(id: u64) -> Self {
+        Self(U64::from_limbs([id]))
+    }
+}
+
+impl Display for PayloadId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "0x{:x}", self.0.as_limbs()[0])
+    }
+}
 
 impl FromStr for PayloadId {
     type Err = <U64 as FromStr>::Err;

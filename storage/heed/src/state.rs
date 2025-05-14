@@ -102,23 +102,20 @@ impl State for HeedState<'_> {
 pub struct HeedStateQueries<'db> {
     env: &'db heed::Env,
     trie_db: Arc<HeedEthTrieDb<'db>>,
+    genesis_state_root: B256,
 }
 
 impl<'db> HeedStateQueries<'db> {
-    pub fn new(env: &'db heed::Env, trie_db: Arc<HeedEthTrieDb<'db>>) -> Self {
-        Self { env, trie_db }
-    }
-
-    pub fn from_genesis(
+    pub fn new(
         env: &'db heed::Env,
         trie_db: Arc<HeedEthTrieDb<'db>>,
         genesis_state_root: B256,
     ) -> Self {
-        let this = Self::new(env, trie_db);
-        if this.height().unwrap() == 0 {
-            this.push_state_root(genesis_state_root).unwrap();
+        Self {
+            env,
+            trie_db,
+            genesis_state_root,
         }
-        this
     }
 
     pub fn push_state_root(&self, state_root: B256) -> Result<(), heed::Error> {
@@ -145,10 +142,14 @@ impl<'db> HeedStateQueries<'db> {
 
         transaction.commit()?;
 
-        Ok(height?.unwrap_or(0))
+        Ok(height?.unwrap_or(0).max(1))
     }
 
     fn root_by_height(&self, height: u64) -> Result<Option<B256>, heed::Error> {
+        if height == 0 {
+            return Ok(Some(self.genesis_state_root));
+        }
+
         let transaction = self.env.read_txn()?;
 
         let db = self.env.state_database(&transaction)?;

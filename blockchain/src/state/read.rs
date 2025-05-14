@@ -112,20 +112,33 @@ pub struct InMemoryStateQueries<
 > {
     memory: R,
     db: Arc<D>,
+    genesis_state_root: B256,
 }
 
 impl<R: ReadStateRoot + Clone, D: DB> Clone for InMemoryStateQueries<R, D> {
     fn clone(&self) -> Self {
-        Self::new(self.memory.clone(), self.db.clone())
+        Self::new(
+            self.memory.clone(),
+            self.db.clone(),
+            self.genesis_state_root,
+        )
     }
 }
 
 impl<R: ReadStateRoot, D: DB> InMemoryStateQueries<R, D> {
-    pub fn new(memory: R, db: Arc<D>) -> Self {
-        Self { memory, db }
+    pub fn new(memory: R, db: Arc<D>, genesis_state_root: B256) -> Self {
+        Self {
+            memory,
+            db,
+            genesis_state_root,
+        }
     }
 
     fn root_by_height(&self, height: BlockHeight) -> Option<B256> {
+        if height == 0 {
+            return Some(self.genesis_state_root);
+        }
+
         self.memory.root_by_height(height)
     }
 
@@ -498,7 +511,8 @@ mod tests {
         mint_one_eth(&mut state, addr);
         storage.push(state.state_root());
 
-        let query = InMemoryStateQueries::new(storage, state.db());
+        let query =
+            InMemoryStateQueries::new(storage, state.db(), genesis_config.initial_state_root);
 
         let actual_balance = query
             .balance_at(&evm_storage, addr, 1)
@@ -537,7 +551,8 @@ mod tests {
         mint_one_eth(&mut state, addr);
         storage.push(state.state_root());
 
-        let query = InMemoryStateQueries::new(storage, state.db());
+        let query =
+            InMemoryStateQueries::new(storage, state.db(), genesis_config.initial_state_root);
 
         let actual_balance = query
             .balance_at(&evm_storage, addr, 1)
@@ -576,7 +591,8 @@ mod tests {
         mint_one_eth(&mut state, addr);
         storage.push(state.state_root());
 
-        let query = InMemoryStateQueries::new(storage, state.db());
+        let query =
+            InMemoryStateQueries::new(storage, state.db(), genesis_config.initial_state_root);
 
         let actual_balance = query
             .balance_at(&evm_storage, addr, 1)
@@ -618,7 +634,8 @@ mod tests {
 
         let storage = vec![genesis_config.initial_state_root];
 
-        let query = InMemoryStateQueries::new(storage, state.db());
+        let query =
+            InMemoryStateQueries::new(storage, state.db(), genesis_config.initial_state_root);
 
         let actual_balance = query
             .balance_at(&evm_storage, addr, 0)
@@ -688,7 +705,8 @@ mod tests {
         inc_one_nonce(0, &mut state, addr);
         storage.push(state.state_root());
 
-        let query = InMemoryStateQueries::new(storage, state.db());
+        let query =
+            InMemoryStateQueries::new(storage, state.db(), genesis_config.initial_state_root);
 
         let actual_nonce = query
             .nonce_at(&evm_storage, addr, 1)
@@ -727,7 +745,8 @@ mod tests {
         inc_one_nonce(2, &mut state, addr);
         storage.push(state.state_root());
 
-        let query = InMemoryStateQueries::new(storage, state.db());
+        let query =
+            InMemoryStateQueries::new(storage, state.db(), genesis_config.initial_state_root);
 
         let actual_nonce = query
             .nonce_at(&evm_storage, addr, 1)
@@ -766,7 +785,8 @@ mod tests {
         inc_one_nonce(2, &mut state, addr);
         storage.push(state.state_root());
 
-        let query = InMemoryStateQueries::new(storage, state.db());
+        let query =
+            InMemoryStateQueries::new(storage, state.db(), genesis_config.initial_state_root);
 
         let actual_nonce = query
             .nonce_at(&evm_storage, addr, 1)
@@ -808,7 +828,8 @@ mod tests {
 
         let storage = vec![genesis_config.initial_state_root];
 
-        let query = InMemoryStateQueries::new(storage, state.db());
+        let query =
+            InMemoryStateQueries::new(storage, state.db(), genesis_config.initial_state_root);
 
         let actual_nonce = query
             .nonce_at(&evm_storage, addr, 0)

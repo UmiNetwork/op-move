@@ -102,11 +102,7 @@ impl moved_app::Dependencies for HeedDependencies {
     }
 
     fn state_queries(&self, genesis_config: &GenesisConfig) -> Self::StateQueries {
-        state::HeedStateQueries::from_genesis(
-            db(),
-            TRIE_DB.clone(),
-            genesis_config.initial_state_root,
-        )
+        state::HeedStateQueries::new(db(), TRIE_DB.clone(), genesis_config.initial_state_root)
     }
 
     fn storage_trie_repository() -> Self::StorageTrieRepository {
@@ -133,6 +129,11 @@ lazy_static::lazy_static! {
     };
 }
 
+#[cfg(test)]
+lazy_static::lazy_static! {
+    static ref TEMP_DIR: tempfile::TempDir = tempfile::tempdir().unwrap();
+}
+
 fn db() -> &'static moved_storage_heed::Env {
     &Database
 }
@@ -140,12 +141,22 @@ fn db() -> &'static moved_storage_heed::Env {
 fn create_db() -> moved_storage_heed::Env {
     assert_eq!(moved_storage_heed::DATABASES.len(), 11);
 
-    let path = "db";
+    let path = {
+        #[cfg(not(test))]
+        {
+            let path = "db";
 
-    if std::env::var("PURGE").as_ref().map(String::as_str) == Ok("1") {
-        let _ = std::fs::remove_dir_all(path);
-    }
-    let _ = std::fs::create_dir(path);
+            if std::env::var("PURGE").as_ref().map(String::as_str) == Ok("1") || cfg!(test) {
+                let _ = std::fs::remove_dir_all(path);
+            }
+            let _ = std::fs::create_dir(path);
+            path
+        }
+        #[cfg(test)]
+        {
+            TEMP_DIR.path()
+        }
+    };
 
     let env = unsafe {
         EnvOpenOptions::new()
