@@ -1,10 +1,7 @@
 module {{name}}::{{snake name}} {
     {{#if has_fungible_asset}}
-    {{#if has_eth_token_metadata}}
-    use aptos_framework::fungible_asset_u256::{FungibleAsset, zero};
-    {{else}}
-    use aptos_framework::fungible_asset_u256::FungibleAsset;
-    {{/if}}
+    use aptos_framework::fungible_asset_u256::
+    {{~#if has_eth_token_metadata}}{FungibleAsset, zero}{{else}}FungibleAsset{{/if}};
     {{else if has_eth_token_metadata}}
     use aptos_framework::fungible_asset_u256::zero;
     {{/if}}
