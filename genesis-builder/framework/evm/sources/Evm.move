@@ -10,8 +10,12 @@ module Evm::evm {
     /// not successful.
     const EDEPLOYMENT_FAILED: u64 = 1;
 
+    /// Call to `system_evm_call` failed because the EVM execution was
+    /// not successful.
+    const ECALL_FAILED: u64 = 2;
+
     /// Solidity FixedBytes must have length between 1 and 32 (inclusive).
-    const EINVALID_FIXED_BYTES_SIZE: u64 = 2;
+    const EINVALID_FIXED_BYTES_SIZE: u64 = 3;
 
     const OWNER: address = @evm_admin;
 
@@ -222,14 +226,7 @@ module Evm::evm {
         value: u256,
         data: vector<u8>
     ): EvmResult {
-        let eth_metadata = get_metadata();
-        let payment = if (value == 0) {
-            fungible_asset_u256::zero(eth_metadata)
-        } else {
-            let caller_addr = signer::address_of(caller);
-            let store = ensure_primary_store_exists(caller_addr, eth_metadata);
-            fungible_asset_u256::withdraw(caller, store, value)
-        };
+        let payment = withdraw_payment(caller, value);
         let result = evm_create(caller, payment, data);
 
         assert!(result.is_success, error::aborted(EDEPLOYMENT_FAILED));
@@ -238,9 +235,39 @@ module Evm::evm {
         result
     }
 
-    // A private function used by the system to call the EVM native.
-    // (For some reason we cannot call the native function directly)
+    // A private function used by the system to call an EVM contract as
+    // requested by a user directly in a transaction.
+    // Note this function does spend the user's tokens if `value` is non-zero.
     fun system_evm_call(
+        caller: &signer,
+        to: address,
+        value: u256,
+        data: vector<u8>
+    ): EvmResult {
+        let payment = withdraw_payment(caller, value);
+        let result = evm_call(caller, to, payment, data);
+
+        assert!(result.is_success, error::aborted(ECALL_FAILED));
+        emit_evm_logs(&result);
+
+        result
+    }
+
+    fun withdraw_payment(caller: &signer, value: u256): FungibleAsset {
+        let eth_metadata = get_metadata();
+        if (value == 0) {
+            fungible_asset_u256::zero(eth_metadata)
+        } else {
+            let caller_addr = signer::address_of(caller);
+            let store = ensure_primary_store_exists(caller_addr, eth_metadata);
+            fungible_asset_u256::withdraw(caller, store, value)
+        }
+    }
+
+    // A private function used by the system to deposit a deposited-type transaction.
+    // This function only delegates to `native_evm_call` because we cannot call
+    // native functions directly for some reason.
+    fun system_deposit_evm_call(
         caller: address,
         to: address,
         value: u256,

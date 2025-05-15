@@ -296,6 +296,7 @@ pub enum TransactionData {
     // Entry function should be the 3rd option to match the SDK TransactionPayload
     EntryFunction(EntryFunction),
     L2Contract(Address),
+    EvmContract { address: Address, data: Vec<u8> },
 }
 
 impl TransactionData {
@@ -310,14 +311,17 @@ impl TransactionData {
                     Ok(Self::EoaBaseTokenTransfer(to))
                 } else {
                     let tx_data: TransactionData = bcs::from_bytes(&tx.data)?;
-                    // Inner value should be an entry function type
-                    let Some(entry_fn) = tx_data.maybe_entry_fn() else {
-                        Err(InvalidTransactionCause::InvalidPayload(bcs::Error::Custom(
-                            "Not an entry function".to_string(),
-                        )))?
-                    };
-                    if entry_fn.module().address() != &to.to_move_address() {
-                        Err(InvalidTransactionCause::InvalidDestination)?
+                    // Inner value should be an entry function type or EVM contract.
+                    match &tx_data {
+                        TransactionData::EntryFunction(entry_fn) => {
+                            if entry_fn.module().address() != &to.to_move_address() {
+                                Err(InvalidTransactionCause::InvalidDestination)?
+                            }
+                        }
+                        TransactionData::EvmContract { .. } => (),
+                        _ => Err(InvalidTransactionCause::InvalidPayload(bcs::Error::Custom(
+                            "Expected entry function or EVM contract".to_string(),
+                        )))?,
                     }
                     Ok(tx_data)
                 }

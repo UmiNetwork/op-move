@@ -4,7 +4,7 @@ use {
         CanonicalExecutionInput, Logs, create_vm_session,
         eth_token::{self, BaseTokenAccounts, TransferArgs},
         execute::{
-            deploy_evm_contract, deploy_module, execute_entry_function, execute_l2_contract,
+            deploy_evm_contract, deploy_module, execute_entry_function, execute_evm_contract,
             execute_script,
         },
         gas::{new_gas_meter, total_gas_used},
@@ -160,7 +160,6 @@ pub(super) fn execute_canonical_transaction<
     let mut deploy_changes = ChangeSet::new();
     // Using l2 input here as test transactions don't set the max limit directly on itself
     let l2_cost = input.l2_fee.l2_fee(input.l2_input.clone()).saturating_to();
-    let mut evm_logs = Vec::new();
 
     // TODO: use free gas meter for things that shouldn't fail due to
     // insufficient gas limit, impose a lower bound on the latter
@@ -238,7 +237,7 @@ pub(super) fn execute_canonical_transaction<
                 &code_storage,
             )
         }
-        TransactionData::L2Contract(contract) => execute_l2_contract(
+        TransactionData::L2Contract(contract) => execute_evm_contract(
             &sender_move_address,
             &contract.to_move_address(),
             input.tx.value,
@@ -247,10 +246,17 @@ pub(super) fn execute_canonical_transaction<
             verify_input.traversal_context,
             verify_input.gas_meter,
             &code_storage,
-        )
-        .map(|mut logs| {
-            evm_logs.append(&mut logs);
-        }),
+        ),
+        TransactionData::EvmContract { address, data } => execute_evm_contract(
+            &sender_move_address,
+            &address.to_move_address(),
+            input.tx.value,
+            data,
+            verify_input.session,
+            verify_input.traversal_context,
+            verify_input.gas_meter,
+            &code_storage,
+        ),
     };
 
     let vm_outcome = vm_outcome.and_then(|_| {
@@ -285,8 +291,7 @@ pub(super) fn execute_canonical_transaction<
         })?;
 
     let (mut changes, mut extensions) = session.finish_with_extensions(&code_storage)?;
-    let mut logs = extensions.logs();
-    logs.extend(evm_logs);
+    let logs = extensions.logs();
     let evm_changes = moved_evm_ext::extract_evm_changes(&extensions);
     changes
         .squash(evm_changes.accounts)

@@ -57,6 +57,7 @@ mod tag_validation;
 mod tests;
 
 const ADDRESS_LAYOUT: MoveTypeLayout = MoveTypeLayout::Address;
+const SIGNER_LAYOUT: MoveTypeLayout = MoveTypeLayout::Signer;
 const U256_LAYOUT: MoveTypeLayout = MoveTypeLayout::U256;
 
 pub fn create_vm_session<'l, 'r, S, L, B>(

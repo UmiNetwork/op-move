@@ -1,7 +1,7 @@
 use {
     super::tag_validation::{validate_entry_type_tag, validate_entry_value},
-    crate::{ADDRESS_LAYOUT, U256_LAYOUT, eth_token::burn_eth, layout::has_value_invariants},
-    alloy::primitives::{Address, Log, LogData},
+    crate::{ADDRESS_LAYOUT, SIGNER_LAYOUT, U256_LAYOUT, layout::has_value_invariants},
+    alloy::primitives::Address,
     aptos_types::transaction::{EntryFunction, Module, Script},
     move_binary_format::CompiledModule,
     move_core_types::{
@@ -179,7 +179,7 @@ pub(super) fn deploy_evm_contract<G: GasMeter, MS: ModuleStorage>(
 // TODO(#329): group MoveVM elements (session, traversal_context,
 // gas_meter, module_storage) together.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn execute_l2_contract<G: GasMeter, MS: ModuleStorage>(
+pub(super) fn execute_evm_contract<G: GasMeter, MS: ModuleStorage>(
     signer: &AccountAddress,
     contract: &AccountAddress,
     value: U256,
@@ -188,12 +188,12 @@ pub(super) fn execute_l2_contract<G: GasMeter, MS: ModuleStorage>(
     traversal_context: &mut TraversalContext,
     gas_meter: &mut G,
     module_storage: &MS,
-) -> moved_shared::error::Result<Vec<Log<LogData>>> {
+) -> moved_shared::error::Result<()> {
     let module = ModuleId::new(EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE.into());
     let function_name = EVM_CALL_FN_NAME;
     // Unwraps in serialization are safe because the layouts match the types.
     let args: Vec<Vec<u8>> = [
-        (Value::address(*signer), &ADDRESS_LAYOUT),
+        (Value::master_signer(*signer), &SIGNER_LAYOUT),
         (Value::address(*contract), &ADDRESS_LAYOUT),
         (Value::u256(value.to_move_u256()), &U256_LAYOUT),
         (Value::vector_u8(data), &CODE_LAYOUT),
@@ -206,7 +206,7 @@ pub(super) fn execute_l2_contract<G: GasMeter, MS: ModuleStorage>(
             .unwrap()
     })
     .collect();
-    let outcome = session
+    session
         .execute_function_bypass_visibility(
             &module,
             function_name,
@@ -218,24 +218,7 @@ pub(super) fn execute_l2_contract<G: GasMeter, MS: ModuleStorage>(
         )
         .map_err(|e| User(UserError::Vm(e)))?;
 
-    let evm_outcome = extract_evm_result(outcome);
-
-    if evm_outcome.is_success {
-        // TODO: ETH is burned until the value from EVM is reflected on MoveVM
-        // Ethereum takes out the ETH value at the beginning of the transaction,
-        // however, move fungible token is taken out only if the EVM succeeds.
-        burn_eth(
-            signer,
-            value,
-            session,
-            traversal_context,
-            gas_meter,
-            module_storage,
-        )?;
-    } else {
-        return Err(User(UserError::L2ContractCallFailure));
-    }
-    Ok(evm_outcome.logs)
+    Ok(())
 }
 
 // If `t` is wrapped in `Type::Reference` or `Type::MutableReference`,
