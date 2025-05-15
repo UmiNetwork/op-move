@@ -541,7 +541,7 @@ async fn deploy_move_counter() -> Result<()> {
         ],
     ));
     let pending_tx =
-        CallBuilder::<(), _, _, _>::new_raw(&provider, bcs::to_bytes(&input).unwrap().into())
+        CallBuilder::<(), _, _, _>::new_raw(&provider, input.to_bytes().unwrap().into())
             .to(contract_address)
             .send()
             .await
