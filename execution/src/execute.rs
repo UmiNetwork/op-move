@@ -20,7 +20,7 @@ use {
     },
     moved_evm_ext::{
         CODE_LAYOUT, EVM_CALL_FN_NAME, EVM_CREATE_FN_NAME, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
-        extract_evm_result,
+        EvmNativeOutcome, extract_evm_result,
     },
     moved_shared::{
         error::{
@@ -188,7 +188,7 @@ pub(super) fn execute_evm_contract<G: GasMeter, MS: ModuleStorage>(
     traversal_context: &mut TraversalContext,
     gas_meter: &mut G,
     module_storage: &MS,
-) -> moved_shared::error::Result<()> {
+) -> moved_shared::error::Result<EvmNativeOutcome> {
     let module = ModuleId::new(EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE.into());
     let function_name = EVM_CALL_FN_NAME;
     // Unwraps in serialization are safe because the layouts match the types.
@@ -206,7 +206,7 @@ pub(super) fn execute_evm_contract<G: GasMeter, MS: ModuleStorage>(
             .unwrap()
     })
     .collect();
-    session
+    let outcome = session
         .execute_function_bypass_visibility(
             &module,
             function_name,
@@ -218,7 +218,9 @@ pub(super) fn execute_evm_contract<G: GasMeter, MS: ModuleStorage>(
         )
         .map_err(|e| User(UserError::Vm(e)))?;
 
-    Ok(())
+    let evm_outcome = extract_evm_result(outcome);
+
+    Ok(evm_outcome)
 }
 
 // If `t` is wrapped in `Type::Reference` or `Type::MutableReference`,

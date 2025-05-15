@@ -246,7 +246,8 @@ pub(super) fn execute_canonical_transaction<
             verify_input.traversal_context,
             verify_input.gas_meter,
             &code_storage,
-        ),
+        )
+        .map(|_| ()),
         TransactionData::EvmContract { address, data } => execute_evm_contract(
             &sender_move_address,
             &address.to_move_address(),
@@ -256,7 +257,8 @@ pub(super) fn execute_canonical_transaction<
             verify_input.traversal_context,
             verify_input.gas_meter,
             &code_storage,
-        ),
+        )
+        .map(|_| ()),
     };
 
     let vm_outcome = vm_outcome.and_then(|_| {
