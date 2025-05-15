@@ -18,6 +18,8 @@ struct L2Module {
     structs: BTreeMap<String, Vec<L2Input>>,
     has_fungible_asset: bool,
     has_non_empty_args: bool,
+    has_evm_call: bool,
+    has_eth_token_metadata: bool,
 }
 
 #[derive(Default, Serialize)]
@@ -26,6 +28,7 @@ struct L2Function {
     selector: [u8; 4],
     inputs: Vec<L2Input>,
     has_value: bool,
+    is_view: bool,
 }
 
 #[derive(Serialize)]
@@ -67,6 +70,12 @@ pub fn l2_abi_to_move() -> anyhow::Result<()> {
         // To determine if importing `abi_encode_params` is needed
         let mut has_non_empty_args = false;
 
+        // To determine if importing `evm_call` is needed
+        let mut has_evm_call = false;
+
+        // To determine if importing `EthToken::eth_token::get_metadata` is needed
+        let mut has_eth_token_metadata = false;
+
         let mut functions = Vec::new();
         let mut unique_function_names = Vec::new();
         for (name, funs) in abi.functions {
@@ -84,9 +93,21 @@ pub fn l2_abi_to_move() -> anyhow::Result<()> {
                     ..Default::default()
                 };
 
-                if fun.state_mutability == StateMutability::Payable {
-                    function.has_value = true;
-                    has_fungible_asset = true;
+                match &fun.state_mutability {
+                    StateMutability::Payable => {
+                        has_evm_call = true;
+                        function.is_view = false;
+                        function.has_value = true;
+                        has_fungible_asset = true;
+                    }
+                    StateMutability::View | StateMutability::Pure => {
+                        function.is_view = true;
+                    }
+                    _ => {
+                        has_evm_call = true;
+                        function.is_view = false;
+                        has_eth_token_metadata = true;
+                    }
                 }
 
                 function.inputs = Vec::new();
@@ -152,6 +173,8 @@ pub fn l2_abi_to_move() -> anyhow::Result<()> {
             structs,
             has_fungible_asset,
             has_non_empty_args,
+            has_evm_call,
+            has_eth_token_metadata,
         };
         handlebars.render_to_write("move", &module, &mut output_file)?;
     }

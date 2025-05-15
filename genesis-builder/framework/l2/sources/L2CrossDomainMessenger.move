@@ -1,19 +1,17 @@
 module L2CrossDomainMessenger::l2_cross_domain_messenger {
     use aptos_framework::fungible_asset_u256::{FungibleAsset, zero};
     use EthToken::eth_token::get_metadata;
-    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, is_result_success, EvmResult};
+    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, evm_view, is_result_success, EvmResult};
     use std::error;
 
     const ENOT_SUCCESS: u64 = 1;
 
 
     public fun message_version(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[63, 130, 122, 90];
 
-        let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -21,12 +19,10 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
 
 
     public fun min_gas_calldata_overhead(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[2, 143, 133, 247];
 
-        let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -34,12 +30,10 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
 
 
     public fun min_gas_dynamic_overhead_denominator(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[12, 86, 132, 152];
 
-        let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -47,12 +41,10 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
 
 
     public fun min_gas_dynamic_overhead_numerator(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[40, 40, 215, 232];
 
-        let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -60,12 +52,10 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
 
 
     public fun other_messenger(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[159, 206, 129, 44];
 
-        let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -73,12 +63,10 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
 
 
     public fun relay_call_overhead(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[76, 29, 106, 105];
 
-        let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -86,12 +74,10 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
 
 
     public fun relay_constant_overhead(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[131, 167, 64, 116];
 
-        let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -99,12 +85,10 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
 
 
     public fun relay_gas_check_buffer(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[86, 68, 207, 223];
 
-        let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -112,12 +96,10 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
 
 
     public fun relay_reserved_gas(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[140, 190, 238, 242];
 
-        let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -129,11 +111,9 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
     }
 
     public fun base_gas(
-        caller: &signer,
         message: vector<u8>,
         min_gas_limit: u32,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let arg_struct = BaseGasArgs {
             message,
             min_gas_limit,
@@ -144,7 +124,7 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
             arg_struct,
         );
 
-        let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -155,10 +135,8 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
     }
 
     public fun failed_messages(
-        caller: &signer,
         key: Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let arg_struct = FailedMessagesArgs {
             key,
         };
@@ -168,7 +146,7 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
             arg_struct,
         );
 
-        let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -200,12 +178,10 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
 
 
     public fun l1_cross_domain_messenger(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[167, 17, 152, 105];
 
-        let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -213,12 +189,10 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
 
 
     public fun message_nonce(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[236, 199, 4, 40];
 
-        let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -226,12 +200,10 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
 
 
     public fun paused(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[92, 151, 90, 187];
 
-        let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -311,10 +283,8 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
     }
 
     public fun successful_messages(
-        caller: &signer,
         key: Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let arg_struct = SuccessfulMessagesArgs {
             key,
         };
@@ -324,7 +294,7 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
             arg_struct,
         );
 
-        let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -332,12 +302,10 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
 
 
     public fun version(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[84, 253, 77, 80];
 
-        let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -345,12 +313,10 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
 
 
     public fun x_domain_message_sender(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[110, 41, 110, 69];
 
-        let result = evm_call(caller, @L2CrossDomainMessenger, _value, data);
+        let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result

@@ -162,6 +162,26 @@ module Evm::evm {
         native_evm_create(caller_addr, get_asset_value(value), data)
     }
 
+    /// Simulate an EVM transaction (as would be done by `evm_call`) without
+    /// persisting any changes. This function is good for view methods of
+    /// solidity contracts for example. Since this function does not persist
+    /// any changes `caller` is not required to be a `signer` (there is no
+    /// security risk of "forging" a signature). Similarly, `value` is allowed
+    /// to be specified as a raw number instead of being a `FungibleAsset`.
+    /// 
+    /// Note: even though you are free to specify any address for `caller`,
+    /// the EVM will still validate if it is an externally owned address (EOA),
+    /// this means if you pass the address of a contract your transaction will
+    /// fail with an error `RejectCallerWithCode`. If the `caller` does not
+    /// matter to the view call then it is recommended you simply use the zero
+    /// address `@0x0` to avoid this error.
+    public native fun evm_view(
+        caller: address,
+        to: address,
+        value: u256,
+        data: vector<u8>
+    ): EvmResult;
+
     /// Encode the move value into bytes using the Solidity ABI
     /// such that it would be suitable for passing to a Solidity contract's function.
     /// The prefix can be used to prepend the output with a Solidity 4-byte function

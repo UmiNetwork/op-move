@@ -1,9 +1,13 @@
 module {{name}}::{{snake name}} {
+    {{#if has_fungible_asset}}
     use aptos_framework::fungible_asset_u256::
-    {{~#if has_fungible_asset}}{FungibleAsset, zero}{{else}}zero{{/if}};
-    use EthToken::eth_token::get_metadata;
+    {{~#if has_eth_token_metadata}}{FungibleAsset, zero}{{else}}FungibleAsset{{/if}};
+    {{else if has_eth_token_metadata}}
+    use aptos_framework::fungible_asset_u256::zero;
+    {{/if}}
+    {{#if has_eth_token_metadata}}use EthToken::eth_token::get_metadata;{{/if}}
     use Evm::evm::{
-    {{~#if has_non_empty_args}}abi_encode_params, {{else}}{{/if}}emit_evm_logs, evm_call, is_result_success, EvmResult};
+    {{~#if has_non_empty_args}}abi_encode_params, {{/if}}emit_evm_logs, {{#if has_evm_call}}evm_call, {{/if}}evm_view, is_result_success, EvmResult};
     use std::error;
 
     const ENOT_SUCCESS: u64 = 1;
@@ -26,7 +30,9 @@ module {{name}}::{{snake name}} {
     {{/if}}
 
     public fun {{snake name}}(
+        {{#unless is_view}}
         caller: &signer,
+        {{/unless}}
         {{#each inputs}}
         {{snake name}}: {{{ty}}},
         {{/each}}
@@ -34,9 +40,11 @@ module {{name}}::{{snake name}} {
         _value: FungibleAsset,
         {{/if}}
     ): EvmResult {
-        {{#unless has_value}}
+        {{#if is_view}}
+        {{else if has_value}}
+        {{else}}
         let _value = zero(get_metadata());
-        {{/unless}}
+        {{/if}}
         {{#if (len inputs)}}
         let arg_struct = {{pascal name}}Args {
             {{#each inputs}}
@@ -52,7 +60,11 @@ module {{name}}::{{snake name}} {
         let data = vector{{selector}};
         {{/if}}
 
+        {{#if is_view}}
+        let result = evm_view(@0x0, @{{../name}}, 0, data);
+        {{else}}
         let result = evm_call(caller, @{{../name}}, _value, data);
+        {{/if}}
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result

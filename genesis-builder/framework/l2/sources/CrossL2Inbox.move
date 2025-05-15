@@ -1,7 +1,7 @@
 module CrossL2Inbox::cross_l2_inbox {
-    use aptos_framework::fungible_asset_u256::{FungibleAsset, zero};
-    use EthToken::eth_token::get_metadata;
-    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, is_result_success, EvmResult};
+    use aptos_framework::fungible_asset_u256::FungibleAsset;
+    
+    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, evm_view, is_result_success, EvmResult};
     use std::error;
 
     const ENOT_SUCCESS: u64 = 1;
@@ -16,12 +16,10 @@ module CrossL2Inbox::cross_l2_inbox {
 
 
     public fun block_number(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[87, 232, 113, 231];
 
-        let result = evm_call(caller, @CrossL2Inbox, _value, data);
+        let result = evm_view(@0x0, @CrossL2Inbox, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -29,12 +27,10 @@ module CrossL2Inbox::cross_l2_inbox {
 
 
     public fun chain_id(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[154, 138, 5, 146];
 
-        let result = evm_call(caller, @CrossL2Inbox, _value, data);
+        let result = evm_view(@0x0, @CrossL2Inbox, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -72,12 +68,10 @@ module CrossL2Inbox::cross_l2_inbox {
 
 
     public fun log_index(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[218, 153, 247, 41];
 
-        let result = evm_call(caller, @CrossL2Inbox, _value, data);
+        let result = evm_view(@0x0, @CrossL2Inbox, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -85,12 +79,10 @@ module CrossL2Inbox::cross_l2_inbox {
 
 
     public fun origin(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[147, 139, 95, 50];
 
-        let result = evm_call(caller, @CrossL2Inbox, _value, data);
+        let result = evm_view(@0x0, @CrossL2Inbox, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -98,12 +90,10 @@ module CrossL2Inbox::cross_l2_inbox {
 
 
     public fun timestamp(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[184, 7, 119, 234];
 
-        let result = evm_call(caller, @CrossL2Inbox, _value, data);
+        let result = evm_view(@0x0, @CrossL2Inbox, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -111,12 +101,10 @@ module CrossL2Inbox::cross_l2_inbox {
 
 
     public fun version(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[84, 253, 77, 80];
 
-        let result = evm_call(caller, @CrossL2Inbox, _value, data);
+        let result = evm_view(@0x0, @CrossL2Inbox, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result

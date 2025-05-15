@@ -3,7 +3,7 @@ script {
     use Evm::evm::{as_fixed_bytes_20, abi_decode_params, evm_output, is_result_success, SolidityFixedBytes, U5, B0, B1};
     use std::string::{bytes, String};
 
-    fun main(owner: &signer) {
+    fun main() {
         // Test different decoding cases by generating more RLP bytes at https://abi.hashex.org
         let test_bool = abi_decode_params<bool>(x"0000000000000000000000000000000000000000000000000000000000000001");
         assert!(test_bool == true, 0);
@@ -51,7 +51,7 @@ script {
         /* ************************ */
 
         // Call to the `version()` has string output "1.4.1"
-        let result = base_fee_vault::version(owner);
+        let result = base_fee_vault::version();
         assert!(is_result_success(&result), 8);
         let version_string = abi_decode_params<String>(evm_output(&result));
         assert!(*bytes(&version_string) == b"1.4.1");

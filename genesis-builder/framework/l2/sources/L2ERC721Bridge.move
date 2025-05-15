@@ -1,19 +1,17 @@
 module L2ERC721Bridge::l2_erc721_bridge {
     use aptos_framework::fungible_asset_u256::zero;
     use EthToken::eth_token::get_metadata;
-    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, is_result_success, EvmResult};
+    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, evm_view, is_result_success, EvmResult};
     use std::error;
 
     const ENOT_SUCCESS: u64 = 1;
 
 
     public fun messenger(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[146, 126, 222, 45];
 
-        let result = evm_call(caller, @L2ERC721Bridge, _value, data);
+        let result = evm_view(@0x0, @L2ERC721Bridge, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -21,12 +19,10 @@ module L2ERC721Bridge::l2_erc721_bridge {
 
 
     public fun other_bridge(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[127, 70, 221, 178];
 
-        let result = evm_call(caller, @L2ERC721Bridge, _value, data);
+        let result = evm_view(@0x0, @L2ERC721Bridge, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -172,12 +168,10 @@ module L2ERC721Bridge::l2_erc721_bridge {
 
 
     public fun paused(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[92, 151, 90, 187];
 
-        let result = evm_call(caller, @L2ERC721Bridge, _value, data);
+        let result = evm_view(@0x0, @L2ERC721Bridge, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -185,12 +179,10 @@ module L2ERC721Bridge::l2_erc721_bridge {
 
 
     public fun version(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[84, 253, 77, 80];
 
-        let result = evm_call(caller, @L2ERC721Bridge, _value, data);
+        let result = evm_view(@0x0, @L2ERC721Bridge, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result

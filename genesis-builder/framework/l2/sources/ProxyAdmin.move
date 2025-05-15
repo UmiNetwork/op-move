@@ -1,19 +1,17 @@
 module ProxyAdmin::proxy_admin {
     use aptos_framework::fungible_asset_u256::{FungibleAsset, zero};
     use EthToken::eth_token::get_metadata;
-    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, is_result_success, EvmResult};
+    use Evm::evm::{abi_encode_params, emit_evm_logs, evm_call, evm_view, is_result_success, EvmResult};
     use std::error;
 
     const ENOT_SUCCESS: u64 = 1;
 
 
     public fun address_manager(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[58, 183, 110, 159];
 
-        let result = evm_call(caller, @ProxyAdmin, _value, data);
+        let result = evm_view(@0x0, @ProxyAdmin, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -51,10 +49,8 @@ module ProxyAdmin::proxy_admin {
     }
 
     public fun get_proxy_admin(
-        caller: &signer,
         proxy: address,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let arg_struct = GetProxyAdminArgs {
             proxy,
         };
@@ -64,7 +60,7 @@ module ProxyAdmin::proxy_admin {
             arg_struct,
         );
 
-        let result = evm_call(caller, @ProxyAdmin, _value, data);
+        let result = evm_view(@0x0, @ProxyAdmin, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -75,10 +71,8 @@ module ProxyAdmin::proxy_admin {
     }
 
     public fun get_proxy_implementation(
-        caller: &signer,
         proxy: address,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let arg_struct = GetProxyImplementationArgs {
             proxy,
         };
@@ -88,7 +82,7 @@ module ProxyAdmin::proxy_admin {
             arg_struct,
         );
 
-        let result = evm_call(caller, @ProxyAdmin, _value, data);
+        let result = evm_view(@0x0, @ProxyAdmin, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -99,10 +93,8 @@ module ProxyAdmin::proxy_admin {
     }
 
     public fun implementation_name(
-        caller: &signer,
         key: address,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let arg_struct = ImplementationNameArgs {
             key,
         };
@@ -112,7 +104,7 @@ module ProxyAdmin::proxy_admin {
             arg_struct,
         );
 
-        let result = evm_call(caller, @ProxyAdmin, _value, data);
+        let result = evm_view(@0x0, @ProxyAdmin, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -120,12 +112,10 @@ module ProxyAdmin::proxy_admin {
 
 
     public fun is_upgrading(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[183, 148, 114, 98];
 
-        let result = evm_call(caller, @ProxyAdmin, _value, data);
+        let result = evm_view(@0x0, @ProxyAdmin, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -133,12 +123,10 @@ module ProxyAdmin::proxy_admin {
 
 
     public fun owner(
-        caller: &signer,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let data = vector[141, 165, 203, 91];
 
-        let result = evm_call(caller, @ProxyAdmin, _value, data);
+        let result = evm_view(@0x0, @ProxyAdmin, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -149,10 +137,8 @@ module ProxyAdmin::proxy_admin {
     }
 
     public fun proxy_type(
-        caller: &signer,
         key: address,
     ): EvmResult {
-        let _value = zero(get_metadata());
         let arg_struct = ProxyTypeArgs {
             key,
         };
@@ -162,7 +148,7 @@ module ProxyAdmin::proxy_admin {
             arg_struct,
         );
 
-        let result = evm_call(caller, @ProxyAdmin, _value, data);
+        let result = evm_view(@0x0, @ProxyAdmin, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result

@@ -2,7 +2,7 @@ use {
     super::*,
     alloy::{network::AnyNetwork, primitives::U256, providers, sol, sol_types::SolValue},
     move_binary_format::errors::VMError,
-    moved_evm_ext::{EVM_NATIVE_ADDRESS, EvmNativeOutcome},
+    moved_evm_ext::EvmNativeOutcome,
 };
 
 #[test]
@@ -184,7 +184,6 @@ fn balance_of(ctx: &TestContext, token_address: Address, account_address: Addres
     let outcome = ctx
         .quick_call(
             vec![
-                MoveValue::Signer(EVM_NATIVE_ADDRESS),
                 MoveValue::Address(token_address.to_move_address()),
                 MoveValue::Address(account_address.to_move_address()),
             ],
@@ -242,7 +241,6 @@ fn allowance(
     let outcome = ctx
         .quick_call(
             vec![
-                MoveValue::Signer(EVM_NATIVE_ADDRESS),
                 MoveValue::Address(token_address.to_move_address()),
                 MoveValue::Address(owner_address.to_move_address()),
                 MoveValue::Address(spender_address.to_move_address()),
@@ -318,10 +316,7 @@ fn transfer_from_err(
 fn total_supply(ctx: &TestContext, token_address: Address) -> U256 {
     let outcome = ctx
         .quick_call(
-            vec![
-                MoveValue::Signer(EVM_NATIVE_ADDRESS),
-                MoveValue::Address(token_address.to_move_address()),
-            ],
+            vec![MoveValue::Address(token_address.to_move_address())],
             "erc20",
             "total_supply",
         )
@@ -332,10 +327,7 @@ fn total_supply(ctx: &TestContext, token_address: Address) -> U256 {
 fn decimals(ctx: &TestContext, token_address: Address) -> u8 {
     let outcome = ctx
         .quick_call(
-            vec![
-                MoveValue::Signer(EVM_NATIVE_ADDRESS),
-                MoveValue::Address(token_address.to_move_address()),
-            ],
+            vec![MoveValue::Address(token_address.to_move_address())],
             "erc20",
             "decimals",
         )
@@ -347,10 +339,7 @@ fn decimals(ctx: &TestContext, token_address: Address) -> u8 {
 fn name(ctx: &TestContext, token_address: Address) -> String {
     let outcome = ctx
         .quick_call(
-            vec![
-                MoveValue::Signer(EVM_NATIVE_ADDRESS),
-                MoveValue::Address(token_address.to_move_address()),
-            ],
+            vec![MoveValue::Address(token_address.to_move_address())],
             "erc20",
             "name",
         )
@@ -362,10 +351,7 @@ fn name(ctx: &TestContext, token_address: Address) -> String {
 fn symbol(ctx: &TestContext, token_address: Address) -> String {
     let outcome = ctx
         .quick_call(
-            vec![
-                MoveValue::Signer(EVM_NATIVE_ADDRESS),
-                MoveValue::Address(token_address.to_move_address()),
-            ],
+            vec![MoveValue::Address(token_address.to_move_address())],
             "erc20",
             "symbol",
         )

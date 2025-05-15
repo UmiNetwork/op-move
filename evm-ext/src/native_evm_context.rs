@@ -15,6 +15,8 @@ use {
     move_vm_types::{resolver::MoveResolver, value_serde::ValueSerDeContext, values::VMValueCast},
     revm::{
         DatabaseRef,
+        context::BlockEnv,
+        context_interface::block::BlobExcessGasAndPrice,
         database::CacheDB,
         primitives::{Address, B256, KECCAK_EMPTY, U256},
         state::{Account, AccountInfo, Bytecode},
@@ -66,6 +68,22 @@ impl<'a> NativeEVMContext<'a> {
             )),
             state_changes: Vec::new(),
             block_header,
+        }
+    }
+
+    pub fn block_env(&self) -> BlockEnv {
+        BlockEnv {
+            number: self.block_header.number,
+            beneficiary: Address::ZERO,
+            timestamp: self.block_header.timestamp,
+            gas_limit: u64::MAX,
+            basefee: 0,
+            difficulty: U256::ZERO,
+            prevrandao: Some(self.block_header.prev_randao),
+            blob_excess_gas_and_price: Some(BlobExcessGasAndPrice {
+                excess_blob_gas: 0,
+                blob_gasprice: 0,
+            }),
         }
     }
 }
