@@ -18,13 +18,7 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v4
-        - uses: actions-rs/toolchain@v1
-          with:
-            default: true
-            toolchain: stable
-            components: clippy
-        - name: Free up disk space
-          run: rm -rf /opt/hostedtoolcache
+        - run: rustup component add clippy
         - uses: actions-rs/clippy-check@v1
           with:
             token: ${{ secrets.GITHUB_TOKEN }}
