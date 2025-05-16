@@ -1,14 +1,12 @@
 use {
     crate::jsonrpc::JsonRpcError,
-    moved_app::{Application, Dependencies},
-    std::sync::Arc,
-    tokio::sync::RwLock,
+    moved_app::{ApplicationReader, Dependencies},
 };
 
 pub async fn execute(
-    app: &Arc<RwLock<Application<impl Dependencies>>>,
+    app: ApplicationReader<impl Dependencies>,
 ) -> Result<serde_json::Value, JsonRpcError> {
-    let response = app.read().await.chain_id();
+    let response = app.chain_id();
     Ok(serde_json::to_value(format!("{response:#x}"))
         .expect("Must be able to JSON-serialize response"))
 }
@@ -19,10 +17,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_execute() {
-        let app = create_app();
+        let (reader, _app) = create_app();
 
         let expected_response: serde_json::Value = serde_json::from_str(r#""0x194""#).unwrap();
-        let actual_response = execute(&app).await.unwrap();
+        let actual_response = execute(reader.clone()).await.unwrap();
 
         assert_eq!(actual_response, expected_response);
     }

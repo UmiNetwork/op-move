@@ -53,7 +53,7 @@ impl ReceiptRepository for HeedReceiptRepository {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct HeedReceiptQueries;
 
 impl ReceiptQueries for HeedReceiptQueries {

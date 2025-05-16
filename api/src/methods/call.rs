@@ -3,20 +3,16 @@ use {
         json_utils::{parse_params_2, transaction_error},
         jsonrpc::JsonRpcError,
     },
-    moved_app::{Application, Dependencies},
-    std::sync::Arc,
-    tokio::sync::RwLock,
+    moved_app::{ApplicationReader, Dependencies},
 };
 
 pub async fn execute(
     request: serde_json::Value,
-    app: &Arc<RwLock<Application<impl Dependencies>>>,
+    app: ApplicationReader<impl Dependencies>,
 ) -> Result<serde_json::Value, JsonRpcError> {
     let (transaction, block_number) = parse_params_2(request)?;
 
     let response = app
-        .read()
-        .await
         .call(transaction, block_number)
         .map_err(transaction_error)?;
 
@@ -75,14 +71,14 @@ mod tests {
         }
     }
 
-    #[test_case("0x1")]
+    #[test_case("0x2")]
     #[test_case("latest")]
     #[test_case("pending")]
     #[tokio::test]
     async fn test_execute_call_entry_fn(block: &str) {
-        let app = create_app();
+        let (reader, app) = create_app();
         let (state_channel, rx) = mpsc::channel(10);
-        let state_actor = CommandActor::new(rx, app.clone());
+        let state_actor = CommandActor::new(rx, Box::new(app));
         let state_handle = state_actor.spawn();
 
         // Add funds to the account to deploy the `counter` contract
@@ -104,23 +100,25 @@ mod tests {
             "id": 1
         });
 
-        drop(state_channel);
-        state_handle.await.unwrap();
+        state_channel.reserve_many(10).await.unwrap();
 
         let expected_response = serde_json::json!([1, 1, 0]);
-        let actual_response = execute(request, &app).await.unwrap();
+        let actual_response = execute(request, reader.clone()).await.unwrap();
 
         assert_eq!(actual_response, expected_response);
+
+        drop(state_channel);
+        state_handle.await.unwrap();
     }
 
-    #[test_case("0x1")]
+    #[test_case("0x2")]
     #[test_case("latest")]
     #[test_case("pending")]
     #[tokio::test]
     async fn test_execute_call_script(block: &str) {
-        let app = create_app();
+        let (reader, app) = create_app();
         let (state_channel, rx) = mpsc::channel(10);
-        let state_actor = CommandActor::new(rx, app.clone());
+        let state_actor = CommandActor::new(rx, Box::new(app));
         let state_handle = state_actor.spawn();
 
         // Add funds to the account to deploy the `counter` contract
@@ -140,10 +138,12 @@ mod tests {
             "id": 1
         });
 
-        drop(state_channel);
-        state_handle.await.unwrap();
+        state_channel.reserve_many(10).await.unwrap();
 
         // Counter script call should succeed
-        execute(request, &app).await.unwrap();
+        execute(request, reader.clone()).await.unwrap();
+
+        drop(state_channel);
+        state_handle.await.unwrap();
     }
 }

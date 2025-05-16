@@ -33,7 +33,7 @@ impl TransactionRepository for RocksDbTransactionRepository {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RocksDbTransactionQueries;
 
 impl TransactionQueries for RocksDbTransactionQueries {

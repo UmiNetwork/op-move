@@ -4,15 +4,13 @@ use {
         jsonrpc::JsonRpcError,
         schema::{ExecutionPayloadV3, GetPayloadResponseV3, PayloadStatusV1, Status},
     },
-    moved_app::{Application, Dependencies},
+    moved_app::{ApplicationReader, Dependencies},
     moved_shared::primitives::B256,
-    std::sync::Arc,
-    tokio::sync::RwLock,
 };
 
 pub async fn execute_v3(
     request: serde_json::Value,
-    app: &Arc<RwLock<Application<impl Dependencies>>>,
+    app: ApplicationReader<impl Dependencies>,
 ) -> Result<serde_json::Value, JsonRpcError> {
     let (execution_payload, expected_blob_versioned_hashes, parent_beacon_block_root) =
         parse_params_3(request)?;
@@ -30,14 +28,12 @@ async fn inner_execute_v3(
     execution_payload: ExecutionPayloadV3,
     expected_blob_versioned_hashes: Vec<B256>,
     parent_beacon_block_root: B256,
-    app: &Arc<RwLock<Application<impl Dependencies>>>,
+    app: ApplicationReader<impl Dependencies>,
 ) -> Result<PayloadStatusV1, JsonRpcError> {
     // Spec: https://github.com/ethereum/execution-apis/blob/main/src/engine/cancun.md#specification
 
     // TODO: in theory we should start syncing to learn about this block hash.
     let response = app
-        .read()
-        .await
         .payload_by_block_hash(execution_payload.block_hash)
         .ok_or(JsonRpcError {
             code: -1,
@@ -162,11 +158,11 @@ mod tests {
         moved_blockchain::{
             block::{
                 Block, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
-                InMemoryBlockRepository,
+                InMemoryBlockRepository, MovedBlockHash,
             },
-            in_memory::SharedMemory,
+            in_memory::shared_memory,
             payload::InMemoryPayloadQueries,
-            receipt::{InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory},
+            receipt::{InMemoryReceiptQueries, InMemoryReceiptRepository, receipt_memory},
             state::InMemoryStateQueries,
             transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
         },
@@ -174,8 +170,6 @@ mod tests {
         moved_genesis::config::GenesisConfig,
         moved_shared::primitives::{Address, B2048, Bytes, U64, U256},
         moved_state::InMemoryState,
-        std::sync::Arc,
-        tokio::sync::RwLock,
     };
 
     #[test]
@@ -268,11 +262,12 @@ mod tests {
         ));
         let genesis_block = Block::default().with_hash(head_hash).with_value(U256::ZERO);
 
-        let mut memory = SharedMemory::new();
+        let (memory_reader, mut memory) = shared_memory::new();
         let mut repository = InMemoryBlockRepository::new();
         repository.add(&mut memory, genesis_block).unwrap();
 
-        let mut state = InMemoryState::new();
+        let trie_db = InMemoryState::create_db();
+        let mut state = InMemoryState::new(trie_db.clone());
         let mut evm_storage = InMemoryStorageTrieRepository::new();
         let (changes, table_changes, evm_storage_changes) = moved_genesis_image::load();
         moved_genesis::apply(
@@ -283,11 +278,12 @@ mod tests {
             &mut state,
             &mut evm_storage,
         );
-        let initial_state_root = genesis_config.initial_state_root;
+        let (receipt_memory_reader, receipt_memory) = receipt_memory::new();
+        let genesis_state_root = genesis_config.initial_state_root;
 
-        let app = Arc::new(RwLock::new(Application::<TestDependencies<_, _, _, _>> {
+        let app = Application::<TestDependencies<_, _, _, _>> {
             mem_pool: Default::default(),
-            genesis_config,
+            genesis_config: genesis_config.clone(),
             gas_fee: Eip1559GasFee::default(),
             base_token: (),
             l1_fee: U256::ZERO,
@@ -303,15 +299,55 @@ mod tests {
             payload_queries: InMemoryPayloadQueries::new(),
             receipt_queries: InMemoryReceiptQueries::new(),
             receipt_repository: InMemoryReceiptRepository::new(),
-            receipt_memory: ReceiptMemory::new(),
+            receipt_memory,
             storage: memory,
+            receipt_memory_reader: receipt_memory_reader.clone(),
+            storage_reader: memory_reader.clone(),
             state,
-            evm_storage,
+            evm_storage: evm_storage.clone(),
             transaction_queries: InMemoryTransactionQueries::new(),
-            state_queries: InMemoryStateQueries::from_genesis(initial_state_root),
+            state_queries: InMemoryStateQueries::new(
+                memory_reader.clone(),
+                trie_db.clone(),
+                genesis_state_root,
+            ),
             transaction_repository: InMemoryTransactionRepository::new(),
-        }));
-        let (queue, state) = moved_app::create(app.clone(), 10);
+        };
+        let reader = ApplicationReader::<
+            TestDependencies<
+                _,
+                InMemoryState,
+                _,
+                MovedBlockHash,
+                _,
+                (),
+                _,
+                _,
+                (),
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                (),
+                Eip1559GasFee,
+                U256,
+                U256,
+            >,
+        > {
+            genesis_config,
+            base_token: (),
+            block_queries: InMemoryBlockQueries,
+            storage: memory_reader.clone(),
+            state_queries: InMemoryStateQueries::new(memory_reader, trie_db, genesis_state_root),
+            transaction_queries: InMemoryTransactionQueries::new(),
+            receipt_memory: receipt_memory_reader,
+            receipt_queries: InMemoryReceiptQueries::new(),
+            payload_queries: InMemoryPayloadQueries::new(),
+            evm_storage,
+        };
+        let (queue, state) = moved_app::create(Box::new(app), 10);
         let state_handle = state.spawn();
 
         let fc_updated_request: serde_json::Value = serde_json::from_str(
@@ -395,14 +431,15 @@ mod tests {
             .await
             .unwrap();
 
-        drop(queue);
-        state_handle.await.unwrap();
+        queue.wait_for_pending_commands().await;
 
-        get_payload::execute_v3(get_payload_request, &app)
+        get_payload::execute_v3(get_payload_request, reader.clone())
             .await
             .unwrap();
 
-        let response = execute_v3(new_payload_request, &app).await.unwrap();
+        let response = execute_v3(new_payload_request, reader.clone())
+            .await
+            .unwrap();
 
         let expected_response: serde_json::Value = serde_json::from_str(
             r#"
@@ -416,5 +453,8 @@ mod tests {
         .unwrap();
 
         assert_eq!(response, expected_response);
+
+        drop(queue);
+        state_handle.await.unwrap();
     }
 }

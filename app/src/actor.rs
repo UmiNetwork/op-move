@@ -6,12 +6,8 @@ use {
         state::InMemoryStateQueries,
     },
     moved_shared::primitives::B256,
-    moved_state::State,
-    std::{ops::DerefMut, sync::Arc},
-    tokio::{
-        sync::{RwLock, mpsc::Receiver},
-        task::JoinHandle,
-    },
+    std::ops::DerefMut,
+    tokio::{sync::mpsc::Receiver, task::JoinHandle},
 };
 
 /// A function invoked on a completion of new transaction execution batch.
@@ -25,21 +21,21 @@ pub type OnPayload<S> = dyn Fn(&mut S, PayloadId, B256) + Send + Sync;
 
 pub struct CommandActor<D: Dependencies> {
     rx: Receiver<Command>,
-    app: Arc<RwLock<Application<D>>>,
+    app: Box<Application<D>>,
 }
 
 impl<D: DependenciesThreadSafe> CommandActor<D> {
     pub fn spawn(mut self) -> JoinHandle<()> {
         tokio::spawn(async move {
             while let Some(msg) = self.rx.recv().await {
-                Self::handle_command(self.app.write().await, msg);
+                Self::handle_command(&mut *self.app, msg);
             }
         })
     }
 }
 
 impl<D: Dependencies> CommandActor<D> {
-    pub fn new(rx: Receiver<Command>, app: Arc<RwLock<Application<D>>>) -> Self {
+    pub fn new(rx: Receiver<Command>, app: Box<Application<D>>) -> Self {
         Self { rx, app }
     }
 
@@ -73,18 +69,12 @@ impl<D: Dependencies<StateQueries = InMemoryStateQueries>> CommandActor<D> {
     }
 
     pub fn on_tx_batch_in_memory() -> &'static OnTxBatch<Application<D>> {
-        &|state| {
-            state
-                .state_queries
-                .push_state_root(state.state.state_root())
-        }
+        &|_state| ()
     }
 }
 
 impl<D: Dependencies<PayloadQueries = InMemoryPayloadQueries>> CommandActor<D> {
     pub fn on_payload_in_memory() -> &'static OnPayload<Application<D>> {
-        &|state, payload_id, block_hash| {
-            state.payload_queries.add_block_hash(payload_id, block_hash)
-        }
+        &|_state, _payload_id, _block_hash| ()
     }
 }

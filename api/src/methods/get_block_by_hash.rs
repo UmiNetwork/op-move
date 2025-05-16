@@ -1,19 +1,15 @@
 use {
     crate::{json_utils::parse_params_2, jsonrpc::JsonRpcError, schema::GetBlockResponse},
-    moved_app::{Application, Dependencies},
-    std::sync::Arc,
-    tokio::sync::RwLock,
+    moved_app::{ApplicationReader, Dependencies},
 };
 
 pub async fn execute(
     request: serde_json::Value,
-    app: &Arc<RwLock<Application<impl Dependencies>>>,
+    app: ApplicationReader<impl Dependencies>,
 ) -> Result<serde_json::Value, JsonRpcError> {
     let (block_hash, include_transactions) = parse_params_2(request)?;
 
     let response = app
-        .read()
-        .await
         .block_by_hash(block_hash, include_transactions)
         .map(GetBlockResponse::from);
 
@@ -43,7 +39,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_execute_reads_genesis_block_successfully() {
-        let app = create_app();
+        let (reader, _app) = create_app();
         let request = example_request();
 
         let expected_response: serde_json::Value = serde_json::from_str(r#"
@@ -52,7 +48,7 @@ mod tests {
             "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
             "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
             "miner": "0x0000000000000000000000000000000000000000",
-            "stateRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+            "stateRoot": "0x5b94e341a4515cddcbf4bf08c1dce92c9bfdfdf39789890d03f4d971c43dd022",
             "transactionsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
             "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
             "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -69,7 +65,7 @@ mod tests {
             "withdrawals": []
         }"#).unwrap();
 
-        let response = execute(request, &app).await.unwrap();
+        let response = execute(request, reader.clone()).await.unwrap();
 
         assert_eq!(response, expected_response);
     }

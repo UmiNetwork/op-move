@@ -98,20 +98,24 @@ impl State for HeedState<'_> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone)]
 pub struct HeedStateQueries<'db> {
     env: &'db heed::Env,
+    trie_db: Arc<HeedEthTrieDb<'db>>,
+    genesis_state_root: B256,
 }
 
 impl<'db> HeedStateQueries<'db> {
-    pub fn new(env: &'db heed::Env) -> Self {
-        Self { env }
-    }
-
-    pub fn from_genesis(env: &'db heed::Env, genesis_state_root: B256) -> Self {
-        let this = Self { env };
-        this.push_state_root(genesis_state_root).unwrap();
-        this
+    pub fn new(
+        env: &'db heed::Env,
+        trie_db: Arc<HeedEthTrieDb<'db>>,
+        genesis_state_root: B256,
+    ) -> Self {
+        Self {
+            env,
+            trie_db,
+            genesis_state_root,
+        }
     }
 
     pub fn push_state_root(&self, state_root: B256) -> Result<(), heed::Error> {
@@ -138,10 +142,14 @@ impl<'db> HeedStateQueries<'db> {
 
         transaction.commit()?;
 
-        Ok(height?.unwrap_or(0))
+        Ok(height?.unwrap_or(0).max(1))
     }
 
     fn root_by_height(&self, height: u64) -> Result<Option<B256>, heed::Error> {
+        if height == 0 {
+            return Ok(Some(self.genesis_state_root));
+        }
+
         let transaction = self.env.read_txn()?;
 
         let db = self.env.state_database(&transaction)?;
@@ -153,50 +161,48 @@ impl<'db> HeedStateQueries<'db> {
         root
     }
 
-    fn tree<D: DB>(&self, db: Arc<D>, height: u64) -> Result<EthTrie<D>, heed::Error> {
+    fn tree(&self, height: u64) -> Result<EthTrie<HeedEthTrieDb<'db>>, heed::Error> {
         Ok(match self.root_by_height(height)? {
-            Some(root) => EthTrie::from(db, root).expect("State root should be valid"),
-            None => EthTrie::new(db),
+            Some(root) => {
+                EthTrie::from(self.trie_db.clone(), root).expect("State root should be valid")
+            }
+            None => EthTrie::new(self.trie_db.clone()),
         })
     }
 
-    fn resolver<'a>(
+    fn resolver(
         &self,
-        db: Arc<impl DB + 'a>,
         height: BlockHeight,
-    ) -> Result<impl MoveResolver + TableResolver + 'a, heed::Error> {
-        Ok(EthTrieResolver::new(self.tree(db, height)?))
+    ) -> Result<impl MoveResolver + TableResolver, heed::Error> {
+        Ok(EthTrieResolver::new(self.tree(height)?))
     }
 }
 
 impl StateQueries for HeedStateQueries<'_> {
     fn balance_at(
         &self,
-        db: Arc<impl DB>,
         evm_storage: &impl StorageTrieRepository,
         account: AccountAddress,
         height: BlockHeight,
     ) -> Option<Balance> {
-        let resolver = self.resolver(db, height).ok()?;
+        let resolver = self.resolver(height).ok()?;
 
         Some(quick_get_eth_balance(&account, &resolver, evm_storage))
     }
 
     fn nonce_at(
         &self,
-        db: Arc<impl DB>,
         evm_storage: &impl StorageTrieRepository,
         account: AccountAddress,
         height: BlockHeight,
     ) -> Option<Nonce> {
-        let resolver = self.resolver(db, height).ok()?;
+        let resolver = self.resolver(height).ok()?;
 
         Some(quick_get_nonce(&account, &resolver, evm_storage))
     }
 
     fn proof_at(
         &self,
-        db: Arc<impl DB>,
         evm_storage: &impl StorageTrieRepository,
         account: AccountAddress,
         storage_slots: &[U256],
@@ -209,10 +215,14 @@ impl StateQueries for HeedStateQueries<'_> {
             return None;
         }
 
-        let mut tree = self.tree(db.clone(), height).ok()?;
-        let resolver = self.resolver(db, height).ok()?;
+        let mut tree = self.tree(height).ok()?;
+        let resolver = self.resolver(height).ok()?;
 
         proof_from_trie_and_resolver(address, storage_slots, &mut tree, &resolver, evm_storage)
+    }
+
+    fn resolver_at<'a>(&'a self, height: BlockHeight) -> impl MoveResolver + TableResolver + 'a {
+        self.resolver(height).unwrap()
     }
 }
 

@@ -4,7 +4,7 @@ use {
     flate2::read::GzDecoder,
     jsonwebtoken::{DecodingKey, Validation},
     moved_api::method_name::MethodName,
-    moved_app::{Application, Command, CommandQueue, Dependencies},
+    moved_app::{Application, ApplicationReader, Command, CommandQueue, Dependencies},
     moved_blockchain::{
         block::{Block, BlockHash, BlockQueries, ExtendedBlock, Header},
         payload::{NewPayloadId, StatePayloadId},
@@ -16,10 +16,8 @@ use {
         fs,
         io::Read,
         net::{Ipv4Addr, SocketAddr, SocketAddrV4},
-        sync::Arc,
         time::SystemTime,
     },
-    tokio::sync::RwLock,
     warp::{
         http::{header::CONTENT_TYPE, HeaderMap, HeaderValue, StatusCode},
         hyper::{body::Bytes, Body, Response},
@@ -63,7 +61,7 @@ static JWTSECRET: Lazy<Vec<u8>> = Lazy::new(|| {
     hex::decode(jwt).expect("JWT secret should be a hex string")
 });
 
-pub async fn run(max_buffered_commands: u32, max_concurrent_queries: u32) {
+pub async fn run(max_buffered_commands: u32) {
     // TODO: genesis should come from a file (path specified by CLI)
     let genesis_config = GenesisConfig {
         chain_id: 42069,
@@ -77,19 +75,18 @@ pub async fn run(max_buffered_commands: u32, max_concurrent_queries: u32) {
         ..Default::default()
     };
 
-    let app = initialize_app(genesis_config);
-    let app = Arc::new(RwLock::with_max_readers(app, max_concurrent_queries));
-    let (queue, state) = moved_app::create(app.clone(), max_buffered_commands);
+    let (app, app_reader) = initialize_app(genesis_config);
+    let (queue, state) = moved_app::create(Box::new(app), max_buffered_commands);
 
-    let http_app = app.clone();
+    let http_app_reader = app_reader.clone();
     let http_cmd_queue = queue.clone();
     let http_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8545));
     let mut content_type = HeaderMap::new();
     content_type.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
     let http_route = warp::any()
-        .map(move || (http_cmd_queue.clone(), http_app.clone()))
+        .map(move || (http_cmd_queue.clone(), http_app_reader.clone()))
         .and(extract_request_data_filter())
-        .and_then(|(queue, app), path, query, method, headers, body| {
+        .and_then(|(queue, app_reader), path, query, method, headers, body| {
             mirror(
                 queue,
                 (path, query, method, headers, body),
@@ -97,7 +94,7 @@ pub async fn run(max_buffered_commands: u32, max_concurrent_queries: u32) {
                 // Limit engine API access to only authenticated endpoint
                 MethodName::is_non_engine_api,
                 &StatePayloadId,
-                app,
+                app_reader,
             )
         })
         .with(warp::reply::with::headers(content_type))
@@ -106,19 +103,21 @@ pub async fn run(max_buffered_commands: u32, max_concurrent_queries: u32) {
     let auth_cmd_queue = queue.clone();
     let auth_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8551));
     let auth_route = warp::any()
-        .map(move || (auth_cmd_queue.clone(), app.clone()))
+        .map(move || (auth_cmd_queue.clone(), app_reader.clone()))
         .and(extract_request_data_filter())
         .and(validate_jwt())
-        .and_then(|(queue, app), path, query, method, headers, body, _| {
-            mirror(
-                queue,
-                (path, query, method, headers, body),
-                "9551",
-                |_| true,
-                &StatePayloadId,
-                app,
-            )
-        })
+        .and_then(
+            |(queue, app_reader), path, query, method, headers, body, _| {
+                mirror(
+                    queue,
+                    (path, query, method, headers, body),
+                    "9551",
+                    |_| true,
+                    &StatePayloadId,
+                    app_reader,
+                )
+            },
+        )
         .with(warp::cors().allow_any_origin());
 
     tokio::join!(
@@ -135,10 +134,20 @@ pub async fn run(max_buffered_commands: u32, max_concurrent_queries: u32) {
     );
 }
 
-pub fn initialize_app(genesis_config: GenesisConfig) -> Application<dependency::Dependency> {
-    let mut app = dependency::create(&genesis_config);
+pub fn initialize_app(
+    genesis_config: GenesisConfig,
+) -> (
+    Application<dependency::Dependency>,
+    ApplicationReader<dependency::Dependency>,
+) {
+    let (mut app, app_reader) = dependency::create(&genesis_config);
 
-    if app.block_queries.latest(&app.storage).unwrap().is_none() {
+    if app
+        .block_queries
+        .latest(&app.storage_reader)
+        .unwrap()
+        .is_none()
+    {
         let (genesis_changes, table_changes, evm_storage_changes) = {
             #[cfg(test)]
             {
@@ -162,12 +171,12 @@ pub fn initialize_app(genesis_config: GenesisConfig) -> Application<dependency::
             &mut app.evm_storage,
         );
 
-        let genesis_block = create_genesis_block(&app.block_hash, &genesis_config);
-
-        app.genesis_update(genesis_block);
+        // let genesis_block = create_genesis_block(&app.block_hash, &genesis_config);
+        //
+        // app.genesis_update(genesis_block);
     }
 
-    app
+    (app, app_reader)
 }
 
 fn create_genesis_block(
@@ -214,7 +223,7 @@ async fn mirror(
     port: &str,
     is_allowed: impl Fn(&MethodName) -> bool,
     payload_id: &impl NewPayloadId,
-    app: Arc<RwLock<Application<impl Dependencies>>>,
+    app: ApplicationReader<impl Dependencies>,
 ) -> Result<warp::reply::Response, Rejection> {
     let (path, query, method, headers, body) = request;
 
@@ -263,7 +272,7 @@ async fn mirror(
 
     let request = request.expect("geth responded, so body must have been JSON");
     let op_move_response =
-        moved_api::request::handle(request.clone(), queue.clone(), is_allowed, payload_id, &app)
+        moved_api::request::handle(request.clone(), queue.clone(), is_allowed, payload_id, app)
             .await;
     let log = MirrorLog {
         request: &request,

@@ -34,7 +34,7 @@ impl From<heed::Error> for Error {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct HeedStorageTrieRepository {
     env: &'static heed::Env,
 }

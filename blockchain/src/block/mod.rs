@@ -8,12 +8,15 @@ mod gas;
 mod hash;
 mod in_memory;
 mod read;
-mod root;
+mod write;
 
 pub use {
     gas::{BaseGasFee, Eip1559GasFee},
     hash::{BlockHash, MovedBlockHash},
-    in_memory::{BlockMemory, InMemoryBlockQueries, InMemoryBlockRepository},
-    read::BlockResponse,
-    root::{Block, BlockQueries, BlockRepository, ExtendedBlock, Header},
+    in_memory::{
+        BlockMemory, BlockMemoryReader, ReadBlockMemory, ReadHashes, ReadHeights, ReadPayloadIds,
+        WriteHashes, WriteHeights, WritePayloadIds,
+    },
+    read::{BlockQueries, BlockResponse, in_memory::InMemoryBlockQueries},
+    write::{Block, BlockRepository, ExtendedBlock, Header, in_memory::InMemoryBlockRepository},
 };

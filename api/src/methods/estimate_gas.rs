@@ -1,22 +1,18 @@
 use {
     crate::{json_utils, json_utils::transaction_error, jsonrpc::JsonRpcError},
     alloy::{eips::BlockNumberOrTag, rpc::types::TransactionRequest},
-    moved_app::{Application, Dependencies},
-    std::sync::Arc,
-    tokio::sync::RwLock,
+    moved_app::{ApplicationReader, Dependencies},
 };
 
 const BASE_FEE: u64 = 21_000;
 
 pub async fn execute(
     request: serde_json::Value,
-    app: &Arc<RwLock<Application<impl Dependencies>>>,
+    app: ApplicationReader<impl Dependencies>,
 ) -> Result<serde_json::Value, JsonRpcError> {
     let (transaction, block_number) = parse_params(request)?;
     let response = std::cmp::max(
-        app.read()
-            .await
-            .estimate_gas(transaction, block_number)
+        app.estimate_gas(transaction, block_number)
             .map_err(transaction_error)?,
         BASE_FEE,
     );
@@ -118,8 +114,8 @@ mod tests {
     #[tokio::test]
     async fn test_execute(block: &str) {
         let (state_channel, rx) = mpsc::channel(10);
-        let app = create_app();
-        let state_actor = CommandActor::new(rx, app.clone());
+        let (reader, app) = create_app();
+        let state_actor = CommandActor::new(rx, Box::new(app));
         let state_handle = state_actor.spawn();
 
         deposit_eth("0x8fd379246834eac74b8419ffda202cf8051f7a03", &state_channel).await;
@@ -137,12 +133,14 @@ mod tests {
             "id": 1
         });
 
-        drop(state_channel);
-        state_handle.await.unwrap();
+        state_channel.reserve_many(10).await.unwrap();
 
         let expected_response: serde_json::Value = serde_json::from_str(r#""0x6326""#).unwrap();
-        let actual_response = execute(request, &app).await.unwrap();
+        let actual_response = execute(request, reader.clone()).await.unwrap();
 
         assert_eq!(actual_response, expected_response);
+
+        drop(state_channel);
+        state_handle.await.unwrap();
     }
 }

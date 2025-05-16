@@ -1,19 +1,15 @@
 use {
     crate::{json_utils::parse_params_2, jsonrpc::JsonRpcError, schema::GetBlockResponse},
-    moved_app::{Application, Dependencies},
-    std::sync::Arc,
-    tokio::sync::RwLock,
+    moved_app::{ApplicationReader, Dependencies},
 };
 
 pub async fn execute(
     request: serde_json::Value,
-    app: &Arc<RwLock<Application<impl Dependencies>>>,
+    app: ApplicationReader<impl Dependencies>,
 ) -> Result<serde_json::Value, JsonRpcError> {
     let (number, include_transactions) = parse_params_2(request)?;
 
     let response = app
-        .read()
-        .await
         .block_by_height(number, include_transactions)
         .map(GetBlockResponse::from);
 
@@ -54,7 +50,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_execute_reads_genesis_block_successfully() {
-        let app = create_app();
+        let (reader, _app) = create_app();
         let request = example_request(Number(0));
 
         let expected_response: serde_json::Value = serde_json::from_str(r#"
@@ -63,7 +59,7 @@ mod tests {
             "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
             "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
             "miner": "0x0000000000000000000000000000000000000000",
-            "stateRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+            "stateRoot": "0x5b94e341a4515cddcbf4bf08c1dce92c9bfdfdf39789890d03f4d971c43dd022",
             "transactionsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
             "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
             "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -80,7 +76,7 @@ mod tests {
             "withdrawals": []
         }"#).unwrap();
 
-        let response = execute(request, &app).await.unwrap();
+        let response = execute(request, reader.clone()).await.unwrap();
 
         assert_eq!(response, expected_response);
     }
@@ -88,12 +84,12 @@ mod tests {
     #[tokio::test]
     async fn test_latest_block_height_is_updated_with_newly_built_block() {
         let (state_channel, rx) = mpsc::channel(10);
-        let app = create_app();
-        let state: CommandActor<TestDependencies> = CommandActor::new(rx, app.clone());
+        let (reader, app) = create_app();
+        let state: CommandActor<TestDependencies> = CommandActor::new(rx, Box::new(app));
         let state_handle = state.spawn();
 
         let request = example_request(Latest);
-        let response = execute(request, &app).await.unwrap();
+        let response = execute(request, reader.clone()).await.unwrap();
         assert_eq!(get_block_number_from_response(response), "0x0");
 
         // Create a block, so the block height becomes 1
@@ -102,12 +98,16 @@ mod tests {
             payload_id: U64::from(0x03421ee50df45cacu64),
         };
         state_channel.send(msg).await.unwrap();
-        drop(state_channel);
-        state_handle.await.unwrap();
+
+        state_channel.reserve_many(10).await.unwrap();
 
         let request = example_request(Latest);
-        let response = execute(request, &app).await.unwrap();
+        let response = execute(request, reader.clone()).await.unwrap();
+
         assert_eq!(get_block_number_from_response(response), "0x1");
+
+        drop(state_channel);
+        state_handle.await.unwrap();
     }
 
     #[test_case(Safe; "safe")]
@@ -116,8 +116,8 @@ mod tests {
     #[tokio::test]
     async fn test_latest_block_height_is_same_as_tag(tag: BlockNumberOrTag) {
         let (state_channel, rx) = mpsc::channel(10);
-        let app = create_app();
-        let state: CommandActor<TestDependencies> = CommandActor::new(rx, app.clone());
+        let (reader, app) = create_app();
+        let state: CommandActor<TestDependencies> = CommandActor::new(rx, Box::new(app));
         let state_handle = state.spawn();
 
         let msg = Command::StartBlockBuild {
@@ -125,11 +125,14 @@ mod tests {
             payload_id: U64::from(0x03421ee50df45cacu64),
         };
         state_channel.send(msg).await.unwrap();
-        drop(state_channel);
-        state_handle.await.unwrap();
+
+        state_channel.reserve_many(10).await.unwrap();
 
         let request = example_request(tag);
-        let response = execute(request, &app).await.unwrap();
+        let response = execute(request, reader.clone()).await.unwrap();
         assert_eq!(get_block_number_from_response(response), "0x1");
+
+        drop(state_channel);
+        state_handle.await.unwrap();
     }
 }

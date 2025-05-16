@@ -29,16 +29,17 @@ pub mod tests {
         },
         move_core_types::account_address::AccountAddress,
         moved_app::{
-            Application, Command, CommandActor, DependenciesThreadSafe, Payload, TestDependencies,
+            Application, ApplicationReader, Command, CommandActor, DependenciesThreadSafe, Payload,
+            TestDependencies,
         },
         moved_blockchain::{
             block::{
-                Block, BlockQueries, BlockRepository, BlockResponse, Eip1559GasFee,
+                Block, BlockQueries, BlockRepository, BlockResponse, Eip1559GasFee, Header,
                 InMemoryBlockQueries, InMemoryBlockRepository, MovedBlockHash,
             },
-            in_memory::SharedMemory,
+            in_memory::shared_memory,
             payload::InMemoryPayloadQueries,
-            receipt::{InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory},
+            receipt::{InMemoryReceiptQueries, InMemoryReceiptRepository, receipt_memory},
             state::{InMemoryStateQueries, MockStateQueries},
             transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
         },
@@ -48,26 +49,36 @@ pub mod tests {
         moved_shared::primitives::{Address, B256, U64, U256},
         moved_state::InMemoryState,
         op_alloy::consensus::{OpTxEnvelope, TxDeposit},
-        std::{convert::Infallible, sync::Arc},
-        tokio::sync::{RwLock, mpsc::Sender},
+        std::convert::Infallible,
+        tokio::sync::mpsc::Sender,
     };
 
     /// The address corresponding to this private key is 0x8fd379246834eac74B8419FfdA202CF8051F7A03
     pub const PRIVATE_KEY: [u8; 32] = [0xaa; 32];
 
-    pub fn create_app() -> Arc<RwLock<Application<TestDependencies>>> {
+    pub fn create_app() -> (
+        ApplicationReader<TestDependencies>,
+        Application<TestDependencies>,
+    ) {
         let genesis_config = GenesisConfig::default();
 
         let head_hash = B256::new(hex!(
             "e56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d"
         ));
-        let genesis_block = Block::default().with_hash(head_hash).with_value(U256::ZERO);
+        let genesis_header = Header {
+            state_root: genesis_config.initial_state_root,
+            ..Default::default()
+        };
+        let genesis_block = Block::new(genesis_header, Vec::new())
+            .with_hash(head_hash)
+            .with_value(U256::ZERO);
 
-        let mut memory = SharedMemory::new();
+        let (memory_reader, mut memory) = shared_memory::new();
         let mut repository = InMemoryBlockRepository::new();
         repository.add(&mut memory, genesis_block).unwrap();
 
-        let mut state = InMemoryState::new();
+        let trie_db = InMemoryState::create_db();
+        let mut state = InMemoryState::new(trie_db.clone());
         let mut evm_storage = InMemoryStorageTrieRepository::new();
         let (changes, table_changes, evm_storage_changes) = moved_genesis_image::load();
         moved_genesis::apply(
@@ -78,32 +89,53 @@ pub mod tests {
             &mut state,
             &mut evm_storage,
         );
-        let initial_state_root = genesis_config.initial_state_root;
+        let state_queries = InMemoryStateQueries::new(
+            memory_reader.clone(),
+            trie_db,
+            genesis_config.initial_state_root,
+        );
+        let (receipt_memory_reader, receipt_memory) = receipt_memory::new();
 
-        Arc::new(RwLock::new(Application {
-            mem_pool: Default::default(),
-            genesis_config,
-            gas_fee: Eip1559GasFee::default(),
-            base_token: MovedBaseTokenAccounts::new(AccountAddress::ONE),
-            l1_fee: U256::ZERO,
-            l2_fee: U256::ZERO,
-            block_hash: MovedBlockHash,
-            block_queries: InMemoryBlockQueries,
-            block_repository: repository,
-            on_payload: CommandActor::on_payload_in_memory(),
-            on_tx: CommandActor::on_tx_noop(),
-            on_tx_batch: CommandActor::on_tx_batch_noop(),
-            payload_queries: InMemoryPayloadQueries::new(),
-            receipt_queries: InMemoryReceiptQueries::new(),
-            receipt_repository: InMemoryReceiptRepository::new(),
-            receipt_memory: ReceiptMemory::new(),
-            storage: memory,
-            state,
-            state_queries: InMemoryStateQueries::from_genesis(initial_state_root),
-            evm_storage,
-            transaction_queries: InMemoryTransactionQueries::new(),
-            transaction_repository: InMemoryTransactionRepository::new(),
-        }))
+        (
+            ApplicationReader {
+                genesis_config: genesis_config.clone(),
+                base_token: MovedBaseTokenAccounts::new(AccountAddress::ONE),
+                block_queries: InMemoryBlockQueries,
+                payload_queries: InMemoryPayloadQueries::new(),
+                receipt_queries: InMemoryReceiptQueries::new(),
+                receipt_memory: receipt_memory_reader.clone(),
+                storage: memory_reader.clone(),
+                state_queries: state_queries.clone(),
+                evm_storage: evm_storage.clone(),
+                transaction_queries: InMemoryTransactionQueries::new(),
+            },
+            Application {
+                mem_pool: Default::default(),
+                genesis_config,
+                gas_fee: Eip1559GasFee::default(),
+                base_token: MovedBaseTokenAccounts::new(AccountAddress::ONE),
+                l1_fee: U256::ZERO,
+                l2_fee: U256::ZERO,
+                block_hash: MovedBlockHash,
+                block_queries: InMemoryBlockQueries,
+                block_repository: repository,
+                on_payload: CommandActor::on_payload_in_memory(),
+                on_tx: CommandActor::on_tx_noop(),
+                on_tx_batch: CommandActor::on_tx_batch_noop(),
+                payload_queries: InMemoryPayloadQueries::new(),
+                receipt_queries: InMemoryReceiptQueries::new(),
+                receipt_repository: InMemoryReceiptRepository::new(),
+                receipt_memory,
+                storage: memory,
+                receipt_memory_reader,
+                storage_reader: memory_reader,
+                state,
+                state_queries,
+                evm_storage,
+                transaction_queries: InMemoryTransactionQueries::new(),
+                transaction_repository: InMemoryTransactionRepository::new(),
+            },
+        )
     }
 
     pub async fn deposit_eth(to: &str, channel: &Sender<Command>) {
@@ -172,8 +204,11 @@ pub mod tests {
     pub fn create_app_with_mock_state_queries(
         address: AccountAddress,
         height: u64,
-    ) -> Arc<RwLock<Application<impl DependenciesThreadSafe<State = InMemoryState>>>> {
-        #[derive(Debug)]
+    ) -> Box<(
+        ApplicationReader<impl DependenciesThreadSafe<State = InMemoryState>>,
+        Application<impl DependenciesThreadSafe<State = InMemoryState>>,
+    )> {
+        #[derive(Debug, Clone)]
         struct StubLatest(u64);
 
         impl BlockQueries for StubLatest {
@@ -203,31 +238,67 @@ pub mod tests {
             }
         }
 
-        Arc::new(RwLock::new(Application::<
-            TestDependencies<_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _>,
-        > {
-            genesis_config: GenesisConfig::default(),
-            mem_pool: Default::default(),
-            gas_fee: Eip1559GasFee::default(),
-            base_token: MovedBaseTokenAccounts::new(AccountAddress::ONE),
-            l1_fee: U256::ZERO,
-            l2_fee: U256::ZERO,
-            block_hash: MovedBlockHash,
-            block_queries: StubLatest(height),
-            block_repository: (),
-            on_payload: CommandActor::on_payload_noop(),
-            on_tx: CommandActor::on_tx_noop(),
-            on_tx_batch: CommandActor::on_tx_batch_noop(),
-            payload_queries: (),
-            receipt_queries: (),
-            receipt_repository: (),
-            receipt_memory: (),
-            storage: (),
-            state: InMemoryState::new(),
-            state_queries: MockStateQueries(address, height),
-            evm_storage: (),
-            transaction_queries: (),
-            transaction_repository: (),
-        }))
+        Box::new((
+            ApplicationReader::<
+                TestDependencies<
+                    _,
+                    InMemoryState,
+                    _,
+                    MovedBlockHash,
+                    _,
+                    (),
+                    _,
+                    _,
+                    (),
+                    _,
+                    _,
+                    _,
+                    _,
+                    _,
+                    _,
+                    (),
+                    Eip1559GasFee,
+                    U256,
+                    U256,
+                >,
+            > {
+                genesis_config: GenesisConfig::default(),
+                base_token: MovedBaseTokenAccounts::new(AccountAddress::ONE),
+                block_queries: StubLatest(height),
+                payload_queries: (),
+                receipt_queries: (),
+                receipt_memory: (),
+                storage: (),
+                state_queries: MockStateQueries(address, height),
+                evm_storage: (),
+                transaction_queries: (),
+            },
+            Application::<TestDependencies<_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _>> {
+                genesis_config: GenesisConfig::default(),
+                mem_pool: Default::default(),
+                gas_fee: Eip1559GasFee::default(),
+                base_token: MovedBaseTokenAccounts::new(AccountAddress::ONE),
+                l1_fee: U256::ZERO,
+                l2_fee: U256::ZERO,
+                block_hash: MovedBlockHash,
+                block_queries: StubLatest(height),
+                block_repository: (),
+                on_payload: CommandActor::on_payload_noop(),
+                on_tx: CommandActor::on_tx_noop(),
+                on_tx_batch: CommandActor::on_tx_batch_noop(),
+                payload_queries: (),
+                receipt_queries: (),
+                receipt_repository: (),
+                receipt_memory: (),
+                storage: (),
+                receipt_memory_reader: (),
+                storage_reader: (),
+                state: InMemoryState::default(),
+                state_queries: MockStateQueries(address, height),
+                evm_storage: (),
+                transaction_queries: (),
+                transaction_repository: (),
+            },
+        ))
     }
 }

@@ -94,10 +94,12 @@ sui-framework = { git = "https://github.com/MystenLabs/sui", tag = "testnet-v1.2
 sui-move-build = { git = "https://github.com/MystenLabs/sui", tag = "testnet-v1.28.3" }
 sui-types = { git = "https://github.com/MystenLabs/sui", tag = "testnet-v1.28.3" }
 test-case = "3"
+tempfile = "3"
 thiserror = "1"
 tokio = { version = "1", features = ["full"] }
 warp = "0.3"
 warp-reverse-proxy = "1"
+evmap = "10"
 
 [patch.crates-io]
 merlin = { git = "https://github.com/aptos-labs/merlin" }

@@ -12,7 +12,7 @@ use {
     },
     moved_blockchain::{
         block::{BaseGasFee, Block, BlockHash, BlockRepository, ExtendedBlock, Header},
-        payload::PayloadId,
+        payload::{PayloadId, PayloadQueries},
         receipt::{ExtendedReceipt, ReceiptRepository},
         transaction::{ExtendedTransaction, TransactionRepository},
     },
@@ -32,6 +32,15 @@ use {
 
 impl<D: Dependencies> Application<D> {
     pub fn start_block_build(&mut self, attributes: Payload, id: PayloadId) {
+        if self
+            .payload_queries
+            .by_id(&self.storage_reader, id)
+            .unwrap()
+            .is_some()
+        {
+            return;
+        }
+
         // Include transactions from both `payload_attributes` and internal mem-pool
         let transactions_with_metadata = attributes
             .transactions
@@ -102,7 +111,8 @@ impl<D: Dependencies> Application<D> {
 
         let block = Block::new(header, transactions.iter().map(|v| v.trie_hash()).collect())
             .with_hash(block_hash)
-            .with_value(total_tip);
+            .with_value(total_tip)
+            .with_payload_id(id);
 
         let block_number = block.block.header.number;
         let base_fee = block.block.header.base_fee_per_gas;
@@ -191,7 +201,8 @@ impl<D: Dependencies> Application<D> {
                 normalized_tx.gas_limit(),
                 normalized_tx.effective_gas_price(base_fee),
             );
-            let block_hash_lookup = StorageBasedProvider::new(&self.storage, &self.block_queries);
+            let block_hash_lookup =
+                StorageBasedProvider::new(&self.storage_reader, &self.block_queries);
             let input = match &normalized_tx {
                 NormalizedExtendedTxEnvelope::Canonical(tx) => CanonicalExecutionInput {
                     tx,

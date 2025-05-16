@@ -91,20 +91,24 @@ impl State for RocksDbState<'_> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone)]
 pub struct RocksDbStateQueries<'db> {
     db: &'db RocksDb,
+    trie_db: Arc<RocksEthTrieDb<'db>>,
+    genesis_state_root: B256,
 }
 
 impl<'db> RocksDbStateQueries<'db> {
-    pub fn new(db: &'db RocksDb) -> Self {
-        Self { db }
-    }
-
-    pub fn from_genesis(db: &'db RocksDb, genesis_state_root: B256) -> Self {
-        let this = Self { db };
-        this.push_state_root(genesis_state_root).unwrap();
-        this
+    pub fn new(
+        db: &'db RocksDb,
+        trie_db: Arc<RocksEthTrieDb<'db>>,
+        genesis_state_root: B256,
+    ) -> Self {
+        Self {
+            db,
+            trie_db,
+            genesis_state_root,
+        }
     }
 
     pub fn push_state_root(&self, state_root: B256) -> Result<(), rocksdb::Error> {
@@ -122,29 +126,35 @@ impl<'db> RocksDbStateQueries<'db> {
             .db
             .get_pinned_cf(&self.height_cf(), HEIGHT_KEY)?
             .map(|v| u64::from_key(v.as_ref()))
-            .unwrap_or(0))
+            .unwrap_or(0)
+            .max(1))
     }
 
     fn root_by_height(&self, height: u64) -> Result<Option<B256>, rocksdb::Error> {
+        if height == 0 {
+            return Ok(Some(self.genesis_state_root));
+        }
+
         Ok(self
             .db
             .get_pinned_cf(&self.cf(), height.to_key())?
             .map(|v| B256::new(v.as_ref().try_into().unwrap())))
     }
 
-    fn tree<D: DB>(&self, db: Arc<D>, height: u64) -> Result<EthTrie<D>, rocksdb::Error> {
+    fn tree(&self, height: u64) -> Result<EthTrie<RocksEthTrieDb<'db>>, rocksdb::Error> {
         Ok(match self.root_by_height(height)? {
-            Some(root) => EthTrie::from(db, root).expect("State root should be valid"),
-            None => EthTrie::new(db),
+            Some(root) => {
+                EthTrie::from(self.trie_db.clone(), root).expect("State root should be valid")
+            }
+            None => EthTrie::new(self.trie_db.clone()),
         })
     }
 
-    fn resolver<'a>(
+    fn resolver(
         &self,
-        db: Arc<impl DB + 'a>,
         height: BlockHeight,
-    ) -> Result<impl MoveResolver + TableResolver + 'a, rocksdb::Error> {
-        Ok(EthTrieResolver::new(self.tree(db, height)?))
+    ) -> Result<impl MoveResolver + TableResolver, rocksdb::Error> {
+        Ok(EthTrieResolver::new(self.tree(height)?))
     }
 
     fn height_cf(&self) -> impl AsColumnFamilyRef + use<'_> {
@@ -163,31 +173,28 @@ impl<'db> RocksDbStateQueries<'db> {
 impl StateQueries for RocksDbStateQueries<'_> {
     fn balance_at(
         &self,
-        db: Arc<impl DB>,
         evm_storage: &impl StorageTrieRepository,
         account: AccountAddress,
         height: BlockHeight,
     ) -> Option<Balance> {
-        let resolver = self.resolver(db, height).ok()?;
+        let resolver = self.resolver(height).ok()?;
 
         Some(quick_get_eth_balance(&account, &resolver, evm_storage))
     }
 
     fn nonce_at(
         &self,
-        db: Arc<impl DB>,
         evm_storage: &impl StorageTrieRepository,
         account: AccountAddress,
         height: BlockHeight,
     ) -> Option<Nonce> {
-        let resolver = self.resolver(db, height).ok()?;
+        let resolver = self.resolver(height).ok()?;
 
         Some(quick_get_nonce(&account, &resolver, evm_storage))
     }
 
     fn proof_at(
         &self,
-        db: Arc<impl DB>,
         evm_storage: &impl StorageTrieRepository,
         account: AccountAddress,
         storage_slots: &[U256],
@@ -200,9 +207,13 @@ impl StateQueries for RocksDbStateQueries<'_> {
             return None;
         }
 
-        let mut tree = self.tree(db.clone(), height).ok()?;
-        let resolver = self.resolver(db, height).ok()?;
+        let mut tree = self.tree(height).ok()?;
+        let resolver = self.resolver(height).ok()?;
 
         proof_from_trie_and_resolver(address, storage_slots, &mut tree, &resolver, evm_storage)
+    }
+
+    fn resolver_at<'a>(&'a self, height: BlockHeight) -> impl MoveResolver + TableResolver + 'a {
+        self.resolver(height).unwrap()
     }
 }

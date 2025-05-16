@@ -1,116 +1,68 @@
 use {
-    crate::{
-        in_memory::SharedMemory,
-        transaction::{
-            ExtendedTransaction, TransactionQueries, TransactionRepository, TransactionResponse,
-        },
-    },
+    crate::transaction::ExtendedTransaction,
     moved_shared::primitives::B256,
-    std::{collections::HashMap, convert::Infallible},
+    std::{ops::Deref, sync::Arc},
 };
 
-#[derive(Debug, Default)]
+pub type ReadHandle = evmap::ReadHandle<B256, Arc<ExtendedTransaction>>;
+pub type WriteHandle = evmap::WriteHandle<B256, Arc<ExtendedTransaction>>;
+
+#[derive(Debug, Clone)]
+pub struct TransactionMemoryReader {
+    transactions: ReadHandle,
+}
+
+impl TransactionMemoryReader {
+    pub const fn new(transactions: ReadHandle) -> Self {
+        Self { transactions }
+    }
+}
+
+impl AsRef<ReadHandle> for TransactionMemoryReader {
+    fn as_ref(&self) -> &ReadHandle {
+        &self.transactions
+    }
+}
+
+#[derive(Debug)]
 pub struct TransactionMemory {
-    transactions: HashMap<B256, ExtendedTransaction>,
+    transactions: WriteHandle,
 }
 
 impl TransactionMemory {
-    pub fn new() -> Self {
-        Self::default()
+    pub const fn new(transactions: WriteHandle) -> Self {
+        Self { transactions }
     }
 
     pub fn extend(&mut self, tx: impl IntoIterator<Item = ExtendedTransaction>) {
         self.transactions
-            .extend(tx.into_iter().map(|tx| (tx.hash(), tx)));
+            .extend(tx.into_iter().map(|tx| (tx.hash(), Arc::new(tx))));
+        self.transactions.refresh();
+    }
+}
+
+impl AsRef<ReadHandle> for TransactionMemory {
+    fn as_ref(&self) -> &ReadHandle {
+        &self.transactions
+    }
+}
+
+pub trait ReadTransactionMemory {
+    fn by_hash(&self, hash: B256) -> Option<ExtendedTransaction>;
+    fn by_hashes(&self, hashes: impl IntoIterator<Item = B256>) -> Vec<ExtendedTransaction>;
+}
+
+impl<T: AsRef<ReadHandle>> ReadTransactionMemory for T {
+    fn by_hash(&self, hash: B256) -> Option<ExtendedTransaction> {
+        self.as_ref()
+            .get_one(&hash)
+            .map(|v| ExtendedTransaction::clone(v.deref()))
     }
 
-    pub fn by_hash(&self, hash: B256) -> Option<ExtendedTransaction> {
-        self.transactions.get(&hash).cloned()
-    }
-
-    pub fn by_hashes(&self, hashes: impl IntoIterator<Item = B256>) -> Vec<ExtendedTransaction> {
+    fn by_hashes(&self, hashes: impl IntoIterator<Item = B256>) -> Vec<ExtendedTransaction> {
         hashes
             .into_iter()
             .filter_map(|hash| self.by_hash(hash))
             .collect()
-    }
-}
-
-#[derive(Debug, Default)]
-pub struct InMemoryTransactionRepository;
-
-impl InMemoryTransactionRepository {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-#[derive(Debug, Default)]
-pub struct InMemoryTransactionQueries;
-
-impl InMemoryTransactionQueries {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl TransactionRepository for InMemoryTransactionRepository {
-    type Err = Infallible;
-    type Storage = SharedMemory;
-
-    fn extend(
-        &mut self,
-        storage: &mut Self::Storage,
-        transactions: impl IntoIterator<Item = ExtendedTransaction>,
-    ) -> Result<(), Self::Err> {
-        storage.transaction_memory.extend(transactions);
-        Ok(())
-    }
-}
-
-impl TransactionQueries for InMemoryTransactionQueries {
-    type Err = Infallible;
-    type Storage = SharedMemory;
-
-    fn by_hash(
-        &self,
-        storage: &Self::Storage,
-        hash: B256,
-    ) -> Result<Option<TransactionResponse>, Self::Err> {
-        Ok(storage
-            .transaction_memory
-            .by_hash(hash)
-            .map(TransactionResponse::from))
-    }
-}
-
-#[cfg(any(feature = "test-doubles", test))]
-mod test_doubles {
-    use super::*;
-
-    impl TransactionQueries for () {
-        type Err = Infallible;
-        type Storage = ();
-
-        fn by_hash(
-            &self,
-            _: &Self::Storage,
-            _: B256,
-        ) -> Result<Option<TransactionResponse>, Self::Err> {
-            Ok(None)
-        }
-    }
-
-    impl TransactionRepository for () {
-        type Err = Infallible;
-        type Storage = ();
-
-        fn extend(
-            &mut self,
-            _: &mut Self::Storage,
-            _: impl IntoIterator<Item = ExtendedTransaction>,
-        ) -> Result<(), Self::Err> {
-            Ok(())
-        }
     }
 }

@@ -1,14 +1,15 @@
 use {
-    crate::{
-        block::{
-            BlockResponse, ExtendedBlock,
-            root::{BlockQueries, BlockRepository},
-        },
-        in_memory::SharedMemory,
-    },
+    crate::{block::ExtendedBlock, payload::PayloadId},
     moved_shared::primitives::B256,
-    std::{collections::HashMap, convert::Infallible},
+    std::sync::Arc,
 };
+
+pub type WriteHashes = evmap::WriteHandle<B256, Arc<ExtendedBlock>>;
+pub type ReadHashes = evmap::ReadHandle<B256, Arc<ExtendedBlock>>;
+pub type WriteHeights = evmap::WriteHandle<u64, Arc<ExtendedBlock>>;
+pub type ReadHeights = evmap::ReadHandle<u64, Arc<ExtendedBlock>>;
+pub type WritePayloadIds = evmap::WriteHandle<PayloadId, Arc<ExtendedBlock>>;
+pub type ReadPayloadIds = evmap::ReadHandle<PayloadId, Arc<ExtendedBlock>>;
 
 /// A storage for blocks that keeps data in memory.
 ///
@@ -16,183 +17,126 @@ use {
 /// maintains a set of indices for efficient lookup.
 #[derive(Debug)]
 pub struct BlockMemory {
-    /// Collection of blocks ordered by insertion.
-    blocks: Vec<ExtendedBlock>,
-    /// Map where key is a block hash and value is a position in the `blocks` vector.
-    hashes: HashMap<B256, usize>,
-    /// Map where key is a block height and value is a position in the `blocks` vector.
-    heights: HashMap<u64, usize>,
-}
-
-impl Default for BlockMemory {
-    fn default() -> Self {
-        Self::new()
-    }
+    hashes: WriteHashes,
+    heights: WriteHeights,
+    payload_ids: WritePayloadIds,
 }
 
 impl BlockMemory {
-    pub fn new() -> Self {
+    pub const fn new(
+        hashes: WriteHashes,
+        heights: WriteHeights,
+        payload_ids: WritePayloadIds,
+    ) -> Self {
         Self {
-            blocks: Vec::new(),
-            hashes: HashMap::new(),
-            heights: HashMap::new(),
+            hashes,
+            heights,
+            payload_ids,
         }
     }
-}
 
-impl BlockMemory {
     pub fn add(&mut self, block: ExtendedBlock) {
-        let index = self.blocks.len();
-        self.hashes.insert(block.hash, index);
-        self.heights.insert(block.block.header.number, index);
-        self.blocks.push(block);
-    }
-
-    pub fn by_hash(&self, hash: B256) -> Option<ExtendedBlock> {
-        let index = *self.hashes.get(&hash)?;
-        self.blocks.get(index).cloned()
-    }
-
-    pub fn by_height(&self, height: u64) -> Option<ExtendedBlock> {
-        let index = *self.heights.get(&height)?;
-        self.blocks.get(index).cloned()
-    }
-
-    pub fn last(&self) -> Option<&ExtendedBlock> {
-        self.blocks.last()
+        let block = Arc::new(block);
+        self.hashes.insert(block.hash, block.clone());
+        self.heights
+            .insert(block.block.header.number, block.clone());
+        self.payload_ids.insert(block.payload_id, block);
+        self.hashes.refresh();
+        self.heights.refresh();
+        self.payload_ids.refresh();
     }
 }
 
-/// Block repository that works with in memory backing store [`BlockMemory`].
-#[derive(Debug)]
-pub struct InMemoryBlockRepository;
-
-impl Default for InMemoryBlockRepository {
-    fn default() -> Self {
-        Self::new()
+impl AsRef<ReadHeights> for BlockMemory {
+    fn as_ref(&self) -> &ReadHeights {
+        &self.heights
     }
 }
 
-impl InMemoryBlockRepository {
-    pub fn new() -> Self {
-        Self
+impl AsRef<ReadHashes> for BlockMemory {
+    fn as_ref(&self) -> &ReadHashes {
+        &self.hashes
     }
 }
 
-impl BlockRepository for InMemoryBlockRepository {
-    type Err = Infallible;
-    type Storage = SharedMemory;
-
-    fn add(&mut self, mem: &mut Self::Storage, block: ExtendedBlock) -> Result<(), Self::Err> {
-        mem.block_memory.add(block);
-        Ok(())
-    }
-
-    fn by_hash(&self, mem: &Self::Storage, hash: B256) -> Result<Option<ExtendedBlock>, Self::Err> {
-        Ok(mem.block_memory.by_hash(hash))
-    }
-
-    fn latest(&self, mem: &Self::Storage) -> Result<Option<ExtendedBlock>, Self::Err> {
-        Ok(mem.block_memory.last().cloned())
+impl AsRef<ReadPayloadIds> for BlockMemory {
+    fn as_ref(&self) -> &ReadPayloadIds {
+        &self.payload_ids
     }
 }
 
-/// Block query implementation that works with in memory backing store [`BlockMemory`].
-#[derive(Debug)]
-pub struct InMemoryBlockQueries;
+#[derive(Debug, Clone)]
+pub struct BlockMemoryReader {
+    hashes: ReadHashes,
+    heights: ReadHeights,
+    payload_ids: ReadPayloadIds,
+}
 
-impl BlockQueries for InMemoryBlockQueries {
-    type Err = Infallible;
-    type Storage = SharedMemory;
-
-    fn by_hash(
-        &self,
-        mem: &Self::Storage,
-        hash: B256,
-        include_transactions: bool,
-    ) -> Result<Option<BlockResponse>, Self::Err> {
-        Ok(if include_transactions {
-            mem.block_memory.by_hash(hash).map(|block| {
-                let transactions = mem.transaction_memory.by_hashes(block.transaction_hashes());
-
-                BlockResponse::from_block_with_transactions(block, transactions)
-            })
-        } else {
-            mem.block_memory
-                .by_hash(hash)
-                .map(BlockResponse::from_block_with_transaction_hashes)
-        })
-    }
-
-    fn by_height(
-        &self,
-        mem: &Self::Storage,
-        height: u64,
-        include_transactions: bool,
-    ) -> Result<Option<BlockResponse>, Self::Err> {
-        Ok(if include_transactions {
-            mem.block_memory.by_height(height).map(|block| {
-                let transactions = mem.transaction_memory.by_hashes(block.transaction_hashes());
-
-                BlockResponse::from_block_with_transactions(block, transactions)
-            })
-        } else {
-            mem.block_memory
-                .by_height(height)
-                .map(BlockResponse::from_block_with_transaction_hashes)
-        })
-    }
-
-    fn latest(&self, mem: &Self::Storage) -> Result<Option<u64>, Self::Err> {
-        Ok(mem.block_memory.last().map(|v| v.block.header.number))
+impl BlockMemoryReader {
+    pub const fn new(
+        hashes: ReadHashes,
+        heights: ReadHeights,
+        payload_ids: ReadPayloadIds,
+    ) -> Self {
+        Self {
+            hashes,
+            heights,
+            payload_ids,
+        }
     }
 }
 
-#[cfg(any(feature = "test-doubles", test))]
-mod test_doubles {
-    use super::*;
+impl AsRef<ReadHeights> for BlockMemoryReader {
+    fn as_ref(&self) -> &ReadHeights {
+        &self.heights
+    }
+}
 
-    impl BlockQueries for () {
-        type Err = Infallible;
-        type Storage = ();
+impl AsRef<ReadHashes> for BlockMemoryReader {
+    fn as_ref(&self) -> &ReadHashes {
+        &self.hashes
+    }
+}
 
-        fn by_hash(
-            &self,
-            _: &Self::Storage,
-            _: B256,
-            _: bool,
-        ) -> Result<Option<BlockResponse>, Self::Err> {
-            Ok(None)
-        }
+impl AsRef<ReadPayloadIds> for BlockMemoryReader {
+    fn as_ref(&self) -> &ReadPayloadIds {
+        &self.payload_ids
+    }
+}
 
-        fn by_height(
-            &self,
-            _: &Self::Storage,
-            _: u64,
-            _: bool,
-        ) -> Result<Option<BlockResponse>, Self::Err> {
-            Ok(None)
-        }
+pub trait ReadBlockMemory {
+    fn by_hash(&self, hash: B256) -> Option<ExtendedBlock>;
+    fn by_payload_id(&self, payload_id: PayloadId) -> Option<ExtendedBlock>;
+    fn by_height(&self, height: u64) -> Option<ExtendedBlock> {
+        self.map_by_height(height, Clone::clone)
+    }
+    fn map_by_height<U>(&self, height: u64, f: impl FnOnce(&'_ ExtendedBlock) -> U) -> Option<U>;
+    fn height(&self) -> Option<u64>;
+    fn last(&self) -> Option<ExtendedBlock> {
+        self.by_height(self.height()?)
+    }
+}
 
-        fn latest(&self, _: &Self::Storage) -> Result<Option<u64>, Self::Err> {
-            Ok(None)
-        }
+impl<T: AsRef<ReadHashes> + AsRef<ReadHeights> + AsRef<ReadPayloadIds>> ReadBlockMemory for T {
+    fn by_hash(&self, hash: B256) -> Option<ExtendedBlock> {
+        <T as AsRef<ReadHashes>>::as_ref(self)
+            .get_one(&hash)
+            .map(|v| ExtendedBlock::clone(&v))
     }
 
-    impl BlockRepository for () {
-        type Err = ();
-        type Storage = ();
+    fn by_payload_id(&self, payload_id: PayloadId) -> Option<ExtendedBlock> {
+        <T as AsRef<ReadPayloadIds>>::as_ref(self)
+            .get_one(&payload_id)
+            .map(|v| ExtendedBlock::clone(&v))
+    }
 
-        fn add(&mut self, _: &mut Self::Storage, _: ExtendedBlock) -> Result<(), Self::Err> {
-            Ok(())
-        }
+    fn map_by_height<U>(&self, height: u64, f: impl FnOnce(&'_ ExtendedBlock) -> U) -> Option<U> {
+        <T as AsRef<ReadHeights>>::as_ref(self)
+            .get_one(&height)
+            .map(|v| f(&v))
+    }
 
-        fn by_hash(&self, _: &Self::Storage, _: B256) -> Result<Option<ExtendedBlock>, Self::Err> {
-            Ok(None)
-        }
-
-        fn latest(&self, _: &Self::Storage) -> Result<Option<ExtendedBlock>, Self::Err> {
-            Ok(None)
-        }
+    fn height(&self) -> Option<u64> {
+        (<T as AsRef<ReadHeights>>::as_ref(self).len() as u64).checked_sub(1)
     }
 }

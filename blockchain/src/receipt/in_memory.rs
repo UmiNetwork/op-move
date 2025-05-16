@@ -3,45 +3,103 @@ use {
         ExtendedReceipt, ReceiptQueries, TransactionReceipt, write::ReceiptRepository,
     },
     moved_shared::primitives::B256,
-    std::{collections::HashMap, convert::Infallible},
+    std::{
+        convert::Infallible,
+        hash::{Hash, Hasher},
+        sync::Arc,
+    },
 };
+
+pub type ReadHandle = evmap::ReadHandle<B256, Arc<ExtendedReceipt>>;
+pub type WriteHandle = evmap::WriteHandle<B256, Arc<ExtendedReceipt>>;
+
+impl Hash for ExtendedReceipt {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.transaction_hash.hash(state);
+        self.transaction_index.hash(state);
+        self.to.hash(state);
+        self.from.hash(state);
+        self.gas_used.hash(state);
+        self.l2_gas_price.hash(state);
+        self.contract_address.hash(state);
+        self.logs_offset.hash(state);
+        self.block_hash.hash(state);
+        self.block_number.hash(state);
+        self.block_timestamp.hash(state);
+    }
+}
 
 #[derive(Debug)]
 pub struct ReceiptMemory {
-    receipts: HashMap<B256, ExtendedReceipt>,
-}
-
-impl Default for ReceiptMemory {
-    fn default() -> Self {
-        Self::new()
-    }
+    receipts: WriteHandle,
 }
 
 impl ReceiptMemory {
-    pub fn new() -> Self {
-        Self {
-            receipts: HashMap::new(),
-        }
-    }
-
-    pub fn contains(&self, transaction_hash: B256) -> bool {
-        self.receipts.contains_key(&transaction_hash)
+    pub fn new(receipts: WriteHandle) -> Self {
+        Self { receipts }
     }
 
     pub fn extend(&mut self, receipts: impl IntoIterator<Item = ExtendedReceipt>) {
         self.receipts.extend(
             receipts
                 .into_iter()
-                .map(|receipt| (receipt.transaction_hash, receipt)),
+                .map(|receipt| (receipt.transaction_hash, Arc::new(receipt))),
         );
-    }
-
-    pub fn by_transaction_hash(&self, transaction_hash: B256) -> Option<&ExtendedReceipt> {
-        self.receipts.get(&transaction_hash)
+        self.receipts.refresh();
     }
 }
 
-#[derive(Debug)]
+impl AsRef<ReadHandle> for ReceiptMemory {
+    fn as_ref(&self) -> &ReadHandle {
+        &self.receipts
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ReceiptMemoryReader {
+    receipts: ReadHandle,
+}
+
+impl ReceiptMemoryReader {
+    pub fn new(receipts: ReadHandle) -> Self {
+        Self { receipts }
+    }
+}
+
+impl AsRef<ReadHandle> for ReceiptMemoryReader {
+    fn as_ref(&self) -> &ReadHandle {
+        &self.receipts
+    }
+}
+
+pub trait ReadReceiptMemory {
+    fn contains(&self, transaction_hash: B256) -> bool;
+    fn by_transaction_hash(&self, transaction_hash: B256) -> Option<ExtendedReceipt>;
+}
+
+impl<T: AsRef<ReadHandle>> ReadReceiptMemory for T {
+    fn contains(&self, transaction_hash: B256) -> bool {
+        self.as_ref().contains_key(&transaction_hash)
+    }
+
+    fn by_transaction_hash(&self, transaction_hash: B256) -> Option<ExtendedReceipt> {
+        self.as_ref()
+            .get_one(&transaction_hash)
+            .map(|v| ExtendedReceipt::clone(&v))
+    }
+}
+
+pub mod receipt_memory {
+    use crate::receipt::{ReceiptMemory, ReceiptMemoryReader};
+
+    pub fn new() -> (ReceiptMemoryReader, ReceiptMemory) {
+        let (r, w) = evmap::new();
+
+        (ReceiptMemoryReader::new(r), ReceiptMemory::new(w))
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct InMemoryReceiptQueries;
 
 impl Default for InMemoryReceiptQueries {
@@ -58,7 +116,7 @@ impl InMemoryReceiptQueries {
 
 impl ReceiptQueries for InMemoryReceiptQueries {
     type Err = Infallible;
-    type Storage = ReceiptMemory;
+    type Storage = ReceiptMemoryReader;
 
     fn by_transaction_hash(
         &self,
@@ -67,12 +125,11 @@ impl ReceiptQueries for InMemoryReceiptQueries {
     ) -> Result<Option<TransactionReceipt>, Self::Err> {
         Ok(storage
             .by_transaction_hash(transaction_hash)
-            .cloned()
             .map(TransactionReceipt::from))
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct InMemoryReceiptRepository;
 
 impl Default for InMemoryReceiptRepository {
@@ -102,40 +159,5 @@ impl ReceiptRepository for InMemoryReceiptRepository {
     ) -> Result<(), Self::Err> {
         storage.extend(receipts);
         Ok(())
-    }
-}
-
-#[cfg(any(feature = "test-doubles", test))]
-mod test_doubles {
-    use super::*;
-
-    impl ReceiptQueries for () {
-        type Err = Infallible;
-        type Storage = ();
-
-        fn by_transaction_hash(
-            &self,
-            _: &Self::Storage,
-            _: B256,
-        ) -> Result<Option<TransactionReceipt>, Self::Err> {
-            Ok(None)
-        }
-    }
-
-    impl ReceiptRepository for () {
-        type Err = Infallible;
-        type Storage = ();
-
-        fn contains(&self, _: &Self::Storage, _: B256) -> Result<bool, Self::Err> {
-            Ok(false)
-        }
-
-        fn extend(
-            &self,
-            _: &mut Self::Storage,
-            _: impl IntoIterator<Item = ExtendedReceipt>,
-        ) -> Result<(), Self::Err> {
-            Ok(())
-        }
     }
 }

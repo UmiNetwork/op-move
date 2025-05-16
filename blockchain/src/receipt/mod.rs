@@ -1,5 +1,8 @@
 pub use {
-    in_memory::{InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory},
+    in_memory::{
+        InMemoryReceiptQueries, InMemoryReceiptRepository, ReadHandle, ReceiptMemory,
+        ReceiptMemoryReader, WriteHandle, receipt_memory,
+    },
     read::{ReceiptQueries, TransactionReceipt},
     write::{ExtendedReceipt, ReceiptRepository},
 };

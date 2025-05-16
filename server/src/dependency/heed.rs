@@ -1,6 +1,6 @@
 use {
     crate::dependency::shared::*,
-    moved_app::{Application, CommandActor},
+    moved_app::{Application, ApplicationReader, CommandActor},
     moved_genesis::config::GenesisConfig,
     moved_state::State,
     moved_storage_heed::{
@@ -11,8 +11,16 @@ use {
 
 pub type Dependency = HeedDependencies;
 
-pub fn create(genesis_config: &GenesisConfig) -> Application<HeedDependencies> {
-    Application::new(HeedDependencies, genesis_config)
+pub fn create(
+    genesis_config: &GenesisConfig,
+) -> (
+    Application<HeedDependencies>,
+    ApplicationReader<HeedDependencies>,
+) {
+    (
+        Application::new(HeedDependencies, genesis_config),
+        ApplicationReader::new(HeedDependencies, genesis_config),
+    )
 }
 
 pub struct HeedDependencies;
@@ -28,6 +36,8 @@ impl moved_app::Dependencies for HeedDependencies {
     type ReceiptRepository = receipt::HeedReceiptRepository;
     type ReceiptStorage = &'static moved_storage_heed::Env;
     type SharedStorage = &'static moved_storage_heed::Env;
+    type ReceiptStorageReader = &'static moved_storage_heed::Env;
+    type SharedStorageReader = &'static moved_storage_heed::Env;
     type State = state::HeedState<'static>;
     type StateQueries = state::HeedStateQueries<'static>;
     type StorageTrieRepository = evm::HeedStorageTrieRepository;
@@ -71,20 +81,28 @@ impl moved_app::Dependencies for HeedDependencies {
         receipt::HeedReceiptRepository
     }
 
-    fn receipt_memory() -> Self::ReceiptStorage {
+    fn receipt_memory(&mut self) -> Self::ReceiptStorage {
         db()
     }
 
-    fn shared_storage() -> Self::SharedStorage {
+    fn shared_storage(&mut self) -> Self::SharedStorage {
         db()
     }
 
-    fn state() -> Self::State {
-        state::HeedState::new(std::sync::Arc::new(trie::HeedEthTrieDb::new(db())))
+    fn receipt_memory_reader(&self) -> Self::ReceiptStorageReader {
+        db()
     }
 
-    fn state_queries(genesis_config: &GenesisConfig) -> Self::StateQueries {
-        state::HeedStateQueries::from_genesis(db(), genesis_config.initial_state_root)
+    fn shared_storage_reader(&self) -> Self::SharedStorageReader {
+        db()
+    }
+
+    fn state(&self) -> Self::State {
+        state::HeedState::new(TRIE_DB.clone())
+    }
+
+    fn state_queries(&self, genesis_config: &GenesisConfig) -> Self::StateQueries {
+        state::HeedStateQueries::new(db(), TRIE_DB.clone(), genesis_config.initial_state_root)
     }
 
     fn storage_trie_repository() -> Self::StorageTrieRepository {
@@ -106,7 +124,15 @@ lazy_static::lazy_static! {
     static ref Database: moved_storage_heed::Env = {
         create_db()
     };
+    static ref TRIE_DB: std::sync::Arc<trie::HeedEthTrieDb<'static>> = {
+        std::sync::Arc::new(trie::HeedEthTrieDb::new(db()))
+    };
 }
+
+// #[cfg(test)]
+// lazy_static::lazy_static! {
+//     static ref TEMP_DIR: tempfile::TempDir = tempfile::tempdir().unwrap();
+// }
 
 fn db() -> &'static moved_storage_heed::Env {
     &Database
@@ -115,12 +141,22 @@ fn db() -> &'static moved_storage_heed::Env {
 fn create_db() -> moved_storage_heed::Env {
     assert_eq!(moved_storage_heed::DATABASES.len(), 11);
 
-    let path = "db";
+    let path = {
+        // #[cfg(not(test))]
+        {
+            let path = "db";
 
-    if std::env::var("PURGE").as_ref().map(String::as_str) == Ok("1") {
-        let _ = std::fs::remove_dir_all(path);
-    }
-    let _ = std::fs::create_dir(path);
+            if std::env::var("PURGE").as_ref().map(String::as_str) == Ok("1") || cfg!(test) {
+                let _ = std::fs::remove_dir_all(path);
+            }
+            let _ = std::fs::create_dir(path);
+            path
+        }
+        // #[cfg(test)]
+        // {
+        //     TEMP_DIR.path()
+        // }
+    };
 
     let env = unsafe {
         EnvOpenOptions::new()

@@ -1,5 +1,5 @@
 use {
-    crate::{Application, Dependencies, block_hash::StorageBasedProvider},
+    crate::{ApplicationReader, Dependencies, block_hash::StorageBasedProvider},
     alloy::{
         eips::{
             BlockId,
@@ -19,17 +19,15 @@ use {
         error::Result,
         primitives::{Address, B256, ToMoveAddress, U256},
     },
-    moved_state::State,
 };
 
-impl<D: Dependencies> Application<D> {
+impl<D: Dependencies> ApplicationReader<D> {
     pub fn chain_id(&self) -> u64 {
         self.genesis_config.chain_id
     }
 
     pub fn balance_by_height(&self, address: Address, height: BlockNumberOrTag) -> Option<U256> {
         self.state_queries.balance_at(
-            self.state.db(),
             &self.evm_storage,
             address.to_move_address(),
             self.resolve_height(height)?,
@@ -38,7 +36,6 @@ impl<D: Dependencies> Application<D> {
 
     pub fn nonce_by_height(&self, address: Address, height: BlockNumberOrTag) -> Option<u64> {
         self.state_queries.nonce_at(
-            self.state.db(),
             &self.evm_storage,
             address.to_move_address(),
             self.resolve_height(height)?,
@@ -84,7 +81,7 @@ impl<D: Dependencies> Application<D> {
         transaction: TransactionRequest,
         block_number: BlockNumberOrTag,
     ) -> Result<u64> {
-        // TODO: Support gas estimation from arbitrary blocks
+        let height = self.resolve_height(block_number).unwrap();
         let block_height = match block_number {
             Number(height) => height,
             Finalized | Pending | Latest | Safe => self
@@ -97,7 +94,7 @@ impl<D: Dependencies> Application<D> {
         let block_hash_lookup = StorageBasedProvider::new(&self.storage, &self.block_queries);
         let outcome = simulate_transaction(
             transaction,
-            self.state.resolver(),
+            &self.state_queries.resolver_at(height),
             &self.evm_storage,
             &self.genesis_config,
             &self.base_token,
@@ -114,13 +111,13 @@ impl<D: Dependencies> Application<D> {
     pub fn call(
         &self,
         transaction: TransactionRequest,
-        _block_number: BlockNumberOrTag,
+        block_number: BlockNumberOrTag,
     ) -> Result<Vec<u8>> {
-        // TODO: Support transaction call from arbitrary blocks
+        let height = self.resolve_height(block_number).unwrap();
         let block_hash_lookup = StorageBasedProvider::new(&self.storage, &self.block_queries);
         call_transaction(
             transaction,
-            self.state.resolver(),
+            &self.state_queries.resolver_at(height),
             &self.evm_storage,
             &self.genesis_config,
             &self.base_token,
@@ -149,7 +146,6 @@ impl<D: Dependencies> Application<D> {
     ) -> Option<ProofResponse> {
         self.height_from_block_id(height).and_then(|height| {
             self.state_queries.proof_at(
-                self.state.db(),
                 &self.evm_storage,
                 address.to_move_address(),
                 &storage_slots,

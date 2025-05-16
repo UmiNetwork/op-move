@@ -1,17 +1,15 @@
 use {
     crate::{json_utils::parse_params_1, jsonrpc::JsonRpcError},
-    moved_app::{Application, Dependencies},
-    std::sync::Arc,
-    tokio::sync::RwLock,
+    moved_app::{ApplicationReader, Dependencies},
 };
 
 pub async fn execute(
     request: serde_json::Value,
-    app: &Arc<RwLock<Application<impl Dependencies>>>,
+    app: ApplicationReader<impl Dependencies>,
 ) -> Result<serde_json::Value, JsonRpcError> {
     let tx_hash = parse_params_1(request)?;
 
-    let response = app.read().await.transaction_receipt(tx_hash);
+    let response = app.transaction_receipt(tx_hash);
 
     Ok(serde_json::to_value(response).expect("Must be able to JSON-serialize response"))
 }
@@ -30,8 +28,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_execute() {
-        let app = create_app();
-        let (queue, state) = moved_app::create(app.clone(), 10);
+        let (reader, app) = create_app();
+        let (queue, state) = moved_app::create(Box::new(app), 10);
         let state_handle = state.spawn();
 
         // 1. Send transaction
@@ -54,8 +52,7 @@ mod tests {
         )
         .unwrap();
 
-        drop(queue);
-        state_handle.await.unwrap();
+        queue.wait_for_pending_commands().await;
 
         let request = serde_json::Value::Object(
             iter::once((
@@ -66,8 +63,12 @@ mod tests {
             ))
             .collect(),
         );
-        let payload_response: GetPayloadResponseV3 =
-            serde_json::from_value(get_payload::execute_v3(request, &app).await.unwrap()).unwrap();
+        let payload_response: GetPayloadResponseV3 = serde_json::from_value(
+            get_payload::execute_v3(request, reader.clone())
+                .await
+                .unwrap(),
+        )
+        .unwrap();
         let block_hash = payload_response.execution_payload.block_hash;
 
         // 3. Get transaction receipt
@@ -79,12 +80,15 @@ mod tests {
             .collect(),
         );
         let receipt: TransactionReceipt =
-            serde_json::from_value(execute(request, &app).await.unwrap()).unwrap();
+            serde_json::from_value(execute(request, reader.clone()).await.unwrap()).unwrap();
 
         // Confirm the receipt contains correct information about the transaction
         assert_eq!(receipt.inner.transaction_index, Some(2));
         assert_eq!(receipt.inner.block_hash, Some(block_hash));
         assert!(receipt.inner.inner.status());
         assert_eq!(receipt.inner.inner.logs().len(), 2);
+
+        drop(queue);
+        state_handle.await.unwrap();
     }
 }
