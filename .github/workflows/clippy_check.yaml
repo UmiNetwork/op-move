@@ -18,11 +18,7 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v4
-        - uses: actions-rs/toolchain@v1
-          with:
-            toolchain: stable
-            components: clippy
-            default: true
+        - run: rustup component add clippy
         - uses: actions-rs/clippy-check@v1
           with:
             token: ${{ secrets.GITHUB_TOKEN }}

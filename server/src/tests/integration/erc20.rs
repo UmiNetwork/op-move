@@ -215,10 +215,6 @@ pub async fn l2_erc20_balance_of(token: Address, account: Address, rpc_url: &str
     let provider = ProviderBuilder::new().on_http(Url::parse(rpc_url)?);
 
     let args = vec![
-        // The caller here does not matter because it is a view call.
-        MoveValue::Signer(EVM_NATIVE_ADDRESS)
-            .simple_serialize()
-            .unwrap(),
         MoveValue::Address(token.to_move_address())
             .simple_serialize()
             .unwrap(),
@@ -262,10 +258,6 @@ pub async fn l2_erc20_allowance(
     let provider = ProviderBuilder::new().on_http(Url::parse(rpc_url)?);
 
     let args = vec![
-        // The caller here does not matter because it is a view call.
-        MoveValue::Signer(EVM_NATIVE_ADDRESS)
-            .simple_serialize()
-            .unwrap(),
         MoveValue::Address(token.to_move_address())
             .simple_serialize()
             .unwrap(),
