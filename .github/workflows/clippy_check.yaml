@@ -20,9 +20,11 @@ jobs:
         - uses: actions/checkout@v4
         - uses: actions-rs/toolchain@v1
           with:
+            default: true
             toolchain: stable
             components: clippy
-            default: true
+        - name: Free up disk space
+          run: rm -rf /opt/hostedtoolcache
         - uses: actions-rs/clippy-check@v1
           with:
             token: ${{ secrets.GITHUB_TOKEN }}
