@@ -14,7 +14,7 @@ use {
     },
     move_vm_types::{resolver::MoveResolver, value_serde::ValueSerDeContext, values::Value},
     moved_evm_ext::{
-        self, CODE_LAYOUT, EVM_CALL_FN_NAME, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
+        self, CODE_LAYOUT, EVM_DEPOSIT_FN_NAME, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
         events::EthTransfersLogger,
         extract_evm_changes, extract_evm_result,
         state::{BlockHashLookup, StorageTrieRepository},
@@ -60,7 +60,7 @@ pub(super) fn execute_deposited_transaction<
     let mut gas_meter = new_gas_meter(input.genesis_config, input.tx.gas_limit);
 
     let module = ModuleId::new(EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE.into());
-    let function_name = EVM_CALL_FN_NAME;
+    let function_name = EVM_DEPOSIT_FN_NAME;
     // Unwraps in serialization are safe because the layouts match the types.
     let to_address = match input.tx.to {
         revm::primitives::TxKind::Call(addr) => addr.to_move_address(),

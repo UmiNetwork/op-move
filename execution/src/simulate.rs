@@ -3,7 +3,9 @@ use {
     crate::{
         BaseTokenAccounts, CanonicalExecutionInput,
         canonical::{CanonicalVerificationInput, verify_transaction},
-        create_vm_session, execute_transaction,
+        create_vm_session,
+        execute::execute_evm_contract,
+        execute_transaction,
         gas::new_gas_meter,
         quick_get_nonce,
         session_id::SessionId,
@@ -143,6 +145,32 @@ pub fn call_transaction(
                 &code_storage,
             )?;
             Ok(vec![])
+        }
+        TransactionData::L2Contract(contract) => {
+            let outcome = execute_evm_contract(
+                &tx.signer.to_move_address(),
+                &contract.to_move_address(),
+                tx.value,
+                tx.data.to_vec(),
+                verify_input.session,
+                verify_input.traversal_context,
+                verify_input.gas_meter,
+                &code_storage,
+            )?;
+            Ok(outcome.output)
+        }
+        TransactionData::EvmContract { address, data } => {
+            let outcome = execute_evm_contract(
+                &tx.signer.to_move_address(),
+                &address.to_move_address(),
+                tx.value,
+                data,
+                verify_input.session,
+                verify_input.traversal_context,
+                verify_input.gas_meter,
+                &code_storage,
+            )?;
+            Ok(outcome.output)
         }
         _ => Err(InvalidTransaction(InvalidTransactionCause::UnsupportedType)),
     }

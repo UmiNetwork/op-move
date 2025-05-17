@@ -20,6 +20,7 @@ use {
         OpDepositReceipt, OpDepositReceiptWithBloom, OpReceiptEnvelope, OpTxEnvelope, TxDeposit,
     },
     serde::{Deserialize, Serialize},
+    std::borrow::Cow,
 };
 
 pub const L2_LOWEST_ADDRESS: Address = address!("4200000000000000000000000000000000000000");
@@ -289,13 +290,13 @@ pub enum ScriptOrDeployment {
 }
 
 /// Possible parsings of transaction data from a non-deposit transaction.
-#[derive(Debug, PartialEq, Eq, Clone, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum TransactionData {
     EoaBaseTokenTransfer(Address),
     ScriptOrDeployment(ScriptOrDeployment),
-    // Entry function should be the 3rd option to match the SDK TransactionPayload
     EntryFunction(EntryFunction),
     L2Contract(Address),
+    EvmContract { address: Address, data: Vec<u8> },
 }
 
 impl TransactionData {
@@ -309,17 +310,25 @@ impl TransactionData {
                     // transaction as a base token transfer between EOAs.
                     Ok(Self::EoaBaseTokenTransfer(to))
                 } else {
-                    let tx_data: TransactionData = bcs::from_bytes(&tx.data)?;
-                    // Inner value should be an entry function type
-                    let Some(entry_fn) = tx_data.maybe_entry_fn() else {
-                        Err(InvalidTransactionCause::InvalidPayload(bcs::Error::Custom(
-                            "Not an entry function".to_string(),
-                        )))?
-                    };
-                    if entry_fn.module().address() != &to.to_move_address() {
-                        Err(InvalidTransactionCause::InvalidDestination)?
+                    let tx_data: SerializableTransactionData = bcs::from_bytes(&tx.data)?;
+                    // Inner value should be an entry function type or EVM contract.
+                    match tx_data {
+                        SerializableTransactionData::EntryFunction(entry_fn) => {
+                            if entry_fn.module().address() != &to.to_move_address() {
+                                Err(InvalidTransactionCause::InvalidDestination)?
+                            }
+                            Ok(TransactionData::EntryFunction(entry_fn.into_owned()))
+                        }
+                        SerializableTransactionData::EvmContract { data } => {
+                            Ok(TransactionData::EvmContract {
+                                address: to,
+                                data: data.into_owned(),
+                            })
+                        }
+                        _ => Err(InvalidTransactionCause::InvalidPayload(bcs::Error::Custom(
+                            "Expected entry function or EVM contract".to_string(),
+                        )))?,
                     }
-                    Ok(tx_data)
                 }
             }
             TxKind::Create => {
@@ -328,6 +337,13 @@ impl TransactionData {
                 Ok(Self::ScriptOrDeployment(script_or_module))
             }
         }
+    }
+
+    /// Serialize this type into bytes suitable for using in the `data` field of
+    /// an Ethereum transaction.
+    pub fn to_bytes(&self) -> Result<Vec<u8>, bcs::Error> {
+        let serializable: SerializableTransactionData = self.into();
+        bcs::to_bytes(&serializable)
     }
 
     pub fn maybe_entry_fn(&self) -> Option<&EntryFunction> {
@@ -364,6 +380,41 @@ impl From<TransactionRequest> for NormalizedEthTransaction {
             max_fee_per_gas: U256::from(value.max_fee_per_gas.unwrap_or_default()),
             data: value.input.into_input().unwrap_or_default(),
             access_list: value.access_list.unwrap_or_default(),
+        }
+    }
+}
+
+// Intentionally left private to hide the serialization details
+// from users of `TransactionData`. This allows making changes to
+// `TransactionData` itself while remaining backwards compatible with
+// the serialization format.
+// The purpose of `Cow` wrapping all the data is to allow serializing
+// from a reference to `TransactionData` without cloning while also allowing
+// deserializing to `SerializableTransactionData` with owned data.
+// Data type which are `Copy` are left without `Cow` references.
+#[derive(Deserialize, Serialize)]
+enum SerializableTransactionData<'a> {
+    EoaBaseTokenTransfer(Address),
+    ScriptOrDeployment(Cow<'a, ScriptOrDeployment>),
+    // Entry function should be the 3rd option to match the SDK TransactionPayload
+    EntryFunction(Cow<'a, EntryFunction>),
+    L2Contract(Address),
+    // Note: we only include the data here not the address as in the `TransactionData` type
+    // because the address is taken from the Ethereum transaction `to` field. Therefore
+    // encoding it here would be redundant.
+    EvmContract { data: Cow<'a, [u8]> },
+}
+
+impl<'a> From<&'a TransactionData> for SerializableTransactionData<'a> {
+    fn from(value: &'a TransactionData) -> Self {
+        match value {
+            TransactionData::EoaBaseTokenTransfer(to) => Self::EoaBaseTokenTransfer(*to),
+            TransactionData::ScriptOrDeployment(x) => Self::ScriptOrDeployment(Cow::Borrowed(x)),
+            TransactionData::EntryFunction(x) => Self::EntryFunction(Cow::Borrowed(x)),
+            TransactionData::L2Contract(x) => Self::L2Contract(*x),
+            TransactionData::EvmContract { data, .. } => Self::EvmContract {
+                data: Cow::Borrowed(data),
+            },
         }
     }
 }

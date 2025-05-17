@@ -81,7 +81,7 @@ fn test_evm() {
     let (tx_hash, tx) = create_transaction(
         &mut ctx.signer,
         TxKind::Call(EVM_NATIVE_ADDRESS.to_eth_address()),
-        bcs::to_bytes(&TransactionData::EntryFunction(entry_fn)).unwrap(),
+        TransactionData::EntryFunction(entry_fn).to_bytes().unwrap(),
     );
 
     let transaction = TestTransaction::new(tx, tx_hash);
@@ -143,7 +143,7 @@ fn test_solidity_fixed_bytes() {
             let (tx_hash, tx) = create_transaction(
                 &mut ctx.signer,
                 TxKind::Call(EVM_ADDRESS),
-                bcs::to_bytes(&TransactionData::EntryFunction(entry_fn)).unwrap(),
+                TransactionData::EntryFunction(entry_fn).to_bytes().unwrap(),
             );
             let tx = tx.into_canonical().unwrap();
             let input = CanonicalExecutionInput {

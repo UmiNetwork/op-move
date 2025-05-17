@@ -34,6 +34,7 @@ use {
     std::collections::VecDeque,
 };
 
+pub const EVM_DEPOSIT_FN_NAME: &IdentStr = ident_str!("system_deposit_evm_call");
 pub const EVM_CALL_FN_NAME: &IdentStr = ident_str!("system_evm_call");
 pub const EVM_CREATE_FN_NAME: &IdentStr = ident_str!("system_evm_create");
 

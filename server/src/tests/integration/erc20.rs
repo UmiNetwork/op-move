@@ -229,7 +229,7 @@ pub async fn l2_erc20_balance_of(token: Address, account: Address, rpc_url: &str
         args,
     );
     let tx_data = TransactionData::EntryFunction(function_call);
-    let data = bcs::to_bytes(&tx_data)?;
+    let data = tx_data.to_bytes()?;
     let eth_call_result = CallBuilder::<(), _, _, _>::new_raw(provider, data.into())
         .to(EVM_NATIVE_ADDRESS.to_eth_address())
         .call()
@@ -275,7 +275,7 @@ pub async fn l2_erc20_allowance(
         args,
     );
     let tx_data = TransactionData::EntryFunction(function_call);
-    let data = bcs::to_bytes(&tx_data)?;
+    let data = tx_data.to_bytes()?;
     let eth_call_result = CallBuilder::<(), _, _, _>::new_raw(provider, data.into())
         .to(EVM_NATIVE_ADDRESS.to_eth_address())
         .call()
@@ -327,7 +327,7 @@ pub async fn l2_erc20_approve(
         args,
     );
     let tx_data = TransactionData::EntryFunction(function_call);
-    let data = bcs::to_bytes(&tx_data)?;
+    let data = tx_data.to_bytes()?;
     let receipt = CallBuilder::<(), _, _, _>::new_raw(provider, data.into())
         .to(EVM_NATIVE_ADDRESS.to_eth_address())
         .send()

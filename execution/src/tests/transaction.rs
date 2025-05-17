@@ -68,7 +68,7 @@ fn test_transaction_incorrect_destination() {
     let (tx_hash, tx) = create_transaction(
         &mut ctx.signer,
         TxKind::Call(Default::default()), // Wrong address!
-        bcs::to_bytes(&TransactionData::EntryFunction(entry_fn)).unwrap(),
+        TransactionData::EntryFunction(entry_fn).to_bytes().unwrap(),
     );
 
     let transaction = TestTransaction::new(tx, tx_hash);
@@ -98,7 +98,7 @@ fn test_transaction_chain_id() {
         to: TxKind::Call(EVM_ADDRESS),
         value: Default::default(),
         access_list: Default::default(),
-        input: bcs::to_bytes(&entry_fn).unwrap().into(),
+        input: entry_fn.to_bytes().unwrap().into(),
     };
     let signature = ctx.signer.inner.sign_transaction_sync(&mut tx).unwrap();
     let signed_tx = TxEnvelope::Eip1559(tx.into_signed(signature));
@@ -132,7 +132,7 @@ fn test_out_of_gas() {
         to: TxKind::Call(EVM_ADDRESS),
         value: Default::default(),
         access_list: Default::default(),
-        input: bcs::to_bytes(&entry_fn).unwrap().into(),
+        input: entry_fn.to_bytes().unwrap().into(),
     };
     let signature = ctx.signer.inner.sign_transaction_sync(&mut tx).unwrap();
     let signed_tx = TxEnvelope::Eip1559(tx.into_signed(signature));

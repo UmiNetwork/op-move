@@ -8,12 +8,8 @@ use {
         signers::local::PrivateKeySigner,
         sol_types::{SolCall, SolEventInterface},
     },
-    aptos_types::transaction::EntryFunction,
-    move_core_types::{ident_str, language_storage::ModuleId, value::MoveValue},
     moved_blockchain::receipt::TransactionReceipt,
-    moved_evm_ext::{EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE},
     moved_execution::transaction::{ScriptOrDeployment, TransactionData},
-    moved_shared::primitives::{ToEthAddress, ToMoveAddress},
 };
 
 mod evm_contract {
@@ -96,43 +92,32 @@ fn get_logged_hash(receipt: &TransactionReceipt) -> B256 {
 fn deploy_evm_contract(chain_id: u64, bytecode: &[u8]) -> TxEnvelope {
     let signer = PrivateKeySigner::random();
     let input = ScriptOrDeployment::EvmContract(bytecode.to_vec());
-    sign_transaction(chain_id, TxKind::Create, &input, &signer)
-}
-
-fn call_contract(chain_id: u64, to: Address, selector: [u8; 4]) -> TxEnvelope {
-    let signer = PrivateKeySigner::random();
-    let caller = signer.address();
-    let module_id = ModuleId::new(EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE.into());
-    let args = vec![
-        MoveValue::Signer(caller.to_move_address())
-            .simple_serialize()
-            .unwrap(),
-        MoveValue::Address(to.to_move_address())
-            .simple_serialize()
-            .unwrap(),
-        MoveValue::vector_u8(selector.to_vec())
-            .simple_serialize()
-            .unwrap(),
-    ];
-    let entry_fn = EntryFunction::new(
-        module_id,
-        ident_str!("entry_evm_call").into(),
-        Vec::new(),
-        args,
-    );
-    let input = TransactionData::EntryFunction(entry_fn);
     sign_transaction(
         chain_id,
-        TxKind::Call(EVM_NATIVE_ADDRESS.to_eth_address()),
-        &input,
+        TxKind::Create,
+        || bcs::to_bytes(&input).unwrap(),
         &signer,
     )
 }
 
-fn sign_transaction<T: serde::Serialize>(
+fn call_contract(chain_id: u64, to: Address, selector: [u8; 4]) -> TxEnvelope {
+    let signer = PrivateKeySigner::random();
+    let input = TransactionData::EvmContract {
+        address: to,
+        data: selector.to_vec(),
+    };
+    sign_transaction(
+        chain_id,
+        TxKind::Call(to),
+        || input.to_bytes().unwrap(),
+        &signer,
+    )
+}
+
+fn sign_transaction<F: FnOnce() -> Vec<u8>>(
     chain_id: u64,
     to: TxKind,
-    input: &T,
+    input: F,
     signer: &PrivateKeySigner,
 ) -> TxEnvelope {
     let mut tx = TxEip1559 {
@@ -144,7 +129,7 @@ fn sign_transaction<T: serde::Serialize>(
         to,
         value: Default::default(),
         access_list: Default::default(),
-        input: bcs::to_bytes(input).unwrap().into(),
+        input: input().into(),
     };
     let signature = signer.sign_transaction_sync(&mut tx).unwrap();
     TxEnvelope::Eip1559(tx.into_signed(signature))
