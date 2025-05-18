@@ -6,7 +6,7 @@ use {
         primitives::{hex, B256},
     },
     moved_api::schema::{ForkchoiceUpdatedResponseV1, GetBlockResponse, GetPayloadResponseV3},
-    moved_app::{ApplicationReader, CommandQueue, Dependencies},
+    moved_app::{ApplicationReader, CommandQueue, Dependencies, SpawnWithHandle},
     moved_blockchain::{payload::StatePayloadId, receipt::TransactionReceipt},
     moved_genesis::config::GenesisConfig,
     serde::de::DeserializeOwned,
@@ -43,7 +43,7 @@ impl<'a> TestContext {
             app.genesis_update(genesis_block);
 
             let (queue, state) = moved_app::create(&mut app, 10);
-            let (state_task_tx, state_task) = oneshot::channel();
+            let state_task = scope.spawn_with_handle(state.work());
 
             let ctx = Self {
                 genesis_config,
@@ -54,15 +54,9 @@ impl<'a> TestContext {
                 timestamp,
             };
 
-            scope
-                .spawn(async move {
-                    state.work().await;
-                    state_task_tx.send(()).unwrap();
-                })
-                .spawn(async move {
-                    let result = future(ctx).await;
-                    tx.send(result).unwrap();
-                });
+            scope.spawn(async move {
+                tx.send(future(ctx).await).unwrap();
+            });
         });
 
         rx.await?
