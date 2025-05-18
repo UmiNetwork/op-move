@@ -86,7 +86,7 @@ pub async fn run(max_buffered_commands: u32) {
     run_with_app(queue, state, app_reader).await;
 }
 
-async fn run_with_app<'a>(
+async fn run_with_app(
     queue: CommandQueue,
     state: CommandActor<'_, dependency::Dependency>,
     app_reader: ApplicationReader<dependency::Dependency>,

@@ -25,10 +25,10 @@ pub struct TestContext {
     state_task: Receiver<()>,
 }
 
-impl<'a> TestContext {
-    pub async fn run<'s, F, FU>(mut future: FU) -> anyhow::Result<()>
+impl TestContext {
+    pub async fn run<'f, F, FU>(mut future: FU) -> anyhow::Result<()>
     where
-        F: Future<Output = anyhow::Result<()>> + Send + 's,
+        F: Future<Output = anyhow::Result<()>> + Send + 'f,
         FU: FnMut(Self) -> F + Send,
     {
         let genesis_config = GenesisConfig::default();

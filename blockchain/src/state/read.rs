@@ -142,10 +142,7 @@ impl<R: ReadStateRoot, D: DB> InMemoryStateQueries<R, D> {
         self.memory.root_by_height(height)
     }
 
-    fn resolver(
-        &self,
-        height: BlockHeight,
-    ) -> Option<impl MoveResolver + TableResolver + '_> {
+    fn resolver(&self, height: BlockHeight) -> Option<impl MoveResolver + TableResolver + '_> {
         Some(EthTrieResolver::new(
             EthTrie::from(self.db.clone(), self.root_by_height(height)?)
                 .expect("State root should be valid"),

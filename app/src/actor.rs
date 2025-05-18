@@ -24,7 +24,7 @@ pub struct CommandActor<'a, D: Dependencies> {
     app: &'a mut Application<D>,
 }
 
-impl<'a, D: DependenciesThreadSafe> CommandActor<'a, D> {
+impl<D: DependenciesThreadSafe> CommandActor<'_, D> {
     pub async fn work(mut self) {
         while let Some(msg) = self.rx.recv().await {
             Self::handle_command(&mut *self.app, msg);
@@ -61,7 +61,7 @@ impl<'a, D: Dependencies> CommandActor<'a, D> {
     }
 }
 
-impl<'a, D: Dependencies<StateQueries = InMemoryStateQueries>> CommandActor<'a, D> {
+impl<D: Dependencies<StateQueries = InMemoryStateQueries>> CommandActor<'_, D> {
     pub fn on_tx_in_memory() -> &'static OnTx<Application<D>> {
         &|_state, _changes| ()
     }
@@ -71,7 +71,7 @@ impl<'a, D: Dependencies<StateQueries = InMemoryStateQueries>> CommandActor<'a, 
     }
 }
 
-impl<'a, D: Dependencies<PayloadQueries = InMemoryPayloadQueries>> CommandActor<'a, D> {
+impl<D: Dependencies<PayloadQueries = InMemoryPayloadQueries>> CommandActor<'_, D> {
     pub fn on_payload_in_memory() -> &'static OnPayload<Application<D>> {
         &|_state, _payload_id, _block_hash| ()
     }
@@ -101,7 +101,7 @@ impl<'a> SpawnWithHandle<'a> for tokio_scoped::Scope<'a> {
     }
 }
 
-pub async fn run<'a, D: DependenciesThreadSafe, F, Out>(state: CommandActor<'a, D>, future: F)
+pub async fn run<D: DependenciesThreadSafe, F, Out>(state: CommandActor<'_, D>, future: F)
 where
     F: Future<Output = Out> + Send,
     Out: Send,
