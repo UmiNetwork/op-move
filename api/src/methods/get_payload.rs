@@ -32,7 +32,7 @@ mod tests {
         super::*,
         crate::methods::forkchoice_updated,
         alloy::primitives::hex,
-        moved_app::{Application, CommandActor, SpawnWithHandle, TestDependencies},
+        moved_app::{Application, CommandActor, TestDependencies},
         moved_blockchain::{
             block::{
                 Block, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
@@ -48,7 +48,6 @@ mod tests {
         moved_genesis::config::GenesisConfig,
         moved_shared::primitives::{B256, U256},
         moved_state::InMemoryState,
-        tokio::sync::oneshot,
     };
 
     #[test]
@@ -168,82 +167,71 @@ mod tests {
             evm_storage,
         };
         let (queue, state) = moved_app::create(&mut app, 10);
-        let (tx, rx) = oneshot::channel();
 
-        moved_app::scope(|scope| {
-            let state_handle = scope.spawn_with_handle(state.work());
+        moved_app::run(state, async move {
+            // Update the state with an execution payload
+            forkchoice_updated::execute_v3(
+                forkchoice_updated::tests::example_request(),
+                queue.clone(),
+                &0x03421ee50df45cacu64,
+            )
+                .await
+                .unwrap();
 
-            scope.spawn_with_handle(async move {
-                // Update the state with an execution payload
-                forkchoice_updated::execute_v3(
-                    forkchoice_updated::tests::example_request(),
-                    queue.clone(),
-                    &0x03421ee50df45cacu64,
-                )
-                    .await
-                    .unwrap();
+            let request: serde_json::Value = serde_json::from_str(
+                r#"
+                {
+                    "id": 30054,
+                    "jsonrpc": "2.0",
+                    "method": "engine_getPayloadV3",
+                    "params": [
+                        "0x03421ee50df45cac"
+                    ]
+                }
+            "#,
+            )
+                .unwrap();
 
-                let request: serde_json::Value = serde_json::from_str(
-                    r#"
-                    {
-                        "id": 30054,
-                        "jsonrpc": "2.0",
-                        "method": "engine_getPayloadV3",
-                        "params": [
-                            "0x03421ee50df45cac"
-                        ]
-                    }
-                "#,
-                )
-                    .unwrap();
+            let expected_response: serde_json::Value = serde_json::from_str(r#"
+                {
+                    "executionPayload": {
+                        "parentHash": "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d",
+                        "feeRecipient": "0x4200000000000000000000000000000000000011",
+                        "stateRoot": "0x7e53bf5c6f519dc1bfb5db267a82ecad319446c9820f0df44cc676af68fb408b",
+                        "receiptsRoot": "0xe50ad6079418eb8a970970d47b82f83976ed19177e538317ae4aec3c765698aa",
+                        "logsBloom": "0x00000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000008000000000000000000000000000000000000000000008000000000000000000000000000000000400000000000001000000000000000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000400",
+                        "prevRandao": "0xbde07f5d381bb84700433fe6c0ae077aa40eaad3a5de7abd298f0e3e27e6e4c9",
+                        "blockNumber": "0x1",
+                        "gasLimit": "0x1c9c380",
+                        "gasUsed": "0x25a38",
+                        "timestamp": "0x6660737b",
+                        "extraData": "0x",
+                        "baseFeePerGas": "0x0",
+                        "blockHash": "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d",
+                        "transactions": [
+                        "0x7ef8f8a0de86bef815fc910df65a9459ccb2b9a35fa8596dfcfed1ff01bbf28891d86d5e94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000000558000c5fc50000000000000000000000006660735b00000000000001a9000000000000000000000000000000000000000000000000000000000000000700000000000000000000000000000000000000000000000000000000000000017ae3f74f0134521a7d62a387ac75a5153bcd1aab1c7e003e9b9e15a5d8846363000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425",
+                        "0x7ef858a000000000000000000000000000000000000000000000000000000000000000009488f9b82462f6c4bf4a0fb15e5c3971559a316e7f9488f9b82462f6c4bf4a0fb15e5c3971559a316e7f7b7b88ffffffffffffffff8080"
+                        ],
+                        "withdrawals": [],
+                        "blobGasUsed": "0x0",
+                        "excessBlobGas": "0x0"
+                    },
+                    "blockValue": "0x0",
+                    "blobsBundle": {
+                        "commitments": [],
+                        "proofs": [],
+                        "blobs": []
+                    },
+                    "shouldOverrideBuilder": false,
+                    "parentBeaconBlockRoot": "0x2bd857e239f7e5b5e6415608c76b90600d51fa0f7f0bbbc04e2d6861b3186f1c"
+                }
+            "#).unwrap();
 
-                let expected_response: serde_json::Value = serde_json::from_str(r#"
-                    {
-                        "executionPayload": {
-                            "parentHash": "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d",
-                            "feeRecipient": "0x4200000000000000000000000000000000000011",
-                            "stateRoot": "0x7e53bf5c6f519dc1bfb5db267a82ecad319446c9820f0df44cc676af68fb408b",
-                            "receiptsRoot": "0xe50ad6079418eb8a970970d47b82f83976ed19177e538317ae4aec3c765698aa",
-                            "logsBloom": "0x00000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000008000000000000000000000000000000000000000000008000000000000000000000000000000000400000000000001000000000000000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000400",
-                            "prevRandao": "0xbde07f5d381bb84700433fe6c0ae077aa40eaad3a5de7abd298f0e3e27e6e4c9",
-                            "blockNumber": "0x1",
-                            "gasLimit": "0x1c9c380",
-                            "gasUsed": "0x25a38",
-                            "timestamp": "0x6660737b",
-                            "extraData": "0x",
-                            "baseFeePerGas": "0x0",
-                            "blockHash": "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d",
-                            "transactions": [
-                            "0x7ef8f8a0de86bef815fc910df65a9459ccb2b9a35fa8596dfcfed1ff01bbf28891d86d5e94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000000558000c5fc50000000000000000000000006660735b00000000000001a9000000000000000000000000000000000000000000000000000000000000000700000000000000000000000000000000000000000000000000000000000000017ae3f74f0134521a7d62a387ac75a5153bcd1aab1c7e003e9b9e15a5d8846363000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425",
-                            "0x7ef858a000000000000000000000000000000000000000000000000000000000000000009488f9b82462f6c4bf4a0fb15e5c3971559a316e7f9488f9b82462f6c4bf4a0fb15e5c3971559a316e7f7b7b88ffffffffffffffff8080"
-                            ],
-                            "withdrawals": [],
-                            "blobGasUsed": "0x0",
-                            "excessBlobGas": "0x0"
-                        },
-                        "blockValue": "0x0",
-                        "blobsBundle": {
-                            "commitments": [],
-                            "proofs": [],
-                            "blobs": []
-                        },
-                        "shouldOverrideBuilder": false,
-                        "parentBeaconBlockRoot": "0x2bd857e239f7e5b5e6415608c76b90600d51fa0f7f0bbbc04e2d6861b3186f1c"
-                    }
-                "#).unwrap();
+            queue.wait_for_pending_commands().await;
 
-                queue.wait_for_pending_commands().await;
+            let actual_response = execute_v3(request, reader.clone()).await.unwrap();
 
-                let actual_response = execute_v3(request, reader.clone()).await.unwrap();
-
-                assert_eq!(actual_response, expected_response);
-
-                drop(queue);
-                state_handle.await.unwrap();
-                tx.send(()).unwrap();
-            });
-        });
-
-        rx.await.unwrap();
+            assert_eq!(actual_response, expected_response);
+        }).await;
     }
 }

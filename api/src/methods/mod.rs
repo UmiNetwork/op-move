@@ -79,6 +79,11 @@ pub mod tests {
 
         let trie_db = InMemoryState::create_db();
         let mut state = InMemoryState::new(trie_db.clone());
+        let state_queries = InMemoryStateQueries::new(
+            memory_reader.clone(),
+            trie_db,
+            genesis_config.initial_state_root,
+        );
         let mut evm_storage = InMemoryStorageTrieRepository::new();
         let (changes, table_changes, evm_storage_changes) = moved_genesis_image::load();
         moved_genesis::apply(
@@ -88,11 +93,6 @@ pub mod tests {
             &genesis_config,
             &mut state,
             &mut evm_storage,
-        );
-        let state_queries = InMemoryStateQueries::new(
-            memory_reader.clone(),
-            trie_db,
-            genesis_config.initial_state_root,
         );
         let (receipt_memory_reader, receipt_memory) = receipt_memory::new();
 

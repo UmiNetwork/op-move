@@ -93,9 +93,7 @@ pub(super) mod tests {
         super::*,
         crate::methods::tests::create_app,
         alloy::primitives::hex,
-        moved_app::SpawnWithHandle,
         moved_shared::primitives::{Address, B256, Bytes, U64},
-        tokio::sync::oneshot,
     };
 
     pub fn example_request() -> serde_json::Value {
@@ -231,35 +229,25 @@ pub(super) mod tests {
         let (_reader, mut app) = create_app();
         let (queue, state) = moved_app::create(&mut app, 10);
 
-        let (tx, rx) = oneshot::channel();
+        moved_app::run(state, async move {
+            let request = example_request();
 
-        moved_app::scope(|scope| {
-            let state_handle = scope.spawn_with_handle(state.work());
+            let expected_response: serde_json::Value = serde_json::from_str(r#"
+                {
+                    "payloadStatus": {
+                        "status": "VALID",
+                        "latestValidHash": "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d",
+                        "validationError": null
+                    },
+                    "payloadId": "0x03421ee50df45cac"
+                }
+            "#).unwrap();
 
-            scope.spawn_with_handle(async move {
-                let request = example_request();
+            let response = execute_v3(request, queue, &0x03421ee50df45cacu64)
+                .await
+                .unwrap();
 
-                let expected_response: serde_json::Value = serde_json::from_str(r#"
-                    {
-                        "payloadStatus": {
-                            "status": "VALID",
-                            "latestValidHash": "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d",
-                            "validationError": null
-                        },
-                        "payloadId": "0x03421ee50df45cac"
-                    }
-                "#).unwrap();
-
-                let response = execute_v3(request, queue, &0x03421ee50df45cacu64)
-                    .await
-                    .unwrap();
-
-                assert_eq!(response, expected_response);
-                state_handle.await.unwrap();
-                tx.send(()).unwrap();
-            });
-        });
-
-        rx.await.unwrap();
+            assert_eq!(response, expected_response);
+        }).await;
     }
 }

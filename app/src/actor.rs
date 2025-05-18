@@ -7,7 +7,7 @@ use {
     },
     moved_shared::primitives::B256,
     std::ops::DerefMut,
-    tokio::sync::mpsc::Receiver,
+    tokio::sync::{mpsc::Receiver, oneshot},
 };
 
 /// A function invoked on a completion of new transaction execution batch.
@@ -24,39 +24,7 @@ pub struct CommandActor<'a, D: Dependencies> {
     app: &'a mut Application<D>,
 }
 
-pub trait SpawnWithHandle<'a> {
-    fn spawn_with_handle<'s, F>(&'s mut self, future: F) -> tokio::sync::oneshot::Receiver<()>
-    where
-        F: Future<Output = ()> + Send + 'a,
-        'a: 's;
-}
-
-impl<'a> SpawnWithHandle<'a> for tokio_scoped::Scope<'a> {
-    fn spawn_with_handle<'s, F>(&'s mut self, future: F) -> tokio::sync::oneshot::Receiver<()>
-    where
-        F: Future<Output = ()> + Send + 'a,
-        'a: 's,
-    {
-        let (tx, rx) = tokio::sync::oneshot::channel();
-
-        self.spawn(async {
-            future.await;
-            tx.send(()).ok();
-        });
-
-        rx
-    }
-}
-
-pub use tokio_scoped::scope;
-
 impl<'a, D: DependenciesThreadSafe> CommandActor<'a, D> {
-    pub fn spawn(self) {
-        tokio_scoped::scope(|scope| {
-            scope.spawn(self.work());
-        });
-    }
-
     pub async fn work(mut self) {
         while let Some(msg) = self.rx.recv().await {
             Self::handle_command(&mut *self.app, msg);
@@ -107,4 +75,48 @@ impl<'a, D: Dependencies<PayloadQueries = InMemoryPayloadQueries>> CommandActor<
     pub fn on_payload_in_memory() -> &'static OnPayload<Application<D>> {
         &|_state, _payload_id, _block_hash| ()
     }
+}
+
+pub trait SpawnWithHandle<'a> {
+    fn spawn_with_handle<'s, F>(&'s mut self, future: F) -> oneshot::Receiver<()>
+    where
+        F: Future<Output = ()> + Send + 'a,
+        'a: 's;
+}
+
+impl<'a> SpawnWithHandle<'a> for tokio_scoped::Scope<'a> {
+    fn spawn_with_handle<'s, F>(&'s mut self, future: F) -> oneshot::Receiver<()>
+    where
+        F: Future<Output = ()> + Send + 'a,
+        'a: 's,
+    {
+        let (tx, rx) = oneshot::channel();
+
+        self.spawn(async {
+            future.await;
+            tx.send(()).ok();
+        });
+
+        rx
+    }
+}
+
+pub async fn run<'a, D: DependenciesThreadSafe, F, Out>(state: CommandActor<'a, D>, future: F)
+where
+    F: Future<Output = Out> + Send,
+    Out: Send,
+{
+    let (tx, rx) = oneshot::channel();
+
+    tokio_scoped::scope(|scope| {
+        let state_handle = scope.spawn_with_handle(state.work());
+
+        scope.spawn_with_handle(async move {
+            let result = future.await;
+            state_handle.await.unwrap();
+            tx.send(result).ok();
+        });
+    });
+
+    rx.await.unwrap();
 }

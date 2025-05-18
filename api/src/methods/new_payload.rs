@@ -154,7 +154,7 @@ mod tests {
         super::*,
         crate::methods::{forkchoice_updated, get_payload},
         alloy::primitives::hex,
-        moved_app::{Application, CommandActor, SpawnWithHandle, TestDependencies},
+        moved_app::{Application, CommandActor, TestDependencies},
         moved_blockchain::{
             block::{
                 Block, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
@@ -170,7 +170,6 @@ mod tests {
         moved_genesis::config::GenesisConfig,
         moved_shared::primitives::{Address, B2048, Bytes, U64, U256},
         moved_state::InMemoryState,
-        tokio::sync::oneshot,
     };
 
     #[test]
@@ -349,122 +348,111 @@ mod tests {
             evm_storage,
         };
         let (queue, state) = moved_app::create(&mut app, 10);
-        let (tx, rx) = oneshot::channel();
 
-        moved_app::scope(|scope| {
-            let state_handle = scope.spawn_with_handle(state.work());
-
-            scope.spawn_with_handle(async move {
-                let fc_updated_request: serde_json::Value = serde_json::from_str(
-                    r#"
-                        {
-                            "jsonrpc": "2.0",
-                            "id": 7,
-                            "method": "engine_forkchoiceUpdatedV3",
-                            "params": [
-                            {
-                                "headBlockHash": "0x781f09c5b7629a7ca30668e440ea40557f01461ad6f105b371f61ff5824b2449",
-                                "safeBlockHash": "0x781f09c5b7629a7ca30668e440ea40557f01461ad6f105b371f61ff5824b2449",
-                                "finalizedBlockHash": "0x781f09c5b7629a7ca30668e440ea40557f01461ad6f105b371f61ff5824b2449"
-                            },
-                            {
-                                "timestamp": "0x666c9d8d",
-                                "prevRandao": "0x5e52abb859f1fff3a4bf38e076b67815214e8cff662055549b91ba33f5cb7fba",
-                                "suggestedFeeRecipient": "0x4200000000000000000000000000000000000011",
-                                "withdrawals": [],
-                                "parentBeaconBlockRoot": "0x1a274bb1e783ec35804dee78ec3d7cecd03371f311b2f946500613e994f024a5",
-                                "transactions": [
-                                "0x7ef8f8a0d449f5de7f558fa593dce80637d3a3f52cfaaee2913167371dd6ffd9014e431d94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e20000f424000000000000000000000000100000000666c9d8b0000000000000028000000000000000000000000000000000000000000000000000000000049165f0000000000000000000000000000000000000000000000000000000000000001d05450763214e6060d285b39ef5fe51ef9526395e5cef6ecb27ba06f9598f27d000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425"
-                                ],
-                                "gasLimit": "0x1c9c380"
-                            }
-                            ]
-                        }
-                "#,
-                )
-                    .unwrap();
-                let get_payload_request: serde_json::Value = serde_json::from_str(
-                    r#"
-                        {
-                            "jsonrpc": "2.0",
-                            "id": 8,
-                            "method": "engine_getPayloadV3",
-                            "params": [
-                                "0x0306d51fc5aa1533"
-                            ]
-                        }
-                "#,
-                )
-                .unwrap();
-                let new_payload_request: serde_json::Value = serde_json::from_str(
-                    r#"
-                        {
-                            "jsonrpc": "2.0",
-                            "id": 9,
-                            "method": "engine_newPayloadV3",
-                            "params": [
-                            {
-                                "parentHash": "0x781f09c5b7629a7ca30668e440ea40557f01461ad6f105b371f61ff5824b2449",
-                                "feeRecipient": "0x4200000000000000000000000000000000000011",
-                                "stateRoot": "0x316850949fd480573fec2a2cb07c9c22d7f18a390d9ad4b6847a4326b1a4a5eb",
-                                "receiptsRoot": "0x619a992b2d1905328560c3bd9c7fc79b57f012afbff3de92d7a82cfdf8aa186c",
-                                "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-                                "prevRandao": "0x5e52abb859f1fff3a4bf38e076b67815214e8cff662055549b91ba33f5cb7fba",
-                                "blockNumber": "0x1",
-                                "gasLimit": "0x1c9c380",
-                                "gasUsed": "0x2728a",
-                                "timestamp": "0x666c9d8d",
-                                "extraData": "0x",
-                                "baseFeePerGas": "0x3b5dc100",
-                                "blockHash": "0xc013e1ff1b8bca9f0d074618cc9e661983bc91d7677168b156765781aee775d3",
-                                "transactions": [
-                                "0x7ef8f8a0d449f5de7f558fa593dce80637d3a3f52cfaaee2913167371dd6ffd9014e431d94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e20000f424000000000000000000000000100000000666c9d8b0000000000000028000000000000000000000000000000000000000000000000000000000049165f0000000000000000000000000000000000000000000000000000000000000001d05450763214e6060d285b39ef5fe51ef9526395e5cef6ecb27ba06f9598f27d000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425"
-                                ],
-                                "withdrawals": [],
-                                "blobGasUsed": "0x0",
-                                "excessBlobGas": "0x0"
-                            },
-                            [],
-                            "0x1a274bb1e783ec35804dee78ec3d7cecd03371f311b2f946500613e994f024a5"
-                            ]
-                        }
-                "#,
-                )
-                .unwrap();
-
-                forkchoice_updated::execute_v3(fc_updated_request, queue.clone(), &0x0306d51fc5aa1533u64)
-                    .await
-                    .unwrap();
-
-                queue.wait_for_pending_commands().await;
-
-                get_payload::execute_v3(get_payload_request, reader.clone())
-                    .await
-                    .unwrap();
-
-                let response = execute_v3(new_payload_request, reader.clone())
-                    .await
-                    .unwrap();
-
-                let expected_response: serde_json::Value = serde_json::from_str(
-                    r#"
+        moved_app::run(state, async move {
+            let fc_updated_request: serde_json::Value = serde_json::from_str(
+                r#"
                     {
-                        "status": "VALID",
-                        "latestValidHash": "0xc013e1ff1b8bca9f0d074618cc9e661983bc91d7677168b156765781aee775d3",
-                        "validationError": null
+                        "jsonrpc": "2.0",
+                        "id": 7,
+                        "method": "engine_forkchoiceUpdatedV3",
+                        "params": [
+                        {
+                            "headBlockHash": "0x781f09c5b7629a7ca30668e440ea40557f01461ad6f105b371f61ff5824b2449",
+                            "safeBlockHash": "0x781f09c5b7629a7ca30668e440ea40557f01461ad6f105b371f61ff5824b2449",
+                            "finalizedBlockHash": "0x781f09c5b7629a7ca30668e440ea40557f01461ad6f105b371f61ff5824b2449"
+                        },
+                        {
+                            "timestamp": "0x666c9d8d",
+                            "prevRandao": "0x5e52abb859f1fff3a4bf38e076b67815214e8cff662055549b91ba33f5cb7fba",
+                            "suggestedFeeRecipient": "0x4200000000000000000000000000000000000011",
+                            "withdrawals": [],
+                            "parentBeaconBlockRoot": "0x1a274bb1e783ec35804dee78ec3d7cecd03371f311b2f946500613e994f024a5",
+                            "transactions": [
+                            "0x7ef8f8a0d449f5de7f558fa593dce80637d3a3f52cfaaee2913167371dd6ffd9014e431d94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e20000f424000000000000000000000000100000000666c9d8b0000000000000028000000000000000000000000000000000000000000000000000000000049165f0000000000000000000000000000000000000000000000000000000000000001d05450763214e6060d285b39ef5fe51ef9526395e5cef6ecb27ba06f9598f27d000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425"
+                            ],
+                            "gasLimit": "0x1c9c380"
+                        }
+                        ]
                     }
-                    "#,
-                )
+            "#,
+            )
+                .unwrap();
+            let get_payload_request: serde_json::Value = serde_json::from_str(
+                r#"
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 8,
+                        "method": "engine_getPayloadV3",
+                        "params": [
+                            "0x0306d51fc5aa1533"
+                        ]
+                    }
+            "#,
+            )
+            .unwrap();
+            let new_payload_request: serde_json::Value = serde_json::from_str(
+                r#"
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 9,
+                        "method": "engine_newPayloadV3",
+                        "params": [
+                        {
+                            "parentHash": "0x781f09c5b7629a7ca30668e440ea40557f01461ad6f105b371f61ff5824b2449",
+                            "feeRecipient": "0x4200000000000000000000000000000000000011",
+                            "stateRoot": "0x316850949fd480573fec2a2cb07c9c22d7f18a390d9ad4b6847a4326b1a4a5eb",
+                            "receiptsRoot": "0x619a992b2d1905328560c3bd9c7fc79b57f012afbff3de92d7a82cfdf8aa186c",
+                            "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                            "prevRandao": "0x5e52abb859f1fff3a4bf38e076b67815214e8cff662055549b91ba33f5cb7fba",
+                            "blockNumber": "0x1",
+                            "gasLimit": "0x1c9c380",
+                            "gasUsed": "0x2728a",
+                            "timestamp": "0x666c9d8d",
+                            "extraData": "0x",
+                            "baseFeePerGas": "0x3b5dc100",
+                            "blockHash": "0xc013e1ff1b8bca9f0d074618cc9e661983bc91d7677168b156765781aee775d3",
+                            "transactions": [
+                            "0x7ef8f8a0d449f5de7f558fa593dce80637d3a3f52cfaaee2913167371dd6ffd9014e431d94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e20000f424000000000000000000000000100000000666c9d8b0000000000000028000000000000000000000000000000000000000000000000000000000049165f0000000000000000000000000000000000000000000000000000000000000001d05450763214e6060d285b39ef5fe51ef9526395e5cef6ecb27ba06f9598f27d000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425"
+                            ],
+                            "withdrawals": [],
+                            "blobGasUsed": "0x0",
+                            "excessBlobGas": "0x0"
+                        },
+                        [],
+                        "0x1a274bb1e783ec35804dee78ec3d7cecd03371f311b2f946500613e994f024a5"
+                        ]
+                    }
+            "#,
+            )
+            .unwrap();
+
+            forkchoice_updated::execute_v3(fc_updated_request, queue.clone(), &0x0306d51fc5aa1533u64)
+                .await
                 .unwrap();
 
-                assert_eq!(response, expected_response);
+            queue.wait_for_pending_commands().await;
 
-                drop(queue);
-                state_handle.await.unwrap();
-                tx.send(()).unwrap();
-            });
-        });
+            get_payload::execute_v3(get_payload_request, reader.clone())
+                .await
+                .unwrap();
 
-        rx.await.unwrap();
+            let response = execute_v3(new_payload_request, reader.clone())
+                .await
+                .unwrap();
+
+            let expected_response: serde_json::Value = serde_json::from_str(
+                r#"
+                {
+                    "status": "VALID",
+                    "latestValidHash": "0xc013e1ff1b8bca9f0d074618cc9e661983bc91d7677168b156765781aee775d3",
+                    "validationError": null
+                }
+                "#,
+            )
+            .unwrap();
+
+            assert_eq!(response, expected_response);
+        }).await;
     }
 }
