@@ -79,9 +79,10 @@ async fn test_evm_contracts() -> anyhow::Result<()> {
         }
 
         ctx.shutdown().await;
-    });
 
-    Ok(())
+        Ok(())
+    })
+    .await
 }
 
 fn get_logged_hash(receipt: &TransactionReceipt) -> B256 {

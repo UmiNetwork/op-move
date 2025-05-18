@@ -53,7 +53,8 @@ async fn test_get_proof() -> anyhow::Result<()> {
         );
 
         ctx.shutdown().await;
-    });
 
-    Ok(())
+        Ok(())
+    })
+    .await
 }

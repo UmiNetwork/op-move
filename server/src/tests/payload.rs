@@ -106,7 +106,6 @@ async fn test_sending_the_same_payload_twice_produces_one_block() -> anyhow::Res
         assert_eq!(actual_response, expected_response);
 
         ctx.shutdown().await;
-    });
-
-    Ok(())
+        Ok(())
+    }).await
 }
