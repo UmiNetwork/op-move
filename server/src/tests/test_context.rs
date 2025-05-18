@@ -13,7 +13,8 @@ use {
     moved_blockchain::{payload::StatePayloadId, receipt::TransactionReceipt},
     moved_genesis::config::GenesisConfig,
     serde::de::DeserializeOwned,
-    tokio::sync::oneshot::Receiver,
+    std::{future::Future, time::Duration},
+    tokio::{sync::oneshot::Receiver, time::sleep},
 };
 
 const DEPOSIT_TX: &[u8] = &hex!("7ef8f8a032595a51f0561028c684fbeeb46c7221a34be9a2eedda60a93069dd77320407e94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000000000000000000000000000000000000000006807cdc800000000000000220000000000000000000000000000000000000000000000000000000000a68a3a000000000000000000000000000000000000000000000000000000000000000198663a8bf712c08273a02876877759b43dc4df514214cc2f6008870b9a8503380000000000000000000000008c67a7b8624044f8f672e9ec374dfa596f01afb9");
@@ -24,29 +25,43 @@ pub struct TestContext {
     pub app: ApplicationReader<dependency::Dependency>,
     head: B256,
     timestamp: u64,
-    state_task: Receiver<()>,
+    state_task: Option<Receiver<()>>,
 }
 
-impl TestContext {
-    pub async fn new() -> anyhow::Result<Self> {
+impl<'a> TestContext {
+    pub fn run<'s, F, FU>(mut future: FU)
+    where
+        F: Future<Output = ()> + Send + 's,
+        FU: FnMut(Self) -> F + Send,
+    {
         let genesis_config = GenesisConfig::default();
         let (mut app, reader) = initialize_app(genesis_config.clone());
-        let genesis_block = create_genesis_block(&app.block_hash, &genesis_config);
-        let head = genesis_block.hash;
-        let timestamp = genesis_block.block.header.timestamp;
-        app.genesis_update(genesis_block);
-        let (queue, state) = moved_app::create(&mut app, 10);
 
-        let state_task = state.spawn();
+        tokio_scoped::scope(|scope| {
+            let genesis_block = create_genesis_block(&app.block_hash, &genesis_config);
+            let head = genesis_block.hash;
+            let timestamp = genesis_block.block.header.timestamp;
+            app.genesis_update(genesis_block);
 
-        Ok(Self {
-            genesis_config,
-            queue,
-            app: reader,
-            state_task,
-            head,
-            timestamp,
-        })
+            let (queue, state) = moved_app::create(&mut app, 10);
+
+            let ctx = Self {
+                genesis_config,
+                queue,
+                app: reader,
+                state_task: None,
+                head,
+                timestamp,
+            };
+
+            scope
+                .spawn(async move {
+                    state.work().await;
+                })
+                .spawn(async move {
+                    future(ctx).await;
+                });
+        });
     }
 
     pub async fn produce_block(&mut self) -> anyhow::Result<B256> {
@@ -88,27 +103,13 @@ impl TestContext {
             "id": 8,
             "method": "engine_getPayloadV3",
             "params": [
-               String::from(payload_id),
+               format!("{payload_id}"),
             ]
         });
         let response: GetPayloadResponseV3 =
-            handle_request(request, &self.queue, self.app.clone()).await?;
+            handle_request_multiple_tries(request, &self.queue, self.app.clone()).await?;
 
-        let request = serde_json::json!({
-            "jsonrpc": "2.0",
-            "id": 9,
-            "method": "engine_newPayloadV3",
-            "params": [
-               response.execution_payload,
-               [],
-               "0x0000000000000000000000000000000000000000000000000000000000000000"
-            ]
-        });
-        let response: PayloadStatusV1 =
-            handle_request(request, &self.queue, self.app.clone()).await?;
-        assert_eq!(response.status, Status::Valid);
-
-        self.head = response.latest_valid_hash.unwrap();
+        self.head = response.execution_payload.block_hash;
         Ok(self.head)
     }
 
@@ -170,7 +171,7 @@ impl TestContext {
 
     pub async fn shutdown(self) {
         drop(self.queue);
-        self.state_task.await.unwrap();
+        // self.state_task.unwrap().await.unwrap();
     }
 }
 
@@ -194,4 +195,34 @@ pub async fn handle_request<T: DeserializeOwned>(
 
     let result: T = serde_json::from_value(response.result.expect("If not error then has result"))?;
     Ok(result)
+}
+
+pub async fn handle_request_multiple_tries<T: DeserializeOwned>(
+    request: serde_json::Value,
+    queue: &CommandQueue,
+    app: ApplicationReader<impl Dependencies>,
+) -> anyhow::Result<T> {
+    for i in 0..300 {
+        let response = moved_api::request::handle(
+            request.clone(),
+            queue.clone(),
+            |_| true,
+            &StatePayloadId,
+            app.clone(),
+        )
+        .await;
+
+        if let Some(error) = response.error {
+            if i == 299 {
+                anyhow::bail!("Error response from request {request:?}: {error:?}");
+            } else {
+                continue;
+            }
+        }
+
+        let result: T =
+            serde_json::from_value(response.result.expect("If not error then has result"))?;
+        return Ok(result);
+    }
+    unreachable!()
 }

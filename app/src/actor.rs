@@ -49,14 +49,16 @@ impl<'a> SpawnWithHandle<'a> for tokio_scoped::Scope<'a> {
 }
 
 impl<'a, D: DependenciesThreadSafe> CommandActor<'a, D> {
-    pub fn spawn(mut self) -> tokio::sync::oneshot::Receiver<()> {
+    pub fn spawn(self) {
         tokio_scoped::scope(|scope| {
-            scope.spawn_with_handle(async move {
-                while let Some(msg) = self.rx.recv().await {
-                    Self::handle_command(&mut *self.app, msg);
-                }
-            })
-        })
+            scope.spawn(self.work());
+        });
+    }
+
+    pub async fn work(mut self) {
+        while let Some(msg) = self.rx.recv().await {
+            Self::handle_command(&mut *self.app, msg);
+        }
     }
 }
 

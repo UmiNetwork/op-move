@@ -7,7 +7,7 @@ use {
     moved_shared::primitives::{Address, B256, B2048, Bytes, U64, U256},
     serde::{Deserialize, Serialize},
     std::{
-        fmt::{Display, Formatter},
+        fmt::{Debug, Display, Formatter},
         str::FromStr,
     },
 };
@@ -63,7 +63,7 @@ pub struct PayloadAttributesV3 {
     pub gas_limit: U64,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(into = "String")]
 pub struct PayloadId(pub U64);
 
@@ -74,6 +74,12 @@ impl PayloadId {
 }
 
 impl Display for PayloadId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "0x{:x}", self.0.as_limbs()[0])
+    }
+}
+
+impl Debug for PayloadId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "0x{:x}", self.0.as_limbs()[0])
     }

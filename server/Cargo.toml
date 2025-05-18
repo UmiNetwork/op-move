@@ -38,6 +38,7 @@ once_cell.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
+tokio-scoped.workspace = true
 warp.workspace = true
 warp-reverse-proxy.workspace = true
 
@@ -52,7 +53,6 @@ moved-evm-ext.workspace = true
 moved-genesis-image.workspace = true
 openssl.workspace = true
 tempfile.workspace = true
-tokio-scoped.workspace = true
 
 [[bin]]
 name = "op-move"

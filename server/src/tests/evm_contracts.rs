@@ -31,54 +31,56 @@ mod evm_contract {
     }
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_evm_contracts() -> anyhow::Result<()> {
-    let mut ctx = TestContext::new().await?;
-    let chain_id = ctx.genesis_config.chain_id;
+    TestContext::run(|mut ctx| async move {
+        let chain_id = ctx.genesis_config.chain_id;
 
-    // 1. Deploy contract in block with height = 1
-    let tx = deploy_evm_contract(chain_id, evm_contract::BYTE_CODE);
-    let receipt = ctx.execute_transaction(tx).await?;
-    assert!(receipt.inner.inner.is_success());
-    let contract_address = receipt.inner.contract_address.unwrap();
+        // 1. Deploy contract in block with height = 1
+        let tx = deploy_evm_contract(chain_id, evm_contract::BYTE_CODE);
+        let receipt = ctx.execute_transaction(tx).await.unwrap();
+        assert!(receipt.inner.inner.is_success());
+        let contract_address = receipt.inner.contract_address.unwrap();
 
-    // 2. Call `getBlockHash` function in block with heights <= 3
-    for block_height in [2, 3] {
-        let tx = call_contract(chain_id, contract_address, getBlockHashCall::SELECTOR);
-        let receipt = ctx.execute_transaction(tx).await?;
-        assert_eq!(receipt.inner.block_number.unwrap(), block_height);
+        // 2. Call `getBlockHash` function in block with heights <= 3
+        for block_height in [2, 3] {
+            let tx = call_contract(chain_id, contract_address, getBlockHashCall::SELECTOR);
+            let receipt = ctx.execute_transaction(tx).await.unwrap();
+            assert_eq!(receipt.inner.block_number.unwrap(), block_height);
 
-        // In this range the `BLOCKHASH` EVM opcode with input 0x3 returns 0x0 because
-        // height 3 has not happened yet.
-        assert_eq!(get_logged_hash(&receipt), B256::ZERO);
-    }
+            // In this range the `BLOCKHASH` EVM opcode with input 0x3 returns 0x0 because
+            // height 3 has not happened yet.
+            assert_eq!(get_logged_hash(&receipt), B256::ZERO);
+        }
 
-    let block = ctx.get_block_by_number(3).await?;
-    let expected_hash = block.0.header.hash;
+        let block = ctx.get_block_by_number(3).await.unwrap();
+        let expected_hash = block.0.header.hash;
 
-    // 3. Call `getBlockHash` function in block with 4 <= height <= 259
-    for block_height in 4..=259 {
-        let tx = call_contract(chain_id, contract_address, getBlockHashCall::SELECTOR);
-        let receipt = ctx.execute_transaction(tx).await?;
-        assert_eq!(receipt.inner.block_number.unwrap(), block_height);
+        // 3. Call `getBlockHash` function in block with 4 <= height <= 259
+        for block_height in 4..=259 {
+            let tx = call_contract(chain_id, contract_address, getBlockHashCall::SELECTOR);
+            let receipt = ctx.execute_transaction(tx).await.unwrap();
+            assert_eq!(receipt.inner.block_number.unwrap(), block_height);
 
-        // In this range the `BLOCKHASH` EVM opcode with input 0x3 returns the block
-        // hash for the block at height 3.
-        assert_eq!(get_logged_hash(&receipt), expected_hash);
-    }
+            // In this range the `BLOCKHASH` EVM opcode with input 0x3 returns the block
+            // hash for the block at height 3.
+            assert_eq!(get_logged_hash(&receipt), expected_hash);
+        }
 
-    // 4. Call `getBlockHash` function in block with heights > 259
-    for block_height in [260, 261] {
-        let tx = call_contract(chain_id, contract_address, getBlockHashCall::SELECTOR);
-        let receipt = ctx.execute_transaction(tx).await?;
-        assert_eq!(receipt.inner.block_number.unwrap(), block_height);
+        // 4. Call `getBlockHash` function in block with heights > 259
+        for block_height in [260, 261] {
+            let tx = call_contract(chain_id, contract_address, getBlockHashCall::SELECTOR);
+            let receipt = ctx.execute_transaction(tx).await.unwrap();
+            assert_eq!(receipt.inner.block_number.unwrap(), block_height);
 
-        // In this range the `BLOCKHASH` EVM opcode with input 0x3 returns 0x0 because
-        // height 3 is too far in the past (more than 256 blocks ago).
-        assert_eq!(get_logged_hash(&receipt), B256::ZERO);
-    }
+            // In this range the `BLOCKHASH` EVM opcode with input 0x3 returns 0x0 because
+            // height 3 is too far in the past (more than 256 blocks ago).
+            assert_eq!(get_logged_hash(&receipt), B256::ZERO);
+        }
 
-    ctx.shutdown().await;
+        ctx.shutdown().await;
+    });
+
     Ok(())
 }
 

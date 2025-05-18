@@ -4,7 +4,9 @@ use {
     flate2::read::GzDecoder,
     jsonwebtoken::{DecodingKey, Validation},
     moved_api::method_name::MethodName,
-    moved_app::{Application, ApplicationReader, Command, CommandQueue, Dependencies},
+    moved_app::{
+        Application, ApplicationReader, Command, CommandQueue, Dependencies, SpawnWithHandle,
+    },
     moved_blockchain::{
         block::{Block, BlockHash, BlockQueries, ExtendedBlock, Header},
         payload::{NewPayloadId, StatePayloadId},
@@ -128,9 +130,10 @@ pub async fn run(max_buffered_commands: u32) {
             .bind_with_graceful_shutdown(auth_server_addr, queue.shutdown_listener())
             .1,
         async {
-            let state = state.spawn().await.ok();
+            tokio_scoped::scope(|scope| scope.spawn_with_handle(state.work()))
+                .await
+                .ok();
             queue.shutdown();
-            state
         },
     );
 }

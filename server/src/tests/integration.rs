@@ -42,7 +42,7 @@ mod erc20;
 mod heartbeat;
 mod withdrawal;
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_on_ethereum() -> Result<()> {
     // Steps to run a testnet on OP
     // 1. Check the accounts in env vars and Optimism binaries
