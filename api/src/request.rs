@@ -13,12 +13,12 @@ pub async fn handle(
     queue: CommandQueue,
     is_allowed: impl Fn(&MethodName) -> bool,
     payload_id: &impl NewPayloadId,
-    app: &ApplicationReader<impl Dependencies>,
+    app: ApplicationReader<impl Dependencies>,
 ) -> JsonRpcResponse {
     let id = json_utils::get_field(&request, "id");
     let jsonrpc = json_utils::get_field(&request, "jsonrpc");
 
-    match inner_handle_request(request, queue, is_allowed, payload_id, app).await {
+    match inner_handle_request(request, queue, is_allowed, payload_id, &app).await {
         Ok(r) => JsonRpcResponse {
             id,
             jsonrpc,

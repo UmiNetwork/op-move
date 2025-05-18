@@ -91,7 +91,7 @@ impl<'a> TestContext {
             ]
         });
         let response: ForkchoiceUpdatedResponseV1 =
-            handle_request(request, &self.queue, &self.reader).await?;
+            handle_request(request, &self.queue, self.reader.clone()).await?;
         let payload_id = response.payload_id.unwrap();
 
         self.queue.wait_for_pending_commands().await;
@@ -105,7 +105,7 @@ impl<'a> TestContext {
             ]
         });
         let response: GetPayloadResponseV3 =
-            handle_request_multiple_tries(request, &self.queue, &self.reader).await?;
+            handle_request_multiple_tries(request, &self.queue, self.reader.clone()).await?;
 
         self.head = response.execution_payload.block_hash;
         Ok(self.head)
@@ -121,7 +121,7 @@ impl<'a> TestContext {
                 format!("0x{}", hex::encode(bytes)),
             ]
         });
-        let tx_hash: B256 = handle_request(request, &self.queue, &self.reader).await?;
+        let tx_hash: B256 = handle_request(request, &self.queue, self.reader.clone()).await?;
         Ok(tx_hash)
     }
 
@@ -137,7 +137,7 @@ impl<'a> TestContext {
                 format!("{tx_hash:?}"),
             ]
         });
-        let receipt = handle_request(request, &self.queue, &self.reader).await?;
+        let receipt = handle_request(request, &self.queue, self.reader.clone()).await?;
         Ok(receipt)
     }
 
@@ -162,7 +162,8 @@ impl<'a> TestContext {
                 true
             ]
         });
-        let block: GetBlockResponse = handle_request(request, &self.queue, &self.reader).await?;
+        let block: GetBlockResponse =
+            handle_request(request, &self.queue, self.reader.clone()).await?;
         Ok(block)
     }
 
@@ -175,7 +176,7 @@ impl<'a> TestContext {
 pub async fn handle_request<T: DeserializeOwned>(
     request: serde_json::Value,
     queue: &CommandQueue,
-    app: &ApplicationReader<impl Dependencies>,
+    app: ApplicationReader<impl Dependencies>,
 ) -> anyhow::Result<T> {
     let response = moved_api::request::handle(
         request.clone(),
@@ -197,7 +198,7 @@ pub async fn handle_request<T: DeserializeOwned>(
 pub async fn handle_request_multiple_tries<T: DeserializeOwned>(
     request: serde_json::Value,
     queue: &CommandQueue,
-    app: &ApplicationReader<impl Dependencies>,
+    app: ApplicationReader<impl Dependencies>,
 ) -> anyhow::Result<T> {
     let max_tries = 300;
 
@@ -207,7 +208,7 @@ pub async fn handle_request_multiple_tries<T: DeserializeOwned>(
             queue.clone(),
             |_| true,
             &StatePayloadId,
-            &app,
+            app.clone(),
         )
         .await;
 
