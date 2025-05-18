@@ -30,11 +30,11 @@ mod tests {
             primitives::{Address, Bytes},
             rpc::types::TransactionRequest,
         },
-        moved_app::CommandActor,
+        moved_app::{CommandActor, SpawnWithHandle},
         moved_shared::primitives::U64,
         std::str::FromStr,
         test_case::test_case,
-        tokio::sync::mpsc,
+        tokio::sync::{mpsc, oneshot},
     };
 
     #[test_case("0x1")]
@@ -76,39 +76,48 @@ mod tests {
     #[test_case("pending")]
     #[tokio::test]
     async fn test_execute_call_entry_fn(block: &str) {
-        let (reader, app) = create_app();
+        let (reader, mut app) = create_app();
         let (state_channel, rx) = mpsc::channel(10);
-        let state_actor = CommandActor::new(rx, Box::new(app));
-        let state_handle = state_actor.spawn();
+        let state_actor = CommandActor::new(rx, &mut app);
+        let (tx, rx) = oneshot::channel();
 
-        // Add funds to the account to deploy the `counter` contract
-        deposit_eth("0x8fd379246834eac74b8419ffda202cf8051f7a03", &state_channel).await;
-        deploy_contract(Bytes::from_hex("01fd01a11ceb0b0600000009010002020204030614051a0e07283d0865200a8501050c8a01490dd3010200000001080000020001000003000200000400030000050403000105010101030002060c0301070307636f756e74657207436f756e7465720e636f756e7465725f657869737473096765745f636f756e7409696e6372656d656e74077075626c69736801690000000000000000000000008fd379246834eac74b8419ffda202cf8051f7a0300020106030001000003030b00290002010100010003050b002b00100014020201040100050b0b002a000f000c010a0114060100000000000000160b0115020301040003050b000b0112002d0002000000").unwrap(), &state_channel).await;
+        moved_app::scope(|scope| {
+            let state_handle = scope.spawn_with_handle(state_actor.work());
 
-        // Check if the count exists for an address, which returns false
-        let request: serde_json::Value = serde_json::json!({
-            "jsonrpc": "2.0",
-            "method": "eth_call",
-            "params": [
-                {
-                    "from": "0x8fd379246834eac74b8419ffda202cf8051f7a03",
-                    "to": "0x8fd379246834eac74b8419ffda202cf8051f7a03",
-                    "input": "0x020000000000000000000000008fd379246834eac74b8419ffda202cf8051f7a0307636f756e7465720e636f756e7465725f6578697374730001200000000000000000000000000000000000000000000000000000000000000b0b"
-                },
-                block,
-            ],
-            "id": 1
+            scope.spawn_with_handle(async move {
+                // Add funds to the account to deploy the `counter` contract
+                deposit_eth("0x8fd379246834eac74b8419ffda202cf8051f7a03", &state_channel).await;
+                deploy_contract(Bytes::from_hex("01fd01a11ceb0b0600000009010002020204030614051a0e07283d0865200a8501050c8a01490dd3010200000001080000020001000003000200000400030000050403000105010101030002060c0301070307636f756e74657207436f756e7465720e636f756e7465725f657869737473096765745f636f756e7409696e6372656d656e74077075626c69736801690000000000000000000000008fd379246834eac74b8419ffda202cf8051f7a0300020106030001000003030b00290002010100010003050b002b00100014020201040100050b0b002a000f000c010a0114060100000000000000160b0115020301040003050b000b0112002d0002000000").unwrap(), &state_channel).await;
+
+                // Check if the count exists for an address, which returns false
+                let request: serde_json::Value = serde_json::json!({
+                    "jsonrpc": "2.0",
+                    "method": "eth_call",
+                    "params": [
+                        {
+                            "from": "0x8fd379246834eac74b8419ffda202cf8051f7a03",
+                            "to": "0x8fd379246834eac74b8419ffda202cf8051f7a03",
+                            "input": "0x020000000000000000000000008fd379246834eac74b8419ffda202cf8051f7a0307636f756e7465720e636f756e7465725f6578697374730001200000000000000000000000000000000000000000000000000000000000000b0b"
+                        },
+                        block,
+                    ],
+                    "id": 1
+                });
+
+                state_channel.reserve_many(10).await.unwrap();
+
+                let expected_response = serde_json::json!([1, 1, 0]);
+                let actual_response = execute(request, reader.clone()).await.unwrap();
+
+                assert_eq!(actual_response, expected_response);
+
+                drop(state_channel);
+                state_handle.await.unwrap();
+                tx.send(()).unwrap();
+            });
         });
 
-        state_channel.reserve_many(10).await.unwrap();
-
-        let expected_response = serde_json::json!([1, 1, 0]);
-        let actual_response = execute(request, reader.clone()).await.unwrap();
-
-        assert_eq!(actual_response, expected_response);
-
-        drop(state_channel);
-        state_handle.await.unwrap();
+        rx.await.unwrap();
     }
 
     #[test_case("0x2")]
@@ -116,34 +125,43 @@ mod tests {
     #[test_case("pending")]
     #[tokio::test]
     async fn test_execute_call_script(block: &str) {
-        let (reader, app) = create_app();
+        let (reader, mut app) = create_app();
         let (state_channel, rx) = mpsc::channel(10);
-        let state_actor = CommandActor::new(rx, Box::new(app));
-        let state_handle = state_actor.spawn();
+        let state_actor = CommandActor::new(rx, &mut app);
+        let (tx, rx) = oneshot::channel();
 
-        // Add funds to the account to deploy the `counter` contract
-        deposit_eth("0x8fd379246834eac74b8419ffda202cf8051f7a03", &state_channel).await;
-        deploy_contract(Bytes::from_hex("01fd01a11ceb0b0600000009010002020204030614051a0e07283d0865200a8501050c8a01490dd3010200000001080000020001000003000200000400030000050403000105010101030002060c0301070307636f756e74657207436f756e7465720e636f756e7465725f657869737473096765745f636f756e7409696e6372656d656e74077075626c69736801690000000000000000000000008fd379246834eac74b8419ffda202cf8051f7a0300020106030001000003030b00290002010100010003050b002b00100014020201040100050b0b002a000f000c010a0114060100000000000000160b0115020301040003050b000b0112002d0002000000").unwrap(), &state_channel).await;
+        moved_app::scope(|scope| {
+            let state_handle = scope.spawn_with_handle(state_actor.work());
 
-        let request: serde_json::Value = serde_json::json!({
-            "jsonrpc": "2.0",
-            "method": "eth_call",
-            "params": [
-                {
-                    "from": "0x8fd379246834eac74b8419ffda202cf8051f7a03",
-                    "input": "00fb01a11ceb0b060000000501000403041405180c072436085a4000000101000203010001030002000104010400010501020002060c0301050001060c0103067369676e657207636f756e7465720a616464726573735f6f66077075626c697368096765745f636f756e7409696e6372656d656e7400000000000000000000000000000000000000000000000000000000000000010000000000000000000000008fd379246834eac74b8419ffda202cf8051f7a030000011b0a0011000c020b000a0111010a0211020a0121040c050e060000000000000000270a0211030b0211020b0106010000000000000016210418051a06010000000000000027020001010d00000000000000"
-                },
-                block,
-            ],
-            "id": 1
+            scope.spawn_with_handle(async move {
+                // Add funds to the account to deploy the `counter` contract
+                deposit_eth("0x8fd379246834eac74b8419ffda202cf8051f7a03", &state_channel).await;
+                deploy_contract(Bytes::from_hex("01fd01a11ceb0b0600000009010002020204030614051a0e07283d0865200a8501050c8a01490dd3010200000001080000020001000003000200000400030000050403000105010101030002060c0301070307636f756e74657207436f756e7465720e636f756e7465725f657869737473096765745f636f756e7409696e6372656d656e74077075626c69736801690000000000000000000000008fd379246834eac74b8419ffda202cf8051f7a0300020106030001000003030b00290002010100010003050b002b00100014020201040100050b0b002a000f000c010a0114060100000000000000160b0115020301040003050b000b0112002d0002000000").unwrap(), &state_channel).await;
+
+                let request: serde_json::Value = serde_json::json!({
+                    "jsonrpc": "2.0",
+                    "method": "eth_call",
+                    "params": [
+                        {
+                            "from": "0x8fd379246834eac74b8419ffda202cf8051f7a03",
+                            "input": "00fb01a11ceb0b060000000501000403041405180c072436085a4000000101000203010001030002000104010400010501020002060c0301050001060c0103067369676e657207636f756e7465720a616464726573735f6f66077075626c697368096765745f636f756e7409696e6372656d656e7400000000000000000000000000000000000000000000000000000000000000010000000000000000000000008fd379246834eac74b8419ffda202cf8051f7a030000011b0a0011000c020b000a0111010a0211020a0121040c050e060000000000000000270a0211030b0211020b0106010000000000000016210418051a06010000000000000027020001010d00000000000000"
+                        },
+                        block,
+                    ],
+                    "id": 1
+                });
+
+                state_channel.reserve_many(10).await.unwrap();
+
+                // Counter script call should succeed
+                execute(request, reader.clone()).await.unwrap();
+
+                drop(state_channel);
+                state_handle.await.unwrap();
+                tx.send(()).unwrap();
+            });
         });
 
-        state_channel.reserve_many(10).await.unwrap();
-
-        // Counter script call should succeed
-        execute(request, reader.clone()).await.unwrap();
-
-        drop(state_channel);
-        state_handle.await.unwrap();
+        rx.await.unwrap();
     }
 }

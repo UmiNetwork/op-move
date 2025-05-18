@@ -55,11 +55,11 @@ mod tests {
         super::*,
         crate::methods::tests::{create_app, deposit_eth},
         alloy::primitives::Address,
-        moved_app::CommandActor,
+        moved_app::{CommandActor, SpawnWithHandle},
         moved_shared::primitives::U64,
         std::str::FromStr,
         test_case::test_case,
-        tokio::sync::mpsc,
+        tokio::sync::{mpsc, oneshot},
     };
 
     #[test]
@@ -114,33 +114,42 @@ mod tests {
     #[tokio::test]
     async fn test_execute(block: &str) {
         let (state_channel, rx) = mpsc::channel(10);
-        let (reader, app) = create_app();
-        let state_actor = CommandActor::new(rx, Box::new(app));
-        let state_handle = state_actor.spawn();
+        let (reader, mut app) = create_app();
+        let state_actor = CommandActor::new(rx, &mut app);
+        let (tx, rx) = oneshot::channel();
 
-        deposit_eth("0x8fd379246834eac74b8419ffda202cf8051f7a03", &state_channel).await;
+        moved_app::scope(|scope| {
+            let state_handle = scope.spawn_with_handle(state_actor.work());
 
-        let request: serde_json::Value = serde_json::json!({
-            "jsonrpc": "2.0",
-            "method": "eth_estimateGas",
-            "params": [
-                {
-                    "from": "0x8fd379246834eac74b8419ffda202cf8051f7a03",
-                    "input": "0x01fd01a11ceb0b0600000009010002020204030614051a0e07283d0865200a8501050c8a01490dd3010200000001080000020001000003000200000400030000050403000105010101030002060c0301070307636f756e74657207436f756e7465720e636f756e7465725f657869737473096765745f636f756e7409696e6372656d656e74077075626c69736801690000000000000000000000008fd379246834eac74b8419ffda202cf8051f7a0300020106030001000003030b00290002010100010003050b002b00100014020201040100050b0b002a000f000c010a0114060100000000000000160b0115020301040003050b000b0112002d0002000000"
-                },
-                block,
-            ],
-            "id": 1
+            scope.spawn_with_handle(async move {
+                deposit_eth("0x8fd379246834eac74b8419ffda202cf8051f7a03", &state_channel).await;
+
+                let request: serde_json::Value = serde_json::json!({
+                    "jsonrpc": "2.0",
+                    "method": "eth_estimateGas",
+                    "params": [
+                        {
+                            "from": "0x8fd379246834eac74b8419ffda202cf8051f7a03",
+                            "input": "0x01fd01a11ceb0b0600000009010002020204030614051a0e07283d0865200a8501050c8a01490dd3010200000001080000020001000003000200000400030000050403000105010101030002060c0301070307636f756e74657207436f756e7465720e636f756e7465725f657869737473096765745f636f756e7409696e6372656d656e74077075626c69736801690000000000000000000000008fd379246834eac74b8419ffda202cf8051f7a0300020106030001000003030b00290002010100010003050b002b00100014020201040100050b0b002a000f000c010a0114060100000000000000160b0115020301040003050b000b0112002d0002000000"
+                        },
+                        block,
+                    ],
+                    "id": 1
+                });
+
+                state_channel.reserve_many(10).await.unwrap();
+
+                let expected_response: serde_json::Value = serde_json::from_str(r#""0x63ec""#).unwrap();
+                let actual_response = execute(request, reader.clone()).await.unwrap();
+
+                assert_eq!(actual_response, expected_response);
+
+                drop(state_channel);
+                state_handle.await.unwrap();
+                tx.send(()).unwrap();
+            });
         });
 
-        state_channel.reserve_many(10).await.unwrap();
-
-        let expected_response: serde_json::Value = serde_json::from_str(r#""0x63ec""#).unwrap();
-        let actual_response = execute(request, reader.clone()).await.unwrap();
-
-        assert_eq!(actual_response, expected_response);
-
-        drop(state_channel);
-        state_handle.await.unwrap();
+        rx.await.unwrap();
     }
 }

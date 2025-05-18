@@ -22,73 +22,85 @@ mod tests {
             methods::{forkchoice_updated, get_payload, send_raw_transaction, tests::create_app},
             schema::{ForkchoiceUpdatedResponseV1, GetPayloadResponseV3},
         },
+        moved_app::SpawnWithHandle,
         moved_blockchain::receipt::TransactionReceipt,
         std::iter,
+        tokio::sync::oneshot,
     };
 
     #[tokio::test]
     async fn test_execute() {
-        let (reader, app) = create_app();
-        let (queue, state) = moved_app::create(Box::new(app), 10);
-        let state_handle = state.spawn();
+        let (reader, mut app) = create_app();
+        let (queue, state) = moved_app::create(&mut app, 10);
+        let (tx, rx) = oneshot::channel();
 
-        // 1. Send transaction
-        let tx_hash = send_raw_transaction::execute(
-            send_raw_transaction::tests::example_request(),
-            queue.clone(),
-        )
-        .await
-        .unwrap();
+        moved_app::scope(|scope| {
+            let state_handle = scope.spawn_with_handle(state.work());
 
-        // 2. Trigger block production
-        let forkchoice_response: ForkchoiceUpdatedResponseV1 = serde_json::from_value(
-            forkchoice_updated::execute_v3(
-                forkchoice_updated::tests::example_request(),
-                queue.clone(),
-                &0x03421ee50df45cacu64,
-            )
-            .await
-            .unwrap(),
-        )
-        .unwrap();
-
-        queue.wait_for_pending_commands().await;
-
-        let request = serde_json::Value::Object(
-            iter::once((
-                "params".to_string(),
-                serde_json::Value::Array(vec![
-                    serde_json::to_value(forkchoice_response.payload_id.unwrap()).unwrap(),
-                ]),
-            ))
-            .collect(),
-        );
-        let payload_response: GetPayloadResponseV3 = serde_json::from_value(
-            get_payload::execute_v3(request, reader.clone())
+            scope.spawn_with_handle(async move {
+                // 1. Send transaction
+                let tx_hash = send_raw_transaction::execute(
+                    send_raw_transaction::tests::example_request(),
+                    queue.clone(),
+                )
                 .await
-                .unwrap(),
-        )
-        .unwrap();
-        let block_hash = payload_response.execution_payload.block_hash;
+                .unwrap();
 
-        // 3. Get transaction receipt
-        let request = serde_json::Value::Object(
-            iter::once((
-                "params".to_string(),
-                serde_json::Value::Array(vec![tx_hash]),
-            ))
-            .collect(),
-        );
-        let receipt: TransactionReceipt =
-            serde_json::from_value(execute(request, reader.clone()).await.unwrap()).unwrap();
+                // 2. Trigger block production
+                let forkchoice_response: ForkchoiceUpdatedResponseV1 = serde_json::from_value(
+                    forkchoice_updated::execute_v3(
+                        forkchoice_updated::tests::example_request(),
+                        queue.clone(),
+                        &0x03421ee50df45cacu64,
+                    )
+                    .await
+                    .unwrap(),
+                )
+                .unwrap();
 
-        // Confirm the receipt contains correct information about the transaction
-        assert_eq!(receipt.inner.transaction_index, Some(2));
-        assert_eq!(receipt.inner.block_hash, Some(block_hash));
-        assert!(receipt.inner.inner.status());
-        assert_eq!(receipt.inner.inner.logs().len(), 2);
+                queue.wait_for_pending_commands().await;
 
-        drop(queue);
-        state_handle.await.unwrap();
+                let request = serde_json::Value::Object(
+                    iter::once((
+                        "params".to_string(),
+                        serde_json::Value::Array(vec![
+                            serde_json::to_value(forkchoice_response.payload_id.unwrap()).unwrap(),
+                        ]),
+                    ))
+                    .collect(),
+                );
+                let payload_response: GetPayloadResponseV3 = serde_json::from_value(
+                    get_payload::execute_v3(request, reader.clone())
+                        .await
+                        .unwrap(),
+                )
+                .unwrap();
+                let block_hash = payload_response.execution_payload.block_hash;
+
+                // 3. Get transaction receipt
+                let request = serde_json::Value::Object(
+                    iter::once((
+                        "params".to_string(),
+                        serde_json::Value::Array(vec![tx_hash]),
+                    ))
+                    .collect(),
+                );
+                let receipt: TransactionReceipt =
+                    serde_json::from_value(execute(request, reader.clone()).await.unwrap())
+                        .unwrap();
+
+                // Confirm the receipt contains correct information about the transaction
+                assert_eq!(receipt.inner.transaction_index, Some(2));
+                assert_eq!(receipt.inner.block_hash, Some(block_hash));
+                assert!(receipt.inner.inner.status());
+                assert_eq!(receipt.inner.inner.logs().len(), 2);
+
+                drop(queue);
+                state_handle.await.unwrap();
+                tx.send(()).unwrap();
+            });
+        });
+
+        rx.await.unwrap();
     }
 }

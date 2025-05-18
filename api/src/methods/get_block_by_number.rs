@@ -22,10 +22,10 @@ mod tests {
         super::*,
         crate::methods::tests::create_app,
         alloy::eips::BlockNumberOrTag::{self, *},
-        moved_app::{Command, CommandActor, TestDependencies},
+        moved_app::{Command, CommandActor, SpawnWithHandle, TestDependencies},
         moved_shared::primitives::U64,
         test_case::test_case,
-        tokio::sync::mpsc,
+        tokio::sync::{mpsc, oneshot},
     };
 
     pub fn example_request(tag: BlockNumberOrTag) -> serde_json::Value {
@@ -84,30 +84,39 @@ mod tests {
     #[tokio::test]
     async fn test_latest_block_height_is_updated_with_newly_built_block() {
         let (state_channel, rx) = mpsc::channel(10);
-        let (reader, app) = create_app();
-        let state: CommandActor<TestDependencies> = CommandActor::new(rx, Box::new(app));
-        let state_handle = state.spawn();
+        let (reader, mut app) = create_app();
+        let state: CommandActor<TestDependencies> = CommandActor::new(rx, &mut app);
+        let (tx, rx) = oneshot::channel();
 
-        let request = example_request(Latest);
-        let response = execute(request, reader.clone()).await.unwrap();
-        assert_eq!(get_block_number_from_response(response), "0x0");
+        moved_app::scope(|scope| {
+            let state_handle = scope.spawn_with_handle(state.work());
 
-        // Create a block, so the block height becomes 1
-        let msg = Command::StartBlockBuild {
-            payload_attributes: Default::default(),
-            payload_id: U64::from(0x03421ee50df45cacu64),
-        };
-        state_channel.send(msg).await.unwrap();
+            scope.spawn_with_handle(async move {
+                let request = example_request(Latest);
+                let response = execute(request, reader.clone()).await.unwrap();
+                assert_eq!(get_block_number_from_response(response), "0x0");
 
-        state_channel.reserve_many(10).await.unwrap();
+                // Create a block, so the block height becomes 1
+                let msg = Command::StartBlockBuild {
+                    payload_attributes: Default::default(),
+                    payload_id: U64::from(0x03421ee50df45cacu64),
+                };
+                state_channel.send(msg).await.unwrap();
 
-        let request = example_request(Latest);
-        let response = execute(request, reader.clone()).await.unwrap();
+                state_channel.reserve_many(10).await.unwrap();
 
-        assert_eq!(get_block_number_from_response(response), "0x1");
+                let request = example_request(Latest);
+                let response = execute(request, reader.clone()).await.unwrap();
 
-        drop(state_channel);
-        state_handle.await.unwrap();
+                assert_eq!(get_block_number_from_response(response), "0x1");
+
+                drop(state_channel);
+                state_handle.await.unwrap();
+                tx.send(()).unwrap();
+            });
+        });
+
+        rx.await.unwrap();
     }
 
     #[test_case(Safe; "safe")]
@@ -116,23 +125,32 @@ mod tests {
     #[tokio::test]
     async fn test_latest_block_height_is_same_as_tag(tag: BlockNumberOrTag) {
         let (state_channel, rx) = mpsc::channel(10);
-        let (reader, app) = create_app();
-        let state: CommandActor<TestDependencies> = CommandActor::new(rx, Box::new(app));
-        let state_handle = state.spawn();
+        let (reader, mut app) = create_app();
+        let state: CommandActor<TestDependencies> = CommandActor::new(rx, &mut app);
+        let (tx, rx) = oneshot::channel();
 
-        let msg = Command::StartBlockBuild {
-            payload_attributes: Default::default(),
-            payload_id: U64::from(0x03421ee50df45cacu64),
-        };
-        state_channel.send(msg).await.unwrap();
+        moved_app::scope(|scope| {
+            let state_handle = scope.spawn_with_handle(state.work());
 
-        state_channel.reserve_many(10).await.unwrap();
+            scope.spawn_with_handle(async move {
+                let msg = Command::StartBlockBuild {
+                    payload_attributes: Default::default(),
+                    payload_id: U64::from(0x03421ee50df45cacu64),
+                };
+                state_channel.send(msg).await.unwrap();
 
-        let request = example_request(tag);
-        let response = execute(request, reader.clone()).await.unwrap();
-        assert_eq!(get_block_number_from_response(response), "0x1");
+                state_channel.reserve_many(10).await.unwrap();
 
-        drop(state_channel);
-        state_handle.await.unwrap();
+                let request = example_request(tag);
+                let response = execute(request, reader.clone()).await.unwrap();
+                assert_eq!(get_block_number_from_response(response), "0x1");
+
+                drop(state_channel);
+                state_handle.await.unwrap();
+                tx.send(()).unwrap();
+            });
+        });
+
+        rx.await.unwrap();
     }
 }

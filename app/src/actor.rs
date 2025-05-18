@@ -48,6 +48,8 @@ impl<'a> SpawnWithHandle<'a> for tokio_scoped::Scope<'a> {
     }
 }
 
+pub use tokio_scoped::scope;
+
 impl<'a, D: DependenciesThreadSafe> CommandActor<'a, D> {
     pub fn spawn(self) {
         tokio_scoped::scope(|scope| {

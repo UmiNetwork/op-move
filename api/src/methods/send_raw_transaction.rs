@@ -51,7 +51,10 @@ async fn inner_execute(tx: TxEnvelope, queue: CommandQueue) -> Result<B256, Json
 
 #[cfg(test)]
 pub mod tests {
-    use {super::*, crate::methods::tests::create_app};
+    use {
+        super::*, crate::methods::tests::create_app, moved_app::SpawnWithHandle,
+        tokio::sync::oneshot,
+    };
 
     pub fn example_request() -> serde_json::Value {
         serde_json::from_str(
@@ -70,20 +73,29 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_execute() {
-        let (_reader, app) = create_app();
-        let (queue, state) = moved_app::create(Box::new(app), 10);
-        let state_handle = state.spawn();
+        let (_reader, mut app) = create_app();
+        let (queue, state) = moved_app::create(&mut app, 10);
+        let (tx, rx) = oneshot::channel();
 
-        let request = example_request();
+        moved_app::scope(|scope| {
+            let state_handle = scope.spawn_with_handle(state.work());
 
-        let expected_response: serde_json::Value = serde_json::from_str(
-            r#""0x3545efb3ce7a22353c346c98771640131b81baa64eb03113b20ad2bef5c0ec53""#,
-        )
-        .unwrap();
+            scope.spawn_with_handle(async move {
+                let request = example_request();
 
-        let response = execute(request, queue).await.unwrap();
+                let expected_response: serde_json::Value = serde_json::from_str(
+                    r#""0x3545efb3ce7a22353c346c98771640131b81baa64eb03113b20ad2bef5c0ec53""#,
+                )
+                .unwrap();
 
-        assert_eq!(response, expected_response);
-        state_handle.await.unwrap();
+                let response = execute(request, queue).await.unwrap();
+
+                assert_eq!(response, expected_response);
+                state_handle.await.unwrap();
+                tx.send(()).unwrap();
+            });
+        });
+
+        rx.await.unwrap();
     }
 }
