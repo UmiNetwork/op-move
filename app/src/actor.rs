@@ -7,7 +7,7 @@ use {
     },
     moved_shared::primitives::B256,
     std::ops::DerefMut,
-    tokio::{sync::mpsc::Receiver, task::JoinHandle},
+    tokio::sync::mpsc::Receiver,
 };
 
 /// A function invoked on a completion of new transaction execution batch.
@@ -19,23 +19,49 @@ pub type OnTx<S> = dyn Fn(&mut S, ChangeSet) + Send + Sync;
 /// A function invoked on an execution of a new payload.
 pub type OnPayload<S> = dyn Fn(&mut S, PayloadId, B256) + Send + Sync;
 
-pub struct CommandActor<D: Dependencies> {
+pub struct CommandActor<'a, D: Dependencies> {
     rx: Receiver<Command>,
-    app: Box<Application<D>>,
+    app: &'a mut Application<D>,
 }
 
-impl<D: DependenciesThreadSafe> CommandActor<D> {
-    pub fn spawn(mut self) -> JoinHandle<()> {
-        tokio::spawn(async move {
-            while let Some(msg) = self.rx.recv().await {
-                Self::handle_command(&mut *self.app, msg);
-            }
+pub trait SpawnWithHandle<'a> {
+    fn spawn_with_handle<'s, F>(&'s mut self, future: F) -> tokio::sync::oneshot::Receiver<()>
+    where
+        F: Future<Output = ()> + Send + 'a,
+        'a: 's;
+}
+
+impl<'a> SpawnWithHandle<'a> for tokio_scoped::Scope<'a> {
+    fn spawn_with_handle<'s, F>(&'s mut self, future: F) -> tokio::sync::oneshot::Receiver<()>
+    where
+        F: Future<Output = ()> + Send + 'a,
+        'a: 's,
+    {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+
+        self.spawn(async {
+            future.await;
+            tx.send(()).ok();
+        });
+
+        rx
+    }
+}
+
+impl<'a, D: DependenciesThreadSafe> CommandActor<'a, D> {
+    pub fn spawn(mut self) -> tokio::sync::oneshot::Receiver<()> {
+        tokio_scoped::scope(|scope| {
+            scope.spawn_with_handle(async move {
+                while let Some(msg) = self.rx.recv().await {
+                    Self::handle_command(&mut *self.app, msg);
+                }
+            })
         })
     }
 }
 
-impl<D: Dependencies> CommandActor<D> {
-    pub fn new(rx: Receiver<Command>, app: Box<Application<D>>) -> Self {
+impl<'a, D: Dependencies> CommandActor<'a, D> {
+    pub fn new(rx: Receiver<Command>, app: &'a mut Application<D>) -> Self {
         Self { rx, app }
     }
 
@@ -63,7 +89,7 @@ impl<D: Dependencies> CommandActor<D> {
     }
 }
 
-impl<D: Dependencies<StateQueries = InMemoryStateQueries>> CommandActor<D> {
+impl<'a, D: Dependencies<StateQueries = InMemoryStateQueries>> CommandActor<'a, D> {
     pub fn on_tx_in_memory() -> &'static OnTx<Application<D>> {
         &|_state, _changes| ()
     }
@@ -73,7 +99,7 @@ impl<D: Dependencies<StateQueries = InMemoryStateQueries>> CommandActor<D> {
     }
 }
 
-impl<D: Dependencies<PayloadQueries = InMemoryPayloadQueries>> CommandActor<D> {
+impl<'a, D: Dependencies<PayloadQueries = InMemoryPayloadQueries>> CommandActor<'a, D> {
     pub fn on_payload_in_memory() -> &'static OnPayload<Application<D>> {
         &|_state, _payload_id, _block_hash| ()
     }

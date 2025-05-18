@@ -13,7 +13,7 @@ use {
     moved_blockchain::{payload::StatePayloadId, receipt::TransactionReceipt},
     moved_genesis::config::GenesisConfig,
     serde::de::DeserializeOwned,
-    tokio::task::JoinHandle,
+    tokio::sync::oneshot::Receiver,
 };
 
 const DEPOSIT_TX: &[u8] = &hex!("7ef8f8a032595a51f0561028c684fbeeb46c7221a34be9a2eedda60a93069dd77320407e94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000000000000000000000000000000000000000006807cdc800000000000000220000000000000000000000000000000000000000000000000000000000a68a3a000000000000000000000000000000000000000000000000000000000000000198663a8bf712c08273a02876877759b43dc4df514214cc2f6008870b9a8503380000000000000000000000008c67a7b8624044f8f672e9ec374dfa596f01afb9");
@@ -24,7 +24,7 @@ pub struct TestContext {
     pub app: ApplicationReader<dependency::Dependency>,
     head: B256,
     timestamp: u64,
-    state_task: JoinHandle<()>,
+    state_task: Receiver<()>,
 }
 
 impl TestContext {
@@ -35,7 +35,7 @@ impl TestContext {
         let head = genesis_block.hash;
         let timestamp = genesis_block.block.header.timestamp;
         app.genesis_update(genesis_block);
-        let (queue, state) = moved_app::create(Box::new(app), 10);
+        let (queue, state) = moved_app::create(&mut app, 10);
 
         let state_task = state.spawn();
 

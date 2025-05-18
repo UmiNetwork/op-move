@@ -25,6 +25,7 @@ moved-shared.workspace = true
 moved-state.workspace = true
 op-alloy.workspace = true
 tokio.workspace = true
+tokio-scoped.workspace = true
 
 [dev-dependencies]
 moved-execution.features = ["test-doubles"]

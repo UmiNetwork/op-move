@@ -52,6 +52,7 @@ moved-evm-ext.workspace = true
 moved-genesis-image.workspace = true
 openssl.workspace = true
 tempfile.workspace = true
+tokio-scoped.workspace = true
 
 [[bin]]
 name = "op-move"

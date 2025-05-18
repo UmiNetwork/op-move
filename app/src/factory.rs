@@ -4,7 +4,7 @@ use {
 };
 
 pub fn create<T: DependenciesThreadSafe>(
-    app: Box<Application<T>>,
+    app: &mut Application<T>,
     buffer: u32,
 ) -> (CommandQueue, CommandActor<T>) {
     let (ktx, _) = broadcast::channel(1);

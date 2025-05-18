@@ -221,7 +221,7 @@ impl StateQueries for HeedStateQueries<'_> {
         proof_from_trie_and_resolver(address, storage_slots, &mut tree, &resolver, evm_storage)
     }
 
-    fn resolver_at<'a>(&'a self, height: BlockHeight) -> impl MoveResolver + TableResolver + 'a {
+    fn resolver_at(&self, height: BlockHeight) -> impl MoveResolver + TableResolver + '_ {
         self.resolver(height).unwrap()
     }
 }

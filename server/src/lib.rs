@@ -75,8 +75,8 @@ pub async fn run(max_buffered_commands: u32) {
         ..Default::default()
     };
 
-    let (app, app_reader) = initialize_app(genesis_config);
-    let (queue, state) = moved_app::create(Box::new(app), max_buffered_commands);
+    let (mut app, app_reader) = initialize_app(genesis_config);
+    let (queue, state) = moved_app::create(&mut app, max_buffered_commands);
 
     let http_app_reader = app_reader.clone();
     let http_cmd_queue = queue.clone();
@@ -127,9 +127,10 @@ pub async fn run(max_buffered_commands: u32) {
         warp::serve(auth_route)
             .bind_with_graceful_shutdown(auth_server_addr, queue.shutdown_listener())
             .1,
-        async move {
-            state.spawn().await.ok();
+        async {
+            let state = state.spawn().await.ok();
             queue.shutdown();
+            state
         },
     );
 }

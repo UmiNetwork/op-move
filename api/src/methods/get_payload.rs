@@ -15,7 +15,7 @@ pub async fn execute_v3(
 
     // Spec: https://github.com/ethereum/execution-apis/blob/main/src/engine/cancun.md#specification-2
     let response = app
-        .payload(payload_id.clone().into())
+        .payload(payload_id.into())
         .map(GetPayloadResponseV3::from)
         .ok_or_else(|| JsonRpcError {
             code: -38001,

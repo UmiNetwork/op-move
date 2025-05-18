@@ -84,7 +84,7 @@ pub trait StateQueries {
         height: BlockHeight,
     ) -> Option<ProofResponse>;
 
-    fn resolver_at<'a>(&'a self, height: BlockHeight) -> impl MoveResolver + TableResolver + 'a;
+    fn resolver_at(&self, height: BlockHeight) -> impl MoveResolver + TableResolver + '_;
 }
 
 pub trait ReadStateRoot {
@@ -142,10 +142,10 @@ impl<R: ReadStateRoot, D: DB> InMemoryStateQueries<R, D> {
         self.memory.root_by_height(height)
     }
 
-    fn resolver<'a>(
-        &'a self,
+    fn resolver(
+        &self,
         height: BlockHeight,
-    ) -> Option<impl MoveResolver + TableResolver + 'a> {
+    ) -> Option<impl MoveResolver + TableResolver + '_> {
         Some(EthTrieResolver::new(
             EthTrie::from(self.db.clone(), self.root_by_height(height)?)
                 .expect("State root should be valid"),
@@ -253,7 +253,7 @@ impl<R: ReadStateRoot, D: DB> StateQueries for InMemoryStateQueries<R, D> {
         proof_from_trie_and_resolver(address, storage_slots, &mut tree, &resolver, evm_storage)
     }
 
-    fn resolver_at<'a>(&'a self, height: BlockHeight) -> impl MoveResolver + TableResolver + 'a {
+    fn resolver_at(&self, height: BlockHeight) -> impl MoveResolver + TableResolver + '_ {
         self.resolver(height).unwrap()
     }
 }
@@ -384,7 +384,7 @@ pub mod test_doubles {
             None
         }
 
-        fn resolver_at<'a>(&'a self, _: BlockHeight) -> impl MoveResolver + TableResolver + 'a {
+        fn resolver_at(&self, _: BlockHeight) -> impl MoveResolver + TableResolver + '_ {
             EthTrieResolver::new(EthTrie::new(Arc::new(eth_trie::MemoryDB::new(true))))
         }
     }

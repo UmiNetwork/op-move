@@ -4,17 +4,18 @@ use {
         criterion_group, measurement::WallTime, BatchSize, BenchmarkGroup, BenchmarkId, Criterion,
         Throughput,
     },
-    moved_app::{Application, DependenciesThreadSafe},
+    moved_app::{Application, DependenciesThreadSafe, SpawnWithHandle},
     moved_genesis::config::GenesisConfig,
     moved_server::initialize_app,
     std::process::Termination,
     tokio::runtime::Runtime,
+    tokio_scoped::ScopeBuilder,
 };
 
 fn build_1000_blocks(
     current: &Runtime,
     bencher: &mut BenchmarkGroup<WallTime>,
-    app: Box<Application<impl DependenciesThreadSafe>>,
+    app: &mut Application<impl DependenciesThreadSafe>,
     buffer_size: u32,
 ) {
     bencher.throughput(Throughput::Elements(*input::BLOCKS_1000_LEN));
@@ -22,20 +23,21 @@ fn build_1000_blocks(
     bencher.bench_with_input(BenchmarkId::from_parameter(buffer_size), &buffer_size, {
         |b, _size| {
             b.iter_batched(
-                || {
-                    let (queue, actor) = moved_app::create(app, buffer_size);
+                input::blocks_1000,
+                |input| {
+                    ScopeBuilder::from_runtime(current).scope(|scope| {
+                        let (queue, actor) = moved_app::create(app, buffer_size);
 
-                    let handle = current.spawn(async move { actor.spawn().await.unwrap() });
+                        let handle =
+                            scope.spawn_with_handle(async move { actor.spawn().await.unwrap() });
 
-                    (queue, handle, input::blocks_1000())
-                },
-                |(queue, handle, input)| {
-                    current.block_on(async move {
-                        for msg in input {
-                            queue.send(msg).await;
-                        }
-                        drop(queue);
-                        handle.await.unwrap()
+                        scope.block_on(async {
+                            for msg in input {
+                                queue.send(msg).await;
+                            }
+                            drop(queue);
+                            handle.await.unwrap()
+                        })
                     })
                 },
                 BatchSize::PerIteration,
@@ -56,9 +58,7 @@ fn bench_build_1000_blocks_with_queue_size(bencher: &mut Criterion) -> impl Term
 
         app.genesis_update(input::GENESIS);
 
-        let app = Box::new(app);
-
-        build_1000_blocks(&current, &mut group, app, buffer_size);
+        build_1000_blocks(&current, &mut group, &mut app, buffer_size);
     }
 }
 
