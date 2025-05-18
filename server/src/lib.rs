@@ -1,3 +1,5 @@
+#[cfg(test)]
+use moved_blockchain::block::{Block, BlockHash, ExtendedBlock, Header};
 use {
     crate::mirror::MirrorLog,
     clap::Parser,
@@ -8,7 +10,7 @@ use {
         Application, ApplicationReader, Command, CommandQueue, Dependencies, SpawnWithHandle,
     },
     moved_blockchain::{
-        block::{Block, BlockHash, BlockQueries, ExtendedBlock, Header},
+        block::BlockQueries,
         payload::{NewPayloadId, StatePayloadId},
     },
     moved_genesis::config::GenesisConfig,
@@ -183,6 +185,7 @@ pub fn initialize_app(
     (app, app_reader)
 }
 
+#[cfg(test)]
 fn create_genesis_block(
     block_hash: &impl BlockHash,
     genesis_config: &GenesisConfig,
