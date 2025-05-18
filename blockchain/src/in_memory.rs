@@ -63,7 +63,7 @@ pub mod shared_memory {
 mod tests {
     use {
         super::*,
-        crate::block::{ExtendedBlock, ReadBlockMemory},
+        crate::block::{Block, ExtendedBlock, Header, ReadBlockMemory},
         alloy::hex,
         moved_shared::primitives::B256,
     };
@@ -89,11 +89,19 @@ mod tests {
 
         assert_eq!(actual_height, expected_height);
 
-        let mut block = ExtendedBlock::default();
-        block.hash = B256::new(hex!(
-            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-        ));
-        block.block.header.number = 1;
+        let block = ExtendedBlock {
+            hash: B256::new(hex!(
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            )),
+            block: Block {
+                header: Header {
+                    number: 1,
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            ..Default::default()
+        };
         w.block_memory.add(block);
 
         let actual_height = r.block_memory.height();
