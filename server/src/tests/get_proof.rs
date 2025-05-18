@@ -23,7 +23,7 @@ async fn test_get_proof() -> anyhow::Result<()> {
                format!("{block_hash}")
             ]
         });
-        let response: ProofResponse = handle_request(request, &ctx.queue, ctx.app.clone())
+        let response: ProofResponse = handle_request(request, &ctx.queue, &ctx.reader)
             .await
             .unwrap();
 

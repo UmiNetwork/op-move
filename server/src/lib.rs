@@ -7,7 +7,8 @@ use {
     jsonwebtoken::{DecodingKey, Validation},
     moved_api::method_name::MethodName,
     moved_app::{
-        Application, ApplicationReader, Command, CommandQueue, Dependencies, SpawnWithHandle,
+        Application, ApplicationReader, Command, CommandActor, CommandQueue, Dependencies,
+        SpawnWithHandle,
     },
     moved_blockchain::{
         block::BlockQueries,
@@ -20,6 +21,7 @@ use {
         fs,
         io::Read,
         net::{Ipv4Addr, SocketAddr, SocketAddrV4},
+        sync::OnceLock,
         time::SystemTime,
     },
     warp::{
@@ -65,6 +67,8 @@ static JWTSECRET: Lazy<Vec<u8>> = Lazy::new(|| {
     hex::decode(jwt).expect("JWT secret should be a hex string")
 });
 
+static APP_READER: OnceLock<ApplicationReader<dependency::Dependency>> = OnceLock::new();
+
 pub async fn run(max_buffered_commands: u32) {
     // TODO: genesis should come from a file (path specified by CLI)
     let genesis_config = GenesisConfig {
@@ -81,16 +85,24 @@ pub async fn run(max_buffered_commands: u32) {
 
     let (mut app, app_reader) = initialize_app(genesis_config);
     let (queue, state) = moved_app::create(&mut app, max_buffered_commands);
+    APP_READER.set(app_reader).ok().unwrap();
 
-    let http_app_reader = app_reader.clone();
+    run_with_app(queue, state, APP_READER.get().unwrap()).await;
+}
+
+async fn run_with_app<'a>(
+    queue: CommandQueue,
+    state: CommandActor<'_, dependency::Dependency>,
+    app_reader: &'static ApplicationReader<dependency::Dependency>,
+) {
     let http_cmd_queue = queue.clone();
     let http_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8545));
     let mut content_type = HeaderMap::new();
     content_type.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
     let http_route = warp::any()
-        .map(move || (http_cmd_queue.clone(), http_app_reader.clone()))
+        .map(move || http_cmd_queue.clone())
         .and(extract_request_data_filter())
-        .and_then(|(queue, app_reader), path, query, method, headers, body| {
+        .and_then(|queue, path, query, method, headers, body| {
             mirror(
                 queue,
                 (path, query, method, headers, body),
@@ -107,21 +119,19 @@ pub async fn run(max_buffered_commands: u32) {
     let auth_cmd_queue = queue.clone();
     let auth_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8551));
     let auth_route = warp::any()
-        .map(move || (auth_cmd_queue.clone(), app_reader.clone()))
+        .map(move || auth_cmd_queue.clone())
         .and(extract_request_data_filter())
         .and(validate_jwt())
-        .and_then(
-            |(queue, app_reader), path, query, method, headers, body, _| {
-                mirror(
-                    queue,
-                    (path, query, method, headers, body),
-                    "9551",
-                    |_| true,
-                    &StatePayloadId,
-                    app_reader,
-                )
-            },
-        )
+        .and_then(move |queue, path, query, method, headers, body, _| {
+            mirror(
+                queue,
+                (path, query, method, headers, body),
+                "9551",
+                |_| true,
+                &StatePayloadId,
+                app_reader,
+            )
+        })
         .with(warp::cors().allow_any_origin());
 
     tokio::join!(
@@ -230,7 +240,7 @@ async fn mirror(
     port: &str,
     is_allowed: impl Fn(&MethodName) -> bool,
     payload_id: &impl NewPayloadId,
-    app: ApplicationReader<impl Dependencies>,
+    app: &ApplicationReader<impl Dependencies>,
 ) -> Result<warp::reply::Response, Rejection> {
     let (path, query, method, headers, body) = request;
 

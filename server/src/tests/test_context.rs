@@ -19,7 +19,7 @@ const DEPOSIT_TX: &[u8] = &hex!("7ef8f8a032595a51f0561028c684fbeeb46c7221a34be9a
 pub struct TestContext {
     pub genesis_config: GenesisConfig,
     pub queue: CommandQueue,
-    pub app: ApplicationReader<dependency::Dependency>,
+    pub reader: ApplicationReader<dependency::Dependency>,
     head: B256,
     timestamp: u64,
     state_task: Receiver<()>,
@@ -48,7 +48,7 @@ impl<'a> TestContext {
             let ctx = Self {
                 genesis_config,
                 queue,
-                app: reader,
+                reader,
                 state_task,
                 head,
                 timestamp,
@@ -91,7 +91,7 @@ impl<'a> TestContext {
             ]
         });
         let response: ForkchoiceUpdatedResponseV1 =
-            handle_request(request, &self.queue, self.app.clone()).await?;
+            handle_request(request, &self.queue, &self.reader).await?;
         let payload_id = response.payload_id.unwrap();
 
         self.queue.wait_for_pending_commands().await;
@@ -101,11 +101,11 @@ impl<'a> TestContext {
             "id": 8,
             "method": "engine_getPayloadV3",
             "params": [
-               format!("{payload_id}"),
+               String::from(payload_id),
             ]
         });
         let response: GetPayloadResponseV3 =
-            handle_request_multiple_tries(request, &self.queue, self.app.clone()).await?;
+            handle_request_multiple_tries(request, &self.queue, &self.reader).await?;
 
         self.head = response.execution_payload.block_hash;
         Ok(self.head)
@@ -121,7 +121,7 @@ impl<'a> TestContext {
                 format!("0x{}", hex::encode(bytes)),
             ]
         });
-        let tx_hash: B256 = handle_request(request, &self.queue, self.app.clone()).await?;
+        let tx_hash: B256 = handle_request(request, &self.queue, &self.reader).await?;
         Ok(tx_hash)
     }
 
@@ -137,7 +137,7 @@ impl<'a> TestContext {
                 format!("{tx_hash:?}"),
             ]
         });
-        let receipt = handle_request(request, &self.queue, self.app.clone()).await?;
+        let receipt = handle_request(request, &self.queue, &self.reader).await?;
         Ok(receipt)
     }
 
@@ -162,8 +162,7 @@ impl<'a> TestContext {
                 true
             ]
         });
-        let block: GetBlockResponse =
-            handle_request(request, &self.queue, self.app.clone()).await?;
+        let block: GetBlockResponse = handle_request(request, &self.queue, &self.reader).await?;
         Ok(block)
     }
 
@@ -176,7 +175,7 @@ impl<'a> TestContext {
 pub async fn handle_request<T: DeserializeOwned>(
     request: serde_json::Value,
     queue: &CommandQueue,
-    app: ApplicationReader<impl Dependencies>,
+    app: &ApplicationReader<impl Dependencies>,
 ) -> anyhow::Result<T> {
     let response = moved_api::request::handle(
         request.clone(),
@@ -198,7 +197,7 @@ pub async fn handle_request<T: DeserializeOwned>(
 pub async fn handle_request_multiple_tries<T: DeserializeOwned>(
     request: serde_json::Value,
     queue: &CommandQueue,
-    app: ApplicationReader<impl Dependencies>,
+    app: &ApplicationReader<impl Dependencies>,
 ) -> anyhow::Result<T> {
     let max_tries = 300;
 
@@ -208,7 +207,7 @@ pub async fn handle_request_multiple_tries<T: DeserializeOwned>(
             queue.clone(),
             |_| true,
             &StatePayloadId,
-            app.clone(),
+            &app,
         )
         .await;
 
