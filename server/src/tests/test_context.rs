@@ -22,7 +22,7 @@ pub struct TestContext {
     pub app: ApplicationReader<dependency::Dependency>,
     head: B256,
     timestamp: u64,
-    state_task: Option<Receiver<()>>,
+    state_task: Receiver<()>,
 }
 
 impl<'a> TestContext {
@@ -43,12 +43,13 @@ impl<'a> TestContext {
             app.genesis_update(genesis_block);
 
             let (queue, state) = moved_app::create(&mut app, 10);
+            let (state_task_tx, state_task) = oneshot::channel();
 
             let ctx = Self {
                 genesis_config,
                 queue,
                 app: reader,
-                state_task: None,
+                state_task,
                 head,
                 timestamp,
             };
@@ -56,6 +57,7 @@ impl<'a> TestContext {
             scope
                 .spawn(async move {
                     state.work().await;
+                    state_task_tx.send(()).unwrap();
                 })
                 .spawn(async move {
                     let result = future(ctx).await;
@@ -173,7 +175,7 @@ impl<'a> TestContext {
 
     pub async fn shutdown(self) {
         drop(self.queue);
-        // self.state_task.unwrap().await.unwrap();
+        self.state_task.await.unwrap();
     }
 }
 
@@ -204,7 +206,9 @@ pub async fn handle_request_multiple_tries<T: DeserializeOwned>(
     queue: &CommandQueue,
     app: ApplicationReader<impl Dependencies>,
 ) -> anyhow::Result<T> {
-    for i in 0..300 {
+    let max_tries = 300;
+
+    for i in 1..=max_tries {
         let response = moved_api::request::handle(
             request.clone(),
             queue.clone(),
@@ -215,7 +219,7 @@ pub async fn handle_request_multiple_tries<T: DeserializeOwned>(
         .await;
 
         if let Some(error) = response.error {
-            if i == 299 {
+            if i == max_tries {
                 anyhow::bail!("Error response from request {request:?}: {error:?}");
             } else {
                 continue;
@@ -226,5 +230,6 @@ pub async fn handle_request_multiple_tries<T: DeserializeOwned>(
             serde_json::from_value(response.result.expect("If not error then has result"))?;
         return Ok(result);
     }
+
     unreachable!()
 }
