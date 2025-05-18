@@ -195,7 +195,7 @@ pub mod tests {
 
         let msg = Command::StartBlockBuild {
             payload_attributes,
-            payload_id: U64::from(0x03421ee50df45cacu64),
+            payload_id: U64::from(0x03421ee50df45aaau64),
         };
         channel.send(msg).await.unwrap();
     }
