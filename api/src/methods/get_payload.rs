@@ -74,7 +74,7 @@ mod tests {
         assert_eq!(params, expected_params);
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn test_execute_v3() {
         let genesis_config = GenesisConfig::default();
 

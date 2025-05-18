@@ -71,7 +71,7 @@ pub mod tests {
         ).unwrap()
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn test_execute() {
         let (_reader, mut app) = create_app();
         let (queue, state) = moved_app::create(&mut app, 10);

@@ -28,7 +28,7 @@ mod tests {
         tokio::sync::oneshot,
     };
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn test_execute() {
         let (reader, mut app) = create_app();
         let (queue, state) = moved_app::create(&mut app, 10);
