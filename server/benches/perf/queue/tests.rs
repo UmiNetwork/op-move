@@ -28,8 +28,7 @@ fn build_1000_blocks(
                     ScopeBuilder::from_runtime(current).scope(|scope| {
                         let (queue, actor) = moved_app::create(app, buffer_size);
 
-                        let handle =
-                            scope.spawn_with_handle(async move { actor.spawn().await.unwrap() });
+                        let handle = scope.spawn_with_handle(actor.work());
 
                         scope.block_on(async {
                             for msg in input {
