@@ -138,7 +138,7 @@ fn db() -> &'static moved_storage_rocksdb::RocksDb {
 fn create_db() -> moved_storage_rocksdb::RocksDb {
     let path = "db";
 
-    if std::env::var("PURGE").as_ref().map(String::as_str) == Ok("1") || cfg!(test) {
+    if std::env::var("PURGE").as_ref().map(String::as_str) == Ok("1") {
         let _ = std::fs::remove_dir_all(path);
     }
 

@@ -129,11 +129,6 @@ lazy_static::lazy_static! {
     };
 }
 
-#[cfg(test)]
-lazy_static::lazy_static! {
-    static ref TEMP_DIR: tempfile::TempDir = tempfile::tempdir().unwrap();
-}
-
 fn db() -> &'static moved_storage_heed::Env {
     &Database
 }
@@ -141,22 +136,12 @@ fn db() -> &'static moved_storage_heed::Env {
 fn create_db() -> moved_storage_heed::Env {
     assert_eq!(moved_storage_heed::DATABASES.len(), 11);
 
-    let path = {
-        #[cfg(not(test))]
-        {
-            let path = "db";
+    let path = "db";
 
-            if std::env::var("PURGE").as_ref().map(String::as_str) == Ok("1") || cfg!(test) {
-                let _ = std::fs::remove_dir_all(path);
-            }
-            let _ = std::fs::create_dir(path);
-            path
-        }
-        #[cfg(test)]
-        {
-            TEMP_DIR.path()
-        }
-    };
+    if std::env::var("PURGE").as_ref().map(String::as_str) == Ok("1") {
+        let _ = std::fs::remove_dir_all(path);
+    }
+    let _ = std::fs::create_dir(path);
 
     let env = unsafe {
         EnvOpenOptions::new()
