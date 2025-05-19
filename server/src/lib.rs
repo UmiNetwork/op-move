@@ -141,7 +141,8 @@ async fn run_with_app(
                 .bind_with_graceful_shutdown(auth_server_addr, queue.shutdown_listener())
                 .1,
         );
-    });
+    })
+    .await;
 }
 
 pub fn initialize_app(

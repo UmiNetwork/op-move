@@ -106,7 +106,7 @@ mod tests {
             let actual_response = execute(request, &reader).await.unwrap();
 
             assert_eq!(actual_response, expected_response);
-        });
+        }).await;
     }
 
     #[test_case("0x2")]
@@ -140,6 +140,6 @@ mod tests {
 
             // Counter script call should succeed
             execute(request, &reader).await.unwrap();
-        });
+        }).await;
     }
 }

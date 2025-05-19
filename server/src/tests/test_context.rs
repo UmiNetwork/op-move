@@ -47,7 +47,7 @@ impl TestContext {
             timestamp,
         };
 
-        moved_app::run(state, future(ctx))
+        moved_app::run(state, future(ctx)).await
     }
 
     pub async fn produce_block(&mut self) -> anyhow::Result<B256> {

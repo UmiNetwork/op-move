@@ -12,7 +12,7 @@ use {
 };
 
 fn build_1000_blocks(
-    current: &Runtime,
+    runtime: &Runtime,
     bencher: &mut BenchmarkGroup<WallTime>,
     app: &mut Application<impl DependenciesThreadSafe>,
     buffer_size: u32,
@@ -26,12 +26,12 @@ fn build_1000_blocks(
                 |input| {
                     let (queue, actor) = moved_app::create(app, buffer_size);
 
-                    moved_app::run_with_runtime(current, actor, async {
+                    runtime.block_on(moved_app::run(actor, async {
                         for msg in input {
                             queue.send(msg).await;
                         }
                         drop(queue)
-                    })
+                    }))
                 },
                 BatchSize::PerIteration,
             );

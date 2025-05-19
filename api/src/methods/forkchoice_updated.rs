@@ -248,6 +248,6 @@ pub(super) mod tests {
                 .unwrap();
 
             assert_eq!(response, expected_response);
-        });
+        }).await;
     }
 }

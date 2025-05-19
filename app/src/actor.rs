@@ -7,8 +7,7 @@ use {
     },
     moved_shared::primitives::B256,
     std::{fmt::Debug, ops::DerefMut},
-    tokio::sync::{mpsc::Receiver, oneshot},
-    tokio_scoped::{Scope, ScopeBuilder},
+    tokio::sync::mpsc::Receiver,
 };
 
 /// A function invoked on a completion of new transaction execution batch.
@@ -78,75 +77,22 @@ impl<D: Dependencies<PayloadQueries = InMemoryPayloadQueries>> CommandActor<'_, 
     }
 }
 
-pub trait SpawnWithHandle<'a> {
-    fn spawn_with_handle<'s, F>(&'s mut self, future: F) -> oneshot::Receiver<()>
-    where
-        F: Future<Output = ()> + Send + 'a,
-        'a: 's;
-}
-
-impl<'a> SpawnWithHandle<'a> for tokio_scoped::Scope<'a> {
-    fn spawn_with_handle<'s, F>(&'s mut self, future: F) -> oneshot::Receiver<()>
-    where
-        F: Future<Output = ()> + Send + 'a,
-        'a: 's,
-    {
-        let (tx, rx) = oneshot::channel();
-
-        self.spawn(async {
-            future.await;
-            tx.send(()).ok();
-        });
-
-        rx
-    }
-}
-
-/// Runs the `future` until completion, while also running `state` [`CommandActor::work`] loop in a
-/// background task concurrently.
+/// Runs the `future` while also running `actor` [`CommandActor::work`] loop concurrently, returning
+/// when `future` completes.
 ///
-/// It is guaranteed that [`CommandActor::work`] future is running for the `future`'s lifetime,
-/// unless it panics.
-pub fn run<D: DependenciesThreadSafe, F, Out>(state: CommandActor<'_, D>, future: F) -> Out
+/// The `actor` receives input from a [`CommandQueue`], which the `future` should use to send
+/// [`Command`]s. At the end of the `future`, the queue gets dropped. When the queue gets dropped,
+/// the `actor` work loop stops.
+///
+/// [`CommandQueue`]: crate::CommandQueue
+pub async fn run<D: DependenciesThreadSafe, F, Out>(actor: CommandActor<'_, D>, future: F) -> Out
 where
     F: Future<Output = Out> + Send,
     Out: Send + Debug,
 {
-    tokio_scoped::scope(run_scoped(state, future))
-}
-
-/// Runs the `future` until completion, while also running `state` [`CommandActor::work`] loop in a
-/// background task concurrently and `runtime` to spawn asynchronous tasks.
-///
-/// It is guaranteed that [`CommandActor::work`] future is running for the `future`'s lifetime,
-/// unless it panics.
-pub fn run_with_runtime<D: DependenciesThreadSafe, F, Out>(
-    runtime: &tokio::runtime::Runtime,
-    state: CommandActor<'_, D>,
-    future: F,
-) -> Out
-where
-    F: Future<Output = Out> + Send,
-    Out: Send + Debug,
-{
-    ScopeBuilder::from_runtime(runtime).scope(run_scoped(state, future))
-}
-
-fn run_scoped<'a, D: DependenciesThreadSafe, F, Out>(
-    state: CommandActor<'a, D>,
-    future: F,
-) -> impl FnOnce(&mut Scope<'a>) -> Out
-where
-    F: Future<Output = Out> + Send + 'a,
-    Out: Send + Debug + 'a,
-{
-    |scope| {
-        let state_handle = scope.spawn_with_handle(state.work());
-
-        scope.block_on(async move {
-            let result = future.await;
-            state_handle.await.unwrap();
-            result
-        })
+    tokio::join! {
+        actor.work(),
+        future,
     }
+    .1
 }

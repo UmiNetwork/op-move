@@ -103,6 +103,7 @@ mod tests {
             });
 
             assert_eq!(actual_response, expected_response);
-        });
+        })
+        .await;
     }
 }

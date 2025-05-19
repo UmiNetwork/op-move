@@ -139,6 +139,6 @@ mod tests {
             let actual_response = execute(request, &reader).await.unwrap();
 
             assert_eq!(actual_response, expected_response);
-        });
+        }).await;
     }
 }

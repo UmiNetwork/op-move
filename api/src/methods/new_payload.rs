@@ -390,7 +390,7 @@ mod tests {
                     }
             "#,
             )
-            .unwrap();
+                .unwrap();
             let new_payload_request: serde_json::Value = serde_json::from_str(
                 r#"
                     {
@@ -425,15 +425,15 @@ mod tests {
                     }
             "#,
             )
-            .unwrap();
+                .unwrap();
 
             forkchoice_updated::execute_v3(
                 fc_updated_request,
                 queue.clone(),
                 &0x0306d51fc5aa1533u64,
             )
-            .await
-            .unwrap();
+                .await
+                .unwrap();
 
             queue.wait_for_pending_commands().await;
 
@@ -452,9 +452,9 @@ mod tests {
                 }
                 "#,
             )
-            .unwrap();
+                .unwrap();
 
             assert_eq!(response, expected_response);
-        });
+        }).await;
     }
 }
