@@ -84,7 +84,6 @@ pub mod tests {
             let response = execute(request, queue).await.unwrap();
 
             assert_eq!(response, expected_response);
-        })
-        .await;
+        });
     }
 }

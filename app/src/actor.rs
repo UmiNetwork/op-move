@@ -6,8 +6,9 @@ use {
         state::InMemoryStateQueries,
     },
     moved_shared::primitives::B256,
-    std::ops::DerefMut,
+    std::{fmt::Debug, ops::DerefMut},
     tokio::sync::{mpsc::Receiver, oneshot},
+    tokio_scoped::{Scope, ScopeBuilder},
 };
 
 /// A function invoked on a completion of new transaction execution batch.
@@ -106,22 +107,46 @@ impl<'a> SpawnWithHandle<'a> for tokio_scoped::Scope<'a> {
 ///
 /// It is guaranteed that [`CommandActor::work`] future is running for the `future`'s lifetime,
 /// unless it panics.
-pub async fn run<D: DependenciesThreadSafe, F, Out>(state: CommandActor<'_, D>, future: F)
+pub fn run<D: DependenciesThreadSafe, F, Out>(state: CommandActor<'_, D>, future: F) -> Out
 where
     F: Future<Output = Out> + Send,
-    Out: Send,
+    Out: Send + Debug,
 {
-    let (tx, rx) = oneshot::channel();
+    tokio_scoped::scope(run_scoped(state, future))
+}
 
-    tokio_scoped::scope(|scope| {
+/// Runs the `future` until completion, while also running `state` [`CommandActor::work`] loop in a
+/// background task concurrently and `runtime` to spawn asynchronous tasks.
+///
+/// It is guaranteed that [`CommandActor::work`] future is running for the `future`'s lifetime,
+/// unless it panics.
+pub fn run_with_runtime<D: DependenciesThreadSafe, F, Out>(
+    runtime: &tokio::runtime::Runtime,
+    state: CommandActor<'_, D>,
+    future: F,
+) -> Out
+where
+    F: Future<Output = Out> + Send,
+    Out: Send + Debug,
+{
+    ScopeBuilder::from_runtime(runtime).scope(run_scoped(state, future))
+}
+
+fn run_scoped<'a, D: DependenciesThreadSafe, F, Out>(
+    state: CommandActor<'a, D>,
+    future: F,
+) -> impl FnOnce(&mut Scope<'a>) -> Out
+where
+    F: Future<Output = Out> + Send + 'a,
+    Out: Send + Debug + 'a,
+{
+    |scope| {
         let state_handle = scope.spawn_with_handle(state.work());
 
-        scope.spawn_with_handle(async move {
+        scope.block_on(async move {
             let result = future.await;
             state_handle.await.unwrap();
-            tx.send(result).ok();
-        });
-    });
-
-    rx.await.unwrap();
+            result
+        })
+    }
 }

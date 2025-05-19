@@ -175,8 +175,8 @@ mod tests {
                 queue.clone(),
                 &0x03421ee50df45cacu64,
             )
-                .await
-                .unwrap();
+            .await
+            .unwrap();
 
             let request: serde_json::Value = serde_json::from_str(
                 r#"
@@ -190,7 +190,7 @@ mod tests {
                 }
             "#,
             )
-                .unwrap();
+            .unwrap();
 
             let expected_response: serde_json::Value = serde_json::from_str(r#"
                 {
@@ -232,6 +232,6 @@ mod tests {
             let actual_response = execute_v3(request, &reader).await.unwrap();
 
             assert_eq!(actual_response, expected_response);
-        }).await;
+        });
     }
 }

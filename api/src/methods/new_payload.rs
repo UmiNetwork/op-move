@@ -427,9 +427,13 @@ mod tests {
             )
             .unwrap();
 
-            forkchoice_updated::execute_v3(fc_updated_request, queue.clone(), &0x0306d51fc5aa1533u64)
-                .await
-                .unwrap();
+            forkchoice_updated::execute_v3(
+                fc_updated_request,
+                queue.clone(),
+                &0x0306d51fc5aa1533u64,
+            )
+            .await
+            .unwrap();
 
             queue.wait_for_pending_commands().await;
 
@@ -437,9 +441,7 @@ mod tests {
                 .await
                 .unwrap();
 
-            let response = execute_v3(new_payload_request, &reader)
-                .await
-                .unwrap();
+            let response = execute_v3(new_payload_request, &reader).await.unwrap();
 
             let expected_response: serde_json::Value = serde_json::from_str(
                 r#"
@@ -453,6 +455,6 @@ mod tests {
             .unwrap();
 
             assert_eq!(response, expected_response);
-        }).await;
+        });
     }
 }

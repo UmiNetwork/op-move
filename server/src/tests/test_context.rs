@@ -6,12 +6,11 @@ use {
         primitives::{hex, B256},
     },
     moved_api::schema::{ForkchoiceUpdatedResponseV1, GetBlockResponse, GetPayloadResponseV3},
-    moved_app::{ApplicationReader, CommandQueue, Dependencies, SpawnWithHandle},
+    moved_app::{ApplicationReader, CommandQueue, Dependencies},
     moved_blockchain::{payload::StatePayloadId, receipt::TransactionReceipt},
     moved_genesis::config::GenesisConfig,
     serde::de::DeserializeOwned,
     std::future::Future,
-    tokio::sync::{oneshot, oneshot::Receiver},
 };
 
 const DEPOSIT_TX: &[u8] = &hex!("7ef8f8a032595a51f0561028c684fbeeb46c7221a34be9a2eedda60a93069dd77320407e94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000000000000000000000000000000000000000006807cdc800000000000000220000000000000000000000000000000000000000000000000000000000a68a3a000000000000000000000000000000000000000000000000000000000000000198663a8bf712c08273a02876877759b43dc4df514214cc2f6008870b9a8503380000000000000000000000008c67a7b8624044f8f672e9ec374dfa596f01afb9");
@@ -22,7 +21,6 @@ pub struct TestContext {
     pub reader: ApplicationReader<dependency::Dependency>,
     head: B256,
     timestamp: u64,
-    state_task: Receiver<()>,
 }
 
 impl TestContext {
@@ -34,32 +32,22 @@ impl TestContext {
         let genesis_config = GenesisConfig::default();
         let (mut app, reader) = initialize_app(genesis_config.clone());
 
-        let (tx, rx) = oneshot::channel();
+        let genesis_block = create_genesis_block(&app.block_hash, &genesis_config);
+        let head = genesis_block.hash;
+        let timestamp = genesis_block.block.header.timestamp;
+        app.genesis_update(genesis_block);
 
-        tokio_scoped::scope(|scope| {
-            let genesis_block = create_genesis_block(&app.block_hash, &genesis_config);
-            let head = genesis_block.hash;
-            let timestamp = genesis_block.block.header.timestamp;
-            app.genesis_update(genesis_block);
+        let (queue, state) = moved_app::create(&mut app, 10);
 
-            let (queue, state) = moved_app::create(&mut app, 10);
-            let state_task = scope.spawn_with_handle(state.work());
+        let ctx = Self {
+            genesis_config,
+            queue,
+            reader,
+            head,
+            timestamp,
+        };
 
-            let ctx = Self {
-                genesis_config,
-                queue,
-                reader,
-                state_task,
-                head,
-                timestamp,
-            };
-
-            scope.spawn(async move {
-                tx.send(future(ctx).await).unwrap();
-            });
-        });
-
-        rx.await?
+        moved_app::run(state, future(ctx))
     }
 
     pub async fn produce_block(&mut self) -> anyhow::Result<B256> {
@@ -169,7 +157,6 @@ impl TestContext {
 
     pub async fn shutdown(self) {
         drop(self.queue);
-        self.state_task.await.unwrap();
     }
 }
 

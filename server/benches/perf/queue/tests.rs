@@ -4,12 +4,11 @@ use {
         criterion_group, measurement::WallTime, BatchSize, BenchmarkGroup, BenchmarkId, Criterion,
         Throughput,
     },
-    moved_app::{Application, DependenciesThreadSafe, SpawnWithHandle},
+    moved_app::{Application, DependenciesThreadSafe},
     moved_genesis::config::GenesisConfig,
     moved_server::initialize_app,
     std::process::Termination,
     tokio::runtime::Runtime,
-    tokio_scoped::ScopeBuilder,
 };
 
 fn build_1000_blocks(
@@ -25,18 +24,13 @@ fn build_1000_blocks(
             b.iter_batched(
                 input::blocks_1000,
                 |input| {
-                    ScopeBuilder::from_runtime(current).scope(|scope| {
-                        let (queue, actor) = moved_app::create(app, buffer_size);
+                    let (queue, actor) = moved_app::create(app, buffer_size);
 
-                        let handle = scope.spawn_with_handle(actor.work());
-
-                        scope.block_on(async {
-                            for msg in input {
-                                queue.send(msg).await;
-                            }
-                            drop(queue);
-                            handle.await.unwrap()
-                        })
+                    moved_app::run_with_runtime(current, actor, async {
+                        for msg in input {
+                            queue.send(msg).await;
+                        }
+                        drop(queue)
                     })
                 },
                 BatchSize::PerIteration,

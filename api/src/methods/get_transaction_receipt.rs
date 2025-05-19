@@ -84,7 +84,6 @@ mod tests {
             assert_eq!(receipt.inner.block_hash, Some(block_hash));
             assert!(receipt.inner.inner.status());
             assert_eq!(receipt.inner.inner.logs().len(), 2);
-        })
-        .await;
+        });
     }
 }

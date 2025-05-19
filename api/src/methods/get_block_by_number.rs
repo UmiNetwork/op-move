@@ -107,8 +107,7 @@ mod tests {
             assert_eq!(get_block_number_from_response(response), "0x1");
 
             drop(state_channel);
-        })
-        .await;
+        });
     }
 
     #[test_case(Safe; "safe")]
@@ -132,7 +131,6 @@ mod tests {
             let request = example_request(tag);
             let response = execute(request, &reader).await.unwrap();
             assert_eq!(get_block_number_from_response(response), "0x1");
-        })
-        .await;
+        });
     }
 }
