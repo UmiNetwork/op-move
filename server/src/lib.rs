@@ -8,7 +8,6 @@ use {
     moved_api::method_name::MethodName,
     moved_app::{
         Application, ApplicationReader, Command, CommandActor, CommandQueue, Dependencies,
-        SpawnWithHandle,
     },
     moved_blockchain::{
         block::BlockQueries,
@@ -91,62 +90,59 @@ async fn run_with_app(
     state: CommandActor<'_, dependency::Dependency>,
     app_reader: ApplicationReader<dependency::Dependency>,
 ) {
-    let http_app_reader = app_reader.clone();
-    let http_cmd_queue = queue.clone();
-    let http_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8545));
-    let mut content_type = HeaderMap::new();
-    content_type.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-    let http_route = warp::any()
-        .map(move || (http_cmd_queue.clone(), http_app_reader.clone()))
-        .and(extract_request_data_filter())
-        .and_then(|(queue, app_reader), path, query, method, headers, body| {
-            mirror(
-                queue,
-                (path, query, method, headers, body),
-                "9545",
-                // Limit engine API access to only authenticated endpoint
-                MethodName::is_non_engine_api,
-                &StatePayloadId,
-                app_reader,
-            )
-        })
-        .with(warp::reply::with::headers(content_type))
-        .with(warp::cors().allow_any_origin());
-
-    let auth_cmd_queue = queue.clone();
-    let auth_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8551));
-    let auth_route = warp::any()
-        .map(move || (auth_cmd_queue.clone(), app_reader.clone()))
-        .and(extract_request_data_filter())
-        .and(validate_jwt())
-        .and_then(
-            move |(queue, app_reader), path, query, method, headers, body, _| {
+    moved_app::run(state, async move {
+        let http_app_reader = app_reader.clone();
+        let http_cmd_queue = queue.clone();
+        let http_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8545));
+        let mut content_type = HeaderMap::new();
+        content_type.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+        let http_route = warp::any()
+            .map(move || (http_cmd_queue.clone(), http_app_reader.clone()))
+            .and(extract_request_data_filter())
+            .and_then(|(queue, app_reader), path, query, method, headers, body| {
                 mirror(
                     queue,
                     (path, query, method, headers, body),
-                    "9551",
-                    |_| true,
+                    "9545",
+                    // Limit engine API access to only authenticated endpoint
+                    MethodName::is_non_engine_api,
                     &StatePayloadId,
                     app_reader,
                 )
-            },
-        )
-        .with(warp::cors().allow_any_origin());
+            })
+            .with(warp::reply::with::headers(content_type))
+            .with(warp::cors().allow_any_origin());
 
-    tokio::join!(
-        warp::serve(http_route)
-            .bind_with_graceful_shutdown(http_server_addr, queue.shutdown_listener())
-            .1,
-        warp::serve(auth_route)
-            .bind_with_graceful_shutdown(auth_server_addr, queue.shutdown_listener())
-            .1,
-        async {
-            tokio_scoped::scope(|scope| scope.spawn_with_handle(state.work()))
-                .await
-                .ok();
-            queue.shutdown();
-        },
-    );
+        let auth_cmd_queue = queue.clone();
+        let auth_server_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8551));
+        let auth_route = warp::any()
+            .map(move || (auth_cmd_queue.clone(), app_reader.clone()))
+            .and(extract_request_data_filter())
+            .and(validate_jwt())
+            .and_then(
+                move |(queue, app_reader), path, query, method, headers, body, _| {
+                    mirror(
+                        queue,
+                        (path, query, method, headers, body),
+                        "9551",
+                        |_| true,
+                        &StatePayloadId,
+                        app_reader,
+                    )
+                },
+            )
+            .with(warp::cors().allow_any_origin());
+
+        tokio::join!(
+            warp::serve(http_route)
+                .bind_with_graceful_shutdown(http_server_addr, queue.shutdown_listener())
+                .1,
+            warp::serve(auth_route)
+                .bind_with_graceful_shutdown(auth_server_addr, queue.shutdown_listener())
+                .1,
+        );
+    })
+    .await;
 }
 
 pub fn initialize_app(

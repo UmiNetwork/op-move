@@ -101,6 +101,11 @@ impl<'a> SpawnWithHandle<'a> for tokio_scoped::Scope<'a> {
     }
 }
 
+/// Runs the `future` until completion, while also running `state` [`CommandActor::work`] loop in a
+/// background task concurrently.
+///
+/// It is guaranteed that [`CommandActor::work`] future is running for the `future`'s lifetime,
+/// unless it panics.
 pub async fn run<D: DependenciesThreadSafe, F, Out>(state: CommandActor<'_, D>, future: F)
 where
     F: Future<Output = Out> + Send,

@@ -7760,7 +7760,6 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "tokio-scoped",
  "warp",
  "warp-reverse-proxy",
 ]
