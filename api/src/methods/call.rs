@@ -74,7 +74,7 @@ mod tests {
     #[test_case("0x2")]
     #[test_case("latest")]
     #[test_case("pending")]
-    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    #[tokio::test]
     async fn test_execute_call_entry_fn(block: &str) {
         let (reader, mut app) = create_app();
         let (state_channel, rx) = mpsc::channel(10);
@@ -112,7 +112,7 @@ mod tests {
     #[test_case("0x2")]
     #[test_case("latest")]
     #[test_case("pending")]
-    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    #[tokio::test]
     async fn test_execute_call_script(block: &str) {
         let (reader, mut app) = create_app();
         let (state_channel, rx) = mpsc::channel(10);

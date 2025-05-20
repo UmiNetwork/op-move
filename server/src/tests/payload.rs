@@ -9,7 +9,7 @@ use {
     moved_shared::primitives::{Address, Bytes, B2048, B256, U64},
 };
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[tokio::test]
 async fn test_sending_the_same_payload_twice_produces_one_block() -> anyhow::Result<()> {
     TestContext::run(|ctx| async move {
         let block_hash = "0x96f5d9746c63cf212c7ad848425c746bcbbdb738352f6b81eac13375a838cec7";

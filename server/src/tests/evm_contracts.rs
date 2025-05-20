@@ -31,7 +31,7 @@ mod evm_contract {
     }
 }
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[tokio::test]
 async fn test_evm_contracts() -> anyhow::Result<()> {
     TestContext::run(|mut ctx| async move {
         let chain_id = ctx.genesis_config.chain_id;

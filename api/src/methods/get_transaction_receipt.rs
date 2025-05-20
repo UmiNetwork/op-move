@@ -26,7 +26,7 @@ mod tests {
         std::iter,
     };
 
-    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    #[tokio::test]
     async fn test_execute() {
         let (reader, mut app) = create_app();
         let (queue, state) = moved_app::create(&mut app, 10);

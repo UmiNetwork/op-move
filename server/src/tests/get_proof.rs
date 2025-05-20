@@ -6,7 +6,7 @@ use {
     std::sync::Arc,
 };
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[tokio::test]
 async fn test_get_proof() -> anyhow::Result<()> {
     TestContext::run(|mut ctx| async move {
         let block_hash = ctx.produce_block().await.unwrap();
