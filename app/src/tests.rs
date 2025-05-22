@@ -22,7 +22,7 @@ use {
             InMemoryBlockRepository, MovedBlockHash,
         },
         in_memory::SharedMemory,
-        payload::{InMemoryPayloadQueries, NewPayloadId, StatePayloadId},
+        payload::InMemoryPayloadQueries,
         receipt::{InMemoryReceiptQueries, InMemoryReceiptRepository, ReceiptMemory},
         state::{BlockHeight, InMemoryStateQueries, MockStateQueries, StateQueries},
         transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
@@ -163,8 +163,7 @@ fn create_app_with_fake_queries(
     let head_hash = B256::new(hex!(
         "e56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d"
     ));
-    let mut genesis_block = Block::default().with_hash(head_hash).with_value(U256::ZERO);
-    genesis_block.block.header.base_fee_per_gas = Some(1_000);
+    let genesis_block = Block::default().with_hash(head_hash).with_value(U256::ZERO);
 
     let mut memory = SharedMemory::new();
     let mut repository = InMemoryBlockRepository::new();
@@ -203,8 +202,8 @@ fn create_app_with_fake_queries(
         transaction_queries: InMemoryTransactionQueries::new(),
         transaction_repository: InMemoryTransactionRepository::new(),
         gas_fee: Eip1559GasFee::default(),
-        l1_fee: U256::ONE,
-        l2_fee: U256::ONE,
+        l1_fee: U256::ZERO,
+        l2_fee: U256::ZERO,
     }
 }
 
@@ -348,8 +347,7 @@ fn test_fetched_balances_are_updated_after_transfer_of_funds() {
     assert_eq!(actual_recipient_balance, expected_recipient_balance);
 
     let actual_sender_balance = app.balance_by_height(EVM_ADDRESS, Latest).unwrap();
-    // also accounting for gas of 1
-    let expected_sender_balance = initial_balance - amount - U256::from(1);
+    let expected_sender_balance = initial_balance - amount;
 
     assert_eq!(actual_sender_balance, expected_sender_balance);
 }

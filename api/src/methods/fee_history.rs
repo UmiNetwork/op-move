@@ -156,7 +156,7 @@ mod tests {
         assert_eq!(err.message, "Incorrect reward percentile");
     }
 
-    #[test_case("0x1")]
+    #[test_case("0x0")]
     #[test_case("latest")]
     #[test_case("pending")]
     #[tokio::test]
@@ -176,8 +176,7 @@ mod tests {
             "id": 1
         });
 
-        let expected_response: serde_json::Value =
-            serde_json::json!({"gasUsedRatio": [], "oldestBlock": "0x0"});
+        let expected_response: serde_json::Value = serde_json::json!({"baseFeePerGas": ["0x0", "0x0"], "gasUsedRatio": [0.0], "baseFeePerBlobGas": ["0x0", "0x0"], "blobGasUsedRatio": [0.0], "oldestBlock": "0x0", "reward": [["0x0"]]});
         let response = execute(request, &app).await.unwrap();
 
         assert_eq!(response, expected_response);

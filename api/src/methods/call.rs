@@ -47,7 +47,7 @@ mod tests {
     fn test_parse_params(block: &str) {
         let request = serde_json::json!({
             "jsonrpc": "2.0",
-            "method": "eth_estimateGas",
+            "method": "eth_call",
             "params": [
                 {
                     "from": "0x0000000000000000000000000000000000000001",
@@ -75,7 +75,7 @@ mod tests {
         }
     }
 
-    #[test_case("0x1")]
+    #[test_case("0x2")]
     #[test_case("latest")]
     #[test_case("pending")]
     #[tokio::test]
@@ -113,7 +113,7 @@ mod tests {
         assert_eq!(actual_response, expected_response);
     }
 
-    #[test_case("0x1")]
+    #[test_case("0x2")]
     #[test_case("latest")]
     #[test_case("pending")]
     #[tokio::test]
