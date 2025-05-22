@@ -188,8 +188,9 @@ pub async fn handle_request_multiple_tries<T: DeserializeOwned>(
     app: ApplicationReader<impl Dependencies>,
 ) -> anyhow::Result<T> {
     let max_tries = 300;
+    let mut tries = 0..max_tries;
 
-    for i in 1..=max_tries {
+    loop {
         let response = moved_api::request::handle(
             request.clone(),
             queue.clone(),
@@ -200,17 +201,16 @@ pub async fn handle_request_multiple_tries<T: DeserializeOwned>(
         .await;
 
         if let Some(error) = response.error {
-            if i == max_tries {
-                anyhow::bail!("Error response from request {request:?}: {error:?}");
-            } else {
+            if tries.next().is_some() {
                 continue;
+            } else {
+                anyhow::bail!("Error response from request {request:?}: {error:?}");
             }
         }
 
         let result: T =
             serde_json::from_value(response.result.expect("If not error then has result"))?;
+
         return Ok(result);
     }
-
-    unreachable!()
 }
