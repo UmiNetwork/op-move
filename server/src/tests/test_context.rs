@@ -93,7 +93,7 @@ impl TestContext {
             ]
         });
         let response: GetPayloadResponseV3 =
-            handle_request_multiple_tries(request, &self.queue, self.reader.clone()).await?;
+            handle_request(request, &self.queue, self.reader.clone()).await?;
 
         self.head = response.execution_payload.block_hash;
         Ok(self.head)
@@ -180,37 +180,4 @@ pub async fn handle_request<T: DeserializeOwned>(
 
     let result: T = serde_json::from_value(response.result.expect("If not error then has result"))?;
     Ok(result)
-}
-
-pub async fn handle_request_multiple_tries<T: DeserializeOwned>(
-    request: serde_json::Value,
-    queue: &CommandQueue,
-    app: ApplicationReader<impl Dependencies>,
-) -> anyhow::Result<T> {
-    let max_tries = 300;
-    let mut tries = 0..max_tries;
-
-    loop {
-        let response = moved_api::request::handle(
-            request.clone(),
-            queue.clone(),
-            |_| true,
-            &StatePayloadId,
-            app.clone(),
-        )
-        .await;
-
-        if let Some(error) = response.error {
-            if tries.next().is_some() {
-                continue;
-            } else {
-                anyhow::bail!("Error response from request {request:?}: {error:?}");
-            }
-        }
-
-        let result: T =
-            serde_json::from_value(response.result.expect("If not error then has result"))?;
-
-        return Ok(result);
-    }
 }
