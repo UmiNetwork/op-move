@@ -59,6 +59,12 @@ impl InMemoryDependencies {
     }
 }
 
+impl Default for InMemoryDependencies {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl moved_app::Dependencies for InMemoryDependencies {
     type BlockQueries = moved_blockchain::block::InMemoryBlockQueries;
     type BlockRepository = moved_blockchain::block::InMemoryBlockRepository;
