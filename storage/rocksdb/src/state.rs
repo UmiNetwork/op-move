@@ -112,11 +112,11 @@ impl<'db> RocksDbStateQueries<'db> {
     }
 
     pub fn push_state_root(&self, state_root: B256) -> Result<(), rocksdb::Error> {
-        let height = self.height()?;
+        let height = self.height()? + 1;
         let mut batch = WriteBatchWithTransaction::<false>::default();
 
         batch.put_cf(&self.cf(), height.to_key(), state_root);
-        batch.put_cf(&self.height_cf(), HEIGHT_KEY, (height + 1).to_key());
+        batch.put_cf(&self.height_cf(), HEIGHT_KEY, height.to_key());
 
         self.db.write(batch)
     }
@@ -126,8 +126,7 @@ impl<'db> RocksDbStateQueries<'db> {
             .db
             .get_pinned_cf(&self.height_cf(), HEIGHT_KEY)?
             .map(|v| u64::from_key(v.as_ref()))
-            .unwrap_or(0)
-            .max(1))
+            .unwrap_or(0))
     }
 
     fn root_by_height(&self, height: u64) -> Result<Option<B256>, rocksdb::Error> {

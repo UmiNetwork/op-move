@@ -119,7 +119,7 @@ impl<'db> HeedStateQueries<'db> {
     }
 
     pub fn push_state_root(&self, state_root: B256) -> Result<(), heed::Error> {
-        let height = self.height()?;
+        let height = self.height()? + 1;
         let mut transaction = self.env.write_txn()?;
 
         let db = self.env.state_database(&transaction)?;
@@ -128,7 +128,7 @@ impl<'db> HeedStateQueries<'db> {
 
         let db = self.env.state_height_database(&transaction)?;
 
-        db.put(&mut transaction, &HEIGHT_KEY, &(height + 1))?;
+        db.put(&mut transaction, &HEIGHT_KEY, &height)?;
 
         transaction.commit()
     }
@@ -142,7 +142,7 @@ impl<'db> HeedStateQueries<'db> {
 
         transaction.commit()?;
 
-        Ok(height?.unwrap_or(0).max(1))
+        Ok(height?.unwrap_or(0))
     }
 
     fn root_by_height(&self, height: u64) -> Result<Option<B256>, heed::Error> {
