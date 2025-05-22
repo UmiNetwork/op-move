@@ -453,14 +453,12 @@ fn test_txs_from_one_account_have_proper_nonce_ordering() {
         // Get receipt for this transaction
         let receipt = app.transaction_receipt(*tx_hash);
 
-        assert!(
-            receipt.is_some(),
-            "Transaction with nonce {} and hash {:?} has no receipt",
-            i,
-            tx_hash
-        );
-
-        let receipt = receipt.unwrap();
+        let receipt = receipt.unwrap_or_else(|| {
+            panic!(
+                "Transaction with nonce {} and hash {:?} has no receipt",
+                i, tx_hash
+            )
+        });
 
         assert!(
             receipt.inner.inner.status(),
