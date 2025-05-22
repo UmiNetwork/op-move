@@ -16,13 +16,9 @@ use {
         },
     },
     alloy::primitives::U256,
-    aptos_gas_algebra::GasExpression,
-    aptos_gas_meter::{AptosGasMeter, GasAlgebra, StandardGasAlgebra, StandardGasMeter},
-    aptos_gas_schedule::gas_params::natives::aptos_framework::{
-        CODE_REQUEST_PUBLISH_BASE, CODE_REQUEST_PUBLISH_PER_BYTE,
-    },
+    aptos_gas_meter::{AptosGasMeter, StandardGasAlgebra, StandardGasMeter},
     aptos_table_natives::TableResolver,
-    move_core_types::{effects::ChangeSet, gas_algebra::NumBytes, language_storage::ModuleId},
+    move_core_types::{effects::ChangeSet, language_storage::ModuleId},
     move_vm_runtime::{
         AsUnsyncCodeStorage, ModuleStorage,
         module_traversal::{TraversalContext, TraversalStorage},
@@ -132,7 +128,6 @@ pub(super) fn execute_canonical_transaction<
 ) -> moved_shared::error::Result<TransactionExecutionOutcome> {
     let sender_move_address = input.tx.signer.to_move_address();
 
-    let tx_data_size = input.tx.data.len();
     let tx_data = TransactionData::parse_from(input.tx)?;
 
     let moved_vm = MovedVm::new(input.genesis_config);
@@ -199,17 +194,12 @@ pub(super) fn execute_canonical_transaction<
             &code_storage,
         ),
         TransactionData::ScriptOrDeployment(ScriptOrDeployment::Module(module)) => {
-            let gas_expression = CODE_REQUEST_PUBLISH_BASE
-                + CODE_REQUEST_PUBLISH_PER_BYTE * NumBytes::new(tx_data_size as u64);
-            let gas_cost = gas_expression.evaluate(
-                verify_input.gas_meter.feature_version(),
-                &verify_input.genesis_config.gas_costs.natives,
+            let charge_gas = crate::gas::charge_new_module_processing(
+                verify_input.gas_meter,
+                verify_input.genesis_config,
+                &sender_move_address,
+                module.code().len() as u64,
             );
-            let charge_gas = verify_input
-                .gas_meter
-                .algebra_mut()
-                .charge_execution(gas_cost)
-                .map_err(moved_shared::error::Error::from);
             let module_id =
                 charge_gas.and_then(|_| deploy_module(module, sender_move_address, &code_storage));
             module_id.map(|(id, writes)| {
