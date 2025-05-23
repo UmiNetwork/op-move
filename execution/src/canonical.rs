@@ -194,8 +194,14 @@ pub(super) fn execute_canonical_transaction<
             &code_storage,
         ),
         TransactionData::ScriptOrDeployment(ScriptOrDeployment::Module(module)) => {
-            // TODO: gas for module deploy
-            let module_id = deploy_module(module, sender_move_address, &code_storage);
+            let charge_gas = crate::gas::charge_new_module_processing(
+                verify_input.gas_meter,
+                verify_input.genesis_config,
+                &sender_move_address,
+                module.code().len() as u64,
+            );
+            let module_id =
+                charge_gas.and_then(|_| deploy_module(module, sender_move_address, &code_storage));
             module_id.map(|(id, writes)| {
                 deployment = Some((sender_move_address, id));
                 deploy_changes

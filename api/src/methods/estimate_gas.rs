@@ -140,7 +140,7 @@ mod tests {
         drop(state_channel);
         state_handle.await.unwrap();
 
-        let expected_response: serde_json::Value = serde_json::from_str(r#""0x6326""#).unwrap();
+        let expected_response: serde_json::Value = serde_json::from_str(r#""0x63ec""#).unwrap();
         let actual_response = execute(request, &app).await.unwrap();
 
         assert_eq!(actual_response, expected_response);

@@ -1,6 +1,11 @@
 use {
     crate::transaction::NormalizedEthTransaction,
+    aptos_gas_algebra::{GasExpression, NumBytes},
     aptos_gas_meter::{AptosGasMeter, GasAlgebra, StandardGasAlgebra, StandardGasMeter},
+    aptos_gas_schedule::gas_params::natives::aptos_framework::{
+        CODE_REQUEST_PUBLISH_BASE, CODE_REQUEST_PUBLISH_PER_BYTE,
+    },
+    move_core_types::{account_address::AccountAddress, ident_str},
     moved_genesis::config::GenesisConfig,
     moved_shared::primitives::U256,
     op_alloy::rpc_types::L1BlockInfo,
@@ -31,6 +36,36 @@ pub fn total_gas_used<G: AptosGasMeter>(gas_meter: &G, genesis_config: &GenesisC
     // so we need to reverse that scaling when we return.
     let scaling_factor: u64 = genesis_config.gas_costs.vm.txn.scaling_factor().into();
     total / scaling_factor
+}
+
+pub fn charge_new_module_processing<G: AptosGasMeter>(
+    gas_meter: &mut G,
+    genesis_config: &GenesisConfig,
+    address: &AccountAddress,
+    module_size: u64,
+) -> Result<(), moved_shared::error::Error> {
+    let module_size = NumBytes::new(module_size);
+
+    // Charge for requesting to publish a module
+    let publish_request_exp =
+        CODE_REQUEST_PUBLISH_BASE + CODE_REQUEST_PUBLISH_PER_BYTE * module_size;
+    let publish_request_cost = publish_request_exp.evaluate(
+        gas_meter.feature_version(),
+        &genesis_config.gas_costs.natives,
+    );
+    gas_meter
+        .algebra_mut()
+        .charge_execution(publish_request_cost)
+        .map_err(moved_shared::error::Error::from)?;
+
+    // Charge for loading that module into memory
+    // Note: the name does not matter because it is not used in the
+    // standard gas meter implementation.
+    gas_meter
+        .charge_dependency(true, address, ident_str!("does_not_matter"), module_size)
+        .map_err(moved_shared::error::Error::from)?;
+
+    Ok(())
 }
 
 impl NormalizedEthTransaction {
