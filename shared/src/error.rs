@@ -76,6 +76,14 @@ pub enum UserError {
     L2ContractCallFailure,
     #[error("EVM contract creation failure")]
     EvmContractCreationFailure,
+    #[error("Invalid block height requested")]
+    InvalidBlockHeight,
+    #[error("Invalid block count requested")]
+    InvalidBlockCount,
+    #[error("Fee history reward percentiles were malformed")]
+    InvalidRewardPercentiles,
+    #[error("Fee history reward percentiles vector was too long")]
+    RewardPercentilesTooLong,
 }
 
 /// The error caused by invalid transaction input parameter.
@@ -117,6 +125,8 @@ pub enum InvalidTransactionCause {
     FailedToPayL1Fee,
     #[error("Failed to pay L2 fee")]
     FailedToPayL2Fee,
+    #[error("Failed to recover tx signer")]
+    FailedToRecoverSigner,
 }
 
 impl From<InvalidTransactionCause> for Error {
@@ -141,6 +151,8 @@ pub enum InvariantViolation {
     EntryFunctionValue(EntryFunctionValue),
     #[error("Script transaction invariant violation: {0}")]
     ScriptTransaction(ScriptTransaction),
+    #[error("Mempool admitted transactions cannot be unsupported type")]
+    MempoolTransaction,
 }
 
 #[derive(Debug, Error)]
