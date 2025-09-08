@@ -263,7 +263,25 @@ impl<'db, D: Dependencies<'db>> GenesisStateExt for Application<'db, D> {
             &mut self.evm_storage,
         );
 
-        let genesis_block = create_genesis_block(&self.block_hash, genesis_config);
+        #[cfg(feature = "op-upgrade")]
+        let withdrawals_root = {
+            let evm_db = umi_evm_ext::ResolverBackedDB::new(
+                &self.evm_storage,
+                umi_state::State::resolver(&self.state),
+                &(),
+                0,
+            );
+            let message_passer_account = evm_db
+                .get_account(&umi_app::L2_TO_L1_MESSAGE_PASSER_ADDRESS)
+                .expect("L2ToL1MessagePasser account retrieval should not fail")
+                .expect("L2ToL1MessagePasser is deployed at genesis");
+            Some(message_passer_account.inner.storage_root)
+        };
+        #[cfg(not(feature = "op-upgrade"))]
+        let withdrawals_root = Some(EMPTY_ROOT_HASH);
+
+        let genesis_block =
+            create_genesis_block(&self.block_hash, genesis_config, withdrawals_root);
         self.genesis_update(genesis_block)
             .expect("Must add genesis block to state");
     }
@@ -284,7 +302,16 @@ pub fn initialize_app(
 fn create_genesis_block(
     block_hash: &impl BlockHash,
     genesis_config: &GenesisConfig,
+    withdrawals_root: Option<B256>,
 ) -> ExtendedBlock {
+    // As defined in <https://specs.optimism.io/protocol/isthmus/exec-engine.html#header-validity-rules>,
+    // i.e. a hash of an empty string
+    #[cfg(feature = "op-upgrade")]
+    let requests_hash = B256::from(hex!(
+        "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ));
+    #[cfg(not(feature = "op-upgrade"))]
+    let requests_hash = None;
     let genesis_header = Header {
         base_fee_per_gas: genesis_config
             .l2_contract_genesis
@@ -306,10 +333,10 @@ fn create_genesis_block(
         state_root: state_root_unhashed(genesis_config.l2_contract_genesis.alloc.clone()),
         timestamp: genesis_config.l2_contract_genesis.timestamp,
         transactions_root: EMPTY_ROOT_HASH,
-        withdrawals_root: Some(EMPTY_ROOT_HASH),
+        withdrawals_root,
         beneficiary: genesis_config.l2_contract_genesis.coinbase,
         ommers_hash: EMPTY_OMMER_ROOT_HASH,
-        requests_hash: None,
+        requests_hash,
     };
     let hash = block_hash.block_hash(&genesis_header);
     let genesis_block = Block::new(genesis_header, Vec::new());

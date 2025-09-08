@@ -6,6 +6,7 @@ edition = "2021"
 
 [features]
 default = []
+op-upgrade = []
 storage = ["storage-lmdb"]
 storage-lmdb = ["umi-storage-heed"]
 storage-rocksdb = ["umi-storage-rocksdb"]
