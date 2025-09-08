@@ -67,6 +67,10 @@ impl Error {
     pub const fn fee_denom_invariant_violation() -> Self {
         Self::InvariantViolation(InvariantViolation::BaseFeeDenom)
     }
+
+    pub const fn fee_elasticity_invariant_violation() -> Self {
+        Self::InvariantViolation(InvariantViolation::BaseFeeElasticity)
+    }
 }
 
 impl<T> From<T> for Error
@@ -190,6 +194,8 @@ pub enum InvariantViolation {
     ExtraData,
     #[error("Payload attributes supplied 0 base fee denominator when elasticity was not 0")]
     BaseFeeDenom,
+    #[error("Payload attributes supplied 0 elasticity when denominator was not 0")]
+    BaseFeeElasticity,
 }
 
 #[derive(Debug, Error)]

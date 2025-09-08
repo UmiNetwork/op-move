@@ -11,6 +11,10 @@ pub const DEFAULT_EIP1559_BASE_FEE_MAX_CHANGE_DENOMINATOR: NonZeroU32 =
     NonZeroU32::new(250).expect("Supplied a non-zero value");
 
 #[cfg(feature = "op-upgrade")]
+/// Represents base fee parameters as they are passed from payload attributes
+/// or block headers. This is different from [`Eip1559GasFee`] in the sense
+/// that it doesn't represent the current state of the blockchain, but a
+/// change, and thus e.g. the difference in instantiation logic.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum BaseFeeParameters {
     #[default]
@@ -23,19 +27,46 @@ pub enum BaseFeeParameters {
 
 #[cfg(feature = "op-upgrade")]
 impl BaseFeeParameters {
+    pub fn new(denominator: NonZeroU32, elasticity: NonZeroU32) -> Self {
+        if elasticity == DEFAULT_EIP1559_ELASTICITY_MULTIPLIER
+            && denominator == DEFAULT_EIP1559_BASE_FEE_MAX_CHANGE_DENOMINATOR
+        {
+            Self::Default
+        } else {
+            Self::Custom {
+                denominator,
+                elasticity,
+            }
+        }
+    }
+
     pub fn decode(extra_data: U64) -> Result<Self, umi_shared::error::Error> {
         // The first [0, 4) bytes are base fee denominator
         let denominator = extra_data.wrapping_shr(32).saturating_to::<u32>();
         // The bottom 4 bytes reserved for elasticity
         let elasticity = (extra_data.bitand(U64::from(0xFFFF_FFFFu64))).saturating_to::<u32>();
 
-        match (elasticity, denominator) {
-            (0, 0) => Ok(Self::Default),
-            (_, 0) => Err(umi_shared::error::Error::fee_denom_invariant_violation()),
-            _ => Ok(Self::Custom {
-                denominator: NonZeroU32::new(denominator).expect("Supplied a non-zero value"),
-                elasticity: NonZeroU32::new(elasticity).expect("Supplied a non-zero value"),
+        match (NonZeroU32::new(elasticity), NonZeroU32::new(denominator)) {
+            (None, None) => Ok(Self::Default),
+            (_, None) => Err(umi_shared::error::Error::fee_denom_invariant_violation()),
+            (None, _) => Err(umi_shared::error::Error::fee_elasticity_invariant_violation()),
+            (Some(elasticity), Some(denominator)) => Ok(Self::Custom {
+                denominator,
+                elasticity,
             }),
+        }
+    }
+    pub fn encode(&self) -> u64 {
+        match self {
+            BaseFeeParameters::Default => 0u64,
+            BaseFeeParameters::Custom {
+                denominator,
+                elasticity,
+            } => {
+                let denominator: u64 = denominator.get().into();
+                let elasticity: u64 = elasticity.get().into();
+                (denominator << 32) + elasticity
+            }
         }
     }
 }
@@ -165,8 +196,14 @@ impl BaseGasFee for Eip1559GasFee {
         // Header `extra_data` should be prepended with a 0 version byte
         out.extend_from_slice(&[0u8]);
 
-        out.extend_from_slice(&(self.base_fee_max_change_denominator).get().to_be_bytes());
-        out.extend_from_slice(&(self.elasticity_multiplier).get().to_be_bytes());
+        // Conversion to base fee parameter form to reuse the encoding
+        let params = BaseFeeParameters::new(
+            self.base_fee_max_change_denominator,
+            self.elasticity_multiplier,
+        )
+        .encode()
+        .to_be_bytes();
+        out.extend_from_slice(&params);
 
         out.into()
     }
