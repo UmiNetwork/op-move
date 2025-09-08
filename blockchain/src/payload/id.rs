@@ -81,12 +81,18 @@ impl<'a> NewPayloadIdInput<'a> {
     /// Creates this input with `eip1559_params`.
     #[cfg(feature = "op-upgrade")]
     pub fn with_eip1559_params(mut self, gas_params: &BaseFeeParameters) -> Self {
-        let mut buf = Vec::with_capacity(8);
-        buf.extend_from_slice(&gas_params.denominator.to_be_bytes());
-        buf.extend_from_slice(&gas_params.elasticity.to_be_bytes());
-        self.eip1559_params = Some(u64::from_be_bytes(
-            buf.try_into().expect("Slice should be 8 bytes"),
-        ));
+        let packed = match gas_params {
+            BaseFeeParameters::Default => 0u64,
+            BaseFeeParameters::Custom {
+                denominator,
+                elasticity,
+            } => {
+                let denominator: u64 = denominator.get().into();
+                let elasticity: u64 = elasticity.get().into();
+                (denominator << 32) + elasticity
+            }
+        };
+        self.eip1559_params = Some(packed);
         self
     }
 }

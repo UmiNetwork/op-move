@@ -1,18 +1,43 @@
 //! This module is concerned about calculating fees charged for gas usage.
 
-use std::cmp::Ordering;
+use std::{cmp::Ordering, num::NonZeroU32};
 
 #[cfg(feature = "op-upgrade")]
-use alloy::primitives::Bytes;
+use alloy::primitives::{Bytes, U64};
 
-pub const DEFAULT_EIP1559_ELASTICITY_MULTIPLIER: u32 = 6;
-pub const DEFAULT_EIP1559_BASE_FEE_MAX_CHANGE_DENOMINATOR: u32 = 250;
+pub const DEFAULT_EIP1559_ELASTICITY_MULTIPLIER: NonZeroU32 =
+    NonZeroU32::new(6).expect("Supplied a non-zero value");
+pub const DEFAULT_EIP1559_BASE_FEE_MAX_CHANGE_DENOMINATOR: NonZeroU32 =
+    NonZeroU32::new(250).expect("Supplied a non-zero value");
 
 #[cfg(feature = "op-upgrade")]
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct BaseFeeParameters {
-    pub denominator: u32,
-    pub elasticity: u32,
+pub enum BaseFeeParameters {
+    #[default]
+    Default,
+    Custom {
+        denominator: NonZeroU32,
+        elasticity: NonZeroU32,
+    },
+}
+
+#[cfg(feature = "op-upgrade")]
+impl BaseFeeParameters {
+    pub fn decode(extra_data: U64) -> Result<Self, umi_shared::error::Error> {
+        // The first [0, 4) bytes are base fee denominator
+        let denominator = extra_data.wrapping_shr(32).saturating_to::<u32>();
+        // The bottom 4 bytes reserved for elasticity
+        let elasticity = (extra_data.bitand(U64::from(0xFFFF_FFFFu64))).saturating_to::<u32>();
+
+        match (elasticity, denominator) {
+            (0, 0) => Ok(Self::Default),
+            (_, 0) => Err(umi_shared::error::Error::fee_denom_invariant_violation()),
+            _ => Ok(Self::Custom {
+                denominator: NonZeroU32::new(denominator).expect("Supplied a non-zero value"),
+                elasticity: NonZeroU32::new(elasticity).expect("Supplied a non-zero value"),
+            }),
+        }
+    }
 }
 
 /// Determines amount of fees charged per gas used in transaction execution.
@@ -60,14 +85,14 @@ pub struct Eip1559GasFee {
     /// * The greater the value the smaller the target gas.
     /// * This value has to be greater than zero.
     /// * A value of 1 makes the target the same as the limit.
-    elasticity_multiplier: u32,
+    elasticity_multiplier: NonZeroU32,
     /// Reduces the difference between block's base fee per gas and its parent. Some properties can
     /// be observed:
     ///
     /// * The greater the value the smaller the increase or decrease of the base fee per gas.
     /// * This value has to be greater than zero.
     /// * A value of 1 makes the greatest fee increases or decreases.
-    base_fee_max_change_denominator: u32,
+    base_fee_max_change_denominator: NonZeroU32,
 }
 
 impl Eip1559GasFee {
@@ -75,16 +100,10 @@ impl Eip1559GasFee {
     ///
     /// # Panics
     /// If either `elasticity_multiplier` or `base_fee_max_change_denominator` is zero.
-    pub fn new(elasticity_multiplier: u32, base_fee_max_change_denominator: u32) -> Self {
-        assert!(
-            elasticity_multiplier > 0,
-            "Supplied `elasticity_multiplier` was 0"
-        );
-        assert!(
-            base_fee_max_change_denominator > 0,
-            "Supplied `base_fee_max_change_denominator` was 0"
-        );
-
+    pub fn new(
+        elasticity_multiplier: NonZeroU32,
+        base_fee_max_change_denominator: NonZeroU32,
+    ) -> Self {
         Self {
             elasticity_multiplier,
             base_fee_max_change_denominator,
@@ -99,13 +118,13 @@ impl BaseGasFee for Eip1559GasFee {
         parent_gas_used: u64,
         parent_base_fee_per_gas: u64,
     ) -> u64 {
-        let gas_target = parent_gas_limit / self.elasticity_multiplier as u64;
+        let gas_target = parent_gas_limit / self.elasticity_multiplier.get() as u64;
 
         match parent_gas_used.cmp(&gas_target) {
             Ordering::Greater => {
                 let delta = (parent_base_fee_per_gas.saturating_mul(parent_gas_used - gas_target)
                     / gas_target
-                    / self.base_fee_max_change_denominator as u64)
+                    / self.base_fee_max_change_denominator.get() as u64)
                     .max(1);
 
                 parent_base_fee_per_gas.saturating_add(delta)
@@ -113,7 +132,7 @@ impl BaseGasFee for Eip1559GasFee {
             Ordering::Less => {
                 let delta = parent_base_fee_per_gas.saturating_mul(gas_target - parent_gas_used)
                     / gas_target
-                    / self.base_fee_max_change_denominator as u64;
+                    / self.base_fee_max_change_denominator.get() as u64;
 
                 parent_base_fee_per_gas.saturating_sub(delta)
             }
@@ -123,12 +142,19 @@ impl BaseGasFee for Eip1559GasFee {
 
     #[cfg(feature = "op-upgrade")]
     fn set_parameters_from_attrs(&mut self, eip1559_params: &BaseFeeParameters) {
-        if eip1559_params.denominator == 0 && eip1559_params.elasticity == 0 {
-            self.base_fee_max_change_denominator = DEFAULT_EIP1559_BASE_FEE_MAX_CHANGE_DENOMINATOR;
-            self.elasticity_multiplier = DEFAULT_EIP1559_ELASTICITY_MULTIPLIER;
-        } else {
-            self.base_fee_max_change_denominator = eip1559_params.denominator;
-            self.elasticity_multiplier = eip1559_params.elasticity;
+        match eip1559_params {
+            BaseFeeParameters::Default => {
+                self.base_fee_max_change_denominator =
+                    DEFAULT_EIP1559_BASE_FEE_MAX_CHANGE_DENOMINATOR;
+                self.elasticity_multiplier = DEFAULT_EIP1559_ELASTICITY_MULTIPLIER;
+            }
+            BaseFeeParameters::Custom {
+                denominator,
+                elasticity,
+            } => {
+                self.base_fee_max_change_denominator = *denominator;
+                self.elasticity_multiplier = *elasticity;
+            }
         }
     }
 
@@ -139,8 +165,8 @@ impl BaseGasFee for Eip1559GasFee {
         // Header `extra_data` should be prepended with a 0 version byte
         out.extend_from_slice(&[0u8]);
 
-        out.extend_from_slice(&(self.base_fee_max_change_denominator).to_be_bytes());
-        out.extend_from_slice(&(self.elasticity_multiplier).to_be_bytes());
+        out.extend_from_slice(&(self.base_fee_max_change_denominator).get().to_be_bytes());
+        out.extend_from_slice(&(self.elasticity_multiplier).get().to_be_bytes());
 
         out.into()
     }
@@ -150,8 +176,10 @@ impl BaseGasFee for Eip1559GasFee {
 mod test_doubles {
     use super::*;
 
-    const ELASTICITY_MULTIPLIER: u32 = 2;
-    const BASE_FEE_MAX_CHANGE_DENOMINATOR: u32 = 8;
+    const ELASTICITY_MULTIPLIER: NonZeroU32 =
+        NonZeroU32::new(2).expect("Supplied a non-zero value");
+    const BASE_FEE_MAX_CHANGE_DENOMINATOR: NonZeroU32 =
+        NonZeroU32::new(8).expect("Supplied a non-zero value");
 
     impl Default for Eip1559GasFee {
         fn default() -> Self {
@@ -162,7 +190,7 @@ mod test_doubles {
     impl Eip1559GasFee {
         /// Creates a new [`Eip1559GasFee`] that always makes the gas target equal to gas limit.
         pub fn with_max_gas_target(mut self) -> Self {
-            self.elasticity_multiplier = 1;
+            self.elasticity_multiplier = NonZeroU32::MIN;
             self
         }
     }

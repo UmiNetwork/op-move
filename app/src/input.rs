@@ -1,3 +1,5 @@
+#[cfg(feature = "op-upgrade")]
+use umi_blockchain::block::BaseFeeParameters;
 use {
     alloy::{primitives::Bloom, rlp::Decodable},
     op_alloy::consensus::OpTxEnvelope,
@@ -54,20 +56,7 @@ impl TryFrom<Payload> for PayloadForExecution {
         #[cfg(feature = "op-upgrade")]
         let parsed_params = value
             .eip1559_params
-            .map(|params| {
-                // The first [0, 4) bytes are base fee denominator
-                let denominator = params.wrapping_shr(32).saturating_to::<u32>();
-                // The bottom 4 bytes reserved for elasticity
-                let elasticity = (params.bitand(U64::from(0xFFFF_FFFFu64))).saturating_to::<u32>();
-
-                if elasticity != 0 && denominator == 0 {
-                    return Err(Self::Error::fee_denom_invariant_violation());
-                }
-                Ok(umi_blockchain::block::BaseFeeParameters {
-                    denominator,
-                    elasticity,
-                })
-            })
+            .map(BaseFeeParameters::decode)
             .transpose()?;
 
         Ok(Self {
