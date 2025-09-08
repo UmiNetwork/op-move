@@ -24,3 +24,7 @@ mod queue;
 mod tests;
 #[cfg(any(feature = "test-doubles", test))]
 mod uninit;
+
+#[cfg(feature = "op-upgrade")]
+pub const L2_TO_L1_MESSAGE_PASSER_ADDRESS: alloy::primitives::Address =
+    alloy::primitives::address!("0x4200000000000000000000000000000000000016");
