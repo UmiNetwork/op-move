@@ -13234,6 +13234,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "umi-load-testing"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+]
+
+[[package]]
 name = "umi-server"
 version = "0.1.0"
 dependencies = [

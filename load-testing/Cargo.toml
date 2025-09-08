@@ -1,0 +1,16 @@
+[package]
+name = "umi-load-testing"
+description = "Load testing for the op-move application."
+version.workspace = true
+edition.workspace = true
+
+[features]
+default = []
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow.workspace = true
+
+[dev-dependencies]

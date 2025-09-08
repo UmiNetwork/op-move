@@ -9,6 +9,7 @@ members = [
   "genesis",
   "genesis-builder",
   "genesis-image",
+  "load-testing",
   "server",
   "server/args",
   "shared",
