@@ -1,6 +1,7 @@
 use {
     crate::bridged_tokens::{self, BridgedToken},
     alloy::{genesis::Genesis, primitives::hex},
+    anyhow::Context,
     aptos_gas_schedule::{InitialGasSchedule, NativeGasParameters, VMGasParameters},
     aptos_vm_types::storage::StorageGasParameters,
     move_core_types::{account_address::AccountAddress, gas_algebra::GasQuantity},
@@ -80,7 +81,10 @@ impl GenesisConfig {
             initial_state_root,
             gas_costs: Default::default(),
             treasury,
-            l2_contract_genesis: serde_json::from_reader(File::open(l2_contract_genesis)?)?,
+            l2_contract_genesis: serde_json::from_reader(
+                File::open(l2_contract_genesis)
+                    .context(format!("Path: {l2_contract_genesis:?}"))?,
+            )?,
             token_list: bridged_tokens::parse_token_list(token_list)?,
         })
     }

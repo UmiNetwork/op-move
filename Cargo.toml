@@ -111,6 +111,7 @@ smallvec = "1"
 sui-framework = { git = "https://github.com/MystenLabs/sui", tag = "testnet-v1.28.3" }
 sui-move-build = { git = "https://github.com/MystenLabs/sui", tag = "testnet-v1.28.3" }
 sui-types = { git = "https://github.com/MystenLabs/sui", tag = "testnet-v1.28.3" }
+tempfile = "3.21"
 test-case = "3"
 thiserror = "1"
 tokio = { version = "1", features = ["full"] }

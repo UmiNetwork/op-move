@@ -12,5 +12,10 @@ workspace = true
 
 [dependencies]
 anyhow.workspace = true
+hex.workspace = true
+jsonwebtoken.workspace = true
+tempfile.workspace = true
+tokio.workspace = true
+umi-server-args.workspace = true
 
 [dev-dependencies]
