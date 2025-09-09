@@ -1,5 +1,6 @@
 use {
-    std::path::Path,
+    crate::CARGO_MANIFEST_DIR,
+    std::{fs::File, path::Path},
     tokio::process::{Child, Command},
     umi_server_args::OptionalConfig,
 };
@@ -7,8 +8,10 @@ use {
 const PREFIX: &str = "OP_MOVE";
 
 pub fn start(path: &Path, config: OptionalConfig) -> anyhow::Result<Child> {
+    let log_file = File::create(Path::new(CARGO_MANIFEST_DIR).join("op_move.log"))?;
     let child = Command::new(path)
         .envs(config_to_env_vars(config))
+        .stdout(log_file)
         .spawn()?;
     Ok(child)
 }
