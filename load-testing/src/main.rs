@@ -9,23 +9,27 @@ const CARGO_MANIFEST_DIR: &str = std::env!("CARGO_MANIFEST_DIR");
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let server_binary = compile::build_umi_server().await?;
     let config = LoadTestConfig::new()?;
+    let server_binary = config.binary_path().await?;
 
+    // Start `op-move` and wait for it to be ready.
     let mut umi_process = run_server::start(&server_binary, config.to_server_config()?)?;
-    let client = UmiClient::new(None);
+    tokio::time::sleep(config.op_move_start_time).await;
 
-    // Wait for op-move to start
-    tokio::time::sleep(std::time::Duration::from_secs(20)).await;
+    // Create a client that can access the authorized endpoint.
+    let client = UmiClient::new(Some(config.jwt_secret()));
 
-    // Send an example request as a test
+    // Send some example requests as a test
+
+    let genesis = client.get_block_by_number(0).await?;
+    assert_eq!(genesis.0.header.number, 0);
+
     let balance = client
         .eth_get_balance(alloy::primitives::Address::ZERO)
         .await?;
     assert_eq!(balance, alloy::primitives::U256::ZERO);
 
-    tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-
+    // Shutdown `op-move`
     umi_process.kill().await?;
 
     Ok(())

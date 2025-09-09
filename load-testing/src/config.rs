@@ -1,22 +1,46 @@
 use {
     crate::CARGO_MANIFEST_DIR,
     jsonwebtoken::EncodingKey,
-    std::path::Path,
+    std::{
+        borrow::Cow,
+        path::{Path, PathBuf},
+        time::Duration,
+    },
     tempfile::TempDir,
     umi_server_args::{OptionalAuthSocket, OptionalConfig, OptionalDatabase, OptionalGenesis},
 };
 
 pub struct LoadTestConfig {
+    binary: BinaryPath,
     db_dir: TempDir,
     jwt_secret: [u8; 4],
+    pub op_move_start_time: Duration,
 }
 
 impl LoadTestConfig {
     pub fn new() -> anyhow::Result<Self> {
+        // An environment variable can be used to pick an existing version
+        // of `op-move`. Otherwise it will be compiled fresh from this repository.
+        let binary = std::env::var("OP_MOVE_BINARY_PATH")
+            .map(|path| BinaryPath::Existing(Path::new(&path).into()))
+            .unwrap_or(BinaryPath::Compile);
+
         Ok(Self {
+            binary,
             db_dir: tempfile::tempdir()?,
             jwt_secret: [0xde, 0xad, 0xbe, 0xef],
+            op_move_start_time: Duration::from_secs(30),
         })
+    }
+
+    pub async fn binary_path(&self) -> anyhow::Result<Cow<PathBuf>> {
+        match &self.binary {
+            BinaryPath::Existing(path) => Ok(Cow::Borrowed(path)),
+            BinaryPath::Compile => {
+                let path = crate::compile::build_umi_server().await?;
+                Ok(Cow::Owned(path))
+            }
+        }
     }
 
     pub fn jwt_secret(&self) -> EncodingKey {
@@ -44,4 +68,9 @@ impl LoadTestConfig {
             ..Default::default()
         })
     }
+}
+
+pub enum BinaryPath {
+    Compile,
+    Existing(PathBuf),
 }

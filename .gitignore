@@ -23,3 +23,6 @@ server/src/tests/optimism
 
 # Persistent storage directory
 server/db/
+
+# Load testing logs
+load-testing/op_move.log

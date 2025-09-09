@@ -4,7 +4,7 @@ use {
     reqwest::{Client, Method},
     serde::de::DeserializeOwned,
     std::time::SystemTime,
-    umi_api::jsonrpc::JsonRpcResponse,
+    umi_api::{jsonrpc::JsonRpcResponse, schema::GetBlockResponse},
 };
 
 pub struct UmiClient {
@@ -40,6 +40,19 @@ impl UmiClient {
         .await
     }
 
+    pub async fn get_block_by_number(&self, number: u64) -> anyhow::Result<GetBlockResponse> {
+        self.rpc_request(&serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "eth_getBlockByNumber",
+            "params": [
+                format!("{number:#x}"),
+                true
+            ]
+        }))
+        .await
+    }
+
     async fn rpc_request<T: DeserializeOwned>(
         &self,
         payload: &serde_json::Value,
@@ -47,7 +60,9 @@ impl UmiClient {
         let mut request = self.inner.request(Method::POST, &self.url).json(payload);
 
         if let Some(key) = &self.jwt_secret {
-            let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)?;
+            let now = SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)?
+                .as_secs();
             let token = jsonwebtoken::encode(
                 &Header::default(),
                 &serde_json::json!({
