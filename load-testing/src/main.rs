@@ -1,8 +1,12 @@
-use crate::{client::UmiClient, config::LoadTestConfig};
+use {
+    crate::{client::UmiClient, config::LoadTestConfig},
+    tokio::sync::broadcast,
+};
 
 mod client;
 mod compile;
 mod config;
+mod loads;
 mod run_server;
 
 const CARGO_MANIFEST_DIR: &str = std::env!("CARGO_MANIFEST_DIR");
@@ -19,15 +23,42 @@ async fn main() -> anyhow::Result<()> {
     // Create a client that can access the authorized endpoint.
     let client = UmiClient::new(Some(config.jwt_secret()));
 
-    // Send some example requests as a test
-
+    // Get the genesis block hash
     let genesis = client.get_block_by_number(0).await?;
-    assert_eq!(genesis.0.header.number, 0);
+    let genesis_block_hash = genesis.0.header.hash;
 
-    let balance = client
-        .eth_get_balance(alloy::primitives::Address::ZERO)
-        .await?;
-    assert_eq!(balance, alloy::primitives::U256::ZERO);
+    // Create shutdown channel to control graceful end to load test.
+    let (shutdown, shutdown_rx) = broadcast::channel(1);
+
+    // Spawn the block building job
+    let block_build = loads::block_production::BlockProduction::new(
+        genesis_block_hash,
+        config.jwt_secret(),
+        shutdown_rx,
+    )
+    .spawn();
+
+    // Spawn balance check jobs
+    let balance_checkers = loads::balance_checker::BalanceChecker::spawn_many(
+        config.n_balance_checkers,
+        shutdown.subscribe(),
+    )
+    .await?;
+
+    // Allow test to run for a time
+    // TODO: collect metrics?
+    tokio::time::sleep(config.load_test_duration).await;
+
+    // Shutdown loads
+    shutdown.send(()).ok();
+    if let Err(e) = block_build.await {
+        println!("WARN: failed to join block build task: {e:?}");
+    }
+    for handle in balance_checkers {
+        if let Err(e) = handle.await {
+            println!("WARN: failed to join balance checker task: {e:?}");
+        }
+    }
 
     // Shutdown `op-move`
     umi_process.kill().await?;

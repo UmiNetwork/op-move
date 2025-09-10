@@ -15,6 +15,8 @@ pub struct LoadTestConfig {
     db_dir: TempDir,
     jwt_secret: [u8; 4],
     pub op_move_start_time: Duration,
+    pub n_balance_checkers: usize,
+    pub load_test_duration: Duration,
 }
 
 impl LoadTestConfig {
@@ -30,6 +32,8 @@ impl LoadTestConfig {
             db_dir: tempfile::tempdir()?,
             jwt_secret: [0xde, 0xad, 0xbe, 0xef],
             op_move_start_time: Duration::from_secs(30),
+            n_balance_checkers: 30,
+            load_test_duration: Duration::from_secs(5 * 60), // 5 minutes
         })
     }
 

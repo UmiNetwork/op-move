@@ -4,7 +4,13 @@ use {
     reqwest::{Client, Method},
     serde::de::DeserializeOwned,
     std::time::SystemTime,
-    umi_api::{jsonrpc::JsonRpcResponse, schema::GetBlockResponse},
+    umi_api::{
+        jsonrpc::JsonRpcResponse,
+        schema::{
+            ForkchoiceStateV1, ForkchoiceUpdatedResponseV1, GetBlockResponse, GetPayloadResponseV3,
+            PayloadAttributesV3, PayloadId,
+        },
+    },
 };
 
 pub struct UmiClient {
@@ -48,6 +54,38 @@ impl UmiClient {
             "params": [
                 format!("{number:#x}"),
                 true
+            ]
+        }))
+        .await
+    }
+
+    pub async fn engine_forkchoice_update(
+        &self,
+        fc_state: ForkchoiceStateV1,
+        attrs: Option<PayloadAttributesV3>,
+    ) -> anyhow::Result<ForkchoiceUpdatedResponseV1> {
+        self.rpc_request(&serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "engine_forkchoiceUpdatedV3",
+            "params": [
+                fc_state,
+                attrs,
+            ]
+        }))
+        .await
+    }
+
+    pub async fn engine_get_payload(
+        &self,
+        payload_id: PayloadId,
+    ) -> anyhow::Result<GetPayloadResponseV3> {
+        self.rpc_request(&serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "engine_getPayloadV3",
+            "params": [
+                payload_id
             ]
         }))
         .await

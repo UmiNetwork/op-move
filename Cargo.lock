@@ -13267,6 +13267,8 @@ dependencies = [
  "anyhow",
  "hex",
  "jsonwebtoken 9.3.1",
+ "op-alloy",
+ "rand 0.8.5",
  "reqwest 0.12.18",
  "serde",
  "serde_json",
