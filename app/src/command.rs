@@ -100,6 +100,10 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 UnrecoverableAppFailure
             })?
             .expect("Block repository is non-empty (must always at least contain genesis)");
+        #[cfg(feature = "op-upgrade")]
+        if let Some(params) = &attributes.eip1559_params {
+            self.gas_fee.set_parameters_from_attrs(params);
+        }
         let base_fee = self.gas_fee.base_fee_per_gas(
             parent.block.header.gas_limit,
             parent.block.header.gas_used,
@@ -132,15 +136,37 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
         }
         let total_tip = execution_outcome.total_tip;
 
+        #[cfg(feature = "op-upgrade")]
+        let withdrawals_root = {
+            let evm_db = umi_evm_ext::ResolverBackedDB::new(
+                &self.evm_storage,
+                self.state.resolver(),
+                &(),
+                header_for_execution.number,
+            );
+            let message_passer_account = evm_db
+            .get_account(&L2_TO_L1_MESSAGE_PASSER_ADDRESS)
+            .map_err(|e| {
+                tracing::error!(
+                    "Failure during `start_block_build`. Failed to get L2ToL1MessagePasser account from storage: {e:?}"
+                );
+                UnrecoverableAppFailure
+            })?.expect("L2ToL1MessagePasser is deployed at genesis");
+            Some(message_passer_account.inner.storage_root)
+        };
+        #[cfg(not(feature = "op-upgrade"))]
+        let withdrawals_root = Some(EMPTY_WITHDRAWALS);
+
         let header = Header {
             parent_hash: parent.hash,
             number: header_for_execution.number,
             transactions_root,
-            // TODO: (#201) set to OP's L2ToL1MessagePasser storage root after upgrading beyond Isthmus
-            withdrawals_root: Some(EMPTY_WITHDRAWALS),
+            withdrawals_root,
             base_fee_per_gas: Some(base_fee),
             blob_gas_used: Some(0),
             excess_blob_gas: Some(0),
+            #[cfg(feature = "op-upgrade")]
+            extra_data: self.gas_fee.encode_parameters_for_header(),
             ..Default::default()
         }
         .with_payload_attributes(attributes)

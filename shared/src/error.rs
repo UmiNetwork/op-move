@@ -59,6 +59,18 @@ impl Error {
     pub const fn state_key_invariant_violation() -> Self {
         Self::InvariantViolation(InvariantViolation::StateKey)
     }
+
+    pub const fn extra_data_invariant_violation() -> Self {
+        Self::InvariantViolation(InvariantViolation::ExtraData)
+    }
+
+    pub const fn fee_denom_invariant_violation() -> Self {
+        Self::InvariantViolation(InvariantViolation::BaseFeeDenom)
+    }
+
+    pub const fn fee_elasticity_invariant_violation() -> Self {
+        Self::InvariantViolation(InvariantViolation::BaseFeeElasticity)
+    }
 }
 
 impl<T> From<T> for Error
@@ -105,6 +117,12 @@ pub enum UserError {
     MissingModule(String),
     #[error("Missing resource requested: {0}")]
     MissingResource(String),
+    #[error("Missing requested table item")]
+    MissingTableItem,
+    #[error("Could not decode resource with given type layout")]
+    IncorrectTypeLayout,
+    #[error("Failed to represent move value as JSON")]
+    MoveToJsonConversionFailed,
 }
 
 /// The error caused by invalid transaction input parameter.
@@ -178,6 +196,12 @@ pub enum InvariantViolation {
     DatabaseState,
     #[error("At least genesis block should exist")]
     GenesisBlock,
+    #[error("Block header extra data should be exactly 9 bytes long")]
+    ExtraData,
+    #[error("Payload attributes supplied 0 base fee denominator when elasticity was not 0")]
+    BaseFeeDenom,
+    #[error("Payload attributes supplied 0 elasticity when denominator was not 0")]
+    BaseFeeElasticity,
 }
 
 #[derive(Debug, Error)]
