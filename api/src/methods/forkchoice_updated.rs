@@ -70,11 +70,16 @@ async fn inner_execute_v3<'reader>(
     let payload_id = if let Some(attrs) = payload_attributes {
         let payload_id = payload_id_generator
             .new_payload_id(attrs.to_payload_id_input(&forkchoice_state.head_block_hash));
-        let msg = Command::StartBlockBuild {
-            payload_attributes: attrs,
-            payload_id,
-        };
-        queue.send(msg).await;
+        if matches!(
+            app.payload(payload_id)?,
+            umi_blockchain::payload::MaybePayloadResponse::Unknown
+        ) {
+            let msg = Command::StartBlockBuild {
+                payload_attributes: attrs,
+                payload_id,
+            };
+            queue.send(msg).await;
+        }
         Some(PayloadId(payload_id))
     } else {
         None

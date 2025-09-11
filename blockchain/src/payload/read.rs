@@ -156,6 +156,16 @@ impl InProgressPayloads {
         }
     }
 
+    /// Abort a build job: drop its sender so all receivers see `Err(RecvError::Closed)`.
+    /// Returns true if a job existed and was removed.
+    pub fn abort_id(&self, id: &PayloadId) -> bool {
+        self.inner
+            .write()
+            .expect("Lock is not poisoned")
+            .remove(id)
+            .is_some()
+    }
+
     pub fn finish_id(
         &self,
         block: ExtendedBlock,

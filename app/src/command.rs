@@ -52,6 +52,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             return Ok(());
         }
         let in_progress_payloads = self.payload_queries.get_in_progress();
+        // If there is a job with this id already present, nothing to do
         if in_progress_payloads.start_id(id).is_err() {
             return Ok(());
         }
@@ -60,9 +61,9 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
         let no_tx_pool = attributes.no_tx_pool.unwrap_or(false);
 
         let transactions = if no_tx_pool {
-            // Though it should be a rare event without follower nodes, `op-node` can demand
-            // to rebuild a block deterministically from payload attributes only. We log it
-            // as a rare event for diagnostic purposes.
+            // Though it is a relatively rare event without follower nodes, `op-node` can demand
+            // to rebuild a block deterministically from payload attributes only. This also happens
+            // when an L2 reorg is triggered. We log it for diagnostic purposes.
             tracing::warn!(
                 "Building from payload attributes only, with no mempool txs: {attributes:?}"
             );
@@ -89,6 +90,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| {
                 tracing::error!("Failure during `start_block_build`. Receipt queries failed: {e:?}");
+                in_progress_payloads.abort_id(&id);
                 UnrecoverableAppFailure
             })?;
 
@@ -97,9 +99,21 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             .latest(&self.storage)
             .map_err(|e| {
                 tracing::error!("Failure during `start_block_build`. Failed to get latest block from block repository: {e:?}");
+                in_progress_payloads.abort_id(&id);
                 UnrecoverableAppFailure
             })?
             .expect("Block repository is non-empty (must always at least contain genesis)");
+        // TODO: also check block time (preferrably dynamically from a config) and
+        // ensure build timeout relative to it
+        if parent.block.header.timestamp >= attributes.timestamp.as_limbs()[0] {
+            tracing::error!(
+                "Encountered non-monotonic timestamp. Parent block had {}, received {} in attributes",
+                parent.block.header.timestamp,
+                attributes.timestamp
+            );
+            in_progress_payloads.abort_id(&id);
+            return Ok(());
+        }
         #[cfg(feature = "op-upgrade")]
         if let Some(params) = &attributes.eip1559_params {
             self.gas_fee.set_parameters_from_attrs(params);
@@ -116,11 +130,16 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             prev_randao: attributes.prev_randao,
             chain_id: self.genesis_config.chain_id,
         };
-        let (execution_outcome, receipts) = self.execute_transactions(
-            new_transactions.clone().into_iter(),
-            base_fee,
-            &header_for_execution,
-        )?;
+        let (execution_outcome, receipts) = self
+            .execute_transactions(
+                new_transactions.clone().into_iter(),
+                base_fee,
+                &header_for_execution,
+            )
+            .map_err(|_| {
+                in_progress_payloads.abort_id(&id);
+                UnrecoverableAppFailure
+            })?;
 
         let transactions_root = alloy_trie::root::ordered_trie_root(&new_transactions);
 
@@ -150,6 +169,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 tracing::error!(
                     "Failure during `start_block_build`. Failed to get L2ToL1MessagePasser account from storage: {e:?}"
                 );
+                in_progress_payloads.abort_id(&id);
                 UnrecoverableAppFailure
             })?.expect("L2ToL1MessagePasser is deployed at genesis");
             Some(message_passer_account.inner.storage_root)
@@ -213,6 +233,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 tracing::error!(
                     "Failure during `start_block_build`. Failed to write receipts: {e:?}"
                 );
+                in_progress_payloads.abort_id(&id);
                 UnrecoverableAppFailure
             })?;
 
@@ -222,6 +243,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 tracing::error!(
                     "Failure during `start_block_build`. Failed to write transactions: {e:?}"
                 );
+                in_progress_payloads.abort_id(&id);
                 UnrecoverableAppFailure
             })?;
 
@@ -232,6 +254,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 tracing::error!(
                     "Failure during `start_block_build`. Failed to write produced block: {e:?}"
                 );
+                in_progress_payloads.abort_id(&id);
                 UnrecoverableAppFailure
             })?;
 
@@ -239,6 +262,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             tracing::error!(
                 "Failure during `start_block_build`. `on_payload` callback failed: {e:?}"
             );
+            in_progress_payloads.abort_id(&id);
             UnrecoverableAppFailure
         })?;
 
@@ -251,6 +275,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 .try_for_each(|tx| {
                     let tx = tx.as_canonical().ok_or_else(|| {
                         tracing::error!("Failure during `start_block_build`. Deposit transaction encountered outside of pyaload attributes in mempool removal.");
+                        in_progress_payloads.abort_id(&id);
                         UnrecoverableAppFailure
                     })?;
                     self.mem_pool.remove_by_nonce(tx.nonce, tx.signer);
