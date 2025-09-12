@@ -90,7 +90,6 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| {
                 tracing::error!("Failure during `start_block_build`. Receipt queries failed: {e:?}");
-                in_progress_payloads.abort_id(&id);
                 UnrecoverableAppFailure
             })?;
 
@@ -99,7 +98,6 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             .latest(&self.storage)
             .map_err(|e| {
                 tracing::error!("Failure during `start_block_build`. Failed to get latest block from block repository: {e:?}");
-                in_progress_payloads.abort_id(&id);
                 UnrecoverableAppFailure
             })?
             .expect("Block repository is non-empty (must always at least contain genesis)");
@@ -130,16 +128,11 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             prev_randao: attributes.prev_randao,
             chain_id: self.genesis_config.chain_id,
         };
-        let (execution_outcome, receipts) = self
-            .execute_transactions(
-                new_transactions.clone().into_iter(),
-                base_fee,
-                &header_for_execution,
-            )
-            .map_err(|_| {
-                in_progress_payloads.abort_id(&id);
-                UnrecoverableAppFailure
-            })?;
+        let (execution_outcome, receipts) = self.execute_transactions(
+            new_transactions.clone().into_iter(),
+            base_fee,
+            &header_for_execution,
+        )?;
 
         let transactions_root = alloy_trie::root::ordered_trie_root(&new_transactions);
 
@@ -169,7 +162,6 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 tracing::error!(
                     "Failure during `start_block_build`. Failed to get L2ToL1MessagePasser account from storage: {e:?}"
                 );
-                in_progress_payloads.abort_id(&id);
                 UnrecoverableAppFailure
             })?.expect("L2ToL1MessagePasser is deployed at genesis");
             Some(message_passer_account.inner.storage_root)
@@ -233,7 +225,6 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 tracing::error!(
                     "Failure during `start_block_build`. Failed to write receipts: {e:?}"
                 );
-                in_progress_payloads.abort_id(&id);
                 UnrecoverableAppFailure
             })?;
 
@@ -243,7 +234,6 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 tracing::error!(
                     "Failure during `start_block_build`. Failed to write transactions: {e:?}"
                 );
-                in_progress_payloads.abort_id(&id);
                 UnrecoverableAppFailure
             })?;
 
@@ -254,7 +244,6 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 tracing::error!(
                     "Failure during `start_block_build`. Failed to write produced block: {e:?}"
                 );
-                in_progress_payloads.abort_id(&id);
                 UnrecoverableAppFailure
             })?;
 
@@ -262,7 +251,6 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             tracing::error!(
                 "Failure during `start_block_build`. `on_payload` callback failed: {e:?}"
             );
-            in_progress_payloads.abort_id(&id);
             UnrecoverableAppFailure
         })?;
 
@@ -274,8 +262,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 .skip(attributes_txs_len)
                 .try_for_each(|tx| {
                     let tx = tx.as_canonical().ok_or_else(|| {
-                        tracing::error!("Failure during `start_block_build`. Deposit transaction encountered outside of pyaload attributes in mempool removal.");
-                        in_progress_payloads.abort_id(&id);
+                        tracing::error!("Failure during `start_block_build`. Deposit transaction encountered outside of payload attributes in mempool removal.");
                         UnrecoverableAppFailure
                     })?;
                     self.mem_pool.remove_by_nonce(tx.nonce, tx.signer);
