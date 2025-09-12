@@ -24,7 +24,7 @@ mod tests {
         alloy::eips::BlockNumberOrTag::{self, *},
         test_case::test_case,
         tokio::sync::mpsc,
-        umi_app::{Command, CommandActor, TestDependencies},
+        umi_app::{Command, CommandActor, PayloadForExecution, TestDependencies},
         umi_shared::primitives::U64,
     };
 
@@ -110,7 +110,10 @@ mod tests {
 
             // Create a block, so the block height becomes 1
             let msg = Command::StartBlockBuild {
-                payload_attributes: Default::default(),
+                payload_attributes: PayloadForExecution {
+                    timestamp: U64::from(1),
+                    ..Default::default()
+                },
                 payload_id: U64::from(0x03421ee50df45cacu64),
             };
             state_channel.send(msg).await.unwrap();
@@ -138,7 +141,10 @@ mod tests {
 
         umi_app::run_with_actor(state, async move {
             let msg = Command::StartBlockBuild {
-                payload_attributes: Default::default(),
+                payload_attributes: PayloadForExecution {
+                    timestamp: U64::from(1),
+                    ..Default::default()
+                },
                 payload_id: U64::from(0x03421ee50df45cacu64),
             };
             state_channel.send(msg).await.unwrap();

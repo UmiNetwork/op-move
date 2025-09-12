@@ -160,7 +160,7 @@ pub mod tests {
         )
     }
 
-    pub async fn deposit_eth(to: &str, channel: &Sender<Command>) {
+    pub async fn deposit_eth(to: &str, block_num: u64, channel: &Sender<Command>) {
         let to = Address::from_hex(to).unwrap();
         let amount = parse_ether("1").unwrap();
         let tx = NormalizedExtendedTxEnvelope::DepositedTx(Sealed::new(TxDeposit {
@@ -179,6 +179,7 @@ pub mod tests {
         let payload_attributes = Payload {
             gas_limit: U64::MAX,
             transactions: vec![encoded.into()],
+            timestamp: U64::from(block_num),
             ..Default::default()
         };
 
@@ -189,7 +190,7 @@ pub mod tests {
         channel.send(msg).await.unwrap();
     }
 
-    pub async fn deploy_contract(contract_bytes: Bytes, channel: &Sender<Command>) {
+    pub async fn deploy_contract(contract_bytes: Bytes, block_num: u64, channel: &Sender<Command>) {
         let mut tx = TxEip1559 {
             chain_id: CHAIN_ID,
             nonce: 0,
@@ -212,6 +213,7 @@ pub mod tests {
         let payload_attributes = Payload {
             gas_limit: U64::MAX,
             transactions: vec![encoded.into()],
+            timestamp: U64::from(block_num),
             ..Default::default()
         };
 

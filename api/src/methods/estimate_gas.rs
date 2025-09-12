@@ -61,7 +61,7 @@ mod tests {
         std::str::FromStr,
         test_case::test_case,
         tokio::sync::mpsc,
-        umi_app::{Command, CommandActor},
+        umi_app::{Command, CommandActor, PayloadForExecution},
         umi_shared::primitives::U64,
     };
 
@@ -111,7 +111,7 @@ mod tests {
         }
     }
 
-    #[test_case("0x1")]
+    #[test_case("0x2")]
     #[test_case("0x120")]
     #[test_case("latest")]
     #[test_case("pending")]
@@ -122,7 +122,7 @@ mod tests {
         let state_actor = CommandActor::new(rx, &mut app);
 
         umi_app::run_with_actor(state_actor, async move {
-            deposit_eth("0x8fd379246834eac74b8419ffda202cf8051f7a03", &state_channel).await;
+            deposit_eth("0x8fd379246834eac74b8419ffda202cf8051f7a03", 1, &state_channel).await;
 
             let request: serde_json::Value = serde_json::json!({
                 "jsonrpc": "2.0",
@@ -139,15 +139,18 @@ mod tests {
 
             state_channel.reserve_many(10).await.unwrap();
 
-          for i in 1..=300 {
+          for i in 2..=301 {
               // Create and submit a block to advance the chain
               // This will populate the block hash cache progressively
-            let msg = Command::StartBlockBuild {
-                payload_attributes: Default::default(),
-                payload_id: U64::from(i),
-            };
-              state_channel.send(msg).await.unwrap();
-             state_channel.reserve_many(10).await.unwrap();
+                let msg = Command::StartBlockBuild {
+                    payload_attributes: PayloadForExecution {
+                            timestamp: U64::from(i),
+                            ..Default::default()
+                        },
+                    payload_id: U64::from(i),
+                };
+                state_channel.send(msg).await.unwrap();
+                state_channel.reserve_many(10).await.unwrap();
           }
             let expected_response: serde_json::Value = serde_json::from_str(r#""0x63ec""#).unwrap();
             let actual_response = execute(request, &reader, SerializationKind::Bcs).await.unwrap();

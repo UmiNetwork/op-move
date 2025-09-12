@@ -459,7 +459,10 @@ fn test_fetched_balances_are_updated_after_transfer_of_funds() {
 
     app.add_transaction(tx);
     app.start_block_build(
-        PayloadForExecution::default(),
+        PayloadForExecution {
+            timestamp: U64::from(1),
+            ..PayloadForExecution::default()
+        },
         U64::from(0x03421ee50df45cacu64),
     )
     .unwrap();
@@ -486,7 +489,10 @@ fn test_fetched_nonces_are_updated_after_executing_transaction() {
 
     app.add_transaction(tx);
     app.start_block_build(
-        PayloadForExecution::default(),
+        PayloadForExecution {
+            timestamp: U64::from(1),
+            ..PayloadForExecution::default()
+        },
         U64::from(0x03421ee50df45cacu64),
     )
     .unwrap();
@@ -514,8 +520,14 @@ fn test_one_payload_can_be_fetched_repeatedly() {
 
     let payload_id = U64::from(0x03421ee50df45cacu64);
 
-    app.start_block_build(PayloadForExecution::default(), payload_id)
-        .unwrap();
+    app.start_block_build(
+        PayloadForExecution {
+            timestamp: U64::from(1),
+            ..PayloadForExecution::default()
+        },
+        payload_id,
+    )
+    .unwrap();
 
     let expected_payload = reader.payload(payload_id).unwrap().unwrap();
     let actual_payload = reader.payload(payload_id).unwrap().unwrap();
@@ -537,6 +549,7 @@ fn test_older_payload_can_be_fetched_again_successfully() {
 
     app.start_block_build(
         Payload {
+            timestamp: U64::from(1),
             gas_limit: U64::MAX,
             ..Default::default()
         }
@@ -556,7 +569,7 @@ fn test_older_payload_can_be_fetched_again_successfully() {
 
     app.start_block_build(
         Payload {
-            timestamp: U64::from(1u64),
+            timestamp: U64::from(2),
             gas_limit: U64::MAX,
             ..Default::default()
         }
@@ -590,8 +603,14 @@ fn test_txs_from_one_account_have_proper_nonce_ordering() {
 
     let payload_id = U64::from(0x03421ee50df45cacu64);
 
-    app.start_block_build(PayloadForExecution::default(), payload_id)
-        .unwrap();
+    app.start_block_build(
+        PayloadForExecution {
+            timestamp: U64::from(1),
+            ..PayloadForExecution::default()
+        },
+        payload_id,
+    )
+    .unwrap();
 
     for (i, tx_hash) in tx_hashes.iter().enumerate() {
         // Get receipt for this transaction
@@ -702,8 +721,14 @@ fn test_fee_history_eip1559_fields() {
     let (reader, mut app) =
         create_app_with_fake_queries(EVM_ADDRESS.to_move_address(), U256::from(10), 0, 1);
 
-    app.start_block_build(PayloadForExecution::default(), U64::from(1))
-        .unwrap();
+    app.start_block_build(
+        PayloadForExecution {
+            timestamp: U64::from(1),
+            ..PayloadForExecution::default()
+        },
+        U64::from(1),
+    )
+    .unwrap();
 
     let result = reader.fee_history(1, Latest, None);
     assert!(result.is_ok());
@@ -734,6 +759,7 @@ fn test_fee_history_empty_vs_full_blocks(num_txs: usize, expect_zero_ratio: bool
 
     let payload = Payload {
         gas_limit: U64::from(1_000_000),
+        timestamp: U64::from(1),
         ..Default::default()
     };
     app.start_block_build(payload.try_into().unwrap(), U64::from(1))
@@ -771,6 +797,7 @@ fn test_fee_history_percentile_calculations(
     app.start_block_build(
         Payload {
             gas_limit: U64::from(1_000_000),
+            timestamp: U64::from(1),
             ..Default::default()
         }
         .try_into()
@@ -855,6 +882,7 @@ fn test_fee_history_boundary_percentiles() {
     app.start_block_build(
         Payload {
             gas_limit: U64::from(1_000_000),
+            timestamp: U64::from(1),
             ..Default::default()
         }
         .try_into()
@@ -894,6 +922,7 @@ fn test_max_priority_fee_low_congestion() {
     app.start_block_build(
         Payload {
             gas_limit: U64::from(1_000_000), // still well within the block limits
+            timestamp: U64::from(1),
             ..Default::default()
         }
         .try_into()
@@ -927,6 +956,7 @@ fn test_max_priority_fee_high_congestion() {
     app.start_block_build(
         Payload {
             gas_limit: U64::from(100_000),
+            timestamp: U64::from(1),
             ..Default::default()
         }
         .try_into()
@@ -961,6 +991,7 @@ fn test_gas_price_high_max_fee() {
     app.start_block_build(
         Payload {
             gas_limit: U64::from(100_000),
+            timestamp: U64::from(1),
             ..Default::default()
         }
         .try_into()
@@ -988,6 +1019,7 @@ fn test_gas_price_vs_max_priority_fee_difference() {
     app.start_block_build(
         Payload {
             gas_limit: U64::from(1_000_000),
+            timestamp: U64::from(1),
             ..Default::default()
         }
         .try_into()
@@ -1053,6 +1085,7 @@ fn test_no_tx_pool_does_not_affect_mempool() {
     let payload_attributes = PayloadForExecution {
         no_tx_pool: Some(true),
         transactions: vec![payload_tx.clone().into()],
+        timestamp: U64::from(1),
         ..Default::default()
     };
     let payload_id = U64::from(1);
