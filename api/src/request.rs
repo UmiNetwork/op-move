@@ -107,7 +107,8 @@ where
         SendRawTransaction => {
             send_raw_transaction::execute(request, queue, serialization_tag).await
         }
-        ChainId => chain_id::execute(request, app).await,
+        ChainId => chain_id::execute(request, app, chain_id::ChainIdFormat::Hex).await,
+        NetVersion => chain_id::execute(request, app, chain_id::ChainIdFormat::Decimal).await,
         GetBalance => get_balance::execute(request, app).await,
         GetCode => get_code::execute(request, app).await,
         GetNonce => get_nonce::execute(request, app).await,
