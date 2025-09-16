@@ -85,3 +85,15 @@ async fn test_entry_function_payload() -> anyhow::Result<()> {
     assert_eq!(serialized_payload[0], 2); // Starting with 2 indicates an entry function
     Ok(())
 }
+
+#[tokio::test]
+async fn test_eth_accounts() -> anyhow::Result<()> {
+    test_context::TestContext::run(|ctx| async move {
+        let accounts = ctx.eth_accounts().await?;
+        assert!(accounts.is_empty());
+
+        ctx.shutdown().await;
+        Ok(())
+    })
+    .await
+}

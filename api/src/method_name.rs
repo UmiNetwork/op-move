@@ -31,6 +31,7 @@ pub enum MethodName {
     ClientVersion,
     ListModules,
     ListResources,
+    Accounts,
 }
 
 impl MethodName {
@@ -63,6 +64,7 @@ impl FromStr for MethodName {
 
             "net_version" => Self::NetVersion,
 
+            "eth_accounts" => Self::Accounts,
             "eth_chainId" => Self::ChainId,
             "eth_getBalance" => Self::GetBalance,
             "eth_getCode" => Self::GetCode,

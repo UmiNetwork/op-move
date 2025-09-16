@@ -130,5 +130,8 @@ where
         ClientVersion => client_version::execute(request, app).await,
         ListModules => list_modules::execute(request, app).await,
         ListResources => list_resources::execute(request, app).await,
+        // eth_accounts: Returns a list of addresses owned by client.
+        // We do not support owning addresses in our client, so always return an empty list.
+        Accounts => Ok(serde_json::Value::Array(Vec::new())),
     }
 }
