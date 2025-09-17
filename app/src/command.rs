@@ -52,6 +52,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             return Ok(());
         }
         let in_progress_payloads = self.payload_queries.get_in_progress();
+        // If there is a job with this id already present, nothing to do
         if in_progress_payloads.start_id(id).is_err() {
             return Ok(());
         }
@@ -60,9 +61,9 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
         let no_tx_pool = attributes.no_tx_pool.unwrap_or(false);
 
         let transactions = if no_tx_pool {
-            // Though it should be a rare event without follower nodes, `op-node` can demand
-            // to rebuild a block deterministically from payload attributes only. We log it
-            // as a rare event for diagnostic purposes.
+            // Though it is a relatively rare event without follower nodes, `op-node` can demand
+            // to rebuild a block deterministically from payload attributes only. This also happens
+            // when an L2 reorg is triggered. We log it for diagnostic purposes.
             tracing::warn!(
                 "Building from payload attributes only, with no mempool txs: {attributes:?}"
             );
@@ -100,6 +101,17 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 UnrecoverableAppFailure
             })?
             .expect("Block repository is non-empty (must always at least contain genesis)");
+        // TODO: also check block time (preferrably dynamically from a config) and
+        // ensure build timeout relative to it
+        if parent.block.header.timestamp >= attributes.timestamp.as_limbs()[0] {
+            tracing::error!(
+                "Encountered non-monotonic timestamp. Parent block had {}, received {} in attributes",
+                parent.block.header.timestamp,
+                attributes.timestamp
+            );
+            in_progress_payloads.abort_id(&id);
+            return Ok(());
+        }
         #[cfg(feature = "op-upgrade")]
         if let Some(params) = &attributes.eip1559_params {
             self.gas_fee.set_parameters_from_attrs(params);
@@ -250,7 +262,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 .skip(attributes_txs_len)
                 .try_for_each(|tx| {
                     let tx = tx.as_canonical().ok_or_else(|| {
-                        tracing::error!("Failure during `start_block_build`. Deposit transaction encountered outside of pyaload attributes in mempool removal.");
+                        tracing::error!("Failure during `start_block_build`. Deposit transaction encountered outside of payload attributes in mempool removal.");
                         UnrecoverableAppFailure
                     })?;
                     self.mem_pool.remove_by_nonce(tx.nonce, tx.signer);
