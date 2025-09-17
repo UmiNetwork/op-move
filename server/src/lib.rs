@@ -1,13 +1,16 @@
 use {
     alloy::consensus::{proofs::state_root_unhashed, EMPTY_OMMER_ROOT_HASH, EMPTY_ROOT_HASH},
     jsonwebtoken::{DecodingKey, Validation},
+    once_cell::sync::Lazy,
     serde::Serialize,
     std::{
         future::Future,
         net::{Ipv4Addr, SocketAddr, SocketAddrV4},
         path::Path,
+        sync::Arc,
         time::SystemTime,
     },
+    tokio::sync::{OwnedSemaphorePermit, Semaphore},
     tracing::level_filters::LevelFilter,
     tracing_subscriber::{fmt::format::FmtSpan, EnvFilter},
     umi_api::{
@@ -98,6 +101,18 @@ pub fn defaults() -> DefaultLayer {
 
 const JWT_VALID_DURATION_IN_SECS: u64 = 60;
 
+/// HTTP (8545) concurrency gate: limits non-engine RPC traffic. Engine/auth
+/// route (8551) bypasses this gate. By default 4 threads (and by extension
+/// tokio workers) are reserved for engine needs.
+// TODO: make it configurable
+static HTTP_CONCURRENCY_GATE: Lazy<Arc<Semaphore>> = Lazy::new(|| {
+    let cpus = std::thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(2);
+    let quota = cpus.saturating_sub(4).max(1);
+    Arc::new(Semaphore::new(quota))
+});
+
 pub fn set_global_tracing_subscriber() {
     // TODO: config options for logging (debug level, output to file, etc)
 
@@ -144,8 +159,22 @@ pub async fn run(args: Config) {
         |queue, reader| {
             tokio::spawn(async move {
                 tokio::join!(
-                    serve(args.http.addr, &queue, &reader, &allow::http, None),
-                    serve(args.auth.addr, &queue, &reader, &allow::auth, Some(jwt)),
+                    serve(
+                        args.http.addr,
+                        &queue,
+                        &reader,
+                        &allow::http,
+                        None,
+                        Some(HTTP_CONCURRENCY_GATE.clone()),
+                    ),
+                    serve(
+                        args.auth.addr,
+                        &queue,
+                        &reader,
+                        &allow::auth,
+                        Some(jwt),
+                        None,
+                    ),
                 );
             })
         },
@@ -162,6 +191,7 @@ pub fn server_filter(
     reader: &ApplicationReader<'static, dependency::ReaderDependency>,
     is_allowed: &'static (impl Fn(&MethodName) -> bool + Send + Sync),
     jwt: Option<DecodingKey>,
+    gate: Option<Arc<Semaphore>>,
 ) -> impl Filter<Extract = impl Reply> + Clone {
     let services = (queue.clone(), reader.clone());
     let content_type =
@@ -175,21 +205,39 @@ pub fn server_filter(
     let root_path = warp::any().map(|| SerializationKind::Bcs);
     let serialization_kind = evm_path.or(root_path).unify();
 
+    let permit_acquire = warp::any().and_then(move || {
+        let gate = gate.clone();
+        async move {
+            if let Some(g) = gate {
+                let permit = g
+                    .acquire_owned()
+                    .await
+                    .map_err(|_| warp::reject::reject())?;
+                Ok::<Option<OwnedSemaphorePermit>, Rejection>(Some(permit))
+            } else {
+                Ok::<Option<OwnedSemaphorePermit>, Rejection>(None)
+            }
+        }
+    });
+
     get_method_auto_response
         .or(serialization_kind
             .and(app_state)
             .and(jwt_validation)
+            .and(permit_acquire)
             .and(request_body)
-            .and_then(move |serialization_tag, (queue, reader), _, request| {
-                handle_request(
-                    queue,
-                    serialization_tag,
-                    request,
-                    is_allowed,
-                    &StatePayloadId,
-                    reader,
-                )
-            }))
+            .and_then(
+                move |serialization_tag, (queue, reader), _, _permit, request| {
+                    handle_request(
+                        queue,
+                        serialization_tag,
+                        request,
+                        is_allowed,
+                        &StatePayloadId,
+                        reader,
+                    )
+                },
+            ))
         .with(warp::reply::with::headers(content_type))
         .with(warp::cors().allow_any_origin())
 }
@@ -200,8 +248,9 @@ fn serve(
     reader: &ApplicationReader<'static, dependency::ReaderDependency>,
     is_allowed: &'static (impl Fn(&MethodName) -> bool + Send + Sync),
     jwt: Option<DecodingKey>,
+    gate: Option<Arc<Semaphore>>,
 ) -> impl Future<Output = ()> {
-    let route = server_filter(queue, reader, is_allowed, jwt);
+    let route = server_filter(queue, reader, is_allowed, jwt, gate);
     warp::serve(route)
         .bind_with_graceful_shutdown(addr, queue.shutdown_listener())
         .1
