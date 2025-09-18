@@ -177,6 +177,17 @@ impl TestContext<'static> {
         Ok(result)
     }
 
+    pub async fn eth_accounts(&self) -> anyhow::Result<Vec<Address>> {
+        let request = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 17,
+            "method": "eth_accounts",
+            "params": []
+        });
+        let result = self.handle_request(&request).await?;
+        Ok(result)
+    }
+
     pub async fn mv_list_modules(
         &self,
         address: Address,

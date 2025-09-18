@@ -9,6 +9,7 @@ pub enum MethodName {
     NewPayloadV4,
     SendRawTransaction,
     ChainId,
+    NetVersion,
     GetBalance,
     GetCode,
     GetBlockByHash,
@@ -30,6 +31,7 @@ pub enum MethodName {
     ClientVersion,
     ListModules,
     ListResources,
+    Accounts,
 }
 
 impl MethodName {
@@ -60,6 +62,9 @@ impl FromStr for MethodName {
             "engine_getPayloadV4" => Self::GetPayloadV4,
             "engine_newPayloadV4" => Self::NewPayloadV4,
 
+            "net_version" => Self::NetVersion,
+
+            "eth_accounts" => Self::Accounts,
             "eth_chainId" => Self::ChainId,
             "eth_getBalance" => Self::GetBalance,
             "eth_getCode" => Self::GetCode,

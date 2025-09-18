@@ -107,7 +107,8 @@ where
         SendRawTransaction => {
             send_raw_transaction::execute(request, queue, serialization_tag).await
         }
-        ChainId => chain_id::execute(request, app).await,
+        ChainId => chain_id::execute(request, app, chain_id::ChainIdFormat::Hex).await,
+        NetVersion => chain_id::execute(request, app, chain_id::ChainIdFormat::Decimal).await,
         GetBalance => get_balance::execute(request, app).await,
         GetCode => get_code::execute(request, app).await,
         GetNonce => get_nonce::execute(request, app).await,
@@ -129,5 +130,8 @@ where
         ClientVersion => client_version::execute(request, app).await,
         ListModules => list_modules::execute(request, app).await,
         ListResources => list_resources::execute(request, app).await,
+        // eth_accounts: Returns a list of addresses owned by client.
+        // We do not support owning addresses in our client, so always return an empty list.
+        Accounts => Ok(serde_json::Value::Array(Vec::new())),
     }
 }
