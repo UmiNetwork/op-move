@@ -12,6 +12,7 @@ use {
 
 pub struct LoadTestConfig {
     binary: BinaryPath,
+    pub stats_dir: PathBuf,
     db_dir: TempDir,
     jwt_secret: [u8; 4],
     pub op_move_start_time: Duration,
@@ -29,6 +30,7 @@ impl LoadTestConfig {
 
         Ok(Self {
             binary,
+            stats_dir: Path::new(CARGO_MANIFEST_DIR).into(),
             db_dir: tempfile::tempdir()?,
             jwt_secret: [0xde, 0xad, 0xbe, 0xef],
             op_move_start_time: Duration::from_secs(30),

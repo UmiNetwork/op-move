@@ -2,10 +2,13 @@
 //! Many of these actors can be spawned at once to put load on the server.
 
 use {
-    crate::client::UmiClient,
+    crate::{client::UmiClient, stats::Datapoint},
     rand::{Rng, SeedableRng, rngs::StdRng},
     std::time::Duration,
-    tokio::{sync::broadcast::Receiver, task::JoinHandle},
+    tokio::{
+        sync::{broadcast::Receiver, mpsc::UnboundedSender},
+        task::JoinHandle,
+    },
 };
 
 const INTERVAL: Duration = Duration::from_secs(1);
@@ -19,12 +22,13 @@ pub struct BalanceChecker {
 impl BalanceChecker {
     pub async fn spawn_many(
         n: usize,
+        stats_channel: UnboundedSender<Datapoint>,
         shutdown: Receiver<()>,
     ) -> anyhow::Result<Vec<JoinHandle<()>>> {
         let mut result: Vec<JoinHandle<()>> = Vec::with_capacity(n);
         let mut seed = rand::thread_rng();
         for _ in 0..n {
-            let actor = match Self::new(&mut seed, shutdown.resubscribe()) {
+            let actor = match Self::new(&mut seed, stats_channel.clone(), shutdown.resubscribe()) {
                 Ok(actor) => actor,
                 Err(e) => {
                     // Cancel all previously created actors before returning
@@ -43,9 +47,13 @@ impl BalanceChecker {
         Ok(result)
     }
 
-    pub fn new<R: Rng>(seed: &mut R, shutdown: Receiver<()>) -> anyhow::Result<Self> {
+    pub fn new<R: Rng>(
+        seed: &mut R,
+        stats_channel: UnboundedSender<Datapoint>,
+        shutdown: Receiver<()>,
+    ) -> anyhow::Result<Self> {
         let rng = StdRng::from_rng(seed)?;
-        let client = UmiClient::new(None);
+        let client = UmiClient::new(stats_channel, None);
         Ok(Self {
             rng,
             client,

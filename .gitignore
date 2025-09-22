@@ -25,4 +25,5 @@ server/src/tests/optimism
 server/db/
 
 # Load testing logs
-load-testing/op_move.log
+load-testing/*.log
+load-testing/*.csv

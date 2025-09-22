@@ -1,9 +1,11 @@
 use {
+    crate::stats::Datapoint,
     alloy::primitives::{Address, U256},
     jsonwebtoken::{EncodingKey, Header},
     reqwest::{Client, Method},
     serde::de::DeserializeOwned,
-    std::time::SystemTime,
+    std::time::{Instant, SystemTime},
+    tokio::sync::mpsc::UnboundedSender,
     umi_api::{
         jsonrpc::JsonRpcResponse,
         schema::{
@@ -17,10 +19,11 @@ pub struct UmiClient {
     url: String,
     inner: Client,
     jwt_secret: Option<EncodingKey>,
+    stats_channel: UnboundedSender<Datapoint>,
 }
 
 impl UmiClient {
-    pub fn new(jwt_secret: Option<EncodingKey>) -> Self {
+    pub fn new(stats_channel: UnboundedSender<Datapoint>, jwt_secret: Option<EncodingKey>) -> Self {
         let inner = Client::new();
         let port = if jwt_secret.is_some() {
             // Use authenticated port
@@ -33,29 +36,38 @@ impl UmiClient {
             url: format!("http://127.0.0.1:{port}"),
             inner,
             jwt_secret,
+            stats_channel,
         }
     }
 
     pub async fn eth_get_balance(&self, address: Address) -> anyhow::Result<U256> {
-        self.rpc_request(&serde_json::json!({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "eth_getBalance",
-            "params": [address, "latest"]
-        }))
+        let method = "eth_getBalance";
+        self.rpc_request(
+            method,
+            &serde_json::json!({
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": method,
+                "params": [address, "latest"]
+            }),
+        )
         .await
     }
 
     pub async fn get_block_by_number(&self, number: u64) -> anyhow::Result<GetBlockResponse> {
-        self.rpc_request(&serde_json::json!({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "eth_getBlockByNumber",
-            "params": [
-                format!("{number:#x}"),
-                true
-            ]
-        }))
+        let method = "eth_getBlockByNumber";
+        self.rpc_request(
+            method,
+            &serde_json::json!({
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": method,
+                "params": [
+                    format!("{number:#x}"),
+                    true
+                ]
+            }),
+        )
         .await
     }
 
@@ -64,15 +76,19 @@ impl UmiClient {
         fc_state: ForkchoiceStateV1,
         attrs: Option<PayloadAttributesV3>,
     ) -> anyhow::Result<ForkchoiceUpdatedResponseV1> {
-        self.rpc_request(&serde_json::json!({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "engine_forkchoiceUpdatedV3",
-            "params": [
-                fc_state,
-                attrs,
-            ]
-        }))
+        let method = "engine_forkchoiceUpdatedV3";
+        self.rpc_request(
+            method,
+            &serde_json::json!({
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": method,
+                "params": [
+                    fc_state,
+                    attrs,
+                ]
+            }),
+        )
         .await
     }
 
@@ -80,19 +96,24 @@ impl UmiClient {
         &self,
         payload_id: PayloadId,
     ) -> anyhow::Result<GetPayloadResponseV3> {
-        self.rpc_request(&serde_json::json!({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "engine_getPayloadV3",
-            "params": [
-                payload_id
-            ]
-        }))
+        let method = "engine_getPayloadV3";
+        self.rpc_request(
+            method,
+            &serde_json::json!({
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": method,
+                "params": [
+                    payload_id
+                ]
+            }),
+        )
         .await
     }
 
     async fn rpc_request<T: DeserializeOwned>(
         &self,
+        rpc_method: &'static str,
         payload: &serde_json::Value,
     ) -> anyhow::Result<T> {
         let mut request = self.inner.request(Method::POST, &self.url).json(payload);
@@ -111,7 +132,16 @@ impl UmiClient {
             request = request.header("authorization", format!("Bearer {token}"));
         }
 
-        let response = request.send().await?.error_for_status()?;
+        let now = Instant::now();
+        let response = request.send().await?;
+        let duration = now.elapsed();
+        self.stats_channel.send(Datapoint {
+            rpc_method,
+            timestamp: now,
+            duration,
+        })?;
+
+        let response = response.error_for_status()?;
         let output: JsonRpcResponse = response.json().await?;
 
         if let Some(error) = output.error {

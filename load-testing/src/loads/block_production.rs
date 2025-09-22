@@ -1,7 +1,7 @@
 //! Contains an actor that will trigger block production once per second.
 
 use {
-    crate::client::UmiClient,
+    crate::{client::UmiClient, stats::Datapoint},
     alloy::{
         consensus::Sealed,
         primitives::{Address, B256, TxKind, U64, U256},
@@ -9,14 +9,17 @@ use {
     jsonwebtoken::EncodingKey,
     op_alloy::consensus::{OpTxEnvelope, TxDeposit},
     std::time::{Duration, SystemTime},
-    tokio::{sync::broadcast::Receiver, task::JoinHandle},
+    tokio::{
+        sync::{broadcast::Receiver, mpsc::UnboundedSender},
+        task::JoinHandle,
+    },
     umi_api::schema::{ForkchoiceStateV1, GetPayloadResponseV3, PayloadAttributesV3, PayloadId},
 };
 
 /// Time to wait before checking if we build another block.
 /// A new block build is only started if the timestamp (in seconds) is different
 /// from the previous block build.
-const INTERVAL: Duration = Duration::from_millis(500);
+const INTERVAL: Duration = Duration::from_millis(50);
 
 /// Time to wait before sending an RPC request again.
 const RETRY_INTERVAL: Duration = Duration::from_millis(10);
@@ -49,9 +52,14 @@ pub struct BlockProduction {
 }
 
 impl BlockProduction {
-    pub fn new(genesis_block_hash: B256, jwt_secret: EncodingKey, shutdown: Receiver<()>) -> Self {
+    pub fn new(
+        genesis_block_hash: B256,
+        jwt_secret: EncodingKey,
+        stats_channel: UnboundedSender<Datapoint>,
+        shutdown: Receiver<()>,
+    ) -> Self {
         Self {
-            client: UmiClient::new(Some(jwt_secret)),
+            client: UmiClient::new(stats_channel, Some(jwt_secret)),
             shutdown,
             head_block_hash: genesis_block_hash,
             head_timestamp: 0,
