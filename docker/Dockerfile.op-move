@@ -28,7 +28,7 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
   && mv target/release/op-move /volume/op-move
 
 # Switch to clean image
-FROM alpine:3.21.2
+FROM alpine:3.21.2 AS op-move
 WORKDIR /volume
 
 RUN \

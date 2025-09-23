@@ -1,3 +1,22 @@
+FROM alpine:3.21.2 AS forge
+
+# Set working directory
+WORKDIR /volume
+
+# Declare argument for target architecture supplied automatically by the build system
+ARG TARGETARCH
+
+# Download and extract foundry binaries
+RUN if [ "$TARGETARCH" = "amd64" ]; then \
+  wget https://github.com/foundry-rs/foundry/releases/download/v1.2.3/foundry_v1.2.3_alpine_amd64.tar.gz && \
+  tar -xzf foundry_v1.2.3_alpine_amd64.tar.gz; \
+  elif [ "$TARGETARCH" = "arm64" ]; then \
+  wget https://github.com/foundry-rs/foundry/releases/download/v1.2.3/foundry_v1.2.3_alpine_arm64.tar.gz && \
+  tar -xzf foundry_v1.2.3_alpine_arm64.tar.gz; \
+  else \
+  echo "Unsupported architecture"; exit 1; \
+  fi
+
 FROM alpine:3.21.2 AS build
 WORKDIR /volume
 
@@ -13,7 +32,6 @@ RUN \
 # Install go
 COPY --from=golang:1.22-alpine /usr/local/go/ /usr/local/go/
 
-
 # Add go to path
 ENV PATH="/usr/local/go/bin:${PATH}"
 
@@ -21,7 +39,7 @@ ENV PATH="/usr/local/go/bin:${PATH}"
 RUN make geth
 
 # Switch to clean container
-FROM alpine:3.21.2
+FROM alpine:3.21.2 AS geth
 WORKDIR /volume
 ENV L1_RPC_ADDR="127.0.0.1"
 ENV L1_RPC_PORT="58138"
@@ -38,8 +56,8 @@ RUN \
 
 # Copy built binary from build image
 COPY --from=build /volume/build/bin/geth /usr/local/bin/geth
-COPY --from=optimism /usr/local/bin/cast /usr/local/bin/cast
-COPY --from=optimism /usr/local/bin/forge /usr/local/bin/forge
+COPY --from=forge /volume/cast /usr/local/bin/cast
+COPY --from=forge /volume/forge /usr/local/bin/forge
 COPY docker/wait-for-it.sh /usr/local/bin/wait-for-it
 COPY docker/prefund.sh prefund.sh
 COPY .env .env

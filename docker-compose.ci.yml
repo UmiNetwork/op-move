@@ -1,19 +1,10 @@
 services:
-  optimism:
-    build:
-      cache_from:
-        - type=registry,ref=ghcr.io/uminetwork/optimism:latest-cache
-      cache_to:
-        - type=registry,ref=ghcr.io/uminetwork/optimism:latest-cache,mode=max
-
   op-node:
     build:
       cache_from:
         - type=registry,ref=ghcr.io/uminetwork/op-node:latest-cache
       cache_to:
         - type=registry,ref=ghcr.io/uminetwork/op-node:latest-cache,mode=max
-      additional_contexts:
-        optimism: "docker-image://ghcr.io/uminetwork/optimism:latest"
 
   op-batcher:
     build:
@@ -21,8 +12,6 @@ services:
         - type=registry,ref=ghcr.io/uminetwork/op-batcher:latest-cache
       cache_to:
         - type=registry,ref=ghcr.io/uminetwork/op-batcher:latest-cache,mode=max
-      additional_contexts:
-        optimism: "docker-image://ghcr.io/uminetwork/optimism:latest"
 
   op-proposer:
     build:
@@ -30,8 +19,6 @@ services:
         - type=registry,ref=ghcr.io/uminetwork/op-proposer:latest-cache
       cache_to:
         - type=registry,ref=ghcr.io/uminetwork/op-proposer:latest-cache,mode=max
-      additional_contexts:
-        optimism: "docker-image://ghcr.io/uminetwork/optimism:latest"
 
   op-move:
     build:
@@ -46,5 +33,3 @@ services:
         - type=registry,ref=ghcr.io/uminetwork/geth:latest-cache
       cache_to:
         - type=registry,ref=ghcr.io/uminetwork/geth:latest-cache,mode=max
-      additional_contexts:
-        optimism: "docker-image://ghcr.io/uminetwork/optimism:latest"
