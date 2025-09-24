@@ -33,7 +33,6 @@ pub mod tests {
             hex::FromHex,
             network::TxSignerSync,
             primitives::{Bytes, FixedBytes, TxKind, hex, utils::parse_ether},
-            rlp::Encodable,
             signers::local::PrivateKeySigner,
         },
         move_core_types::account_address::AccountAddress,
@@ -175,7 +174,7 @@ pub mod tests {
         }));
 
         let mut encoded = Vec::new();
-        tx.encode(&mut encoded);
+        tx.trie_encode(&mut encoded);
         let payload_attributes = Payload {
             gas_limit: U64::MAX,
             transactions: vec![encoded.into()],
@@ -209,7 +208,7 @@ pub mod tests {
         let tx = UmiTxEnvelope::Eip1559(signed_tx);
 
         let mut encoded = Vec::new();
-        tx.encode(&mut encoded);
+        tx.trie_encode(&mut encoded);
         let payload_attributes = Payload {
             gas_limit: U64::MAX,
             transactions: vec![encoded.into()],

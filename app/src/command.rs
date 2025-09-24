@@ -134,7 +134,10 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             &header_for_execution,
         )?;
 
-        let transactions_root = alloy_trie::root::ordered_trie_root(&new_transactions);
+        let transactions_root =
+            alloy_trie::root::ordered_trie_root_with_encoder(&new_transactions, |tx, buf| {
+                tx.trie_encode(buf)
+            });
 
         // The withdrawals in the EIP-4895 sense are not used by Optimism at all
         // (<https://specs.optimism.io/protocol/isthmus/exec-engine.html?highlight=withdrawals#p2p>),

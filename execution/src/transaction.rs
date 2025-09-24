@@ -5,11 +5,10 @@ use {
             Receipt, ReceiptWithBloom, Sealed, Signed, Transaction, TxEip1559, TxEip2930,
             TxEnvelope, TxLegacy,
         },
-        eips::eip2930::AccessList,
+        eips::{Decodable2718, Encodable2718, eip2930::AccessList},
         primitives::{
             Address, B256, Bloom, Bytes, Log, LogData, PrimitiveSignature, TxKind, U256, address,
         },
-        rlp::{Decodable, Encodable},
         rpc::types::TransactionRequest,
     },
     aptos_types::transaction::{EntryFunction, ModuleBundle, Script},
@@ -43,6 +42,21 @@ pub enum UmiTxEnvelope {
     Legacy(Signed<TxLegacy>),
     Eip2930(Signed<TxEip2930>),
     Eip1559(Signed<TxEip1559>),
+}
+
+impl UmiTxEnvelope {
+    pub fn decode(buf: &mut &[u8]) -> alloy::rlp::Result<Self> {
+        let tx_envelope = TxEnvelope::decode_2718(buf)?;
+        tx_envelope
+            .try_into()
+            .map_err(|_| alloy::rlp::Error::Custom("Unsupported transaction type"))
+    }
+
+    /// RLP encoding suitable for computing the transaction root.
+    pub fn trie_encode(&self, out: &mut Vec<u8>) {
+        let tx_envelope: TxEnvelope = self.clone().into();
+        tx_envelope.encode_2718(out);
+    }
 }
 
 impl TryFrom<TxEnvelope> for UmiTxEnvelope {
@@ -79,22 +93,6 @@ impl TryFrom<UmiTxEnvelope> for NormalizedEthTransaction {
             UmiTxEnvelope::Eip2930(tx) => tx.try_into(),
             UmiTxEnvelope::Eip1559(tx) => tx.try_into(),
         }
-    }
-}
-
-impl Decodable for UmiTxEnvelope {
-    fn decode(buf: &mut &[u8]) -> alloy::rlp::Result<Self> {
-        let envelope = TxEnvelope::decode(buf)?;
-        envelope
-            .try_into()
-            .map_err(|_| alloy::rlp::Error::Custom("Unsupported transaction type"))
-    }
-}
-
-impl Encodable for UmiTxEnvelope {
-    fn encode(&self, out: &mut dyn alloy::rlp::BufMut) {
-        let envelope: TxEnvelope = self.clone().into();
-        envelope.encode(out);
     }
 }
 
@@ -136,13 +134,6 @@ impl WrapReceipt for NormalizedExtendedTxEnvelope {
 pub enum NormalizedExtendedTxEnvelope {
     Canonical(NormalizedEthTransaction),
     DepositedTx(Sealed<TxDeposit>),
-}
-
-impl Encodable for NormalizedExtendedTxEnvelope {
-    fn encode(&self, out: &mut dyn alloy::rlp::BufMut) {
-        let envelope: OpTxEnvelope = self.clone().into();
-        envelope.encode(out);
-    }
 }
 
 impl TryFrom<OpTxEnvelope> for NormalizedExtendedTxEnvelope {
@@ -217,6 +208,12 @@ impl NormalizedExtendedTxEnvelope {
 
     pub fn trie_hash(&self) -> B256 {
         self.tx_hash()
+    }
+
+    /// RLP encoding suitable for computing the transaction root.
+    pub fn trie_encode(&self, out: &mut Vec<u8>) {
+        let op_envelope: OpTxEnvelope = self.clone().into();
+        op_envelope.encode_2718(out);
     }
 
     pub fn signer(&self) -> Address {

@@ -20,7 +20,7 @@ const ONE: Address = {
 };
 
 #[tokio::test]
-async fn test_invalid_transaction() -> anyhow::Result<()> {
+async fn test_legacy_transaction() -> anyhow::Result<()> {
     TestContext::run(|mut ctx| async move {
         // Submit a legacy transaction
         let tx = legacy_tx(ctx.genesis_config.chain_id);
@@ -34,8 +34,7 @@ async fn test_invalid_transaction() -> anyhow::Result<()> {
         // Confirm payload is accepted
         let new_payload_response = ctx.engine_new_payload(payload.execution_payload).await?;
 
-        // TODO: must be valid
-        assert_eq!(new_payload_response.status, Status::Invalid);
+        assert_eq!(new_payload_response.status, Status::Valid);
 
         ctx.shutdown().await;
         Ok(())
