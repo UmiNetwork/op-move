@@ -13,7 +13,8 @@ use {
         jsonrpc::JsonRpcResponse,
         schema::{
             mv::{TableHandle, TableItemRequest},
-            ForkchoiceUpdatedResponseV1, GetBlockResponse, GetPayloadResponseV3,
+            ExecutionPayloadV3, ForkchoiceUpdatedResponseV1, GetBlockResponse,
+            GetPayloadResponseV3, PayloadId, PayloadStatusV1,
         },
     },
     umi_app::{ApplicationReader, CommandQueue},
@@ -72,6 +73,20 @@ impl TestContext<'static> {
     }
 
     pub async fn produce_block(&mut self) -> anyhow::Result<B256> {
+        let response = self.engine_forkchoice_update().await?;
+        let payload_id = response.payload_id.unwrap();
+
+        self.queue.wait_for_pending_commands().await;
+
+        let response = self.engine_get_payload(payload_id).await?;
+
+        self.head = response.execution_payload.block_hash;
+        Ok(self.head)
+    }
+
+    pub async fn engine_forkchoice_update(
+        &mut self,
+    ) -> anyhow::Result<ForkchoiceUpdatedResponseV1> {
         self.timestamp += 1;
         let head_hash = self.head;
         let timestamp = self.timestamp;
@@ -99,11 +114,13 @@ impl TestContext<'static> {
                 }
             ]
         });
-        let response: ForkchoiceUpdatedResponseV1 = self.handle_request(&request).await?;
-        let payload_id = response.payload_id.unwrap();
+        self.handle_request(&request).await
+    }
 
-        self.queue.wait_for_pending_commands().await;
-
+    pub async fn engine_get_payload(
+        &self,
+        payload_id: PayloadId,
+    ) -> anyhow::Result<GetPayloadResponseV3> {
         let request = serde_json::json!({
             "jsonrpc": "2.0",
             "id": 8,
@@ -112,10 +129,24 @@ impl TestContext<'static> {
                String::from(payload_id),
             ]
         });
-        let response: GetPayloadResponseV3 = self.handle_request(&request).await?;
+        self.handle_request(&request).await
+    }
 
-        self.head = response.execution_payload.block_hash;
-        Ok(self.head)
+    pub async fn engine_new_payload(
+        &self,
+        payload: ExecutionPayloadV3,
+    ) -> anyhow::Result<PayloadStatusV1> {
+        let request = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 8,
+            "method": "engine_newPayloadV3",
+            "params": [
+               payload,
+               serde_json::Value::Array(Vec::new()),
+               B256::ZERO,
+            ]
+        });
+        self.handle_request(&request).await
     }
 
     pub async fn send_raw_transaction(&self, tx: TxEnvelope) -> anyhow::Result<B256> {
