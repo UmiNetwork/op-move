@@ -1,6 +1,5 @@
 use {
     crate::{json_utils, jsonrpc::JsonRpcError, request::SerializationKind},
-    alloy::rlp::Decodable,
     umi_app::{Command, CommandQueue},
     umi_execution::transaction::{NormalizedEthTransaction, UmiTxEnvelope},
     umi_shared::primitives::{B256, Bytes},
@@ -76,7 +75,7 @@ pub mod tests {
                 {
                     "method": "eth_sendRawTransaction",
                     "params": [
-                    "0xb86d02f86a82019480808088ffffffffffffffff948fd379246834eac74b8419ffda202cf8051f7a033d80c080a078c716fef14bfcb7c2c9ff4abeb741529874fe7046ac042871f9d8490db55f5ca001fd5186e08990692d54912b476496f12c48bd7cc540a92d211dde232133ed17"
+                    "0x02f86a82019480808088ffffffffffffffff948fd379246834eac74b8419ffda202cf8051f7a033d80c080a078c716fef14bfcb7c2c9ff4abeb741529874fe7046ac042871f9d8490db55f5ca001fd5186e08990692d54912b476496f12c48bd7cc540a92d211dde232133ed17"
                     ],
                     "id": 4,
                     "jsonrpc": "2.0"

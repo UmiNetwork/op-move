@@ -1,6 +1,7 @@
 mod evm_contracts;
 mod get_proof;
 mod integration;
+mod legacy_tx;
 mod listing_apis;
 mod payload;
 mod table_api;

@@ -143,7 +143,11 @@ fn validate_payload_block_hash(
     execution_payload: &ExecutionPayloadV3,
     parent_beacon_block_root: B256,
 ) -> Result<(), PayloadStatusV1> {
-    let transactions_root = alloy_trie::root::ordered_trie_root(&execution_payload.transactions);
+    let transactions_root = alloy_trie::root::ordered_trie_root_with_encoder(
+        &execution_payload.transactions,
+        // Transactions are already encoded, so we simply pass through the bytes.
+        |tx, buf| buf.extend_from_slice(tx),
+    );
 
     let payload_header = Header {
         parent_hash: execution_payload.parent_hash,
