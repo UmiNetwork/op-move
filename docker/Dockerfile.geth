@@ -1,7 +1,4 @@
-FROM alpine:3.21.2 AS forge
-
-# Set working directory
-WORKDIR /volume
+FROM alpine:3.21.2 AS foundry
 
 # Declare argument for target architecture supplied automatically by the build system
 ARG TARGETARCH
@@ -15,7 +12,9 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
   tar -xzf foundry_v1.2.3_alpine_arm64.tar.gz; \
   else \
   echo "Unsupported architecture"; exit 1; \
-  fi
+  fi \
+  # Clean up
+  && rm -rf $(ls -d /* /etc/* | grep -v -e ^/cast$ -e ^/forge$ -e ^/sys$ -e ^/proc$ -e ^/dev -e ^/etc$ -e ^/etc/hosts$ -e ^/etc/resolv.conf$)
 
 FROM alpine:3.21.2 AS build
 WORKDIR /volume
@@ -55,8 +54,8 @@ RUN \
 
 # Copy built binary from build image
 COPY --from=build /volume/build/bin/geth /usr/local/bin/geth
-COPY --from=forge /volume/cast /usr/local/bin/cast
-COPY --from=forge /volume/forge /usr/local/bin/forge
+COPY --from=foundry /cast /usr/local/bin/cast
+COPY --from=foundry /forge /usr/local/bin/forge
 COPY docker/wait-for-it.sh /usr/local/bin/wait-for-it
 COPY docker/prefund.sh prefund.sh
 COPY .env .env
