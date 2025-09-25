@@ -1,10 +1,9 @@
 use {
-    umi_server::defaults,
+    umi_server::{defaults, ServerRuntimes},
     umi_server_args::{CliLayer, ConfigBuilder, EnvLayer, FileLayer},
 };
 
-#[tokio::main]
-async fn main() {
+fn main() {
     let args = ConfigBuilder::new()
         .layer(defaults())
         .layer(FileLayer::toml())
@@ -14,5 +13,25 @@ async fn main() {
         .expect("Must build config to run app");
 
     umi_server::set_global_tracing_subscriber();
-    umi_server::run(args).await;
+    let http_rt = tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(10)
+        .thread_name("rt-http")
+        .enable_all()
+        .build()
+        .expect("Must build http runtime to run app");
+
+    let auth_rt = tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(4)
+        .thread_name("rt-auth")
+        .enable_all()
+        .build()
+        .expect("Must build auth runtime to run app");
+
+    http_rt.block_on(umi_server::run_with_runtimes(
+        args,
+        ServerRuntimes {
+            http: &http_rt,
+            auth: &auth_rt,
+        },
+    ));
 }

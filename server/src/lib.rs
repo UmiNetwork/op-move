@@ -53,6 +53,12 @@ pub struct ServerLog<'a> {
     pub op_move_response: &'a JsonRpcResponse,
 }
 
+#[derive(Debug)]
+pub struct ServerRuntimes<'a> {
+    pub http: &'a tokio::runtime::Runtime,
+    pub auth: &'a tokio::runtime::Runtime,
+}
+
 pub fn defaults() -> DefaultLayer {
     let default_genesis_config = GenesisConfig::default();
     let umi_root_path = Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -108,6 +114,7 @@ pub fn set_global_tracing_subscriber() {
         .add_directive("alloy=info".parse().expect("Is valid directive"));
 
     let subscriber = tracing_subscriber::FmtSubscriber::builder()
+        .with_thread_names(true)
         .with_env_filter(filter)
         .with_ansi(false)
         .with_span_events(FmtSpan::FULL)
@@ -115,7 +122,7 @@ pub fn set_global_tracing_subscriber() {
     tracing::subscriber::set_global_default(subscriber).expect("Failed to set tracing subscriber");
 }
 
-pub async fn run(args: Config) {
+pub async fn run_with_runtimes(args: Config, rts: ServerRuntimes<'_>) {
     let genesis_config = GenesisConfig::try_new(
         args.genesis.chain_id,
         args.genesis.initial_state_root,
@@ -141,20 +148,36 @@ pub async fn run(args: Config) {
     umi_app::run(
         (reader, app),
         args.max_buffered_commands,
-        |queue, reader| {
-            tokio::spawn(async move {
-                tokio::join!(
-                    serve(args.http.addr, &queue, &reader, &allow::http, None),
-                    serve(args.auth.addr, &queue, &reader, &allow::auth, Some(jwt)),
-                );
-            })
+        |queue, reader| async move {
+            let queue_http = queue.clone();
+            let reader_http = reader.clone();
+            let addr_http = args.http.addr;
+
+            let http = rts.http.spawn(serve(
+                addr_http,
+                &queue_http,
+                &reader_http,
+                &allow::http,
+                None,
+            ));
+
+            let queue_auth = queue.clone();
+            let reader_auth = reader.clone();
+            let addr_auth = args.auth.addr;
+
+            let auth = rts.auth.spawn(serve(
+                addr_auth,
+                &queue_auth,
+                &reader_auth,
+                &allow::auth,
+                Some(jwt),
+            ));
+
+            queue.shutdown_listener().await;
+            let _ = (http.await, auth.await);
         },
     )
     .await
-    .inspect_err(|e| {
-        tracing::error!("Failed to join spawned server task: {e:?}");
-    })
-    .ok();
 }
 
 pub fn server_filter(
@@ -200,7 +223,7 @@ fn serve(
     reader: &ApplicationReader<'static, dependency::ReaderDependency>,
     is_allowed: &'static (impl Fn(&MethodName) -> bool + Send + Sync),
     jwt: Option<DecodingKey>,
-) -> impl Future<Output = ()> {
+) -> impl Future<Output = ()> + Send + 'static {
     let route = server_filter(queue, reader, is_allowed, jwt);
     warp::serve(route)
         .bind_with_graceful_shutdown(addr, queue.shutdown_listener())
