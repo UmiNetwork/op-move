@@ -35,7 +35,7 @@ jobs:
       # Previous published packages kept for possible rollback
       - name: Backup current images as previous
         run: |
-          ALL_SERVICES=("optimism" "op-move" "geth" "op-node" "op-batcher" "op-proposer")
+          ALL_SERVICES=("op-move" "geth" "op-node" "op-batcher" "op-proposer")
           for service in "${ALL_SERVICES[@]}"; do
           echo "Retagging ghcr.io/uminetwork/${service}:latest as :previous"
             docker compose pull ${service} || echo "No existing ${service}:latest found"
@@ -48,15 +48,12 @@ jobs:
 
       # Stage 1: Build and push base images first
       - name: Build base images
-        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml build optimism op-move geth
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml build op-move geth
 
       - name: Push base images
-        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml push optimism op-move geth
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml push op-move geth
 
       # Stage 2: Pull fresh base images, then build dependents
-      - name: Pull fresh base images
-        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml pull optimism
-
       - name: Build dependent images
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml build op-node op-batcher op-proposer
 
