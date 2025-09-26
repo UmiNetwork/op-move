@@ -1,58 +1,54 @@
 # First build all the dependencies
-FROM golang:1.22-alpine AS builder
+FROM golang:1.22-alpine AS optimism
 
-# Install build dependencies
-RUN apk add --no-cache git make bash wget
-
-# Set working directory
-WORKDIR /build
-
-# Clone and build optimism at specific commit
-RUN git clone https://github.com/ethereum-optimism/optimism . && \
-  git checkout f2e5a7a5 && \
-  make cannon-prestate op-node op-batcher op-proposer
-
-# Download and extract foundry binaries
+# Declare argument for target architecture supplied automatically by the build system
 ARG TARGETARCH
-RUN if [ "$TARGETARCH" = "amd64" ]; then \
-  wget https://github.com/foundry-rs/foundry/releases/download/v1.2.3/foundry_v1.2.3_alpine_amd64.tar.gz && \
-  tar -xzf foundry_v1.2.3_alpine_amd64.tar.gz; \
-  elif [ "$TARGETARCH" = "arm64" ]; then \
-  wget https://github.com/foundry-rs/foundry/releases/download/v1.2.3/foundry_v1.2.3_alpine_arm64.tar.gz && \
-  tar -xzf foundry_v1.2.3_alpine_arm64.tar.gz; \
-  else \
-  echo "Unsupported architecture"; exit 1; \
-  fi
 
-# Install forge dependencies for contracts
-RUN cd packages/contracts-bedrock && \
-  ../../forge install
-
-# Final minimal image
-FROM alpine:3.21.2 AS optimism
-
-# Copy only the built binaries we need
-COPY --from=builder /build/op-node/bin/op-node /usr/local/bin/
-COPY --from=builder /build/op-batcher/bin/op-batcher /usr/local/bin/
-COPY --from=builder /build/op-proposer/bin/op-proposer /usr/local/bin/
-COPY --from=builder /build/forge /usr/local/bin/
-COPY --from=builder /build/cast /usr/local/bin/
-
-# Required for op-node startup
-COPY --from=builder /build/op-program/bin/prestate.json /volume/op-program/bin/prestate.json
-COPY --from=builder /build/op-program/bin/meta.json /volume/op-program/bin/meta.json
-COPY --from=builder /build/op-program/bin/prestate-proof.json /volume/op-program/bin/prestate-proof.json
-
-# To keep the right commit checked out
-COPY --from=builder /build/.git /volume/.git
-
-# Copy contracts and dependencies - needed for OP Stack deployment
-COPY --from=builder /build/packages/contracts-bedrock /volume/packages/contracts-bedrock
-
-# Copy only the specific Solidity compiler versions needed
-COPY --from=ethereum/solc:0.8.15 /usr/bin/solc /root/.svm/0.8.15/solc-0.8.15
-COPY --from=ethereum/solc:0.8.19 /usr/bin/solc /root/.svm/0.8.19/solc-0.8.19
-COPY --from=ethereum/solc:0.8.25 /usr/bin/solc /root/.svm/0.8.25/solc-0.8.25
+RUN \
+  # Install build dependencies
+  apk add --no-cache git make bash wget \
+  # Download and extract foundry binaries
+  && \
+    if [ "$TARGETARCH" = "amd64" ]; then \
+      wget https://github.com/foundry-rs/foundry/releases/download/v1.2.3/foundry_v1.2.3_alpine_amd64.tar.gz && \
+      tar -xzf foundry_v1.2.3_alpine_amd64.tar.gz; \
+    elif [ "$TARGETARCH" = "arm64" ]; then \
+      wget https://github.com/foundry-rs/foundry/releases/download/v1.2.3/foundry_v1.2.3_alpine_arm64.tar.gz && \
+      tar -xzf foundry_v1.2.3_alpine_arm64.tar.gz; \
+    else \
+      echo "Unsupported architecture"; exit 1; \
+    fi \
+  # Clone optimism at specific commit
+  && git clone https://github.com/ethereum-optimism/optimism /volume \
+  && git --work-tree /volume --git-dir /volume/.git checkout f2e5a7a5 \
+  # Build optimism binaries and files required for op-node startup
+  && make --directory /volume cannon-prestate op-node op-batcher op-proposer \
+  # Install forge dependencies for contracts
+  && ./forge install --root /volume/packages/contracts-bedrock \
+  # Move build artifacts to the root directory
+  && mv \
+    # Only the foundry binaries we need
+    forge \
+    cast \
+    # Only the built binaries we need
+    /volume/op-node/bin/op-node \
+    /volume/op-batcher/bin/op-batcher \
+    /volume/op-proposer/bin/op-proposer \
+    # Files required for op-node startup
+    /volume/op-program/bin/prestate.json \
+    /volume/op-program/bin/meta.json \
+    /volume/op-program/bin/prestate-proof.json \
+    # Contracts and dependencies needed for OP Stack deployment
+    /volume/packages/contracts-bedrock \
+    # Git directory to keep the right commit checked out
+    /volume/.git / \
+  # Clean up
+  && rm -rf $(ls -d /* /etc/* | grep -v \
+    -e ^/cast$ -e ^/forge$ -e ^/op-node$ -e ^/op-batcher$ -e ^/op-proposer$ \
+    -e ^/prestate.json$ -e ^/meta.json$ -e ^/prestate-proof.json$ \
+    -e ^/contracts-bedrock$ -e ^/.git$ \
+    -e ^/sys$ -e ^/proc$ -e ^/dev -e ^/etc$ -e ^/etc/hosts$ -e ^/etc/resolv.conf$ \
+  )
 
 # Switch to clean image
 FROM alpine:3.21.2 AS op-proposer
@@ -66,7 +62,7 @@ RUN \
   && rm -rf /tmp/* /var/cache/apk/*
 
 # Copy built binary from build image
-COPY --from=optimism /usr/local/bin/op-proposer /usr/local/bin/op-proposer
+COPY --from=optimism /op-proposer /usr/local/bin/op-proposer
 
 # Copy entrypoint
 COPY docker/op-proposer.sh entrypoint.sh
@@ -87,7 +83,7 @@ RUN \
   && rm -rf /tmp/* /var/cache/apk/*
 
 # Copy built binary from build image
-COPY --from=optimism /usr/local/bin/op-batcher /usr/local/bin/op-batcher
+COPY --from=optimism /op-batcher /usr/local/bin/op-batcher
 
 # Copy entrypoint
 COPY docker/op-batcher.sh entrypoint.sh
@@ -120,17 +116,19 @@ COPY docker/wait-for-it.sh /usr/local/bin/wait-for-it
 # Grant run privileges to copied scripts
 RUN chmod +x entrypoint.sh config.sh /usr/local/bin/wait-for-it
 
+# Copy only the specific Solidity compiler versions needed
+COPY --from=ethereum/solc:0.8.15 /usr/bin/solc /root/.svm/0.8.15/solc-0.8.15
+COPY --from=ethereum/solc:0.8.19 /usr/bin/solc /root/.svm/0.8.19/solc-0.8.19
+COPY --from=ethereum/solc:0.8.25 /usr/bin/solc /root/.svm/0.8.25/solc-0.8.25
+
 # Copy built binary from build image and other dependencies
-COPY --from=optimism /usr/local/bin/op-node /usr/local/bin/op-node
-COPY --from=optimism /volume/packages/contracts-bedrock /volume/packages/contracts-bedrock
-COPY --from=optimism /volume/.git /volume/.git
-COPY --from=optimism /root/.svm/0.8.15/solc-0.8.15 /root/.svm/0.8.15/solc-0.8.15
-COPY --from=optimism /root/.svm/0.8.19/solc-0.8.19 /root/.svm/0.8.19/solc-0.8.19
-COPY --from=optimism /root/.svm/0.8.25/solc-0.8.25 /root/.svm/0.8.25/solc-0.8.25
-COPY --from=optimism /volume/op-program/bin/prestate.json /volume/op-program/bin/prestate.json
-COPY --from=optimism /volume/op-program/bin/meta.json /volume/op-program/bin/meta.json
-COPY --from=optimism /volume/op-program/bin/prestate-proof.json /volume/op-program/bin/prestate-proof.json
-COPY --from=optimism /usr/local/bin/cast /usr/local/bin/cast
-COPY --from=optimism /usr/local/bin/forge /usr/local/bin/forge
+COPY --from=optimism /op-node /usr/local/bin/op-node
+COPY --from=optimism /contracts-bedrock /volume/packages/contracts-bedrock
+COPY --from=optimism /.git /volume/.git
+COPY --from=optimism /prestate.json /volume/op-program/bin/prestate.json
+COPY --from=optimism /meta.json /volume/op-program/bin/meta.json
+COPY --from=optimism /prestate-proof.json /volume/op-program/bin/prestate-proof.json
+COPY --from=optimism /cast /usr/local/bin/cast
+COPY --from=optimism /forge /usr/local/bin/forge
 
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
