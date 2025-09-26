@@ -5,10 +5,6 @@ services:
       context: ./
       dockerfile: ./docker/Dockerfile.optimism
       target: op-node
-      cache_from:
-        - type=local,src=.buildx-cache/op-node
-      cache_to:
-        - type=local,dest=.buildx-cache/op-node,mode=max
     environment:
       JWT_SECRET: "f3099a1d969c4f5aba1a94434c368a84f8d950121feb4a398a67f78453853d1d"
     networks:
@@ -22,10 +18,6 @@ services:
       context: ./
       dockerfile: ./docker/Dockerfile.optimism
       target: op-batcher
-      cache_from:
-        - type=local,src=.buildx-cache/op-batcher
-      cache_to:
-        - type=local,dest=.buildx-cache/op-batcher,mode=max
     networks:
       - localnet
     volumes:
@@ -37,10 +29,6 @@ services:
       context: ./
       dockerfile: ./docker/Dockerfile.optimism
       target: op-proposer
-      cache_from:
-        - type=local,src=.buildx-cache/op-proposer
-      cache_to:
-        - type=local,dest=.buildx-cache/op-proposer,mode=max
     networks:
       - localnet
     volumes:
@@ -51,10 +39,6 @@ services:
     build:
       context: ./
       dockerfile: ./docker/Dockerfile.op-move
-      cache_from:
-        - type=local,src=.buildx-cache/op-move
-      cache_to:
-        - type=local,dest=.buildx-cache/op-move,mode=max
     environment:
       OP_MOVE_AUTH_JWT_SECRET: "f3099a1d969c4f5aba1a94434c368a84f8d950121feb4a398a67f78453853d1d"
       OP_MOVE_DB_PURGE: ${OP_MOVE_DB_PURGE:-false}
@@ -95,10 +79,6 @@ services:
     build:
       context: ./
       dockerfile: ./docker/Dockerfile.geth
-      cache_from:
-        - type=local,src=.buildx-cache/geth
-      cache_to:
-        - type=local,dest=.buildx-cache/geth,mode=max
     networks:
       - localnet
     ports:
