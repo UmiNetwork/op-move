@@ -26,7 +26,8 @@ pub async fn execute<'reader>(
         }
     }
 
-    let response = std::cmp::max(app.estimate_gas(transaction, block_number)?, BASE_FEE);
+    let estimate = tokio::task::block_in_place(|| app.estimate_gas(transaction, block_number))?;
+    let response = std::cmp::max(estimate, BASE_FEE);
 
     // Format the gas estimate as a hex string
     Ok(serde_json::to_value(format!("0x{:x}", response))

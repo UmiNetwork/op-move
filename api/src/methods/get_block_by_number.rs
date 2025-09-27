@@ -9,9 +9,10 @@ pub async fn execute<'reader>(
 ) -> Result<serde_json::Value, JsonRpcError> {
     let (number, include_transactions) = parse_params_2(request)?;
 
-    let response = app
-        .block_by_height(number, include_transactions)
-        .map(GetBlockResponse::from)?;
+    let response = tokio::task::block_in_place(|| {
+        app.block_by_height(number, include_transactions)
+            .map(GetBlockResponse::from)
+    })?;
 
     Ok(serde_json::to_value(response).expect("Must be able to JSON-serialize response"))
 }

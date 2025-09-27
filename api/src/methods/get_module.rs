@@ -19,7 +19,9 @@ pub async fn execute<'reader>(
 ) -> Result<serde_json::Value, JsonRpcError> {
     let (account, module, number): (Address, String, _) = parse_params_3(request)?;
 
-    let response = app.move_module_by_height(account.to_move_address(), module.as_str(), number)?;
+    let response = tokio::task::block_in_place(|| {
+        app.move_module_by_height(account.to_move_address(), module.as_str(), number)
+    })?;
 
     Ok(serde_json::to_value(response).expect("Must be able to JSON-serialize response"))
 }

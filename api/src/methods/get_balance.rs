@@ -9,7 +9,7 @@ pub async fn execute<'reader>(
 ) -> Result<serde_json::Value, JsonRpcError> {
     let (address, block_number) = parse_params_2(request)?;
 
-    let response = app.balance_by_height(address, block_number)?;
+    let response = tokio::task::block_in_place(|| app.balance_by_height(address, block_number))?;
 
     // Format the balance as a hex string
     Ok(serde_json::Value::String(format!("0x{response:x}")))

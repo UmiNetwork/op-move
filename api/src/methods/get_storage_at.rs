@@ -9,7 +9,7 @@ pub async fn execute<'reader>(
 ) -> Result<serde_json::Value, JsonRpcError> {
     let (address, index, block_number) = parse_params_3(request)?;
 
-    let value = app.storage(address, index, block_number)?;
+    let value = tokio::task::block_in_place(|| app.storage(address, index, block_number))?;
 
     Ok(serde_json::Value::String(format!("0x{value:064x}")))
 }

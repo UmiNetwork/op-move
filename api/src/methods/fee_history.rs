@@ -13,7 +13,9 @@ pub async fn execute<'reader>(
 ) -> Result<serde_json::Value, JsonRpcError> {
     let (block_count, block_number, reward_percentiles) = parse_params(request)?;
 
-    let response = app.fee_history(block_count, block_number, reward_percentiles)?;
+    let response = tokio::task::block_in_place(|| {
+        app.fee_history(block_count, block_number, reward_percentiles)
+    })?;
 
     Ok(serde_json::to_value(response).expect("Must be able to JSON-serialize response"))
 }

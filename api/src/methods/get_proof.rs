@@ -16,7 +16,7 @@ pub async fn execute<'reader>(
 ) -> Result<serde_json::Value, JsonRpcError> {
     let (address, storage_slots, block_number) = parse_params(request)?;
 
-    let response = app.proof(address, storage_slots, block_number)?;
+    let response = tokio::task::block_in_place(|| app.proof(address, storage_slots, block_number))?;
 
     // Format the balance as a hex string
     Ok(serde_json::to_value(response).expect("Must be able to JSON-serialize response"))

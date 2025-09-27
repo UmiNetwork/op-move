@@ -9,7 +9,8 @@ pub async fn execute<'reader>(
 ) -> Result<serde_json::Value, JsonRpcError> {
     let (address, block_number) = parse_params_2(request)?;
 
-    let response = app.evm_bytecode_by_height(address, block_number)?;
+    let response =
+        tokio::task::block_in_place(|| app.evm_bytecode_by_height(address, block_number))?;
 
     // Format the bytecode as a hex string
     Ok(serde_json::Value::String(format!("{response:x}")))

@@ -8,7 +8,7 @@ pub async fn execute<'reader>(
     app: &ApplicationReader<'reader, impl Dependencies<'reader>>,
 ) -> Result<serde_json::Value, JsonRpcError> {
     parse_params_0(request)?;
-    let response = app.client_version();
+    let response = tokio::task::block_in_place(|| app.client_version());
 
     Ok(serde_json::to_value(response).expect("Must be able to JSON-serialize response"))
 }

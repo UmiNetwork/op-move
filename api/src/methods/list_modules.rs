@@ -20,12 +20,11 @@ pub async fn execute<'reader>(
         block_number,
     ) = parse_params_2(request)?;
 
-    let response = app.move_list_modules(
-        address,
-        block_number,
-        after.as_ref(),
-        limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT),
-    )?;
+    let after = after.as_ref().cloned();
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT);
+    let response = tokio::task::block_in_place(|| {
+        app.move_list_modules(address, block_number, after.as_ref(), limit)
+    })?;
 
     Ok(serde_json::to_value(response).expect("Must be able to JSON-serialize response"))
 }

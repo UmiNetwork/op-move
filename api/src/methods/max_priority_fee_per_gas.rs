@@ -8,7 +8,7 @@ pub async fn execute<'reader>(
 ) -> Result<serde_json::Value, JsonRpcError> {
     parse_params_0(request)?;
 
-    let response = app.max_priority_fee_per_gas()?;
+    let response = tokio::task::block_in_place(|| app.max_priority_fee_per_gas())?;
 
     Ok(serde_json::to_value(format!("{response:#x}"))
         .expect("Must be able to JSON-serialize response"))

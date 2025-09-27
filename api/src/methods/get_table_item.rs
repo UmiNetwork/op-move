@@ -28,7 +28,8 @@ pub async fn execute<'reader>(
 
     let handle = TableHandle(table_address);
 
-    let response = app.move_table_item_by_height(&handle, request, number)?;
+    let response =
+        tokio::task::block_in_place(|| app.move_table_item_by_height(&handle, request, number))?;
 
     Ok(serde_json::to_value(response).expect("Must be able to JSON-serialize response"))
 }

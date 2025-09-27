@@ -14,7 +14,7 @@ pub async fn execute<'reader>(
     format: ChainIdFormat,
 ) -> Result<serde_json::Value, JsonRpcError> {
     parse_params_0(request)?;
-    let chain_id = app.chain_id();
+    let chain_id = tokio::task::block_in_place(|| app.chain_id());
 
     let response = match format {
         ChainIdFormat::Hex => format!("{chain_id:#x}"),

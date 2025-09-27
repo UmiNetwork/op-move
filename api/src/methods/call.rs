@@ -26,7 +26,8 @@ pub async fn execute<'reader>(
         }
     }
 
-    let response = Bytes::from(app.call(transaction, block_number)?);
+    let response = tokio::task::block_in_place(|| app.call(transaction, block_number))?;
+    let response = Bytes::from(response);
 
     Ok(serde_json::to_value(response).expect("Must be able to JSON-serialize response"))
 }
