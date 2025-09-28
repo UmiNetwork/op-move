@@ -35,7 +35,7 @@ Build and install the Ethereum L1 runner from the [`geth` project](https://githu
 ```bash
 git clone https://github.com/ethereum/go-ethereum.git
 cd go-ethereum
-git checkout tags/v1.14.5 # or higher
+git checkout tags/v1.14.6 # or higher
 make geth
 mv build/bin/geth ~/go/bin/geth
 ```
@@ -44,8 +44,9 @@ mv build/bin/geth ~/go/bin/geth
 
 ### Go-Ethereum version
 
-Make sure the `geth` version is compatible. Otherwise, the API communication could fail. The best way to match the versions is to check out a `go-ethereum` `tag` around the day of the `optimism` commit in submodule.
-For instance, a compatible `geth` tag is `tags/v1.14.5` for the current `optimism` version.
+Make sure the `geth` version is compatible. Otherwise, the API communication could fail. The best way to match the
+versions is to check out a `go-ethereum` `tag` around the day of the `optimism` commit in submodule.
+For instance, a compatible `geth` tag is `tags/v1.14.6` for the current `optimism` version.
 To check which commit we use for Optimism:
 
 ```bash
