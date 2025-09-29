@@ -2,7 +2,7 @@
 ARG RUST_TOOLCHAIN="1.85.1"
 
 # Start from a container that has workspace rust toolchain
-FROM rust:${RUST_TOOLCHAIN}-alpine AS build
+FROM rust:${RUST_TOOLCHAIN}-alpine3.21 AS build
 
 # Set working directory
 WORKDIR /volume
@@ -20,7 +20,7 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 COPY . .
 
 # RocksDB breaks the build with libclang.so not found, point its location explicitly
-ENV LIBCLANG_PATH="/usr/lib/llvm20/lib/libclang.so.20.1.8"
+ENV LIBCLANG_PATH="/usr/lib/libclang.so"
 
 # Build release binary
 RUN --mount=type=cache,target=/root/.cargo/registry \

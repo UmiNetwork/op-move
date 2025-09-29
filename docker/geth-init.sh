@@ -14,4 +14,4 @@ wait-for-it "${L1_RPC_ADDR}:${L1_RPC_PORT}"
 ./prefund.sh
 
 # Deploy Optimism factory deployer contract
-cast publish --async --rpc-url "${L1_RPC_URL}" "${SIGNED_L1_CONTRACT_TX}"
+cast publish --rpc-url "${L1_RPC_URL}" "${SIGNED_L1_CONTRACT_TX}"

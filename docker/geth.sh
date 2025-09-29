@@ -7,13 +7,6 @@
 set -eux
 L1_DATADIR="./l1_datadir"
 
-# In case of restart, data dir will not be empty
-# Wipe it to avoid an attempt to restore the state which is not persisted in `--dev` mode
-rm -rf "${L1_DATADIR}" && mkdir -p "${L1_DATADIR}"
-
-./keystore.sh &
-./geth-init.sh &
-
 # Ephemeral proof-of-authority network with a pre-funded developer account,
 # with automatic mining when there are pending transactions.
 geth \
@@ -26,4 +19,20 @@ geth \
   --http.port 58138 \
   --http.corsdomain '*' \
   --http.api 'web3,debug,eth,txpool,net,engine' \
-  --http.vhosts '*'
+  --http.vhosts '*' &
+
+# Get the PID of the geth process launched in the background
+GETH_PID="$!"
+
+# Shuts geth down in a way that does not corrupt the datadir
+function shutdown() {
+  kill -SIGINT "${GETH_PID}"
+  wait "${GETH_PID}"
+  exit 0
+}
+
+# Trap signal from docker stop to the graceful shutdown function
+trap shutdown SIGTERM
+
+# Block on the background geth process
+wait "${GETH_PID}"
