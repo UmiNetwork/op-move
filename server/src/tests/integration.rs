@@ -70,7 +70,7 @@ pub fn set_module_address(bytecode: Vec<u8>, address: Address) -> Vec<u8> {
     }
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn test_on_ethereum() -> Result<()> {
     dotenvy::dotenv().expect(".env file not found");
 

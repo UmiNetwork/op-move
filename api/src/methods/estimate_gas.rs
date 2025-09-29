@@ -116,7 +116,7 @@ mod tests {
     #[test_case("0x120")]
     #[test_case("latest")]
     #[test_case("pending")]
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_execute(block: &str) {
         let (state_channel, rx) = mpsc::channel(10);
         let (reader, mut app) = create_app();

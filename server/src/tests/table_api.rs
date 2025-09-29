@@ -22,7 +22,7 @@ use {
     umi_shared::primitives::ToMoveAddress,
 };
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn test_mv_get_table_item() -> anyhow::Result<()> {
     TestContext::run(|mut ctx| async move {
         let signer = PrivateKeySigner::from_slice(&[0xaa; 32]).unwrap();

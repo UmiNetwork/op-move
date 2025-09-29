@@ -20,7 +20,7 @@ mod tests {
 
     use super::*;
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_execute() {
         let (reader, _app) = create_app();
 
@@ -41,7 +41,7 @@ mod tests {
         assert_eq!(u64::from_str_radix(hex_str, 16).unwrap(), 1_000_000);
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_bad_input() {
         let (reader, _app) = create_app();
 

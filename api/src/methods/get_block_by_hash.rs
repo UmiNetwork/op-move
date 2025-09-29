@@ -38,7 +38,7 @@ mod tests {
         .unwrap()
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_execute_reads_genesis_block_successfully() {
         let (reader, _app) = create_app();
         let request = example_request();
@@ -72,7 +72,7 @@ mod tests {
         assert_eq!(response, expected_response);
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_bad_input() {
         let (reader, _app) = create_app();
 

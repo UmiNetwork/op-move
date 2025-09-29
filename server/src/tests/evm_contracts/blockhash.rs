@@ -29,7 +29,7 @@ mod evm_contract {
     }
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn test_blockhash_evm_contract() -> anyhow::Result<()> {
     TestContext::run(|mut ctx| async move {
         let chain_id = ctx.genesis_config.chain_id;

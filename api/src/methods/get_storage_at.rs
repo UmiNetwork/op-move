@@ -60,7 +60,7 @@ mod tests {
     #[test_case("0x1")]
     #[test_case("latest")]
     #[test_case("pending")]
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_execute(block: &str) {
         let (reader, _app) = *create_app_with_mock_state_queries(AccountAddress::ONE, 1);
 

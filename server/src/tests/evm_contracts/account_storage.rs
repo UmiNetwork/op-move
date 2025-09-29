@@ -34,7 +34,7 @@ mod evm_contract {
     }
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn test_storage_evm_contract() -> anyhow::Result<()> {
     TestContext::run(|mut ctx| async move {
         let chain_id = ctx.genesis_config.chain_id;
@@ -80,7 +80,7 @@ async fn test_storage_evm_contract() -> anyhow::Result<()> {
     .await
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn test_get_storage_at_evm_contract() -> anyhow::Result<()> {
     TestContext::run(|mut ctx| async move {
         let chain_id = ctx.genesis_config.chain_id;
@@ -114,7 +114,7 @@ async fn test_get_storage_at_evm_contract() -> anyhow::Result<()> {
     .await
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn test_derive_evm_contract_address() -> anyhow::Result<()> {
     // Test to check that the address of an EVM contract can be predicted
     // using the return value from `eth_getTransactionCount` if the EVM-specific

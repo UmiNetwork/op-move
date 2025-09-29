@@ -81,7 +81,7 @@ mod tests {
         assert_eq!(params, expected_params);
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_execute_v3() {
         let genesis_config = GenesisConfig::default();
 

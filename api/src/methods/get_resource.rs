@@ -60,7 +60,7 @@ mod tests {
             .to_string()
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_execute_reads_module_successfully() {
         let (reader, _app) = create_app();
         let request = example_request(Number(0));
@@ -73,7 +73,7 @@ mod tests {
         assert_eq!(response, expected_response);
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_non_existent_block_is_bad_input() {
         let (reader, _app) = create_app();
 
@@ -88,7 +88,7 @@ mod tests {
         assert_eq!(response.unwrap_err(), expected_response);
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_byte_code_is_kept_with_newly_built_block() {
         let (state_channel, rx) = mpsc::channel(10);
         let (reader, mut app) = create_app();
@@ -126,7 +126,7 @@ mod tests {
     #[test_case(Safe; "safe")]
     #[test_case(Pending; "pending")]
     #[test_case(Finalized; "finalized")]
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_latest_block_byte_code_is_same_as_tag(tag: BlockNumberOrTag) {
         let (state_channel, rx) = mpsc::channel(10);
         let (reader, mut app) = create_app();

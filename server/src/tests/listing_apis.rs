@@ -20,7 +20,7 @@ use {
     umi_shared::primitives::{ToEthAddress, ToMoveAddress},
 };
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn test_mv_list_modules() -> anyhow::Result<()> {
     TestContext::run(|mut ctx| async move {
         // Listing API returns all modules in alphabetical order
@@ -86,7 +86,7 @@ async fn test_mv_list_modules() -> anyhow::Result<()> {
     .await
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn test_mv_list_resources() -> anyhow::Result<()> {
     TestContext::run(|mut ctx| async move {
         // Listing API can get all the framework resources via pagination

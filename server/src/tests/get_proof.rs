@@ -6,7 +6,7 @@ use {
     umi_evm_ext::state,
 };
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn test_get_proof() -> anyhow::Result<()> {
     TestContext::run(|mut ctx| async move {
         let block_hash = ctx.produce_block().await.unwrap();

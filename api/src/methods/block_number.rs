@@ -106,7 +106,7 @@ mod tests {
         )
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_execute() {
         let (reader, _app) = create_app();
 
@@ -123,7 +123,7 @@ mod tests {
         assert_eq!(actual_response, expected_response);
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     #[should_panic = "At least genesis block should exist"]
     async fn test_bad_input() {
         let (reader, _app) = create_app_without_genesis();

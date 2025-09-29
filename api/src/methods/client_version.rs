@@ -17,7 +17,7 @@ pub async fn execute<'reader>(
 mod tests {
     use {super::*, crate::methods::tests::create_app};
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_execute() {
         let (reader, _app) = create_app();
 
@@ -49,7 +49,7 @@ mod tests {
         assert!(parts[3].starts_with("rust"));
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_bad_input() {
         let (reader, _app) = create_app();
 

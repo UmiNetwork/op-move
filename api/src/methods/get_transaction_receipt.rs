@@ -27,7 +27,7 @@ mod tests {
         umi_blockchain::receipt::TransactionReceipt,
     };
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_bad_input() {
         let (reader, _app) = create_app();
 
@@ -47,7 +47,7 @@ mod tests {
         assert_eq!(response.unwrap(), serde_json::Value::Null);
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_execute() {
         let (reader, mut app) = create_app();
         let (queue, state) = umi_app::create(&mut app, 10);

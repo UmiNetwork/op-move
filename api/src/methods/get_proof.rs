@@ -88,7 +88,7 @@ mod tests {
         }
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_execute() {
         let (reader, _app) = create_app();
 
@@ -125,7 +125,7 @@ mod tests {
         }
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_bad_input() {
         let (reader, _app) = create_app();
 

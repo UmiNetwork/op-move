@@ -59,7 +59,7 @@ mod tests {
     #[test_case("0x1")]
     #[test_case("latest")]
     #[test_case("pending")]
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_execute(block: &str) {
         let (reader, _app) = *create_app_with_mock_state_queries(AccountAddress::ONE, 1);
 
@@ -79,7 +79,7 @@ mod tests {
         assert_eq!(response, expected_response);
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_endpoint_returns_json_encoded_balance_query_result_successfully() {
         let expected_balance = 5;
         let height = 3;
