@@ -49,18 +49,10 @@ COPY --from=builder /build/.git /volume/.git
 # Copy contracts and dependencies - needed for OP Stack deployment
 COPY --from=builder /build/packages/contracts-bedrock /volume/packages/contracts-bedrock
 
-# Set up forge to find the contracts
-ENV FOUNDRY_ROOT=/volume/packages/contracts-bedrock
-
 # Copy only the specific Solidity compiler versions needed
 COPY --from=ethereum/solc:0.8.15 /usr/bin/solc /root/.svm/0.8.15/solc-0.8.15
 COPY --from=ethereum/solc:0.8.19 /usr/bin/solc /root/.svm/0.8.19/solc-0.8.19
 COPY --from=ethereum/solc:0.8.25 /usr/bin/solc /root/.svm/0.8.25/solc-0.8.25
-
-WORKDIR /volume
-
-# Clean up
-RUN rm -rf /var/cache/apk/* /tmp/*
 
 # Switch to clean image
 FROM alpine:3.21.2 AS op-proposer
