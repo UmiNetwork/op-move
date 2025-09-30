@@ -48,7 +48,7 @@ jobs:
 
       # Stage 1: Build and push base images first
       - name: Build base images
-        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml build op-move geth
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml build --build-arg RUST_TOOLCHAIN=$(cat rust-toolchain) op-move geth
 
       - name: Push base images
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml push op-move geth
