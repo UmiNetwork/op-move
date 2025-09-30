@@ -128,14 +128,14 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             prev_randao: attributes.prev_randao,
             chain_id: self.genesis_config.chain_id,
         };
-        let (execution_outcome, receipts) = self.execute_transactions(
+        let (execution_outcome, receipts, executed_transactions) = self.execute_transactions(
             new_transactions.clone().into_iter(),
             base_fee,
             &header_for_execution,
         )?;
 
         let transactions_root =
-            alloy_trie::root::ordered_trie_root_with_encoder(&new_transactions, |tx, buf| {
+            alloy_trie::root::ordered_trie_root_with_encoder(&executed_transactions, |tx, buf| {
                 tx.trie_encode(buf)
             });
 
@@ -191,7 +191,10 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
 
         let block = Block::new(
             header,
-            new_transactions.iter().map(|v| v.trie_hash()).collect(),
+            executed_transactions
+                .iter()
+                .map(|v| v.trie_hash())
+                .collect(),
         )
         .into_extended_with_hash(block_hash)
         .with_value(total_tip)
@@ -199,7 +202,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
 
         let block_number = block.block.header.number;
 
-        let extended_transactions = new_transactions
+        let extended_transactions = executed_transactions
             .iter()
             .cloned()
             .enumerate()
@@ -278,7 +281,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             );
         }
 
-        in_progress_payloads.finish_id(block, new_transactions.into_iter().map(Into::into));
+        in_progress_payloads.finish_id(block, executed_transactions.into_iter().map(Into::into));
 
         Ok(())
     }
@@ -300,9 +303,17 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
         transactions: impl Iterator<Item = NormalizedExtendedTxEnvelope>,
         base_fee: u64,
         block_header: &HeaderForExecution,
-    ) -> Result<(ExecutionOutcome, Vec<ExtendedReceipt>), UnrecoverableAppFailure> {
+    ) -> Result<
+        (
+            ExecutionOutcome,
+            Vec<ExtendedReceipt>,
+            Vec<NormalizedExtendedTxEnvelope>,
+        ),
+        UnrecoverableAppFailure,
+    > {
         let mut total_tip = U256::ZERO;
         let mut receipts = Vec::new();
+        let mut executed_transactions = Vec::new();
         let mut transactions = transactions.peekable();
         let mut cumulative_gas_used = 0u128;
         let mut logs_bloom = Bloom::ZERO;
@@ -415,7 +426,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             };
 
             receipts.push(ExtendedReceipt {
-                transaction_hash: normalized_tx.tx_hash(),
+                transaction_hash: tx_hash,
                 to: to.copied(),
                 from,
                 receipt,
@@ -429,6 +440,8 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 block_number: block_header.number,
                 block_timestamp: block_header.timestamp,
             });
+
+            executed_transactions.push(normalized_tx);
 
             tx_index += 1;
         }
@@ -455,6 +468,6 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             logs_bloom,
             total_tip,
         };
-        Ok((outcome, receipts))
+        Ok((outcome, receipts, executed_transactions))
     }
 }

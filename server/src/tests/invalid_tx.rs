@@ -10,6 +10,7 @@ use {
         primitives::{Address, TxKind, U256},
         signers::local::PrivateKeySigner,
     },
+    umi_api::schema::Status,
 };
 
 const INVALID_PAYLOAD: &[u8] = b"a5cad08a000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000057465737431000000000000000000000000000000000000000000000000000000";
@@ -22,8 +23,16 @@ async fn test_invalid_transaction() -> anyhow::Result<()> {
         let tx_hash = ctx.send_raw_transaction(tx).await?;
 
         // Produce a new block
-        ctx.produce_block().await?;
-        let block = ctx.get_block_by_number(1).await?;
+        let update = ctx.engine_forkchoice_update().await?;
+        ctx.queue.wait_for_pending_commands().await;
+        let payload = ctx.engine_get_payload(update.payload_id.unwrap()).await?;
+        let block = ctx
+            .get_block_by_number(payload.execution_payload.block_number.saturating_to())
+            .await?;
+
+        // Confirm payload is accepted
+        let new_payload_response = ctx.engine_new_payload(payload.execution_payload).await?;
+        assert_eq!(new_payload_response.status, Status::Valid);
 
         // Confirm transaction has no receipt.
         let receipt = ctx.get_transaction_receipt(tx_hash).await?;
