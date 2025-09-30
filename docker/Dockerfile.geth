@@ -56,14 +56,38 @@ RUN \
 COPY --from=build /volume/build/bin/geth /usr/local/bin/geth
 COPY --from=foundry /cast /usr/local/bin/cast
 COPY --from=foundry /forge /usr/local/bin/forge
-COPY docker/wait-for-it.sh /usr/local/bin/wait-for-it
-COPY docker/prefund.sh prefund.sh
-COPY .env .env
-COPY docker/geth.sh entrypoint.sh
-COPY docker/keystore.sh keystore.sh
-COPY docker/geth-init.sh geth-init.sh
+COPY --chmod=0777 docker/wait-for-it.sh /usr/local/bin/wait-for-it
+COPY --chmod=0777 docker/prefund.sh prefund.sh
+COPY --chmod=0777 .env .env
+COPY --chmod=0777 docker/geth.sh entrypoint.sh
+COPY --chmod=0777 docker/keystore.sh keystore.sh
+COPY --chmod=0777 docker/geth-init.sh geth-init.sh
 
-# Set entrypoint to geth binary
-RUN chmod +x entrypoint.sh /usr/local/bin/wait-for-it prefund.sh keystore.sh geth-init.sh
+RUN \
+  # Create datadir for geth
+  mkdir -p ./l1_datadir \
+  # Initialize keystore in the datadir
+  && ./keystore.sh \
+  # Launch geth node to receive transactions
+  && geth \
+  --dev \
+  --dev.period 3 \
+  --datadir "./l1_datadir" \
+  --rpc.allow-unprotected-txs \
+  --http \
+  --http.addr 0.0.0.0 \
+  --http.port 58138 \
+  --http.corsdomain '*' \
+  --http.api 'web3,debug,eth,txpool,net,engine' \
+  --http.vhosts '*' \
+  # Store geth process ID
+  & GETH_PID=$! \
+  # Send transactions that prefund accounts and deploy Optimism factory deployer
+  && ./geth-init.sh \
+  # Send interrupt signal to geth to shut it down gracefully preventing datadir corruption
+  && kill -SIGINT "${GETH_PID}" \
+  # Wait for geth to exit
+  && wait "${GETH_PID}"
 
+# Set entrypoint to a script that launches geth
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
