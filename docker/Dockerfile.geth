@@ -16,25 +16,20 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
   # Clean up
   && rm -rf $(ls -d /* /etc/* | grep -v -e ^/cast$ -e ^/forge$ -e ^/sys$ -e ^/proc$ -e ^/dev -e ^/etc$ -e ^/etc/hosts$ -e ^/etc/resolv.conf$)
 
-FROM alpine:3.21.2 AS build
-WORKDIR /volume
+# Start from an image that can install go 1.22, the most recent working version for this geth version
+FROM alpine:3.20.7 AS build
 
 RUN \
   # Install build dependencies
-  apk add --no-cache git make \
-  # Clean up
-  && rm -rf /tmp/* \
+  apk add --no-cache git make go linux-headers \
   # Clone geth sources
-  && git clone https://github.com/ethereum/go-ethereum . --branch v1.14.6 --depth 1
-
-# Install go
-COPY --from=golang:1.22-alpine /usr/local/go/ /usr/local/go/
-
-# Add go to path
-ENV PATH="/usr/local/go/bin:${PATH}"
-
-# Build geth
-RUN make geth
+  && git clone https://github.com/ethereum/go-ethereum /volume --branch v1.14.6 --depth 1 \
+  # Build geth
+  && make --directory /volume geth \
+  # Move geth binary to root directory
+  && mv /volume/build/bin/geth /geth \
+  # Clean up
+  && rm -rf $(ls -d /* /etc/* | grep -v -e ^/geth$ -e ^/sys$ -e ^/proc$ -e ^/dev$ -e ^/etc$ -e ^/etc/hosts$ -e ^/etc/resolv.conf$)
 
 # Switch to clean container
 FROM alpine:3.21.2 AS geth
@@ -53,7 +48,7 @@ RUN \
   && rm -rf /tmp/* /var/cache/apk/*
 
 # Copy built binary from build image
-COPY --from=build /volume/build/bin/geth /usr/local/bin/geth
+COPY --from=build /geth /usr/local/bin/geth
 COPY --from=foundry /cast /usr/local/bin/cast
 COPY --from=foundry /forge /usr/local/bin/forge
 COPY --chmod=0777 docker/wait-for-it.sh /usr/local/bin/wait-for-it
