@@ -362,8 +362,7 @@ impl TestContext<'static> {
             anyhow::bail!("Error response from request {request:?}: {error:?}");
         }
 
-        let result: T =
-            serde_json::from_value(response.result.expect("If not error then has result"))?;
+        let result: T = serde_json::from_value(response.result.unwrap_or(serde_json::Value::Null))?;
         Ok(result)
     }
 
