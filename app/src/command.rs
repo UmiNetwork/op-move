@@ -5,6 +5,7 @@ use {
         input::{WithExecutionOutcome, WithPayloadAttributes},
     },
     alloy::{consensus::Receipt, primitives::Bloom, rlp::Encodable},
+    metrics::histogram,
     umi_blockchain::{
         block::{BaseGasFee, Block, BlockHash, BlockRepository, ExtendedBlock, Header},
         payload::{PayloadId, PayloadQueries},
@@ -34,6 +35,8 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
         attributes: PayloadForExecution,
         id: PayloadId,
     ) -> Result<(), UnrecoverableAppFailure> {
+        let t0 = std::time::Instant::now();
+
         let payload_exists = self
             .payload_queries
             .by_id(&self.storage_reader, id)
@@ -278,6 +281,8 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
         }
 
         in_progress_payloads.finish_id(block, executed_transactions.into_iter().map(Into::into));
+
+        histogram!("block_build_duration_seconds").record(t0.elapsed().as_secs_f64());
 
         Ok(())
     }

@@ -4,6 +4,7 @@ use {
         jsonrpc::{JsonRpcError, JsonRpcResponse},
         method_name::MethodName,
     },
+    metrics::{counter, gauge, histogram},
     umi_app::{ApplicationReader, CommandQueue, Dependencies},
     umi_blockchain::payload::NewPayloadId,
 };
@@ -93,7 +94,13 @@ where
         return Err(JsonRpcError::missing_method(request));
     }
 
-    match method {
+    let method_str = format!("{method:?}");
+    let t0 = std::time::Instant::now();
+
+    counter!("rpc_requests_total", "method" => method_str.clone()).increment(1);
+    gauge!("rpc_inflight_requests", "method" => method_str.clone()).increment(1.0);
+
+    let resp = match method {
         ForkChoiceUpdatedV3 => {
             forkchoice_updated::execute_v3(request, queue, app, payload_id).await
         }
@@ -133,5 +140,16 @@ where
         // eth_accounts: Returns a list of addresses owned by client.
         // We do not support owning addresses in our client, so always return an empty list.
         Accounts => Ok(serde_json::Value::Array(Vec::new())),
-    }
+    };
+
+    gauge!("rpc_inflight_requests", "method" => method_str.clone()).decrement(1.0);
+    let _ = resp.as_ref().map_err(|e| {
+        let err_code = format!("{}", e.code);
+        counter!("rpc_errors_total", "method" => method_str.clone(), "code" => err_code)
+            .increment(1);
+    });
+    histogram!("rpc_request_duration_seconds", "method" => method_str)
+        .record(t0.elapsed().as_secs_f64());
+
+    resp
 }
