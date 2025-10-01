@@ -16,11 +16,10 @@ node_modules
 server/*.log
 
 # Docker mounted volumes
-docker/volumes
+docker/*/volume
 
 # Optimism cloned repository
 server/src/tests/optimism
 
 # Persistent storage directory
 server/db/
-

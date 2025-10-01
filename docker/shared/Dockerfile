@@ -69,11 +69,10 @@ RUN \
 # Copy built binary from build image
 COPY --from=optimism /op-proposer /usr/local/bin/op-proposer
 
-# Copy entrypoint
-COPY docker/op-proposer.sh entrypoint.sh
+# Copy entrypoint with run privileges
+COPY --chmod=0777 docker/op-proposer/entrypoint.sh entrypoint.sh
 COPY .env .env
-COPY docker/wait-for-it.sh /usr/local/bin/wait-for-it
-RUN chmod +x entrypoint.sh /usr/local/bin/wait-for-it
+COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
 
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
 
@@ -90,11 +89,10 @@ RUN \
 # Copy built binary from build image
 COPY --from=optimism /op-batcher /usr/local/bin/op-batcher
 
-# Copy entrypoint
-COPY docker/op-batcher.sh entrypoint.sh
+# Copy entrypoint with run privileges
+COPY --chmod=0777 docker/op-batcher/entrypoint.sh entrypoint.sh
 COPY .env .env
-COPY docker/wait-for-it.sh /usr/local/bin/wait-for-it
-RUN chmod +x entrypoint.sh /usr/local/bin/wait-for-it
+COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
 
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
 
@@ -108,18 +106,17 @@ RUN \
   # Clean up
   && rm -rf /tmp/* /var/cache/apk/*
 
-# Copy entrypoint
-COPY docker/op-node.sh entrypoint.sh
+# Copy entrypoint with run privileges
+COPY --chmod=0777 docker/op-node/entrypoint.sh entrypoint.sh
 
-# Copy genesis config generator
-COPY server/src/tests/config.sh config.sh
+# Copy genesis config generator with run privileges
+COPY --chmod=0777 server/src/tests/config.sh config.sh
 
 # Copy ENV file that include Optimism wallet addresses
 COPY .env .env
-COPY docker/wait-for-it.sh /usr/local/bin/wait-for-it
 
-# Grant run privileges to copied scripts
-RUN chmod +x entrypoint.sh config.sh /usr/local/bin/wait-for-it
+# Copy script that waits for other services availability
+COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
 
 # Copy only the specific Solidity compiler versions needed
 COPY --from=ethereum/solc:0.8.15 /usr/bin/solc /root/.svm/0.8.15/solc-0.8.15
@@ -170,15 +167,11 @@ RUN \
   && rm -rf /tmp/* /var/cache/apk/*
 
 # Copy built binary from build image
-COPY --from=go-ethereum /geth /usr/local/bin/geth
-COPY --from=foundry /cast /usr/local/bin/cast
-COPY --from=foundry /forge /usr/local/bin/forge
-COPY --chmod=0777 docker/wait-for-it.sh /usr/local/bin/wait-for-it
-COPY --chmod=0777 docker/prefund.sh prefund.sh
-COPY --chmod=0777 .env .env
-COPY --chmod=0777 docker/geth.sh entrypoint.sh
-COPY --chmod=0777 docker/keystore.sh keystore.sh
-COPY --chmod=0777 docker/geth-init.sh geth-init.sh
+COPY --from=go-ethereum /geth /usr/local/bin/
+COPY --from=foundry /cast /forge /usr/local/bin/
+COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
+COPY --chmod=0777 docker/geth/*.sh ./
+COPY .env ./
 
 RUN \
   # Create datadir for geth
@@ -200,7 +193,7 @@ RUN \
   # Store geth process ID
   & GETH_PID=$! \
   # Send transactions that prefund accounts and deploy Optimism factory deployer
-  && ./geth-init.sh \
+  && ./init.sh \
   # Send interrupt signal to geth to shut it down gracefully preventing datadir corruption
   && kill -SIGINT "${GETH_PID}" \
   # Wait for geth to exit
