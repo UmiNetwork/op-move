@@ -28,16 +28,6 @@ export DEPLOY_CONFIG_PATH="${DEPLOY_CONFIG}"
 if [ ! -f "${DEPLOY_CONFIG_PATH}" ]; then
   rm -f "${SHARED}/1337-deploy.json"
 
-  echo "Waiting for a finalized L1 block with a non-zero timestamp..."
-  timestamp=0
-  while [ "$timestamp" -le 0 ]; do
-    block_info=$(cast block finalized --rpc-url "$L1_RPC_URL" || echo "timestamp 0")
-    timestamp=$(echo "$block_info" | awk '/^timestamp/ { print $2 }')
-    echo "Waiting until finalized block timestamp > 0."
-    sleep 2
-  done
-  echo "L1 is fully ready with a valid block. Proceeding..."
-
   echo "Generating deploy config..."
   /volume/config.sh
 
