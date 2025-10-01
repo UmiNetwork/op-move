@@ -19,9 +19,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
       - name: Free up disk space
         run: rm -rf /opt/hostedtoolcache
+      - run: echo "TOOLCHAIN=$(cat rust-toolchain)" >> $GITHUB_ENV
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.TOOLCHAIN }}
       - name: Test
         run: cargo test -- --skip integration
       - name: Run flaky tests
@@ -38,7 +41,11 @@ jobs:
       CARGO_TERM_COLOR: always
     steps:
       - uses: actions/checkout@v4
-      - run: rustup component add clippy
+      - run: echo "TOOLCHAIN=$(cat rust-toolchain)" >> $GITHUB_ENV
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.TOOLCHAIN }}
+          components: clippy
       - uses: auguwu/clippy-action@1.4.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
