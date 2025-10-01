@@ -4,9 +4,12 @@ A Move VM execution layer for OP Stack.
 
 # Integration testing
 
-Make sure you have `go` installed on your system. Due to the pinned versions being based around August 2024, a version not older than 1.22 is required. Other dependencies include [foundry](http://getfoundry.sh/) for smart contract interaction and [jq](https://jqlang.github.io/jq/) being called indirectly by Optimism itself.
+Make sure you have `go` installed on your system. Due to the pinned versions being based around August 2024, a version
+not older than 1.22 is required. Other dependencies include [foundry](http://getfoundry.sh/) for smart contract
+interaction and [jq](https://jqlang.github.io/jq/) being called indirectly by Optimism itself.
 
-While inside the `op-move` folder, clone the Optimism monorepo. The repo is used to compile and deploy Optimism contracts.
+While inside the `op-move` folder, clone the Optimism monorepo. The repo is used to compile and deploy Optimism
+contracts.
 
 ```bash
 git clone https://github.com/ethereum-optimism/optimism server/src/tests/optimism
@@ -23,7 +26,7 @@ Make sure the Optimism binaries are built and are in the PATH, i.e. under the `g
 
 ```bash
 cd server/src/tests/optimism
-git checkout f2e5a7a5
+git checkout v1.7.6
 make op-node op-batcher op-proposer
 mv op-node/bin/op-node ~/go/bin/
 mv op-batcher/bin/op-batcher ~/go/bin/
@@ -58,7 +61,8 @@ This shows the `(HEAD detached at <commit>)` and find the day the `<commit>` was
 
 ### Fault proof setup
 
-When you run the integration test, if you notice an error about Optimism fault proof, run the following command inside the `optimism` root folder.
+When you run the integration test, if you notice an error about Optimism fault proof, run the following command inside
+the `optimism` root folder.
 
 ```bash
 make cannon-prestate
@@ -66,8 +70,10 @@ make cannon-prestate
 
 ### Stalled process
 
-When you see a message with the address already being used, it means `geth` isn't shutdown correctly from a previous test run and most likely `geth` is still running in the background.
-The integration test cannot shut this down automatically when it starts, so open up Activity Monitor or Task Manager to force any process with names `geth` or `op-*` to shut down.
+When you see a message with the address already being used, it means `geth` isn't shutdown correctly from a previous
+test run and most likely `geth` is still running in the background.
+The integration test cannot shut this down automatically when it starts, so open up Activity Monitor or Task Manager to
+force any process with names `geth` or `op-*` to shut down.
 
 ### Optimism repo location
 

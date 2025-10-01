@@ -18,9 +18,8 @@ RUN \
     else \
       echo "Unsupported architecture"; exit 1; \
     fi \
-  # Clone optimism at specific commit
-  && git clone https://github.com/ethereum-optimism/optimism /volume \
-  && git --work-tree /volume --git-dir /volume/.git checkout f2e5a7a5 \
+  # Clone optimism at specific version
+  && git clone https://github.com/ethereum-optimism/optimism /volume --branch v1.7.6 --depth 1 \
   # Build optimism binaries and files required for op-node startup
   && make --directory /volume cannon-prestate op-node op-batcher op-proposer \
   # Install forge dependencies for contracts
