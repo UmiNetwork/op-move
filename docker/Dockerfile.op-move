@@ -7,33 +7,30 @@ FROM rust:${RUST_TOOLCHAIN}-alpine3.21 AS build
 # Set working directory
 WORKDIR /volume
 
-# Copy file with workspace rust toolchain
-COPY rust-toolchain rust-toolchain
-
-# Install build dependencies
-RUN apk add --no-cache clang clang-dev lld curl build-base linux-headers git openssl-dev
-
-# Add `cargo` to `PATH`
-ENV PATH="/root/.cargo/bin:${PATH}"
+RUN \
+  # Install build dependencies
+  apk add --no-cache clang clang-dev lld curl build-base linux-headers git openssl-dev \
+  # Clean up
+  && rm -rf /tmp/* /var/cache/apk/*
 
 # Copy sources over to the image
 COPY . .
 
-# RocksDB breaks the build with libclang.so not found, point its location explicitly
-ENV LIBCLANG_PATH="/usr/lib/libclang.so"
-
 # Build release binary
-RUN --mount=type=cache,target=/root/.cargo/registry \
-  --mount=type=cache,target=/root/.cargo/git \
+RUN --mount=type=cache,target=/usr/local/cargo/git \
+  --mount=type=cache,target=/usr/local/cargo/registry \
   --mount=type=cache,target=/volume/target \
   # RocksDB breaks the build with libclang.so not found https://github.com/apache/skywalking/issues/10439
   # Aptos-core breaks the build with `disable_lifo_slot` not found https://github.com/aptos-labs/aptos-core/issues/5655 \
   RUSTFLAGS="-C target-feature=-crt-static --cfg tokio_unstable" \
   cargo build --bin op-move --release --features storage \
+  # Copy binary out of target directory, else it's removed by the cache mount
   && mv target/release/op-move /volume/op-move
 
 # Switch to clean image
 FROM alpine:3.21.2 AS op-move
+
+# Set working directory
 WORKDIR /volume
 
 RUN \
@@ -55,10 +52,7 @@ COPY execution/src/tests/res/bridged_tokens_test.json execution/src/tests/res/br
 # Copy built binary
 COPY --from=build /volume/op-move /volume/op-move
 
-# Copy entrypoint
-COPY docker/op-move.sh entrypoint.sh
-
-# Grant run privileges to copied script
-RUN chmod +x entrypoint.sh
+# Copy entrypoint with run privileges
+COPY --chmod=0777 docker/op-move.sh entrypoint.sh
 
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
