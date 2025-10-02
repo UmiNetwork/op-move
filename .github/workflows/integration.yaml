@@ -17,7 +17,6 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
       - name: Free up disk space
         run: rm -rf /opt/hostedtoolcache
       - name: Generate keystore file
@@ -44,6 +43,10 @@ jobs:
             docker compose up -d
           fi
 
+      - run: echo "TOOLCHAIN=$(cat rust-toolchain)" >> $GITHUB_ENV
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.TOOLCHAIN }}
       - name: Run integration test
         run: cargo test --release test_on_ethereum
       - name: Capture logs
