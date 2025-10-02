@@ -29,22 +29,8 @@ jobs:
       - name: Log in to the registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Set up Docker Buildx # Driver that supports cache export
+      - name: Set up Docker Buildx, a driver that supports cache export
         uses: docker/setup-buildx-action@v3
-
-      # Previous published packages kept for possible rollback
-      - name: Backup current images as previous
-        run: |
-          ALL_SERVICES=("op-move" "geth" "op-node" "op-batcher" "op-proposer")
-          for service in "${ALL_SERVICES[@]}"; do
-          echo "Retagging ghcr.io/uminetwork/${service}:latest as :previous"
-            docker compose pull ${service} || echo "No existing ${service}:latest found"
-            if docker image inspect ghcr.io/uminetwork/${service}:latest >/dev/null 2>&1; then
-              docker tag ghcr.io/uminetwork/${service}:latest ghcr.io/uminetwork/${service}:previous
-              docker push ghcr.io/uminetwork/${service}:previous
-            fi
-          done
-        continue-on-error: true
 
       - name: Restore cached Rust build artifacts
         uses: actions/cache@v4
@@ -58,19 +44,17 @@ jobs:
         with:
           builder: ${{ steps.setup-buildx.outputs.name }}
           cache-dir: cache-mount
-          dockerfile: docker/Dockerfile.op-move
+          dockerfile: docker/op-move/Dockerfile
           skip-extraction: ${{ steps.cache.outputs.cache-hit }}
 
-      # Stage 1: Build and push base images first
-      - name: Build base images
-        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml build --build-arg RUST_TOOLCHAIN=$(cat rust-toolchain) op-move geth
+      - name: Build ${{ github.sha }}
+        run: UMI_TAG=${{ github.sha }} docker compose -f docker-compose.yml -f .github/docker-compose.yml build --build-arg RUST_TOOLCHAIN=$(cat rust-toolchain)
 
-      - name: Push base images
-        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml push op-move geth
+      - name: Push ${{ github.sha }}
+        run: UMI_TAG=${{ github.sha }} docker compose push
 
-      # Stage 2: Pull fresh base images, then build dependents
-      - name: Build dependent images
-        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml build op-node op-batcher op-proposer
+      - name: Tag latest
+        run: docker compose build --build-arg RUST_TOOLCHAIN=$(cat rust-toolchain)
 
-      - name: Push dependent images
-        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml push op-node op-batcher op-proposer
+      - name: Push latest
+        run: docker compose push
