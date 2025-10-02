@@ -46,6 +46,21 @@ jobs:
           done
         continue-on-error: true
 
+      - name: Restore cached Rust build artifacts
+        uses: actions/cache@v4
+        id: cache
+        with:
+          path: cache-mount
+          key: cache-mount
+
+      - name: Restore Docker cache mounts
+        uses: reproducible-containers/buildkit-cache-dance@v3
+        with:
+          builder: ${{ steps.setup-buildx.outputs.name }}
+          cache-dir: cache-mount
+          dockerfile: docker/Dockerfile.op-move
+          skip-extraction: ${{ steps.cache.outputs.cache-hit }}
+
       # Stage 1: Build and push base images first
       - name: Build base images
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml build --build-arg RUST_TOOLCHAIN=$(cat rust-toolchain) op-move geth
