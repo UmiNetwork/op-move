@@ -16,7 +16,10 @@ pub struct LoadTestConfig {
     db_dir: TempDir,
     jwt_secret: [u8; 4],
     pub op_move_start_time: Duration,
-    pub n_balance_checkers: usize,
+    /// Balance checks are done in batches (each batch runs once per second).
+    /// Each batch has no sleep between calls made by the actors within that batch.
+    /// There is a 1ms sleep between batches.
+    pub n_balance_checkers: Vec<usize>,
     pub load_test_duration: Duration,
 }
 
@@ -34,7 +37,7 @@ impl LoadTestConfig {
             db_dir: tempfile::tempdir()?,
             jwt_secret: [0xde, 0xad, 0xbe, 0xef],
             op_move_start_time: Duration::from_secs(30),
-            n_balance_checkers: 30,
+            n_balance_checkers: vec![30; 10],
             load_test_duration: Duration::from_secs(5 * 60), // 5 minutes
         })
     }

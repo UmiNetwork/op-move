@@ -45,12 +45,31 @@ async fn main() -> anyhow::Result<()> {
     .spawn();
 
     // Spawn balance check jobs
-    let balance_checkers = loads::balance_checker::BalanceChecker::spawn_many(
-        config.n_balance_checkers,
-        stats_channel,
-        shutdown.subscribe(),
-    )
-    .await?;
+    let total_balance_checkers = config.n_balance_checkers.iter().sum::<usize>();
+    let n_balance_batches = config.n_balance_checkers.len();
+    let mut balance_checkers = Vec::with_capacity(total_balance_checkers);
+    for n in config
+        .n_balance_checkers
+        .iter()
+        .take(n_balance_batches.saturating_sub(1))
+    {
+        let batch = loads::balance_checker::BalanceChecker::spawn_many(
+            *n,
+            stats_channel.clone(),
+            shutdown.subscribe(),
+        )?;
+        for handle in batch {
+            balance_checkers.push(handle);
+        }
+        tokio::time::sleep(loads::balance_checker::BATCH_SEPARATION).await;
+    }
+    if let Some(n) = config.n_balance_checkers.last() {
+        balance_checkers.append(&mut loads::balance_checker::BalanceChecker::spawn_many(
+            *n,
+            stats_channel,
+            shutdown.subscribe(),
+        )?);
+    }
 
     tokio::time::sleep(config.load_test_duration).await;
 

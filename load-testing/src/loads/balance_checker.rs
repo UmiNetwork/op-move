@@ -11,6 +11,7 @@ use {
     },
 };
 
+pub const BATCH_SEPARATION: Duration = Duration::from_millis(1);
 const INTERVAL: Duration = Duration::from_secs(1);
 
 pub struct BalanceChecker {
@@ -20,7 +21,7 @@ pub struct BalanceChecker {
 }
 
 impl BalanceChecker {
-    pub async fn spawn_many(
+    pub fn spawn_many(
         n: usize,
         stats_channel: UnboundedSender<Datapoint>,
         shutdown: Receiver<()>,
@@ -39,10 +40,6 @@ impl BalanceChecker {
                 }
             };
             result.push(actor.spawn());
-
-            // Wait 1ms between actor creation so that they are not all sending
-            // requests at the exact same time.
-            tokio::time::sleep(Duration::from_millis(1)).await;
         }
         Ok(result)
     }
