@@ -47,6 +47,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.TOOLCHAIN }}
+      - name: Restore cached build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
       - name: Run integration test
         run: cargo test --release test_on_ethereum
       - name: Capture logs

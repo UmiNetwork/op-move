@@ -19,12 +19,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install mold to speed up ELF linking and decrease memory usage
+        uses: rui314/setup-mold@v1
       - name: Free up disk space
         run: rm -rf /opt/hostedtoolcache
       - run: echo "TOOLCHAIN=$(cat rust-toolchain)" >> $GITHUB_ENV
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.TOOLCHAIN }}
+      - name: Restore cached build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
       - name: Test
         run: cargo test -- --skip integration
       - name: Run flaky tests
@@ -46,6 +52,10 @@ jobs:
         with:
           toolchain: ${{ env.TOOLCHAIN }}
           components: clippy
+      - name: Restore cached build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
       - uses: auguwu/clippy-action@1.4.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
