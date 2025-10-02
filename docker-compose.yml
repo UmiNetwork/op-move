@@ -1,6 +1,6 @@
 services:
   op-node:
-    image: ghcr.io/uminetwork/op-node:latest
+    image: ghcr.io/uminetwork/op-node:${UMI_TAG:-latest}
     build:
       dockerfile: docker/shared/Dockerfile
       target: op-node
@@ -12,7 +12,7 @@ services:
       - ./docker/shared/volume:/volume/shared
 
   op-batcher:
-    image: ghcr.io/uminetwork/op-batcher:latest
+    image: ghcr.io/uminetwork/op-batcher:${UMI_TAG:-latest}
     build:
       dockerfile: docker/shared/Dockerfile
       target: op-batcher
@@ -22,7 +22,7 @@ services:
       - ./docker/shared/volume:/volume/shared
 
   op-proposer:
-    image: ghcr.io/uminetwork/op-proposer:latest
+    image: ghcr.io/uminetwork/op-proposer:${UMI_TAG:-latest}
     build:
       dockerfile: docker/shared/Dockerfile
       target: op-proposer
@@ -32,7 +32,7 @@ services:
       - ./docker/shared/volume:/volume/shared
 
   op-move:
-    image: ghcr.io/uminetwork/op-move:latest
+    image: ghcr.io/uminetwork/op-move:${UMI_TAG:-latest}
     build:
       dockerfile: docker/op-move/Dockerfile
       args:
@@ -73,7 +73,7 @@ services:
       retries: 3
 
   geth:
-    image: ghcr.io/uminetwork/geth:latest
+    image: ghcr.io/uminetwork/geth:${UMI_TAG:-latest}
     build:
       dockerfile: docker/shared/Dockerfile
       target: geth
