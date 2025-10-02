@@ -6,7 +6,10 @@ version.workspace = true
 
 [features]
 default = []
-op-upgrade = []
+op-upgrade = [
+  "umi-app/op-upgrade",
+  "umi-blockchain/op-upgrade",
+]
 
 [lints]
 workspace = true
