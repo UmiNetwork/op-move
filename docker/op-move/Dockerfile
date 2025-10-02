@@ -50,9 +50,9 @@ COPY execution/src/tests/res/l2_genesis_tests.json server/src/tests/optimism/pac
 COPY execution/src/tests/res/bridged_tokens_test.json execution/src/tests/res/bridged_tokens_test.json
 
 # Copy built binary
-COPY --from=build /volume/op-move /volume/op-move
+COPY --from=build /volume/op-move ./
 
 # Copy entrypoint with run privileges
-COPY --chmod=0777 docker/op-move.sh entrypoint.sh
+COPY --chmod=0777 docker/op-move/entrypoint.sh ./
 
 ENTRYPOINT [ "/volume/entrypoint.sh" ]

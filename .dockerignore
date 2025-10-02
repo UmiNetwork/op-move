@@ -2,7 +2,8 @@
 .*
 
 !docker
-docker/volumes
+docker/*/volume
+docker/Readme.md
 
 !server
 server/src/tests/optimism
