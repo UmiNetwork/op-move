@@ -126,7 +126,8 @@ impl AverageDuration {
 
         if duration < self.min {
             self.min = duration;
-        } else if self.max < duration {
+        }
+        if self.max < duration {
             self.max = duration
         }
     }
