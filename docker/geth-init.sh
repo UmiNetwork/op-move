@@ -15,3 +15,6 @@ wait-for-it "${L1_RPC_ADDR}:${L1_RPC_PORT}"
 
 # Deploy Optimism factory deployer contract
 cast publish --rpc-url "${L1_RPC_URL}" "${SIGNED_L1_CONTRACT_TX}"
+
+# Wait for a finalized block with a positive timestamp
+while [ "$(cast block finalized --rpc-url "${L1_RPC_URL}" | awk '/^timestamp/ { print $2 }')" -le 0 ]; do sleep 3; done
