@@ -80,7 +80,8 @@ services:
     image: ghcr.io/uminetwork/geth:latest
     build:
       context: ./
-      dockerfile: ./docker/Dockerfile.geth
+      dockerfile: ./docker/Dockerfile.optimism
+      target: geth
     networks:
       - localnet
     ports:

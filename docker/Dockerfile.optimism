@@ -1,34 +1,40 @@
-# First build all the dependencies
-FROM golang:1.22-alpine AS optimism
+# Start from a clean image
+FROM alpine:3.21.2 AS foundry
 
 # Declare argument for target architecture supplied automatically by the build system
 ARG TARGETARCH
 
 RUN \
-  # Install build dependencies
-  apk add --no-cache git make bash wget \
   # Download and extract foundry binaries
-  && \
-    if [ "$TARGETARCH" = "amd64" ]; then \
-      wget https://github.com/foundry-rs/foundry/releases/download/v1.2.3/foundry_v1.2.3_alpine_amd64.tar.gz && \
-      tar -xzf foundry_v1.2.3_alpine_amd64.tar.gz; \
-    elif [ "$TARGETARCH" = "arm64" ]; then \
-      wget https://github.com/foundry-rs/foundry/releases/download/v1.2.3/foundry_v1.2.3_alpine_arm64.tar.gz && \
-      tar -xzf foundry_v1.2.3_alpine_arm64.tar.gz; \
-    else \
-      echo "Unsupported architecture"; exit 1; \
-    fi \
+  if [ "$TARGETARCH" = "amd64" ]; then \
+    wget https://github.com/foundry-rs/foundry/releases/download/v1.2.3/foundry_v1.2.3_alpine_amd64.tar.gz && \
+    tar -xzf foundry_v1.2.3_alpine_amd64.tar.gz; \
+  elif [ "$TARGETARCH" = "arm64" ]; then \
+    wget https://github.com/foundry-rs/foundry/releases/download/v1.2.3/foundry_v1.2.3_alpine_arm64.tar.gz && \
+    tar -xzf foundry_v1.2.3_alpine_arm64.tar.gz; \
+  else \
+    echo "Unsupported architecture"; exit 1; \
+  fi \
+  # Clean up
+  && rm -rf $(ls -d /* /etc/* | grep -v -e ^/cast$ -e ^/forge$ -e ^/sys$ -e ^/proc$ -e ^/dev -e ^/etc$ -e ^/etc/hosts$ -e ^/etc/resolv.conf$)
+
+# Start from an image with go 1.22, the most recent version that works with this version of Optimism
+FROM golang:1.22-alpine AS optimism
+
+# Copy forge from foundry to install dependencies for contracts
+COPY --from=foundry /forge /usr/local/bin/
+
+RUN \
+  # Install build dependencies
+  apk add --no-cache git make bash \
   # Clone optimism at specific version
   && git clone https://github.com/ethereum-optimism/optimism /volume --branch v1.7.6 --depth 1 \
   # Build optimism binaries and files required for op-node startup
   && make --directory /volume cannon-prestate op-node op-batcher op-proposer \
   # Install forge dependencies for contracts
-  && ./forge install --root /volume/packages/contracts-bedrock \
+  && forge install --root /volume/packages/contracts-bedrock \
   # Move build artifacts to the root directory
   && mv \
-    # Only the foundry binaries we need
-    forge \
-    cast \
     # Only the built binaries we need
     /volume/op-node/bin/op-node \
     /volume/op-batcher/bin/op-batcher \
@@ -43,13 +49,13 @@ RUN \
     /volume/.git / \
   # Clean up
   && rm -rf $(ls -d /* /etc/* | grep -v \
-    -e ^/cast$ -e ^/forge$ -e ^/op-node$ -e ^/op-batcher$ -e ^/op-proposer$ \
+    -e ^/op-node$ -e ^/op-batcher$ -e ^/op-proposer$ \
     -e ^/prestate.json$ -e ^/meta.json$ -e ^/prestate-proof.json$ \
     -e ^/contracts-bedrock$ -e ^/.git$ \
     -e ^/sys$ -e ^/proc$ -e ^/dev -e ^/etc$ -e ^/etc/hosts$ -e ^/etc/resolv.conf$ \
   )
 
-# Switch to clean image
+# Start from a clean image
 FROM alpine:3.21.2 AS op-proposer
 WORKDIR /volume
 
@@ -71,7 +77,7 @@ RUN chmod +x entrypoint.sh /usr/local/bin/wait-for-it
 
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
 
-# Switch to clean image
+# Start from a clean image
 FROM alpine:3.21.2 AS op-batcher
 WORKDIR /volume
 
@@ -92,7 +98,7 @@ RUN chmod +x entrypoint.sh /usr/local/bin/wait-for-it
 
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
 
-# Switch to clean image
+# Start from a clean image
 FROM alpine:3.21.2 AS op-node
 WORKDIR /volume
 
@@ -127,7 +133,78 @@ COPY --from=optimism /.git /volume/.git
 COPY --from=optimism /prestate.json /volume/op-program/bin/prestate.json
 COPY --from=optimism /meta.json /volume/op-program/bin/meta.json
 COPY --from=optimism /prestate-proof.json /volume/op-program/bin/prestate-proof.json
-COPY --from=optimism /cast /usr/local/bin/cast
-COPY --from=optimism /forge /usr/local/bin/forge
+COPY --from=foundry /cast /usr/local/bin/cast
+COPY --from=foundry /forge /usr/local/bin/forge
 
+ENTRYPOINT [ "/volume/entrypoint.sh" ]
+
+# Start from an image that can install go 1.22, the most recent working version for this geth version
+FROM alpine:3.20.7 AS go-ethereum
+
+RUN \
+  # Install build dependencies
+  apk add --no-cache git make go linux-headers \
+  # Clone geth sources
+  && git clone https://github.com/ethereum/go-ethereum /volume --branch v1.14.6 --depth 1 \
+  # Build geth
+  && make --directory /volume geth \
+  # Move geth binary to root directory
+  && mv /volume/build/bin/geth /geth \
+  # Clean up
+  && rm -rf $(ls -d /* /etc/* | grep -v -e ^/geth$ -e ^/sys$ -e ^/proc$ -e ^/dev$ -e ^/etc$ -e ^/etc/hosts$ -e ^/etc/resolv.conf$)
+
+# Start from a clean image
+FROM alpine:3.21.2 AS geth
+WORKDIR /volume
+ENV L1_RPC_ADDR="127.0.0.1"
+ENV L1_RPC_PORT="58138"
+ENV L1_RPC_URL="http://${L1_RPC_ADDR}:${L1_RPC_PORT}"
+ENV SIGNED_L1_CONTRACT_TX="0xf8a58085174876e800830186a08080b853604580600e600039806000f350fe7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf31ba02222222222222222222222222222222222222222222222222222222222222222a02222222222222222222222222222222222222222222222222222222222222222"
+ENV FACTORY_DEPLOYER_ADDRESS="0x3fAB184622Dc19b6109349B94811493BF2a45362"
+
+RUN \
+  # Install build dependencies
+  apk upgrade --no-cache \
+  && apk add --no-cache bash curl jq \
+  # Clean up
+  && rm -rf /tmp/* /var/cache/apk/*
+
+# Copy built binary from build image
+COPY --from=go-ethereum /geth /usr/local/bin/geth
+COPY --from=foundry /cast /usr/local/bin/cast
+COPY --from=foundry /forge /usr/local/bin/forge
+COPY --chmod=0777 docker/wait-for-it.sh /usr/local/bin/wait-for-it
+COPY --chmod=0777 docker/prefund.sh prefund.sh
+COPY --chmod=0777 .env .env
+COPY --chmod=0777 docker/geth.sh entrypoint.sh
+COPY --chmod=0777 docker/keystore.sh keystore.sh
+COPY --chmod=0777 docker/geth-init.sh geth-init.sh
+
+RUN \
+  # Create datadir for geth
+  mkdir -p ./l1_datadir \
+  # Initialize keystore in the datadir
+  && ./keystore.sh \
+  # Launch geth node to receive transactions
+  && geth \
+  --dev \
+  --dev.period 3 \
+  --datadir "./l1_datadir" \
+  --rpc.allow-unprotected-txs \
+  --http \
+  --http.addr 0.0.0.0 \
+  --http.port 58138 \
+  --http.corsdomain '*' \
+  --http.api 'web3,debug,eth,txpool,net,engine' \
+  --http.vhosts '*' \
+  # Store geth process ID
+  & GETH_PID=$! \
+  # Send transactions that prefund accounts and deploy Optimism factory deployer
+  && ./geth-init.sh \
+  # Send interrupt signal to geth to shut it down gracefully preventing datadir corruption
+  && kill -SIGINT "${GETH_PID}" \
+  # Wait for geth to exit
+  && wait "${GETH_PID}"
+
+# Set entrypoint to a script that launches geth
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
