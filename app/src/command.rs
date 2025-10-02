@@ -4,11 +4,7 @@ use {
         actor::UnrecoverableAppFailure,
         input::{WithExecutionOutcome, WithPayloadAttributes},
     },
-    alloy::{
-        consensus::{Receipt, constants::EMPTY_WITHDRAWALS},
-        primitives::Bloom,
-        rlp::Encodable,
-    },
+    alloy::{consensus::Receipt, primitives::Bloom, rlp::Encodable},
     umi_blockchain::{
         block::{BaseGasFee, Block, BlockHash, BlockRepository, ExtendedBlock, Header},
         payload::{PayloadId, PayloadQueries},
@@ -160,7 +156,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 header_for_execution.number,
             );
             let message_passer_account = evm_db
-            .get_account(&L2_TO_L1_MESSAGE_PASSER_ADDRESS)
+            .get_account(&crate::L2_TO_L1_MESSAGE_PASSER_ADDRESS)
             .map_err(|e| {
                 tracing::error!(
                     "Failure during `start_block_build`. Failed to get L2ToL1MessagePasser account from storage: {e:?}"
@@ -170,7 +166,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             Some(message_passer_account.inner.storage_root)
         };
         #[cfg(not(feature = "op-upgrade"))]
-        let withdrawals_root = Some(EMPTY_WITHDRAWALS);
+        let withdrawals_root = Some(alloy::consensus::constants::EMPTY_WITHDRAWALS);
 
         let header = Header {
             parent_hash: parent.hash,
