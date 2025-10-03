@@ -18,13 +18,16 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Free up disk space
+        run: find /opt/hostedtoolcache /usr/share/dotnet /usr/local/lib/android -type f -print0 | xargs -0 rm &
       - name: Install mold to speed up ELF linking and decrease memory usage
         uses: rui314/setup-mold@v1
-      - name: Free up disk space
-        run: rm -rf /opt/hostedtoolcache
-      - run: echo "TOOLCHAIN=$(cat rust-toolchain)" >> $GITHUB_ENV
-      - uses: dtolnay/rust-toolchain@master
+      - name: Clone repository
+        uses: actions/checkout@v4
+      - name: Parse workspace toolchain
+        run: echo "TOOLCHAIN=$(cat rust-toolchain)" >> $GITHUB_ENV
+      - name: Install workspace toolchain
+        uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.TOOLCHAIN }}
       - name: Restore cached build artifacts
@@ -32,7 +35,7 @@ jobs:
         with:
           cache-on-failure: true
       - name: Test
-        run: cargo test -- --skip integration
+        run: cargo test --locked --workspace -- --skip integration
       - name: Run flaky tests
         run: cargo test -- --ignored
         continue-on-error: true
