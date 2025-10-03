@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Free up disk space
-        run: find /opt/hostedtoolcache /usr/share/dotnet /usr/local/lib/android -type f -print0 | xargs -0 rm &
+        run: find /opt/hostedtoolcache /usr/share/dotnet /usr/local/lib/android -type f -print0 | xargs -0 rm
       - name: Install mold to speed up ELF linking and decrease memory usage
         uses: rui314/setup-mold@v1
       - name: Clone repository
