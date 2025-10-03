@@ -96,45 +96,6 @@ COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
 
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
 
-# Start from a clean image
-FROM alpine:3.21.2 AS op-node
-WORKDIR /volume
-
-RUN \
-  # jq required at least by optimism deploy script
-  apk add --no-cache clang lld curl build-base linux-headers git bash jq \
-  # Clean up
-  && rm -rf /tmp/* /var/cache/apk/*
-
-# Copy entrypoint with run privileges
-COPY --chmod=0777 docker/op-node/entrypoint.sh entrypoint.sh
-
-# Copy genesis config generator with run privileges
-COPY --chmod=0777 server/src/tests/config.sh config.sh
-
-# Copy ENV file that include Optimism wallet addresses
-COPY .env .env
-
-# Copy script that waits for other services availability
-COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
-
-# Copy only the specific Solidity compiler versions needed
-COPY --from=ethereum/solc:0.8.15 /usr/bin/solc /root/.svm/0.8.15/solc-0.8.15
-COPY --from=ethereum/solc:0.8.19 /usr/bin/solc /root/.svm/0.8.19/solc-0.8.19
-COPY --from=ethereum/solc:0.8.25 /usr/bin/solc /root/.svm/0.8.25/solc-0.8.25
-
-# Copy built binary from build image and other dependencies
-COPY --from=optimism /op-node /usr/local/bin/op-node
-COPY --from=optimism /contracts-bedrock /volume/packages/contracts-bedrock
-COPY --from=optimism /.git /volume/.git
-COPY --from=optimism /prestate.json /volume/op-program/bin/prestate.json
-COPY --from=optimism /meta.json /volume/op-program/bin/meta.json
-COPY --from=optimism /prestate-proof.json /volume/op-program/bin/prestate-proof.json
-COPY --from=foundry /cast /usr/local/bin/cast
-COPY --from=foundry /forge /usr/local/bin/forge
-
-ENTRYPOINT [ "/volume/entrypoint.sh" ]
-
 # Start from an image that can install go 1.22, the most recent working version for this geth version
 FROM alpine:3.20.7 AS go-ethereum
 
@@ -162,15 +123,32 @@ ENV FACTORY_DEPLOYER_ADDRESS="0x3fAB184622Dc19b6109349B94811493BF2a45362"
 RUN \
   # Install build dependencies
   apk upgrade --no-cache \
-  && apk add --no-cache bash curl jq \
+  && apk add --no-cache bash curl jq git \
   # Clean up
   && rm -rf /tmp/* /var/cache/apk/*
 
+# Copy only the specific Solidity compiler versions needed
+COPY --from=ethereum/solc:0.8.15 /usr/bin/solc /root/.svm/0.8.15/solc-0.8.15
+COPY --from=ethereum/solc:0.8.19 /usr/bin/solc /root/.svm/0.8.19/solc-0.8.19
+COPY --from=ethereum/solc:0.8.25 /usr/bin/solc /root/.svm/0.8.25/solc-0.8.25
+
+# Copy files for Optimism L1 deployment and L2 genesis initialization
+COPY --from=optimism /contracts-bedrock /volume/packages/contracts-bedrock
+COPY --from=optimism /.git /volume/.git
+COPY --from=optimism /prestate.json /meta.json /prestate-proof.json /volume/op-program/bin/
+COPY --from=optimism /op-node /usr/local/bin/
+
+# Copy built binaries of foundry tools
+COPY --from=foundry /cast /forge /usr/local/bin/
+
 # Copy built binary from build image
 COPY --from=go-ethereum /geth /usr/local/bin/
-COPY --from=foundry /cast /forge /usr/local/bin/
+
+# Copy scripts and genesis config generator with run privileges
 COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
-COPY --chmod=0777 docker/geth/*.sh ./
+COPY --chmod=0777 docker/geth/*.sh server/src/tests/config.sh ./
+
+# Copy environment variables
 COPY .env ./
 
 RUN \
@@ -200,4 +178,37 @@ RUN \
   && wait "${GETH_PID}"
 
 # Set entrypoint to a script that launches geth
+ENTRYPOINT [ "/volume/entrypoint.sh" ]
+
+# Start from a clean image
+FROM alpine:3.21.2 AS op-node
+WORKDIR /volume
+
+RUN \
+  # jq required at least by optimism deploy script
+  apk add --no-cache clang lld curl build-base linux-headers git bash jq \
+  # Clean up
+  && rm -rf /tmp/* /var/cache/apk/*
+
+# Copy entrypoint with run privileges
+COPY --chmod=0777 docker/op-node/entrypoint.sh entrypoint.sh
+
+# Copy genesis config generator with run privileges
+COPY --chmod=0777 server/src/tests/config.sh config.sh
+
+# Copy ENV file that include Optimism wallet addresses
+COPY .env .env
+
+# Copy script that waits for other services availability
+COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
+
+# Copy built binary from build image and other dependencies
+COPY --from=optimism /op-node /usr/local/bin/
+COPY --from=geth /volume/packages/contracts-bedrock/ /volume/packages/contracts-bedrock/
+COPY --from=geth /volume/packages/contracts-bedrock/deploy-config/umi.json /volume/packages/contracts-bedrock/deploy-config/
+COPY --from=geth /volume/packages/contracts-bedrock/deployments/1337-deploy.json /volume/packages/contracts-bedrock/deployments/genesis.json /volume/packages/contracts-bedrock/deployments/rollup.json /volume/packages/contracts-bedrock/deployments/
+
+# Copy cast from foundry
+COPY --from=foundry /cast /usr/local/bin/
+
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
