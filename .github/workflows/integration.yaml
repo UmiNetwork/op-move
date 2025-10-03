@@ -20,7 +20,7 @@ jobs:
       - name: Free up disk space
         run: rm -rf /opt/hostedtoolcache
       - name: Generate keystore file
-        run: . docker/keystore.sh
+        run: . docker/geth/keystore.sh
       - name: Log in to container registry
         uses: docker/login-action@v2
         with:

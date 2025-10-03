@@ -111,7 +111,11 @@ fn validate_payload_format(
         });
     }
 
-    if execution_payload.transactions.iter().any(|s| s.len() == 0) {
+    if execution_payload
+        .transactions
+        .iter()
+        .any(|tx| tx.is_empty())
+    {
         return Err(PayloadStatusV1 {
             status: Status::Invalid,
             latest_valid_hash: None,

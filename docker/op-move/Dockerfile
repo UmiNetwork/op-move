@@ -1,5 +1,5 @@
 # Declare variable for Rust toolchain version which should be filled with `rust-toolchain` file contents
-ARG RUST_TOOLCHAIN="1.85.1"
+ARG RUST_TOOLCHAIN="1.86.0"
 
 # Start from a container that has workspace rust toolchain
 FROM rust:${RUST_TOOLCHAIN}-alpine3.21 AS build
