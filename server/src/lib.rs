@@ -113,6 +113,10 @@ pub fn set_workers_count() -> (usize, usize) {
     let reserve = core_count.saturating_div(8).max(1);
     let usable = core_count.saturating_sub(reserve);
 
+    if usable < 4 {
+        return (1, 1);
+    }
+
     let auth_ratio: f32 = 0.30;
     let auth_workers = (((usable as f32) * auth_ratio).round() as usize).clamp(2, usable - 2);
     let http_workers = usable.saturating_sub(auth_workers).max(2);
