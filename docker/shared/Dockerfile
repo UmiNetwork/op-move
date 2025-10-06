@@ -67,11 +67,11 @@ RUN \
   && rm -rf /tmp/* /var/cache/apk/*
 
 # Copy built binary from build image
-COPY --from=optimism /op-proposer /usr/local/bin/op-proposer
+COPY --from=optimism /op-proposer /usr/local/bin/
 
 # Copy entrypoint with run privileges
-COPY --chmod=0777 docker/op-proposer/entrypoint.sh entrypoint.sh
-COPY .env .env
+COPY --chmod=0777 docker/op-proposer/entrypoint.sh ./
+COPY .env ./
 COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
 
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
@@ -87,11 +87,11 @@ RUN \
   && rm -rf /tmp/* /var/cache/apk/*
 
 # Copy built binary from build image
-COPY --from=optimism /op-batcher /usr/local/bin/op-batcher
+COPY --from=optimism /op-batcher /usr/local/bin/
 
 # Copy entrypoint with run privileges
-COPY --chmod=0777 docker/op-batcher/entrypoint.sh entrypoint.sh
-COPY .env .env
+COPY --chmod=0777 docker/op-batcher/entrypoint.sh ./
+COPY .env ./
 COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
 
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
@@ -117,6 +117,7 @@ WORKDIR /volume
 ENV L1_RPC_ADDR="127.0.0.1"
 ENV L1_RPC_PORT="58138"
 ENV L1_RPC_URL="http://${L1_RPC_ADDR}:${L1_RPC_PORT}"
+ENV L1_DATADIR="/volume/l1_datadir"
 ENV SIGNED_L1_CONTRACT_TX="0xf8a58085174876e800830186a08080b853604580600e600039806000f350fe7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf31ba02222222222222222222222222222222222222222222222222222222222222222a02222222222222222222222222222222222222222222222222222222222222222"
 ENV FACTORY_DEPLOYER_ADDRESS="0x3fAB184622Dc19b6109349B94811493BF2a45362"
 
@@ -159,8 +160,7 @@ RUN \
   # Launch geth node to receive transactions
   && geth \
   --dev \
-  --dev.period 3 \
-  --datadir "./l1_datadir" \
+  --datadir "${L1_DATADIR}" \
   --rpc.allow-unprotected-txs \
   --http \
   --http.addr 0.0.0.0 \
@@ -184,31 +184,19 @@ ENTRYPOINT [ "/volume/entrypoint.sh" ]
 FROM alpine:3.21.2 AS op-node
 WORKDIR /volume
 
-RUN \
-  # jq required at least by optimism deploy script
-  apk add --no-cache clang lld curl build-base linux-headers git bash jq \
-  # Clean up
-  && rm -rf /tmp/* /var/cache/apk/*
-
-# Copy entrypoint with run privileges
-COPY --chmod=0777 docker/op-node/entrypoint.sh entrypoint.sh
-
-# Copy genesis config generator with run privileges
-COPY --chmod=0777 server/src/tests/config.sh config.sh
-
-# Copy ENV file that include Optimism wallet addresses
-COPY .env .env
-
 # Copy script that waits for other services availability
 COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
 
-# Copy built binary from build image and other dependencies
-COPY --from=optimism /op-node /usr/local/bin/
-COPY --from=geth /volume/packages/contracts-bedrock/ /volume/packages/contracts-bedrock/
-COPY --from=geth /volume/packages/contracts-bedrock/deploy-config/umi.json /volume/packages/contracts-bedrock/deploy-config/
-COPY --from=geth /volume/packages/contracts-bedrock/deployments/1337-deploy.json /volume/packages/contracts-bedrock/deployments/genesis.json /volume/packages/contracts-bedrock/deployments/rollup.json /volume/packages/contracts-bedrock/deployments/
-
-# Copy cast from foundry
+# Copy cast from foundry to wait for op-move
 COPY --from=foundry /cast /usr/local/bin/
+
+# Copy built binary from build image
+COPY --from=optimism /op-node /usr/local/bin/
+
+# Copy entrypoint with run privileges
+COPY --chmod=0777 docker/op-node/entrypoint.sh ./
+
+# Copy ENV file that include Optimism wallet addresses
+COPY .env ./
 
 ENTRYPOINT [ "/volume/entrypoint.sh" ]

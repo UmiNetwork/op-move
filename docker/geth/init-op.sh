@@ -1,21 +1,17 @@
 #!/bin/bash
-# Entrypoint of the geth docker container
+# Background tasks of the geth docker container
 
 # -e Exit if a command fails
 # -u Treat unset or undefined variables as errors
 # -x Print out command arguments during execution
-set -eux
-L1_DATADIR="./l1_datadir"
-INIT_OP="./init-op.sh"
-
-# Deploy Optimism on the L1 and produce deploy artifacts for L2
-if [ -f "${INIT_OP}" ]; then ${INIT_OP} ; rm -f ${INIT_OP}; fi
+# -a Export all variables
+set -euxa
+. /volume/.env
 
 # Ephemeral proof-of-authority network with a pre-funded developer account,
 # with automatic mining when there are pending transactions.
 geth \
   --dev \
-  --dev.period 3 \
   --datadir "${L1_DATADIR}" \
   --rpc.allow-unprotected-txs \
   --http \
@@ -28,15 +24,11 @@ geth \
 # Get the PID of the geth process launched in the background
 GETH_PID="$!"
 
-# Shuts geth down in a way that does not corrupt the datadir
-function shutdown() {
-  kill -SIGINT "${GETH_PID}"
-  wait "${GETH_PID}"
-  exit 0
-}
+# Deploy Optimism on the L1 and produce deploy artifacts for L2
+./deploy-optimism.sh
 
-# Trap signal from docker stop to the graceful shutdown function
-trap shutdown SIGTERM
+# Gracefully shut geth down by sending SIGINT to avoid breaking datadir
+kill -SIGINT "${GETH_PID}"
 
-# Block on the background geth process
+# Wait for geth to shutdown
 wait "${GETH_PID}"
