@@ -85,16 +85,16 @@ where
         payload_id,
         serialization_tag,
     } = modifiers;
-    let method: MethodName = json_utils::get_field(&request, "method")
+    let method_str = json_utils::get_field(&request, "method")
         .as_str()
         .ok_or(JsonRpcError::missing_method(request.clone()))?
-        .parse()?;
+        .to_owned();
+    let method: MethodName = method_str.parse()?;
 
     if !is_allowed(&method) {
         return Err(JsonRpcError::missing_method(request));
     }
 
-    let method_str = format!("{method:?}");
     let t0 = std::time::Instant::now();
 
     counter!("rpc_requests_total", "method" => method_str.clone()).increment(1);
