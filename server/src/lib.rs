@@ -5,6 +5,7 @@ use {
     std::{
         future::Future,
         net::{Ipv4Addr, SocketAddr, SocketAddrV4},
+        num::NonZeroUsize,
         path::Path,
         time::SystemTime,
     },
@@ -103,6 +104,20 @@ pub fn defaults() -> DefaultLayer {
 }
 
 const JWT_VALID_DURATION_IN_SECS: u64 = 60;
+
+pub fn set_workers_count() -> (usize, usize) {
+    let core_count = std::thread::available_parallelism()
+        .map(NonZeroUsize::get)
+        .unwrap_or(1);
+    // Leaving some leeway to avoid saturation
+    let reserve = core_count.saturating_div(8).max(1);
+    let usable = core_count.saturating_sub(reserve);
+
+    let auth_ratio: f32 = 0.30;
+    let auth_workers = (((usable as f32) * auth_ratio).round() as usize).clamp(2, usable - 2);
+    let http_workers = usable.saturating_sub(auth_workers).max(2);
+    (auth_workers, http_workers)
+}
 
 pub fn set_global_tracing_subscriber() {
     // TODO: config options for logging (debug level, output to file, etc)

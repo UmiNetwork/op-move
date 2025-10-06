@@ -13,15 +13,18 @@ fn main() {
         .expect("Must build config to run app");
 
     umi_server::set_global_tracing_subscriber();
+
+    let (auth_count, http_count) = umi_server::set_workers_count();
+
     let http_rt = tokio::runtime::Builder::new_multi_thread()
-        .worker_threads(10)
+        .worker_threads(http_count)
         .thread_name("rt-http")
         .enable_all()
         .build()
         .expect("Must build http runtime to run app");
 
     let auth_rt = tokio::runtime::Builder::new_multi_thread()
-        .worker_threads(4)
+        .worker_threads(auth_count)
         .thread_name("rt-auth")
         .enable_all()
         .build()
