@@ -22,6 +22,7 @@ workspace = true
 alloy.workspace = true
 alloy-trie.workspace = true
 aptos-api-types.workspace = true
+metrics.workspace = true
 move-core-types.workspace = true
 move-table-extension.workspace = true
 move-vm-runtime.workspace = true

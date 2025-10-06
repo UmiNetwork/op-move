@@ -1,4 +1,5 @@
 use {
+    metrics_exporter_prometheus::PrometheusBuilder,
     umi_server::{defaults, ServerRuntimes},
     umi_server_args::{CliLayer, ConfigBuilder, EnvLayer, FileLayer},
 };
@@ -11,6 +12,11 @@ fn main() {
         .layer(CliLayer::new())
         .try_build()
         .expect("Must build config to run app");
+
+    PrometheusBuilder::new()
+        .with_http_listener(([0, 0, 0, 0], 9000))
+        .install()
+        .expect("Must have Prometheus sink installed");
 
     umi_server::set_global_tracing_subscriber();
 

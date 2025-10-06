@@ -1,21 +1,21 @@
 [workspace]
 resolver = "3"
 members = [
-    "api",
-    "app",
-    "blockchain",
-    "evm-ext",
-    "execution",
-    "genesis",
-    "genesis-builder",
-    "genesis-image",
-    "server",
-    "server/args",
-    "shared",
-    "state",
-    "storage/rocksdb",
-    "storage/heed",
-    "trie",
+  "api",
+  "app",
+  "blockchain",
+  "evm-ext",
+  "execution",
+  "genesis",
+  "genesis-builder",
+  "genesis-image",
+  "server",
+  "server/args",
+  "shared",
+  "state",
+  "storage/rocksdb",
+  "storage/heed",
+  "trie",
 ]
 
 [workspace.package]
@@ -24,7 +24,14 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace.dependencies]
-alloy = { version = "0.13", features = ["full", "genesis", "getrandom", "rlp", "serde", "signer-keystore"] }
+alloy = { version = "0.13", features = [
+  "full",
+  "genesis",
+  "getrandom",
+  "rlp",
+  "serde",
+  "signer-keystore",
+] }
 alloy-rlp = { version = "0.3", features = ["derive"] }
 alloy-trie = "0.7"
 anyhow = "1"
@@ -58,6 +65,8 @@ hex-literal = "0.4"
 hyper = "0.14"
 jsonwebtoken = { version = "9", default-features = false }
 lazy_static = "1.5"
+metrics = "0.24.2"
+metrics-exporter-prometheus = "0.17.2"
 move-binary-format = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.27.2" }
 move-bytecode-utils = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.27.2" }
 move-compiler = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.27.2" }
@@ -68,7 +77,9 @@ move-package = { git = "https://github.com/MystenLabs/sui", tag = "testnet-v1.28
 move-resource-viewer = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.27.2" }
 move-table-extension = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.27.2" }
 move-vm-runtime = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.27.2" }
-move-vm-test-utils = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.27.2", features = ["table-extension"] }
+move-vm-test-utils = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.27.2", features = [
+  "table-extension",
+] }
 move-vm-types = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.27.2" }
 umi-api = { path = "api" }
 umi-app = { path = "app" }
