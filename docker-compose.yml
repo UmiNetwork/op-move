@@ -80,6 +80,8 @@ services:
       target: geth
     networks:
       - localnet
+    volumes:
+      - ./docker/shared/volume:/volume/shared
     ports:
       - "58138:58138"
 
