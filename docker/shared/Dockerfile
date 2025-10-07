@@ -61,8 +61,7 @@ WORKDIR /volume
 
 RUN \
   # bash required by wait-for-it
-  # jq required by entrypoint to parse L2_ORACLE_PROXY
-  apk add --no-cache bash jq \
+  apk add --no-cache bash \
   # Clean up
   && rm -rf /tmp/* /var/cache/apk/*
 
