@@ -13,7 +13,7 @@ wait-for-it -t "${TIMEOUT_SECS}" "$(echo ${L1_RPC_URL} | cut -c 8-)"
 wait-for-it -t "${TIMEOUT_SECS}" "$(echo ${ROLLUP_RPC_URL} | cut -c 8-)"
 
 # Read the oracle address from the list of deployed contract addresses
-L2_ORACLE_PROXY=$(jq -r .L2OutputOracleProxy "${L1_DEPLOYMENT}")
+L2_ORACLE_PROXY=$(grep L2OutputOracleProxy "${L1_DEPLOYMENT}" | cut -d"\"" -f4)
 
 op-proposer \
     --poll-interval 12s \
