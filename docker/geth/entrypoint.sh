@@ -15,7 +15,7 @@ if [ -f "${INIT_OP}" ]; then ${INIT_OP} ; rm -f ${INIT_OP}; fi
 # with automatic mining when there are pending transactions.
 geth \
   --dev \
-  --dev.period 3 \
+  --dev.period "${L1_BLOCK_TIME}" \
   --datadir "${L1_DATADIR}" \
   --rpc.allow-unprotected-txs \
   --http \
