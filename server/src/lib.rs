@@ -219,19 +219,23 @@ pub fn server_filter(
 
     get_method_auto_response
         .or(serialization_kind
+            .and(warp::header::<u128>("X-Req-Start-Ms"))
             .and(app_state)
             .and(jwt_validation)
             .and(request_body)
-            .and_then(move |serialization_tag, (queue, reader), _, request| {
-                handle_request(
-                    queue,
-                    serialization_tag,
-                    request,
-                    is_allowed,
-                    &StatePayloadId,
-                    reader,
-                )
-            }))
+            .and_then(
+                move |serialization_tag, request_start, (queue, reader), _, request| {
+                    handle_request(
+                        queue,
+                        serialization_tag,
+                        request_start,
+                        request,
+                        is_allowed,
+                        &StatePayloadId,
+                        reader,
+                    )
+                },
+            ))
         .with(warp::reply::with::headers(content_type))
         .with(warp::cors().allow_any_origin())
 }
@@ -431,12 +435,13 @@ pub fn validate_jwt(
 async fn handle_request<'reader>(
     queue: CommandQueue,
     serialization_tag: SerializationKind,
+    request_start: u128,
     request: serde_json::Value,
     is_allowed: &impl Fn(&MethodName) -> bool,
     payload_id: &impl NewPayloadId,
     app: ApplicationReader<'reader, impl Dependencies<'reader>>,
 ) -> Result<warp::reply::Response, Rejection> {
-    let modifiers = RequestModifiers::new(is_allowed, payload_id, serialization_tag);
+    let modifiers = RequestModifiers::new(is_allowed, payload_id, serialization_tag, request_start);
     let op_move_response =
         umi_api::request::handle(request.clone(), queue.clone(), modifiers, app).await;
     let log = ServerLog {
