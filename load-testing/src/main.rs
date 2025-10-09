@@ -23,7 +23,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Start `op-move` and wait for it to be ready.
     let mut umi_process = run_server::start(&server_binary, config.to_server_config()?)?;
-    tokio::time::sleep(config.op_move_start_time).await;
+    tokio::time::sleep(config.op_move_windup_allowance).await;
 
     // Get the genesis block hash
     let genesis_block_hash = {
