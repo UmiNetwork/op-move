@@ -102,7 +102,7 @@ fn test_query_fetches_latest_balance() {
     let query = InMemoryStateQueries::new(storage, trie_db, genesis_config.initial_state_root);
 
     let actual_balance = query
-        .balance_at(&evm_storage, addr, 1)
+        .balance_at(addr, 1)
         .expect("Block height should exist");
     let expected_balance = U256::from(1u64);
 
@@ -141,7 +141,7 @@ fn test_query_fetches_older_balance() {
     let query = InMemoryStateQueries::new(storage, trie_db, genesis_config.initial_state_root);
 
     let actual_balance = query
-        .balance_at(&evm_storage, addr, 1)
+        .balance_at(addr, 1)
         .expect("Block height should exist");
     let expected_balance = U256::from(1u64);
 
@@ -180,14 +180,14 @@ fn test_query_fetches_latest_and_previous_balance() {
     let query = InMemoryStateQueries::new(storage, trie_db, genesis_config.initial_state_root);
 
     let actual_balance = query
-        .balance_at(&evm_storage, addr, 1)
+        .balance_at(addr, 1)
         .expect("Block height should exist");
     let expected_balance = U256::from(1u64);
 
     assert_eq!(actual_balance, expected_balance);
 
     let actual_balance = query
-        .balance_at(&evm_storage, addr, 2)
+        .balance_at(addr, 2)
         .expect("Block height should exist");
     let expected_balance = U256::from(3u64);
 
@@ -220,7 +220,7 @@ fn test_query_fetches_zero_balance_for_non_existent_account() {
     let query = InMemoryStateQueries::new(storage, trie_db, genesis_config.initial_state_root);
 
     let actual_balance = query
-        .balance_at(&evm_storage, addr, 0)
+        .balance_at(addr, 0)
         .expect("Block height should exist");
     let expected_balance = U256::ZERO;
 

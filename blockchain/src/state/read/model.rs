@@ -70,13 +70,12 @@ pub trait StateQueries {
     /// base token associated with `account`.
     fn balance_at(
         &self,
-        evm_storage: &impl StorageTrieRepository,
         account: AccountAddress,
         height: BlockHeight,
     ) -> umi_shared::error::Result<Balance> {
         let resolver = self.resolver_at(height)?;
 
-        quick_get_eth_balance(&account, &resolver, evm_storage)
+        quick_get_eth_balance(&account, &resolver)
     }
 
     /// Queries the blockchain state version corresponding with block `height` for the nonce value

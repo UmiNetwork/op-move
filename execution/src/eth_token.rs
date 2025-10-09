@@ -13,7 +13,7 @@ use {
         gas::{GasMeter, UnmeteredGasMeter},
         resolver::MoveResolver,
     },
-    umi_evm_ext::{EVM_NATIVE_ADDRESS, events::EthTransferLog, state::StorageTrieRepository},
+    umi_evm_ext::{EVM_NATIVE_ADDRESS, events::EthTransferLog},
     umi_genesis::FRAMEWORK_ADDRESS,
     umi_shared::{error::EthToken, primitives::ToMoveU256},
 };
@@ -270,7 +270,6 @@ pub fn replicate_transfers<G: GasMeter, L: EthTransferLog>(
 pub fn quick_get_eth_balance(
     account: &AccountAddress,
     state: &(impl MoveResolver + TableResolver),
-    _storage_trie: &impl StorageTrieRepository,
 ) -> Result<U256, umi_shared::error::Error> {
     let struct_tag = StructTag {
         address: FRAMEWORK_ADDRESS,

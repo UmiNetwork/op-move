@@ -24,7 +24,6 @@ pub struct MockStateQueries(pub AccountAddress, pub BlockHeight);
 impl StateQueries for MockStateQueries {
     fn balance_at(
         &self,
-        _evm_storage: &impl StorageTrieRepository,
         account: AccountAddress,
         height: BlockHeight,
     ) -> umi_shared::error::Result<Balance> {
