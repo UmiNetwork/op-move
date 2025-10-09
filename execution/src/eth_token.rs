@@ -26,7 +26,10 @@ const FUNGIBLE_ASSET_MODULE: &IdentStr = ident_str!("fungible_asset_u256");
 const FUNGIBLE_ASSET_STORE: &IdentStr = ident_str!("FungibleStore");
 
 /// Address for the Eth token metadata object resource.
-/// Derived from `sha3_256([@0x1 | ETH | 0xFE])`
+/// Derived from `sha3_256([@0x1 | ETH | 0xFE])`.
+/// I.e. based on the `create_object_address` function with seed equal to `b"ETH"`.
+/// See aptos framework for details:
+/// https://github.com/aptos-labs/aptos-core/blob/aptos-node-v1.27.2/aptos-move/framework/aptos-framework/sources/object.move#L216
 const ETH_METADATA_ADDRESS: AccountAddress = move_core_types::account_address::AccountAddress::new(
     alloy::hex!("deed7d21428b9ca921615cc0e83e33dbe549568a82caf5ad38b2ddce182a75b4"),
 );
@@ -296,6 +299,9 @@ pub fn quick_get_eth_balance(
 }
 
 /// Compute the address where the `FungibleStore` resource will be located.
+/// Based on `create_user_derived_object_address` function with `derive_from` equal to
+/// the Eth token metadata address. See aptos framework for details:
+/// https://github.com/aptos-labs/aptos-core/blob/aptos-node-v1.27.2/aptos-move/framework/aptos-framework/sources/object.move#L226
 fn store_address(owner: &AccountAddress) -> AccountAddress {
     let input = [owner.as_slice(), ETH_METADATA_ADDRESS.as_slice(), &[0xFC]].concat();
     AccountAddress::new(move_vm_types::sha3_256(&input))
