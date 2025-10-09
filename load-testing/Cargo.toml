@@ -1,0 +1,28 @@
+[package]
+name = "umi-load-testing"
+description = "Load testing for the op-move application."
+version.workspace = true
+edition.workspace = true
+
+[features]
+default = []
+
+[lints]
+workspace = true
+
+[dependencies]
+alloy.workspace = true
+anyhow.workspace = true
+hex.workspace = true
+jsonwebtoken.workspace = true
+op-alloy.workspace = true
+rand.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true
+tokio.workspace = true
+umi-api.workspace = true
+umi-server-args.workspace = true
+
+[dev-dependencies]

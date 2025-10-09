@@ -23,3 +23,7 @@ server/src/tests/optimism
 
 # Persistent storage directory
 server/db/
+
+# Load testing logs
+load-testing/*.log
+load-testing/*.csv

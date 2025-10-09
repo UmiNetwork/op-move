@@ -9,6 +9,7 @@ members = [
   "genesis",
   "genesis-builder",
   "genesis-image",
+  "load-testing",
   "server",
   "server/args",
   "shared",
@@ -99,6 +100,7 @@ op-alloy = { version = "0.12", features = ["full", "std", "k256", "serde"] }
 openssl = "0.10"
 rand = "0.8"
 regex = "1.11.1"
+reqwest = { version = "0.12", features = ["json"] }
 revm = { version = "21", features = ["optional_balance_check"] }
 rocksdb = { version = "0.23" }
 serde = { version = "1", features = ["derive"] }
@@ -110,6 +112,7 @@ smallvec = "1"
 sui-framework = { git = "https://github.com/MystenLabs/sui", tag = "testnet-v1.28.3" }
 sui-move-build = { git = "https://github.com/MystenLabs/sui", tag = "testnet-v1.28.3" }
 sui-types = { git = "https://github.com/MystenLabs/sui", tag = "testnet-v1.28.3" }
+tempfile = "3.21"
 test-case = "3"
 thiserror = "1"
 tokio = { version = "1", features = ["full"] }
