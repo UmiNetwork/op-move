@@ -18,13 +18,6 @@ fn main() {
         .install()
         .expect("Must have Prometheus sink installed");
 
-    tokio::spawn(
-        tokio_metrics::RuntimeMetricsReporterBuilder::default()
-            // Default 30s is too coarse
-            .with_interval(std::time::Duration::from_secs(5))
-            .describe_and_run(),
-    );
-
     umi_server::set_global_tracing_subscriber();
 
     let (auth_count, http_count) = umi_server::set_workers_count();
@@ -42,6 +35,13 @@ fn main() {
         .enable_all()
         .build()
         .expect("Must build auth runtime to run app");
+
+    http_rt.spawn(
+        tokio_metrics::RuntimeMetricsReporterBuilder::default()
+            // Default 30s is too coarse
+            .with_interval(std::time::Duration::from_secs(5))
+            .describe_and_run(),
+    );
 
     http_rt.block_on(umi_server::run_with_runtimes(
         args,
