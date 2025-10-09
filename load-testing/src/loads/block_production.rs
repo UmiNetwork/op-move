@@ -35,14 +35,7 @@ const DEPOSIT_FROM: Address =
     alloy::primitives::address!("0xdeaddeaddeaddeaddeaddeaddeaddeaddead0001");
 const DEPOSIT_TO: Address =
     alloy::primitives::address!("0x4200000000000000000000000000000000000015");
-const DEPOSIT_INPUT: &str = r#"
-440a5e2000022950000c5f4f00000000000000050000000068ae9ec700000000
-0000ba0600000000000000000000000000000000000000000000000000000000
-0000000700000000000000000000000000000000000000000000000000000000
-0000000111c8bd9dd367fdb8fd9b6bb001da2163777f0d698533cf649d5820bc
-fcadde990000000000000000000000008c67a7b8624044f8f672e9ec374dfa59
-6f01afb9
-"#;
+const DEPOSIT_INPUT: &str = include_str!("res/deposit_input.hex");
 
 pub struct BlockProduction {
     client: UmiClient,
@@ -91,8 +84,7 @@ impl BlockProduction {
                 };
 
                 let deposit_transaction = {
-                    let input = DEPOSIT_INPUT.replace(['\n', ' '], "");
-                    let input = hex::decode(input).expect("Is correct hex");
+                    let input = hex::decode(DEPOSIT_INPUT.trim()).expect("Is correct hex");
                     let tx = TxDeposit {
                         source_hash: alloy::primitives::keccak256(now.to_be_bytes()),
                         from: DEPOSIT_FROM,
