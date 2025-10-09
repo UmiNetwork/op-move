@@ -283,6 +283,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
         in_progress_payloads.finish_id(block, executed_transactions.into_iter().map(Into::into));
 
         histogram!("block_build_duration_seconds").record(t0.elapsed().as_secs_f64());
+        metrics::counter!("blocks_produced_count").increment(1);
 
         Ok(())
     }
