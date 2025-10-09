@@ -11,7 +11,7 @@ use {
     },
 };
 
-// Average RPC response times over 30s window
+// The period for averaging RPC response times
 const WINDOW_SIZE: Duration = Duration::from_secs(30);
 
 pub struct Datapoint {

@@ -32,7 +32,7 @@ async fn main() -> anyhow::Result<()> {
         genesis.0.header.hash
     };
 
-    // Create shutdown channel to control graceful end to load test.
+    // Create shutdown channel to allow gracefully killing the load test subtasks.
     let (shutdown, shutdown_rx) = broadcast::channel(1);
 
     // Spawn the block building job
