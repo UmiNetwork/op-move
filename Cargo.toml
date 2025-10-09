@@ -58,6 +58,7 @@ criterion = "0.5"
 convert_case = "0.6"
 dotenvy = "0.15"
 eth_trie = "0.5.0"
+evmap = "10"
 flate2 = "1"
 handlebars = "6.2"
 heed = "0.21"
@@ -82,19 +83,6 @@ move-vm-test-utils = { git = "https://github.com/aptos-labs/aptos-core", tag = "
   "table-extension",
 ] }
 move-vm-types = { git = "https://github.com/aptos-labs/aptos-core", tag = "aptos-node-v1.27.2" }
-umi-api = { path = "api" }
-umi-app = { path = "app" }
-umi-blockchain = { path = "blockchain" }
-umi-evm-ext = { path = "evm-ext" }
-umi-execution = { path = "execution" }
-umi-genesis = { path = "genesis" }
-umi-genesis-image = { path = "genesis-image" }
-umi-server-args = { path = "server/args" }
-umi-shared = { path = "shared" }
-umi-state = { path = "state" }
-umi-storage-rocksdb = { path = "storage/rocksdb" }
-umi-storage-heed = { path = "storage/heed" }
-umi-trie = { path = "trie" }
 once_cell = "1.19"
 op-alloy = { version = "0.12", features = ["full", "std", "k256", "serde"] }
 openssl = "0.10"
@@ -116,11 +104,24 @@ tempfile = "3.21"
 test-case = "3"
 thiserror = "1"
 tokio = { version = "1", features = ["full"] }
+tokio-metrics = { version = "0.4.5", features = ["metrics-rs-integration"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
-warp = "0.3"
-evmap = "10"
 toml = "0.8"
+umi-api = { path = "api" }
+umi-app = { path = "app" }
+umi-blockchain = { path = "blockchain" }
+umi-evm-ext = { path = "evm-ext" }
+umi-execution = { path = "execution" }
+umi-genesis = { path = "genesis" }
+umi-genesis-image = { path = "genesis-image" }
+umi-server-args = { path = "server/args" }
+umi-shared = { path = "shared" }
+umi-state = { path = "state" }
+umi-storage-rocksdb = { path = "storage/rocksdb" }
+umi-storage-heed = { path = "storage/heed" }
+umi-trie = { path = "trie" }
+warp = "0.3"
 
 [workspace.lints.clippy]
 unwrap_used = "deny"

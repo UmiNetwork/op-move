@@ -18,6 +18,13 @@ fn main() {
         .install()
         .expect("Must have Prometheus sink installed");
 
+    tokio::spawn(
+        tokio_metrics::RuntimeMetricsReporterBuilder::default()
+            // Default 30s is too coarse
+            .with_interval(std::time::Duration::from_secs(5))
+            .describe_and_run(),
+    );
+
     umi_server::set_global_tracing_subscriber();
 
     let (auth_count, http_count) = umi_server::set_workers_count();
