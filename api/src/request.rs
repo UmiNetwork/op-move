@@ -22,7 +22,7 @@ pub enum SerializationKind {
 pub struct RequestModifiers<'a, A, P> {
     is_allowed: A,
     payload_id: &'a P,
-    request_start_ms: u128,
+    request_start_ms: Option<u128>,
     serialization_tag: SerializationKind,
 }
 
@@ -35,7 +35,7 @@ where
         is_allowed: A,
         payload_id: &'a P,
         serialization_tag: SerializationKind,
-        request_start_ms: u128,
+        request_start_ms: Option<u128>,
     ) -> Self {
         Self {
             is_allowed,
@@ -105,19 +105,22 @@ where
     }
 
     let t0 = std::time::Instant::now();
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("System clock adjustment can't invalidate Unix epoch")
-        .as_millis();
-    let signed_skew_ms = (now as i128) - (request_start_ms as i128);
-    let nonneg_queue_ms = signed_skew_ms.max(0) as u128;
+    if let Some(start_ms) = request_start_ms {
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("System clock adjustment can't invalidate Unix epoch")
+            .as_millis();
+        let signed_skew_ms = (now as i128) - (start_ms as i128);
+        let nonneg_queue_ms = signed_skew_ms.max(0) as u128;
+
+        histogram!("ingress_to_app_seconds", "method" => method_str.clone())
+            .record(nonneg_queue_ms as f64 / 1000.0);
+        gauge!("ingress_time_skew_seconds", "method" => method_str.clone())
+            .set(signed_skew_ms as f64 / 1000.0);
+    }
 
     counter!("rpc_requests_total", "method" => method_str.clone()).increment(1);
     gauge!("rpc_inflight_requests", "method" => method_str.clone()).increment(1.0);
-    histogram!("ingress_to_app_seconds", "method" => method_str.clone())
-        .record(nonneg_queue_ms as f64 / 1000.0);
-    gauge!("ingress_time_skew_seconds", "method" => method_str.clone())
-        .set(signed_skew_ms as f64 / 1000.0);
 
     let resp = match method {
         ForkChoiceUpdatedV3 => {

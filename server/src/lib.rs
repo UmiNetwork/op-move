@@ -219,7 +219,7 @@ pub fn server_filter(
 
     get_method_auto_response
         .or(serialization_kind
-            .and(warp::header::<u128>("X-Req-Start-Ms"))
+            .and(warp::header::optional::<u128>("X-Req-Start-Ms"))
             .and(app_state)
             .and(jwt_validation)
             .and(request_body)
@@ -435,7 +435,7 @@ pub fn validate_jwt(
 async fn handle_request<'reader>(
     queue: CommandQueue,
     serialization_tag: SerializationKind,
-    request_start: u128,
+    request_start: Option<u128>,
     request: serde_json::Value,
     is_allowed: &impl Fn(&MethodName) -> bool,
     payload_id: &impl NewPayloadId,
