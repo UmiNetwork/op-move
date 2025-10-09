@@ -26,3 +26,4 @@ server/*.log
 !Cargo.toml
 !rust-toolchain
 !trie
+!load-testing
