@@ -5,6 +5,7 @@ use {
         method_name::MethodName,
     },
     metrics::{counter, gauge, histogram},
+    std::time::{SystemTime, UNIX_EPOCH},
     umi_app::{ApplicationReader, CommandQueue, Dependencies},
     umi_blockchain::payload::NewPayloadId,
 };
@@ -21,6 +22,7 @@ pub enum SerializationKind {
 pub struct RequestModifiers<'a, A, P> {
     is_allowed: A,
     payload_id: &'a P,
+    request_start_ms: Option<u128>,
     serialization_tag: SerializationKind,
 }
 
@@ -29,10 +31,16 @@ where
     A: Fn(&MethodName) -> bool,
     P: NewPayloadId,
 {
-    pub fn new(is_allowed: A, payload_id: &'a P, serialization_tag: SerializationKind) -> Self {
+    pub fn new(
+        is_allowed: A,
+        payload_id: &'a P,
+        serialization_tag: SerializationKind,
+        request_start_ms: Option<u128>,
+    ) -> Self {
         Self {
             is_allowed,
             payload_id,
+            request_start_ms,
             serialization_tag,
         }
     }
@@ -84,6 +92,7 @@ where
         is_allowed,
         payload_id,
         serialization_tag,
+        request_start_ms,
     } = modifiers;
     let method_str = json_utils::get_field(&request, "method")
         .as_str()
@@ -96,6 +105,19 @@ where
     }
 
     let t0 = std::time::Instant::now();
+    if let Some(start_ms) = request_start_ms {
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("System clock adjustment can't invalidate Unix epoch")
+            .as_millis();
+        let signed_skew_ms = (now as i128) - (start_ms as i128);
+        let nonneg_queue_ms = signed_skew_ms.max(0) as u128;
+
+        histogram!("ingress_to_app_seconds", "method" => method_str.clone())
+            .record(nonneg_queue_ms as f64 / 1000.0);
+        gauge!("ingress_time_skew_seconds", "method" => method_str.clone())
+            .set(signed_skew_ms as f64 / 1000.0);
+    }
 
     counter!("rpc_requests_total", "method" => method_str.clone()).increment(1);
     gauge!("rpc_inflight_requests", "method" => method_str.clone()).increment(1.0);

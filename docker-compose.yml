@@ -48,8 +48,8 @@ services:
       - ./docker/shared/volume:/volume/shared
       - ./docker/op-move/volume:/volume/db
     ports:
-      - "8545:8545"
       - "9000:9000"
+      - "8545"
     deploy:
       replicas: 1
       update_config:
@@ -84,6 +84,15 @@ services:
       - ./docker/shared/volume:/volume/shared
     ports:
       - "58138:58138"
+
+  proxy:
+    image: nginx:1.29.1-alpine
+    ports:
+      - "8545:8545"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d:ro
+    depends_on:
+      - op-move
 
 networks:
   localnet:
