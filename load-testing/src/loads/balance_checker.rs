@@ -11,7 +11,6 @@ use {
     },
 };
 
-pub const BATCH_SEPARATION: Duration = Duration::from_millis(1);
 const INTERVAL: Duration = Duration::from_secs(1);
 
 pub struct BalanceChecker {

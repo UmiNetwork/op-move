@@ -10,16 +10,23 @@ use {
     umi_server_args::{OptionalAuthSocket, OptionalConfig, OptionalDatabase, OptionalGenesis},
 };
 
+/// Balance checks are done in batches (each batch runs once per second).
+/// Each batch has no sleep between calls made by the actors within that batch.
+/// There is a `batch_separation` sleep between batches.
+/// The batches are defined by `n_checkers`; each element of that list represents
+/// one batch by giving the number of actors in that batch.
+pub struct BalanceCheckLoadConfig {
+    pub n_checkers: Vec<usize>,
+    pub batch_separation: Duration,
+}
+
 pub struct LoadTestConfig {
     binary: BinaryPath,
     pub stats_dir: PathBuf,
     db_dir: TempDir,
     jwt_secret: [u8; 4],
     pub op_move_windup_allowance: Duration,
-    /// Balance checks are done in batches (each batch runs once per second).
-    /// Each batch has no sleep between calls made by the actors within that batch.
-    /// There is a 1ms sleep between batches.
-    pub n_balance_checkers: Vec<usize>,
+    pub balance_check_load: BalanceCheckLoadConfig,
     pub load_test_duration: Duration,
 }
 
@@ -37,7 +44,10 @@ impl LoadTestConfig {
             db_dir: tempfile::tempdir()?,
             jwt_secret: [0xde, 0xad, 0xbe, 0xef],
             op_move_windup_allowance: Duration::from_secs(30),
-            n_balance_checkers: vec![30; 10],
+            balance_check_load: BalanceCheckLoadConfig {
+                n_checkers: vec![30; 10],
+                batch_separation: Duration::from_millis(1),
+            },
             load_test_duration: Duration::from_secs(5 * 60), // 5 minutes
         })
     }

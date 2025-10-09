@@ -45,11 +45,12 @@ async fn main() -> anyhow::Result<()> {
     .spawn();
 
     // Spawn balance check jobs
-    let total_balance_checkers = config.n_balance_checkers.iter().sum::<usize>();
-    let n_balance_batches = config.n_balance_checkers.len();
+    let total_balance_checkers = config.balance_check_load.n_checkers.iter().sum::<usize>();
+    let n_balance_batches = config.balance_check_load.n_checkers.len();
     let mut balance_checkers = Vec::with_capacity(total_balance_checkers);
     for n in config
-        .n_balance_checkers
+        .balance_check_load
+        .n_checkers
         .iter()
         .take(n_balance_batches.saturating_sub(1))
     {
@@ -61,9 +62,9 @@ async fn main() -> anyhow::Result<()> {
         for handle in batch {
             balance_checkers.push(handle);
         }
-        tokio::time::sleep(loads::balance_checker::BATCH_SEPARATION).await;
+        tokio::time::sleep(config.balance_check_load.batch_separation).await;
     }
-    if let Some(n) = config.n_balance_checkers.last() {
+    if let Some(n) = config.balance_check_load.n_checkers.last() {
         balance_checkers.append(&mut loads::balance_checker::BalanceChecker::spawn_many(
             *n,
             stats_channel,
