@@ -1,35 +1,38 @@
 use {
-    crate::session_id::SessionId,
     alloy::primitives::U256,
     aptos_table_natives::TableResolver,
     move_core_types::{
-        account_address::AccountAddress, ident_str, identifier::IdentStr,
-        language_storage::ModuleId, value::MoveValue,
+        account_address::AccountAddress,
+        ident_str,
+        identifier::IdentStr,
+        language_storage::{ModuleId, StructTag},
+        value::MoveValue,
     },
-    move_vm_runtime::{
-        AsUnsyncCodeStorage, ModuleStorage,
-        module_traversal::{TraversalContext, TraversalStorage},
-        session::Session,
-    },
+    move_vm_runtime::{ModuleStorage, module_traversal::TraversalContext, session::Session},
     move_vm_types::{
         gas::{GasMeter, UnmeteredGasMeter},
         resolver::MoveResolver,
-        value_serde::ValueSerDeContext,
     },
-    umi_evm_ext::{EVM_NATIVE_ADDRESS, events::EthTransferLog, state::StorageTrieRepository},
-    umi_genesis::{CreateMoveVm, FRAMEWORK_ADDRESS, UmiVm},
-    umi_shared::{
-        error::EthToken,
-        primitives::{ToMoveU256, ToU256},
-    },
-    umi_state::ResolverBasedModuleBytesStorage,
+    umi_evm_ext::{EVM_NATIVE_ADDRESS, events::EthTransferLog},
+    umi_genesis::FRAMEWORK_ADDRESS,
+    umi_shared::{error::EthToken, primitives::ToMoveU256},
 };
 
 const TOKEN_ADMIN: AccountAddress = FRAMEWORK_ADDRESS;
 const TOKEN_MODULE_NAME: &IdentStr = ident_str!("eth_token");
 const MINT_FUNCTION_NAME: &IdentStr = ident_str!("mint");
-const GET_BALANCE_FUNCTION_NAME: &IdentStr = ident_str!("get_balance");
 const TRANSFER_FUNCTION_NAME: &IdentStr = ident_str!("transfer");
+const FUNGIBLE_ASSET_MODULE: &IdentStr = ident_str!("fungible_asset_u256");
+const FUNGIBLE_ASSET_STORE: &IdentStr = ident_str!("FungibleStore");
+
+/// Address for the Eth token metadata object resource.
+/// Derived from `sha3_256([@0x1 | ETH | 0xFE])`.
+/// I.e. based on the `create_object_address` function with seed equal to `b"ETH"`.
+/// See aptos framework for details:
+/// https://github.com/aptos-labs/aptos-core/blob/aptos-node-v1.27.2/aptos-move/framework/aptos-framework/sources/object.move#L216
+const ETH_METADATA_ADDRESS: AccountAddress = move_core_types::account_address::AccountAddress::new(
+    alloy::hex!("deed7d21428b9ca921615cc0e83e33dbe549568a82caf5ad38b2ddce182a75b4"),
+);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TransferArgs<'a> {
@@ -265,82 +268,43 @@ pub fn replicate_transfers<G: GasMeter, L: EthTransferLog>(
     Ok(())
 }
 
-pub fn get_eth_balance<G: GasMeter>(
-    account: &AccountAddress,
-    session: &mut Session,
-    traversal_context: &mut TraversalContext,
-    gas_meter: &mut G,
-    module_storage: &impl ModuleStorage,
-) -> Result<U256, umi_shared::error::Error> {
-    let addr_arg = bcs::to_bytes(account).expect("address can serialize");
-    let token_module_id = ModuleId::new(FRAMEWORK_ADDRESS, TOKEN_MODULE_NAME.into());
-
-    let return_values = session
-        .execute_function_bypass_visibility(
-            &token_module_id,
-            GET_BALANCE_FUNCTION_NAME,
-            Vec::new(),
-            vec![addr_arg.as_slice()],
-            gas_meter,
-            traversal_context,
-            module_storage,
-        )
-        .map_err(|e| {
-            tracing::error!("get_eth_balance error: {e:?}");
-
-            umi_shared::error::Error::eth_token_invariant_violation(
-                EthToken::GetBalanceAlwaysSucceeds,
-            )
-        })?
-        .return_values;
-
-    let (raw_output, layout) =
-        return_values
-            .first()
-            .ok_or(umi_shared::error::Error::eth_token_invariant_violation(
-                EthToken::GetBalanceReturnsAValue,
-            ))?;
-
-    let value = ValueSerDeContext::new()
-        .deserialize(raw_output, layout)
-        .ok_or(umi_shared::error::Error::eth_token_invariant_violation(
-            EthToken::GetBalanceReturnDeserializes,
-        ))?
-        .as_move_value(layout);
-
-    match value {
-        MoveValue::U256(balance) => Ok(balance.to_u256()),
-        _ => Err(umi_shared::error::Error::eth_token_invariant_violation(
-            EthToken::GetBalanceReturnsU256,
-        )),
-    }
-}
-
 /// Simplified API for getting the base token balance with no side effects.
 /// Use it only for view methods as it does not use a VM session in the request pipeline.
 pub fn quick_get_eth_balance(
     account: &AccountAddress,
     state: &(impl MoveResolver + TableResolver),
-    storage_trie: &impl StorageTrieRepository,
 ) -> Result<U256, umi_shared::error::Error> {
-    let umi_vm = UmiVm::new(&Default::default());
-    let vm = umi_vm.create_move_vm()?;
-    let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state);
-    let code_storage = module_bytes_storage.as_unsync_code_storage(&umi_vm);
-    // Noop block hash lookup is safe here because the EVM is not used for
-    // querying base token balances.
-    let mut session =
-        super::create_vm_session(&vm, state, SessionId::default(), storage_trie, &(), &());
-    let traversal_storage = TraversalStorage::new();
-    let mut traversal_context = TraversalContext::new(&traversal_storage);
-    let mut gas_meter = UnmeteredGasMeter;
-    get_eth_balance(
-        account,
-        &mut session,
-        &mut traversal_context,
-        &mut gas_meter,
-        &code_storage,
-    )
+    let struct_tag = StructTag {
+        address: FRAMEWORK_ADDRESS,
+        module: FUNGIBLE_ASSET_MODULE.into(),
+        name: FUNGIBLE_ASSET_STORE.into(),
+        type_args: Vec::new(),
+    };
+    let (Some(bytes), _) = state.get_resource_bytes_with_metadata_and_layout(
+        &store_address(account),
+        &struct_tag,
+        &[],
+        None,
+    )?
+    else {
+        return Ok(U256::ZERO);
+    };
+
+    // First 32 bytes are the metadata address
+    debug_assert_eq!(&bytes[0..32], ETH_METADATA_ADDRESS.as_slice());
+
+    // Next 32 bytes are the balance (little endian encoded)
+    let amount_le = &bytes[32..64];
+    Ok(U256::from_le_slice(amount_le))
+}
+
+/// Compute the address where the `FungibleStore` resource will be located.
+/// Based on `create_user_derived_object_address` function with `derive_from` equal to
+/// the Eth token metadata address. See aptos framework for details:
+/// https://github.com/aptos-labs/aptos-core/blob/aptos-node-v1.27.2/aptos-move/framework/aptos-framework/sources/object.move#L226
+fn store_address(owner: &AccountAddress) -> AccountAddress {
+    let input = [owner.as_slice(), ETH_METADATA_ADDRESS.as_slice(), &[0xFC]].concat();
+    AccountAddress::new(move_vm_types::sha3_256(&input))
 }
 
 #[cfg(any(feature = "test-doubles", test))]

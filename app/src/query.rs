@@ -62,11 +62,8 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
     }
 
     pub fn balance_by_height(&self, address: Address, height: BlockNumberOrTag) -> Result<U256> {
-        self.state_queries.balance_at(
-            &self.evm_storage,
-            address.to_move_address(),
-            self.resolve_height(height)?,
-        )
+        self.state_queries
+            .balance_at(address.to_move_address(), self.resolve_height(height)?)
     }
 
     pub fn evm_bytecode_by_height(

@@ -455,12 +455,7 @@ impl TestContext {
     /// # Returns
     /// The balance as a u256
     pub fn get_balance(&self, address: Address) -> U256 {
-        quick_get_eth_balance(
-            &address.to_move_address(),
-            self.state.resolver(),
-            &self.evm_storage,
-        )
-        .unwrap()
+        quick_get_eth_balance(&address.to_move_address(), self.state.resolver()).unwrap()
     }
 
     /// Gets the nonce for an address.
