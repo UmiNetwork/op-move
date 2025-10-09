@@ -84,6 +84,8 @@ services:
       - ./docker/shared/volume:/volume/shared
     ports:
       - "58138:58138"
+    env_file:
+      - .env
 
   proxy:
     image: nginx:1.29.1-alpine
