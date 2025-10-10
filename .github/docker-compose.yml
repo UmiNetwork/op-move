@@ -1,35 +1,25 @@
 services:
   op-node:
     build:
-      cache_from:
-        - type=registry,ref=ghcr.io/uminetwork/op-node:latest-cache
       cache_to:
         - type=registry,ref=ghcr.io/uminetwork/op-node:latest-cache,mode=max
 
   op-batcher:
     build:
-      cache_from:
-        - type=registry,ref=ghcr.io/uminetwork/op-batcher:latest-cache
       cache_to:
         - type=registry,ref=ghcr.io/uminetwork/op-batcher:latest-cache,mode=max
 
   op-proposer:
     build:
-      cache_from:
-        - type=registry,ref=ghcr.io/uminetwork/op-proposer:latest-cache
       cache_to:
         - type=registry,ref=ghcr.io/uminetwork/op-proposer:latest-cache,mode=max
 
   op-move:
     build:
-      cache_from:
-        - type=registry,ref=ghcr.io/uminetwork/op-move:latest-cache
       cache_to:
         - type=registry,ref=ghcr.io/uminetwork/op-move:latest-cache,mode=max
 
   geth:
     build:
-      cache_from:
-        - type=registry,ref=ghcr.io/uminetwork/geth:latest-cache
       cache_to:
         - type=registry,ref=ghcr.io/uminetwork/geth:latest-cache,mode=max
