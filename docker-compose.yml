@@ -2,6 +2,8 @@ services:
   op-node:
     image: ghcr.io/uminetwork/op-node:${UMI_TAG:-latest}
     build:
+      cache_from:
+        - type=registry,ref=ghcr.io/uminetwork/op-node:latest-cache
       dockerfile: docker/shared/Dockerfile
       target: op-node
     environment:
@@ -14,6 +16,8 @@ services:
   op-batcher:
     image: ghcr.io/uminetwork/op-batcher:${UMI_TAG:-latest}
     build:
+      cache_from:
+        - type=registry,ref=ghcr.io/uminetwork/op-batcher:latest-cache
       dockerfile: docker/shared/Dockerfile
       target: op-batcher
     networks:
@@ -24,6 +28,8 @@ services:
   op-proposer:
     image: ghcr.io/uminetwork/op-proposer:${UMI_TAG:-latest}
     build:
+      cache_from:
+        - type=registry,ref=ghcr.io/uminetwork/op-proposer:latest-cache
       dockerfile: docker/shared/Dockerfile
       target: op-proposer
     networks:
@@ -34,6 +40,8 @@ services:
   op-move:
     image: ghcr.io/uminetwork/op-move:${UMI_TAG:-latest}
     build:
+      cache_from:
+        - type=registry,ref=ghcr.io/uminetwork/op-move:latest-cache
       dockerfile: docker/op-move/Dockerfile
       args:
         - RUST_TOOLCHAIN
@@ -76,6 +84,8 @@ services:
   geth:
     image: ghcr.io/uminetwork/geth:${UMI_TAG:-latest}
     build:
+      cache_from:
+        - type=registry,ref=ghcr.io/uminetwork/geth:latest-cache
       dockerfile: docker/shared/Dockerfile
       target: geth
     networks:
