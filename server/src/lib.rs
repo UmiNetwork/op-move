@@ -7,6 +7,7 @@ use {
         net::{Ipv4Addr, SocketAddr, SocketAddrV4},
         num::NonZeroUsize,
         path::Path,
+        str::FromStr,
         time::SystemTime,
     },
     tracing::level_filters::LevelFilter,
@@ -219,7 +220,7 @@ pub fn server_filter(
 
     get_method_auto_response
         .or(serialization_kind
-            .and(warp::header::optional::<u128>("X-Req-Start-Ms"))
+            .and(warp::header::optional::<Msec>("X-Req-Start-Ms"))
             .and(app_state)
             .and(jwt_validation)
             .and(request_body)
@@ -238,6 +239,23 @@ pub fn server_filter(
             ))
         .with(warp::reply::with::headers(content_type))
         .with(warp::cors().allow_any_origin())
+}
+
+#[derive(Debug)]
+struct Msec(u128);
+
+impl FromStr for Msec {
+    type Err = <f64 as FromStr>::Err;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self((s.parse::<f64>()? * 1000.0) as u128))
+    }
+}
+
+impl From<Msec> for u128 {
+    fn from(value: Msec) -> Self {
+        value.0
+    }
 }
 
 fn serve(
@@ -435,13 +453,18 @@ pub fn validate_jwt(
 async fn handle_request<'reader>(
     queue: CommandQueue,
     serialization_tag: SerializationKind,
-    request_start: Option<u128>,
+    request_start: Option<Msec>,
     request: serde_json::Value,
     is_allowed: &impl Fn(&MethodName) -> bool,
     payload_id: &impl NewPayloadId,
     app: ApplicationReader<'reader, impl Dependencies<'reader>>,
 ) -> Result<warp::reply::Response, Rejection> {
-    let modifiers = RequestModifiers::new(is_allowed, payload_id, serialization_tag, request_start);
+    let modifiers = RequestModifiers::new(
+        is_allowed,
+        payload_id,
+        serialization_tag,
+        request_start.map(Msec::into),
+    );
     let op_move_response =
         umi_api::request::handle(request.clone(), queue.clone(), modifiers, app).await;
     let log = ServerLog {

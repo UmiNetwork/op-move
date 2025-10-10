@@ -16,7 +16,8 @@ node_modules
 server/*.log
 
 # Docker mounted volumes
-docker/*/volume
+docker/op-move/volume
+docker/shared/volume
 
 # Optimism cloned repository
 server/src/tests/optimism
