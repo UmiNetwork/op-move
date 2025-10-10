@@ -151,31 +151,6 @@ COPY --chmod=0777 docker/geth/*.sh server/src/tests/config.sh ./
 # Copy environment variables
 COPY .env ./
 
-RUN \
-  # Create datadir for geth
-  mkdir -p ./l1_datadir \
-  # Initialize keystore in the datadir
-  && ./keystore.sh \
-  # Launch geth node to receive transactions
-  && geth \
-  --dev \
-  --datadir "${L1_DATADIR}" \
-  --rpc.allow-unprotected-txs \
-  --http \
-  --http.addr 0.0.0.0 \
-  --http.port 58138 \
-  --http.corsdomain '*' \
-  --http.api 'web3,debug,eth,txpool,net,engine' \
-  --http.vhosts '*' \
-  # Store geth process ID
-  & GETH_PID=$! \
-  # Send transactions that prefund accounts and deploy Optimism factory deployer
-  && ./init.sh \
-  # Send interrupt signal to geth to shut it down gracefully preventing datadir corruption
-  && kill -SIGINT "${GETH_PID}" \
-  # Wait for geth to exit
-  && wait "${GETH_PID}"
-
 # Set entrypoint to a script that launches geth
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
 

@@ -18,8 +18,23 @@ SHARED="/volume/shared"
 # Remove existing output files in the shared volume
 rm -f "${SHARED}/umi.json" "${SHARED}/1337-deploy.json" "${SHARED}/state-dump-42069.json" "${SHARED}/genesis.json" "${SHARED}/rollup.json"
 
+# Create datadir for geth
+mkdir -p "${L1_DATADIR}"
+
+# Initialize keystore in the datadir
+./keystore.sh
+
 # Wait for the RPC node to become available
 wait-for-it "${L1_RPC_ADDR}:${L1_RPC_PORT}"
+
+# Prefund Optimism service accounts
+./prefund.sh
+
+# Deploy Optimism factory deployer contract
+cast publish --rpc-url "${L1_RPC_URL}" "${SIGNED_L1_CONTRACT_TX}"
+
+# Wait for a finalized block with a positive timestamp
+while [ "$(cast block finalized --rpc-url "${L1_RPC_URL}" | awk '/^timestamp/ { print $2 }')" -le 0 ]; do sleep 3; done
 
 # Generate L2 genesis deploy config file
 DEPLOY_CONFIG_PATH="${DEPLOY_CONFIG}" \
