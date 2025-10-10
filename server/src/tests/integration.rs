@@ -19,6 +19,7 @@ use {
     std::{
         env::var,
         io::Read,
+        path::PathBuf,
         process::Command,
         str::FromStr,
         time::{Duration, Instant},
@@ -253,7 +254,7 @@ async fn get_op_balance(account: Address) -> Result<U256> {
 
 async fn get_prefunded_wallet() -> Result<LocalSigner<SigningKey>> {
     // Decrypt the keystore file for L1 dev mode with a blank password
-    let keystore_folder = "../l1_datadir/keystore";
+    let keystore_folder = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../l1_datadir/keystore");
     let keystore_path = fs::read_dir(keystore_folder).await?.next_entry().await?;
     let wallet = LocalSigner::decrypt_keystore(keystore_path.expect("No keys").path(), "")?;
     Ok(wallet)
