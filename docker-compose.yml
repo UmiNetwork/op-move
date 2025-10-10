@@ -99,12 +99,14 @@ services:
 
   proxy:
     image: nginx:1.29.1-alpine
-    ports:
-      - "8545:8545"
-    volumes:
-      - ./nginx:/etc/nginx/conf.d:ro
+    networks:
+      - localnet
     depends_on:
       - op-move
+    volumes:
+      - ./docker/proxy/volume:/etc/nginx/conf.d:ro
+    ports:
+      - "8545:8545"
 
 networks:
   localnet:

@@ -4,6 +4,7 @@ mod integration;
 mod invalid_tx;
 mod legacy_tx;
 mod listing_apis;
+mod msec;
 mod payload;
 mod table_api;
 mod test_context;
