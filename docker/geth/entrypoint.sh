@@ -5,7 +5,6 @@
 # -u Treat unset or undefined variables as errors
 # -x Print out command arguments during execution
 set -eux
-L1_DATADIR="./l1_datadir"
 INIT_OP="./init-op.sh"
 
 # Deploy Optimism on the L1 and produce deploy artifacts for L2
