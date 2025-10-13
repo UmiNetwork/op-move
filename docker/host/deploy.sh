@@ -11,8 +11,8 @@ mkdir -p docker/op-move/volume docker/shared/volume
 # Create shared network for services deployed to the swarm
 docker network inspect localnet -f "Network exists" || docker network create localnet --scope swarm --driver overlay
 
-# Pull all images
-docker compose pull
+# Pull and build images
+docker compose build --pull
 
 # Deploy the stack
 docker stack deploy --resolve-image never -c docker-compose.yml -d umi
