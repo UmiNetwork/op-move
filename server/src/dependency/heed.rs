@@ -138,7 +138,7 @@ impl<'db> umi_app::Dependencies<'db> for HeedDependencies {
     }
 
     fn state(&self) -> Self::State {
-        fallible::retry(|| {
+        storage::retry(|| {
             EthTrieState::try_new(Arc::new(trie::HeedEthTrieDb::new(self.db.clone())))
         })
     }
@@ -257,7 +257,7 @@ impl<'db> umi_app::Dependencies<'db> for HeedReaderDependencies {
     }
 
     fn state(&self) -> Self::State {
-        fallible::retry(|| {
+        storage::retry(|| {
             EthTrieState::try_new(Arc::new(trie::HeedEthTrieDb::new(self.db.clone())))
         })
     }
@@ -289,7 +289,7 @@ fn create_db(args: umi_server_args::Database) -> umi_storage_heed::Env {
     assert_eq!(umi_storage_heed::DATABASES.len(), 11);
 
     if args.purge {
-        let _ = std::fs::remove_dir_all(&args.dir);
+        storage::remove_files_in_dir(&args.dir).expect("Removing database files should succeed")
     }
     let _ = std::fs::create_dir(&args.dir);
 

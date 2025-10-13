@@ -57,9 +57,10 @@ macro_rules! impl_shared {
 pub(crate) use impl_shared;
 
 #[cfg(any(feature = "storage-lmdb", feature = "storage-rocksdb"))]
-pub(super) mod fallible {
+pub(super) mod storage {
     use std::{
         fmt::{Debug, Display},
+        fs,
         time::Duration,
     };
 
@@ -77,5 +78,13 @@ pub(super) mod fallible {
                 }
             }
         }
+    }
+
+    pub(crate) fn remove_files_in_dir(path: impl AsRef<std::path::Path>) -> std::io::Result<()> {
+        for i in fs::read_dir(path)? {
+            fs::remove_file(i?.path())?;
+        }
+
+        Ok(())
     }
 }
