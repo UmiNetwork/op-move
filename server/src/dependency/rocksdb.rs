@@ -142,7 +142,7 @@ impl<'db> umi_app::Dependencies<'db> for RocksDbDependencies {
     }
 
     fn state(&self) -> Self::State {
-        fallible::retry(|| EthTrieState::try_new(Arc::new(RocksEthTrieDb::new(self.db.clone()))))
+        storage::retry(|| EthTrieState::try_new(Arc::new(RocksEthTrieDb::new(self.db.clone()))))
     }
 
     fn state_queries(&self, genesis_config: &GenesisConfig) -> Self::StateQueries {
@@ -264,7 +264,7 @@ impl<'db> umi_app::Dependencies<'db> for RocksDbReaderDependencies {
     }
 
     fn state(&self) -> Self::State {
-        fallible::retry(|| EthTrieState::try_new(Arc::new(RocksEthTrieDb::new(self.db.clone()))))
+        storage::retry(|| EthTrieState::try_new(Arc::new(RocksEthTrieDb::new(self.db.clone()))))
     }
 
     fn state_queries(&self, genesis_config: &GenesisConfig) -> Self::StateQueries {
@@ -292,7 +292,7 @@ impl<'db> umi_app::Dependencies<'db> for RocksDbReaderDependencies {
 
 fn create_db(args: umi_server_args::Database) -> umi_storage_rocksdb::RocksDb {
     if args.purge {
-        let _ = std::fs::remove_dir_all(&args.dir);
+        storage::remove_files_in_dir(&args.dir).expect("Removing database files should succeed")
     }
 
     let mut options = umi_storage_rocksdb::rocksdb::Options::default();
