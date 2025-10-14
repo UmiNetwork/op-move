@@ -6,9 +6,7 @@ use {
             TxEnvelope, TxLegacy,
         },
         eips::{Decodable2718, Encodable2718, eip2930::AccessList},
-        primitives::{
-            Address, B256, Bloom, Bytes, Log, LogData, PrimitiveSignature, TxKind, U256, address,
-        },
+        primitives::{Address, B256, Bloom, Bytes, Log, LogData, Signature, TxKind, U256, address},
         rpc::types::TransactionRequest,
     },
     aptos_types::transaction::{EntryFunction, ModuleBundle, Script},
@@ -305,7 +303,7 @@ pub struct NormalizedEthTransaction {
     /// Set to 0 during conversions to minimize encoding burden, so it needs
     /// to be set manually via [`Self::with_gas_input`].
     pub l1_gas_fee_input: L1GasFeeInput,
-    pub signature: PrimitiveSignature,
+    pub signature: Signature,
 }
 
 impl NormalizedEthTransaction {
@@ -597,7 +595,7 @@ impl From<TransactionRequest> for NormalizedEthTransaction {
             tx_type: UmiTxType::Eip1559,
             tx_hash: B256::random(),
             l1_gas_fee_input: L1GasFeeInput::default(),
-            signature: PrimitiveSignature::new(U256::ZERO, U256::ZERO, false),
+            signature: Signature::new(U256::ZERO, U256::ZERO, false),
             original_input: None,
         }
     }
@@ -654,7 +652,7 @@ mod tests {
             source_hash: B256::new(hex!("ad2cd5c72f8d6b25e4da049d76790993af597050965f2aee87e12f98f8c2427f")),
             from: address!("4a04a3191b7a44a99bfd3184f0d2c2c82b98b939"),
             to: TxKind::Call(address!("4200000000000000000000000000000000000007")),
-            mint: Some(0x56bc75e2d63100000_u128),
+            mint: 0x56bc75e2d63100000_u128,
             value: U256::from(0x56bc75e2d63100000_u128),
             gas_limit: 0x77d2e_u64,
             is_system_transaction: false,

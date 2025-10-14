@@ -79,7 +79,7 @@ fn inner_get_deposit_nonce(tx: &TxDeposit) -> Option<VersionedNonce> {
         return None;
     }
 
-    let args = RelayMessageArgs::abi_decode_params(&tx.input[4..], true).ok()?;
+    let args = RelayMessageArgs::abi_decode_params(&tx.input[4..]).ok()?;
 
     // See optimism/packages/contracts-bedrock/src/libraries/Encoding.sol
     let encoded_versioned_nonce = args.nonce;

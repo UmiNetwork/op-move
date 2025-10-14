@@ -33,27 +33,19 @@ impl Erc20Methods {
         }
         let selector: [u8; 4] = bytes[0..4].try_into().ok()?;
         match selector {
-            balanceOfCall::SELECTOR => balanceOfCall::abi_decode(bytes, true)
-                .ok()
-                .map(Self::BalanceOf),
-            transferCall::SELECTOR => transferCall::abi_decode(bytes, true)
-                .ok()
-                .map(Self::Transfer),
-            transferFromCall::SELECTOR => transferFromCall::abi_decode(bytes, true)
+            balanceOfCall::SELECTOR => balanceOfCall::abi_decode(bytes).ok().map(Self::BalanceOf),
+            transferCall::SELECTOR => transferCall::abi_decode(bytes).ok().map(Self::Transfer),
+            transferFromCall::SELECTOR => transferFromCall::abi_decode(bytes)
                 .ok()
                 .map(Self::TransferFrom),
-            approveCall::SELECTOR => approveCall::abi_decode(bytes, true).ok().map(Self::Approve),
-            allowanceCall::SELECTOR => allowanceCall::abi_decode(bytes, true)
-                .ok()
-                .map(Self::Allowance),
-            totalSupplyCall::SELECTOR => totalSupplyCall::abi_decode(bytes, true)
+            approveCall::SELECTOR => approveCall::abi_decode(bytes).ok().map(Self::Approve),
+            allowanceCall::SELECTOR => allowanceCall::abi_decode(bytes).ok().map(Self::Allowance),
+            totalSupplyCall::SELECTOR => totalSupplyCall::abi_decode(bytes)
                 .ok()
                 .map(Self::TotalSupply),
-            nameCall::SELECTOR => nameCall::abi_decode(bytes, true).ok().map(Self::Name),
-            symbolCall::SELECTOR => symbolCall::abi_decode(bytes, true).ok().map(Self::Symbol),
-            decimalsCall::SELECTOR => decimalsCall::abi_decode(bytes, true)
-                .ok()
-                .map(Self::Decimals),
+            nameCall::SELECTOR => nameCall::abi_decode(bytes).ok().map(Self::Name),
+            symbolCall::SELECTOR => symbolCall::abi_decode(bytes).ok().map(Self::Symbol),
+            decimalsCall::SELECTOR => decimalsCall::abi_decode(bytes).ok().map(Self::Decimals),
             _ => None,
         }
     }

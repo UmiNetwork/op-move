@@ -6,6 +6,7 @@ use {
     super::*,
     crate::tests::test_context::TestContext,
     alloy::{
+        consensus::transaction::SignerRecoverable,
         eips::BlockNumberOrTag,
         primitives::{B256, U256},
         sol_types::{SolCall, SolEventInterface},
@@ -190,5 +191,5 @@ fn get_logged_address(receipt: &TransactionReceipt) -> Address {
 
 fn get_logged_event(receipt: &TransactionReceipt) -> BlockEnvEvents {
     let log = receipt.inner.inner.logs().first().unwrap();
-    BlockEnvEvents::decode_raw_log(log.topics(), &log.data().data, true).unwrap()
+    BlockEnvEvents::decode_raw_log(log.topics(), &log.data().data).unwrap()
 }

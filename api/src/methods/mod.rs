@@ -167,7 +167,7 @@ pub mod tests {
             value: amount,
             source_hash: FixedBytes::default(),
             from: to,
-            mint: Some(amount.try_into().unwrap()),
+            mint: amount.try_into().unwrap(),
             gas_limit: u64::MAX,
             is_system_transaction: false,
             input: Vec::new().into(),

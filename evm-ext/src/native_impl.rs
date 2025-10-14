@@ -221,13 +221,14 @@ pub fn evm_transact_with_native(
         inner: InnerMainnetHandler::default(),
         transfer_logs: evm_native_ctx.transfer_logs,
     };
-    let outcome = handler.run(&mut evm).map_err(evm_error)?;
+    let result = handler.run(&mut evm).map_err(evm_error)?;
+    let state = evm.finalize();
 
     // Capture changes in native context so that they can be
     // converted into Move changes when the session is finalized
-    evm_native_ctx.state_changes.push(outcome.state.clone());
+    evm_native_ctx.state_changes.push(state.clone());
 
-    Ok(outcome)
+    Ok(ResultAndState::new(result, state))
 }
 
 fn pop_evm_args(mut args: VecDeque<Value>) -> SafeNativeResult<EvmCallArgs> {
@@ -330,13 +331,15 @@ type EvmDB<'a, 'b> = &'a mut CacheDB<ResolverBackedDB<'b>>;
 type EvmCtx<'a, 'b> =
     Context<BlockEnv, TxEnv, CfgEnv, EvmDB<'a, 'b>, Journal<EvmDB<'a, 'b>, JournalEntry>>;
 type InnerMainnetHandler<'a, 'b> = MainnetHandler<
-    Evm<EvmCtx<'a, 'b>, (), EthInstructions<EthInterpreter, EvmCtx<'a, 'b>>, EthPrecompiles>,
-    EVMError<DbError>,
-    EthFrame<
-        Evm<EvmCtx<'a, 'b>, (), EthInstructions<EthInterpreter, EvmCtx<'a, 'b>>, EthPrecompiles>,
-        EVMError<DbError>,
-        EthInterpreter,
+    Evm<
+        EvmCtx<'a, 'b>,
+        (),
+        EthInstructions<EthInterpreter, EvmCtx<'a, 'b>>,
+        EthPrecompiles,
+        EthFrame,
     >,
+    EVMError<DbError>,
+    EthFrame,
 >;
 
 /// Custom handler to allow extracting transfer events.
@@ -348,29 +351,26 @@ struct WrappedMainnetHandler<'a, 'b> {
 impl<'a, 'b> Handler for WrappedMainnetHandler<'a, 'b> {
     type Evm = <InnerMainnetHandler<'a, 'b> as Handler>::Evm;
     type Error = <InnerMainnetHandler<'a, 'b> as Handler>::Error;
-    type Frame = <InnerMainnetHandler<'a, 'b> as Handler>::Frame;
     type HaltReason = <InnerMainnetHandler<'a, 'b> as Handler>::HaltReason;
 
     // Modify the post-execution handler to extract transfer events.
     fn post_execution(
         &self,
         evm: &mut Self::Evm,
-        exec_result: FrameResult,
+        exec_result: &mut FrameResult,
         init_and_floor_gas: InitialAndFloorGas,
         eip7702_gas_refund: i64,
-    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
-        let transfers = evm.journaled_state.journal.iter().flat_map(|entries| {
-            entries.iter().filter_map(|entry| {
-                if let revm::JournalEntry::BalanceTransfer { from, to, balance } = entry {
-                    Some(EthTransfer {
-                        from: from.to_move_address(),
-                        to: to.to_move_address(),
-                        amount: *balance,
-                    })
-                } else {
-                    None
-                }
-            })
+    ) -> Result<(), Self::Error> {
+        let transfers = evm.journaled_state.journal.iter().filter_map(|entry| {
+            if let revm::JournalEntry::BalanceTransfer { from, to, balance } = entry {
+                Some(EthTransfer {
+                    from: from.to_move_address(),
+                    to: to.to_move_address(),
+                    amount: *balance,
+                })
+            } else {
+                None
+            }
         });
         for t in transfers {
             self.transfer_logs.push_transfer(t);

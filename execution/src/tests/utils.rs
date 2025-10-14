@@ -396,7 +396,7 @@ impl TestContext {
             value: U256::from(amount),
             source_hash: FixedBytes::default(),
             from: to,
-            mint: Some(amount.saturating_to()),
+            mint: amount.saturating_to(),
             gas_limit: u64::MAX,
             is_system_transaction: false,
             input: Vec::new().into(),

@@ -13,7 +13,7 @@ fn test_deposit_tx() {
         source_hash: B256::new(hex!("ad2cd5c72f8d6b25e4da049d76790993af597050965f2aee87e12f98f8c2427f")),
         from: address!("4a04a3191b7a44a99bfd3184f0d2c2c82b98b939"),
         to: TxKind::Call(address!("4200000000000000000000000000000000000007")),
-        mint: Some(mint_amount.saturating_to()),
+        mint: mint_amount.saturating_to(),
         value: U256::from(mint_amount),
         gas_limit: 0x77d2e_u64,
         is_system_transaction: false,

@@ -56,7 +56,7 @@ pub async fn deploy_l1_token(from_wallet: &PrivateKeySigner, rpc_url: &str) -> R
     let from_address = from_wallet.address();
     let provider = ProviderBuilder::new()
         .wallet(EthereumWallet::from(from_wallet.to_owned()))
-        .on_http(Url::parse(rpc_url)?);
+        .connect_http(Url::parse(rpc_url)?);
 
     let contract = Erc20::deploy(
         provider,
@@ -88,7 +88,7 @@ pub async fn deploy_l2_token(
     let factory_address = alloy::primitives::address!("4200000000000000000000000000000000000012");
     let provider = ProviderBuilder::new()
         .wallet(EthereumWallet::from(from_wallet.to_owned()))
-        .on_http(Url::parse(rpc_url)?);
+        .connect_http(Url::parse(rpc_url)?);
 
     let contract = erc20_factory::OptimismMintableERC20Factory::new(factory_address, provider);
     let receipt = contract
@@ -126,7 +126,7 @@ pub async fn deposit_l1_token(
 ) -> Result<()> {
     let provider = ProviderBuilder::new()
         .wallet(EthereumWallet::from(from_wallet.to_owned()))
-        .on_http(Url::parse(rpc_url)?);
+        .connect_http(Url::parse(rpc_url)?);
 
     let bridge_address = Address::from_str(L1_STANDARD_BRIDGE_PROXY)?;
     let bridge_contract = bridge_l1::L1StandardBridge::new(bridge_address, provider);
@@ -174,7 +174,7 @@ pub async fn withdraw_erc20_token_from_l2_to_l1(
     // Initiate bridging
     let l2_provider = ProviderBuilder::new()
         .wallet(EthereumWallet::from(wallet.to_owned()))
-        .on_http(Url::parse(l2_rpc_url)?);
+        .connect_http(Url::parse(l2_rpc_url)?);
     let bridge_contract = bridge_l2::L2StandardBridge::new(L2_STANDARD_BRIDGE_ADDRESS, l2_provider);
     let receipt = bridge_contract
         .bridgeERC20(l2_address, l1_address, amount, 100_000, Default::default())
@@ -190,16 +190,16 @@ pub async fn withdraw_erc20_token_from_l2_to_l1(
     // Get initial balance
     let l1_provider = ProviderBuilder::new()
         .wallet(EthereumWallet::from(wallet.to_owned()))
-        .on_http(Url::parse(l1_rpc_url)?);
+        .connect_http(Url::parse(l1_rpc_url)?);
     let l1_token = Erc20::new(l1_address, l1_provider);
-    let initial_balance = l1_token.balanceOf(owner_address).call().await?._0;
+    let initial_balance = l1_token.balanceOf(owner_address).call().await?;
 
     // Prove withdraw on L1
     let withdraw_tx_hash = receipt.transaction_hash;
     super::withdrawal::withdraw_to_l1(withdraw_tx_hash, wallet.clone()).await?;
 
     // Check final balance
-    let final_balance = l1_token.balanceOf(owner_address).call().await?._0;
+    let final_balance = l1_token.balanceOf(owner_address).call().await?;
     assert_eq!(
         initial_balance + amount,
         final_balance,
@@ -210,7 +210,7 @@ pub async fn withdraw_erc20_token_from_l2_to_l1(
 }
 
 pub async fn l2_erc20_balance_of(token: Address, account: Address, rpc_url: &str) -> Result<U256> {
-    let provider = ProviderBuilder::new().on_http(Url::parse(rpc_url)?);
+    let provider = ProviderBuilder::new().connect_http(Url::parse(rpc_url)?);
 
     let args = vec![
         MoveValue::Address(token.to_move_address())
@@ -228,7 +228,7 @@ pub async fn l2_erc20_balance_of(token: Address, account: Address, rpc_url: &str
     );
     let tx_data = TransactionData::EntryFunction(function_call);
     let data = tx_data.to_bytes()?;
-    let eth_call_result = CallBuilder::<(), _, _, _>::new_raw(provider, data.into())
+    let eth_call_result = CallBuilder::new_raw(provider, data.into())
         .to(EVM_NATIVE_ADDRESS.to_eth_address())
         .call()
         .await?;
@@ -253,7 +253,7 @@ pub async fn l2_erc20_allowance(
     spender: Address,
     rpc_url: &str,
 ) -> Result<U256> {
-    let provider = ProviderBuilder::new().on_http(Url::parse(rpc_url)?);
+    let provider = ProviderBuilder::new().connect_http(Url::parse(rpc_url)?);
 
     let args = vec![
         MoveValue::Address(token.to_move_address())
@@ -274,7 +274,7 @@ pub async fn l2_erc20_allowance(
     );
     let tx_data = TransactionData::EntryFunction(function_call);
     let data = tx_data.to_bytes()?;
-    let eth_call_result = CallBuilder::<(), _, _, _>::new_raw(provider, data.into())
+    let eth_call_result = CallBuilder::new_raw(provider, data.into())
         .to(EVM_NATIVE_ADDRESS.to_eth_address())
         .call()
         .await?;
@@ -302,7 +302,7 @@ pub async fn l2_erc20_approve(
     let from_address = from_wallet.address();
     let provider = ProviderBuilder::new()
         .wallet(EthereumWallet::from(from_wallet.to_owned()))
-        .on_http(Url::parse(rpc_url)?);
+        .connect_http(Url::parse(rpc_url)?);
 
     let args = vec![
         MoveValue::Signer(from_address.to_move_address())
@@ -326,7 +326,7 @@ pub async fn l2_erc20_approve(
     );
     let tx_data = TransactionData::EntryFunction(function_call);
     let data = tx_data.to_bytes()?;
-    let receipt = CallBuilder::<(), _, _, _>::new_raw(provider, data.into())
+    let receipt = CallBuilder::new_raw(provider, data.into())
         .to(EVM_NATIVE_ADDRESS.to_eth_address())
         .send()
         .await?

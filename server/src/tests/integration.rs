@@ -161,10 +161,10 @@ async fn deploy_move_counter() -> Result<()> {
     let from_wallet = get_prefunded_wallet().await?;
     let provider = ProviderBuilder::new()
         .wallet(EthereumWallet::from(from_wallet.to_owned()))
-        .on_http(Url::parse(L2_RPC_URL)?);
+        .connect_http(Url::parse(L2_RPC_URL)?);
 
     let bytecode = create_move_counter_contract_bytecode(from_wallet.address());
-    let call = CallBuilder::<(), _, _, _>::new_raw_deploy(&provider, bytecode.into());
+    let call = CallBuilder::new_raw_deploy(&provider, bytecode.into());
     let contract_address = call.deploy().await.unwrap();
 
     let input = TransactionData::EntryFunction(EntryFunction::new(
@@ -179,12 +179,11 @@ async fn deploy_move_counter() -> Result<()> {
             bcs::to_bytes(&MoveValue::U64(7)).unwrap(),
         ],
     ));
-    let pending_tx =
-        CallBuilder::<(), _, _, _>::new_raw(&provider, input.to_bytes().unwrap().into())
-            .to(contract_address)
-            .send()
-            .await
-            .unwrap();
+    let pending_tx = CallBuilder::new_raw(&provider, input.to_bytes().unwrap().into())
+        .to(contract_address)
+        .send()
+        .await
+        .unwrap();
     let receipt = pending_tx.get_receipt().await.unwrap();
     assert!(receipt.status(), "Transaction should succeed");
 
@@ -232,7 +231,7 @@ async fn send_ethers(
 
     let provider = ProviderBuilder::new()
         .wallet(EthereumWallet::from(from_wallet.to_owned()))
-        .on_http(Url::parse(url)?);
+        .connect_http(Url::parse(url)?);
     let prev_balance = provider.get_balance(to).await?;
     let receipt = provider.send_transaction(tx).await?;
     pause(Some(Duration::from_millis(TXN_RECEIPT_WAIT_IN_MILLIS)));
@@ -246,7 +245,7 @@ async fn send_ethers(
 }
 
 async fn get_op_balance(account: Address) -> Result<U256> {
-    let provider = ProviderBuilder::new().on_http(Url::parse(L2_RPC_URL)?);
+    let provider = ProviderBuilder::new().connect_http(Url::parse(L2_RPC_URL)?);
     // Ok(provider.get_balance(account).await?)
     let balance = provider.get_balance(account).await?;
     Ok(balance)

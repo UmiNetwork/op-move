@@ -47,7 +47,7 @@ pub enum TreeValue {
 }
 
 impl TreeValue {
-    pub fn serialize(&self) -> Cow<[u8]> {
+    pub fn serialize(&self) -> Cow<'_, [u8]> {
         match self {
             Self::Deleted => Cow::Borrowed(&[]),
             Self::Evm(bytes) => Cow::Borrowed(bytes),

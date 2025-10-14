@@ -36,6 +36,7 @@ pub fn genesis_state_changes(
     resolver: &impl MoveResolver,
     storage_trie: &impl StorageTrieRepository,
 ) -> Result<Changes, Error> {
+    let transaction_id = 0;
     let mut result = ChangeSet::new();
     let empty_changes = AccountChangeSet::new();
     let mut account_changes = AccountChangeSet::new();
@@ -55,7 +56,7 @@ pub fn genesis_state_changes(
                     .map(|(index, data)| {
                         let index = U256::from_be_bytes(index.0);
                         let data = U256::from_be_bytes(data.0);
-                        let mut slot = EvmStorageSlot::new(data);
+                        let mut slot = EvmStorageSlot::new(data, transaction_id);
                         // Original value must be marked as 0 to make sure we
                         // know it is now a new value.
                         slot.original_value = U256::ZERO;
@@ -73,6 +74,7 @@ pub fn genesis_state_changes(
             },
             storage,
             status: AccountStatus::Touched,
+            transaction_id,
         };
         let storage_changes = add_account_changes(
             &address,

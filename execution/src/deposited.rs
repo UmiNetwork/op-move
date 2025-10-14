@@ -116,7 +116,7 @@ pub(super) fn execute_deposited_transaction<
             // The tokens will then be distributed to the correct
             // accounts according to the transfers that happened
             // during EVM execution.
-            let mint_amount = input.tx.mint.unwrap_or_default();
+            let mint_amount = input.tx.mint;
             if mint_amount != 0 {
                 eth_token::mint_eth(
                     &EVM_NATIVE_ADDRESS,

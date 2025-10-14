@@ -129,7 +129,7 @@ impl interface::Erc20Token for MoveImpl {
             )
             .0;
         let name = outcome.output;
-        String::abi_decode(&name, true).unwrap()
+        String::abi_decode(&name).unwrap()
     }
 
     fn symbol(ctx: &TestContext, token_address: Address) -> String {
@@ -141,6 +141,6 @@ impl interface::Erc20Token for MoveImpl {
             )
             .0;
         let symbol = outcome.output;
-        String::abi_decode(&symbol, true).unwrap()
+        String::abi_decode(&symbol).unwrap()
     }
 }

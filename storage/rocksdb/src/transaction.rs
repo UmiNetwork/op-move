@@ -141,7 +141,7 @@ mod tests {
             source_hash: Default::default(),
             gas_limit: u64::MAX,
             to: TxKind::Call(address!("ddddddddddadddddddddddd00000000022222222")),
-            mint: None,
+            mint: 0,
             value: U256::from(23u64),
             input: vec![9, 9, 9].into(),
             from: Default::default(),
