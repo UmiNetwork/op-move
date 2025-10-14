@@ -66,10 +66,10 @@ pub struct CanonicalVerificationInput<'input, 'a, 'r, 'l, B, MS> {
 pub(super) fn verify_transaction<B: BaseTokenAccounts, MS: ModuleStorage>(
     input: CanonicalVerificationInput<B, MS>,
 ) -> umi_shared::error::Result<()> {
-    if let Some(chain_id) = input.tx.chain_id {
-        if chain_id != input.genesis_config.chain_id {
-            return Err(InvalidTransactionCause::IncorrectChainId.into());
-        }
+    if let Some(chain_id) = input.tx.chain_id
+        && chain_id != input.genesis_config.chain_id
+    {
+        return Err(InvalidTransactionCause::IncorrectChainId.into());
     }
 
     let sender_move_address = input.tx.signer.to_move_address();

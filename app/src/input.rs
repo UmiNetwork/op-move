@@ -83,7 +83,7 @@ pub enum Command {
         payload_id: PayloadId,
     },
     AddTransaction {
-        tx: NormalizedEthTransaction,
+        tx: Box<NormalizedEthTransaction>,
     },
 }
 

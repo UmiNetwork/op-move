@@ -16,7 +16,7 @@ pub async fn execute_v3<'reader>(
 
     // Spec: https://github.com/ethereum/execution-apis/blob/main/src/engine/cancun.md#specification-2
     let response = match app.payload(payload_id.into())? {
-        MaybePayloadResponse::Some(response) => response,
+        MaybePayloadResponse::Some(response) => *response,
         MaybePayloadResponse::Delayed(mut rx) => {
             if let Ok(response) = rx.recv().await {
                 response

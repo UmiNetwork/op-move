@@ -222,22 +222,21 @@ fn add_account_changes(
     // We don't need to push anything if the resource already exists.
     let struct_tag = code_hash_struct_tag(&code_hash);
     let code_resource_exists = resource_exists(&struct_tag);
-    if !code_resource_exists {
-        if let Some(code) = &account.info.code {
-            if !code.is_empty() {
-                let struct_tag = code_hash_struct_tag(&code_hash);
-                let code_value = Value::vector_u8(code.original_bytes());
-                let code = ValueSerDeContext::new()
-                    .serialize(&code_value, &CODE_LAYOUT)
-                    .ok()
-                    .flatten()
-                    .expect("EVM code must serialize");
-                let op = Op::New(code.into());
-                // If the same contract is deployed more than once then the same resource
-                // could be added twice, but that's ok we can just skip the duplicate.
-                result.add_resource_op(struct_tag, op).ok();
-            }
-        }
+    if !code_resource_exists
+        && let Some(code) = &account.info.code
+        && !code.is_empty()
+    {
+        let struct_tag = code_hash_struct_tag(&code_hash);
+        let code_value = Value::vector_u8(code.original_bytes());
+        let code = ValueSerDeContext::new()
+            .serialize(&code_value, &CODE_LAYOUT)
+            .ok()
+            .flatten()
+            .expect("EVM code must serialize");
+        let op = Op::New(code.into());
+        // If the same contract is deployed more than once then the same resource
+        // could be added twice, but that's ok we can just skip the duplicate.
+        result.add_resource_op(struct_tag, op).ok();
     }
 
     Ok(storage_changes)

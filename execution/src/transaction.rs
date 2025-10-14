@@ -130,8 +130,14 @@ impl WrapReceipt for NormalizedExtendedTxEnvelope {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NormalizedExtendedTxEnvelope {
-    Canonical(NormalizedEthTransaction),
+    Canonical(Box<NormalizedEthTransaction>),
     DepositedTx(Sealed<TxDeposit>),
+}
+
+impl NormalizedExtendedTxEnvelope {
+    pub fn canonical(tx: NormalizedEthTransaction) -> Self {
+        Self::Canonical(Box::new(tx))
+    }
 }
 
 impl TryFrom<OpTxEnvelope> for NormalizedExtendedTxEnvelope {
@@ -139,9 +145,9 @@ impl TryFrom<OpTxEnvelope> for NormalizedExtendedTxEnvelope {
 
     fn try_from(value: OpTxEnvelope) -> Result<Self, Self::Error> {
         Ok(match value {
-            OpTxEnvelope::Eip1559(tx) => NormalizedExtendedTxEnvelope::Canonical(tx.try_into()?),
-            OpTxEnvelope::Eip2930(tx) => NormalizedExtendedTxEnvelope::Canonical(tx.try_into()?),
-            OpTxEnvelope::Legacy(tx) => NormalizedExtendedTxEnvelope::Canonical(tx.try_into()?),
+            OpTxEnvelope::Eip1559(tx) => NormalizedExtendedTxEnvelope::canonical(tx.try_into()?),
+            OpTxEnvelope::Eip2930(tx) => NormalizedExtendedTxEnvelope::canonical(tx.try_into()?),
+            OpTxEnvelope::Legacy(tx) => NormalizedExtendedTxEnvelope::canonical(tx.try_into()?),
             OpTxEnvelope::Deposit(tx) => NormalizedExtendedTxEnvelope::DepositedTx(tx),
             OpTxEnvelope::Eip7702(_) => Err(InvalidTransactionCause::UnsupportedType)?,
         })
@@ -150,7 +156,7 @@ impl TryFrom<OpTxEnvelope> for NormalizedExtendedTxEnvelope {
 
 impl From<NormalizedEthTransaction> for NormalizedExtendedTxEnvelope {
     fn from(tx: NormalizedEthTransaction) -> Self {
-        NormalizedExtendedTxEnvelope::Canonical(tx)
+        NormalizedExtendedTxEnvelope::canonical(tx)
     }
 }
 
@@ -475,7 +481,7 @@ impl From<NormalizedEthTransaction> for OpTxEnvelope {
 impl From<NormalizedExtendedTxEnvelope> for OpTxEnvelope {
     fn from(normalized_envelope: NormalizedExtendedTxEnvelope) -> Self {
         match normalized_envelope {
-            NormalizedExtendedTxEnvelope::Canonical(normalized_tx) => normalized_tx.into(),
+            NormalizedExtendedTxEnvelope::Canonical(normalized_tx) => (*normalized_tx).into(),
             NormalizedExtendedTxEnvelope::DepositedTx(sealed_deposit) => {
                 OpTxEnvelope::Deposit(sealed_deposit)
             }

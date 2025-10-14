@@ -28,7 +28,10 @@ use {
 pub mod erc20;
 pub mod events;
 mod native_evm_context;
+// Clippy doesn't like the aptos `SafeNativeResult` type. But there is nothing we can do about it.
+#[allow(clippy::result_large_err)]
 mod native_impl;
+#[allow(clippy::result_large_err)]
 mod solidity_abi;
 pub mod state;
 mod state_changes;

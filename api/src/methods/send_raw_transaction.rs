@@ -59,7 +59,7 @@ async fn inner_execute(
 ) -> Result<B256, JsonRpcError> {
     let tx_hash = tx.tx_hash;
 
-    let msg = Command::AddTransaction { tx };
+    let msg = Command::AddTransaction { tx: Box::new(tx) };
     queue.send(msg).await;
 
     Ok(tx_hash)

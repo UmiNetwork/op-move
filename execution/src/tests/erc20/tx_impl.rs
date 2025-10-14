@@ -119,7 +119,7 @@ fn execute_erc20_method(
         .into();
     let outcome = ctx
         .execute_tx(&TestTransaction::new(
-            NormalizedExtendedTxEnvelope::Canonical(tx),
+            NormalizedExtendedTxEnvelope::canonical(tx),
         ))
         .unwrap();
     ctx.state.apply(outcome.changes.move_vm).unwrap();

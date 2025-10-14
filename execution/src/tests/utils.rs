@@ -775,7 +775,7 @@ pub fn create_transaction_with_value(
     let signed_tx = TxEnvelope::Eip1559(tx.into_signed(signature));
     let umi_tx: UmiTxEnvelope = signed_tx.try_into().unwrap();
     let normalized_eth_tx: NormalizedEthTransaction = umi_tx.try_into().unwrap();
-    NormalizedExtendedTxEnvelope::Canonical(normalized_eth_tx)
+    NormalizedExtendedTxEnvelope::canonical(normalized_eth_tx)
 }
 
 /// Trait for compilation jobs with common functionality

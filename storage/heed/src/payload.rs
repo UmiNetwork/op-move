@@ -91,7 +91,9 @@ impl PayloadQueries for HeedPayloadQueries {
         transaction.commit()?;
         let response = self
             .by_hash(env, hash)?
-            .map_or(MaybePayloadResponse::Unknown, MaybePayloadResponse::Some);
+            .map_or(MaybePayloadResponse::Unknown, |p| {
+                MaybePayloadResponse::Some(Box::new(p))
+            });
         Ok(response)
     }
 
