@@ -4,12 +4,19 @@ use {
         actor::UnrecoverableAppFailure,
         input::{WithExecutionOutcome, WithPayloadAttributes},
     },
-    alloy::{consensus::Receipt, primitives::Bloom, rlp::Encodable},
+    alloy::{
+        consensus::Receipt,
+        primitives::{B256, Bloom},
+        rlp::Encodable,
+        rpc::types::engine::ForkchoiceState,
+    },
     metrics::histogram,
     umi_blockchain::{
-        block::{BaseGasFee, Block, BlockHash, BlockRepository, ExtendedBlock, Header},
+        block::{
+            BaseGasFee, Block, BlockHash, BlockQueries, BlockRepository, ExtendedBlock, Header,
+        },
         payload::{PayloadId, PayloadQueries},
-        receipt::{ExtendedReceipt, ReceiptRepository},
+        receipt::{ExtendedReceipt, ReceiptQueries, ReceiptRepository},
         transaction::{ExtendedTransaction, TransactionRepository},
     },
     umi_evm_ext::{
@@ -29,12 +36,15 @@ use {
 };
 
 impl<'app, D: Dependencies<'app>> Application<'app, D> {
+    /// Build a block from the given payload.
+    /// Returns the hash of the constructed block (if any).
+    /// Returns `None` if the payload was previously executed or is already in progress.
     #[tracing::instrument(level = "debug", skip(self, attributes))]
     pub(crate) fn start_block_build(
         &mut self,
         attributes: PayloadForExecution,
         id: PayloadId,
-    ) -> Result<(), UnrecoverableAppFailure> {
+    ) -> Result<Option<B256>, UnrecoverableAppFailure> {
         let t0 = std::time::Instant::now();
 
         let payload_exists = self
@@ -48,12 +58,12 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             })?
             .is_some();
         if payload_exists {
-            return Ok(());
+            return Ok(None);
         }
         let in_progress_payloads = self.payload_queries.get_in_progress();
         // If there is a job with this id already present, nothing to do
         if in_progress_payloads.start_id(id).is_err() {
-            return Ok(());
+            return Ok(None);
         }
 
         let attributes_txs_len = attributes.transactions.len();
@@ -76,13 +86,38 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 .collect::<Vec<_>>()
         };
 
+        let parent = self
+            .block_repository
+            .get_forkchoice_state(&self.storage)
+            .and_then(|fc| {
+                self.block_repository.by_hash(&self.storage, fc.head_block_hash)
+            })
+            .map_err(|e| {
+                tracing::error!("Failure during `start_block_build`. Failed to get latest block from block repository: {e:?}");
+                UnrecoverableAppFailure
+            })?
+            .expect("Block repository is non-empty (must always at least contain genesis)");
+
         let new_transactions = transactions
             .into_iter()
             .filter_map(|tx|
                 // Do not include transactions we have already processed before
                 match self.receipt_repository.contains(&self.receipt_memory, tx.tx_hash()) {
                     Ok(false) => Some(Ok(tx)),
-                    Ok(true) => None,
+                    Ok(true) => {
+                        // Double check the transaction exists in the current fork
+                        let receipt = self.receipt_queries.by_transaction_hash(&self.receipt_memory_reader, tx.tx_hash()).ok().flatten();
+                        let Some(tx_block_hash) = receipt.and_then(|rx| rx.inner.block_hash) else {
+                            return Some(Ok(tx));
+                        };
+
+                        let is_canonical = self.block_queries.ancestor_check(&self.storage_reader, tx_block_hash, parent.hash).ok().unwrap_or(false);
+                        if is_canonical {
+                            None
+                        } else {
+                            Some(Ok(tx))
+                        }
+                    }
                     Err(e) => Some(Err(e)),
                 }
             )
@@ -92,25 +127,6 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 UnrecoverableAppFailure
             })?;
 
-        let parent = self
-            .block_repository
-            .latest(&self.storage)
-            .map_err(|e| {
-                tracing::error!("Failure during `start_block_build`. Failed to get latest block from block repository: {e:?}");
-                UnrecoverableAppFailure
-            })?
-            .expect("Block repository is non-empty (must always at least contain genesis)");
-        // TODO: also check block time (preferrably dynamically from a config) and
-        // ensure build timeout relative to it
-        if parent.block.header.timestamp >= attributes.timestamp.as_limbs()[0] {
-            tracing::error!(
-                "Encountered non-monotonic timestamp. Parent block had {}, received {} in attributes",
-                parent.block.header.timestamp,
-                attributes.timestamp
-            );
-            in_progress_payloads.abort_id(&id);
-            return Ok(());
-        }
         #[cfg(feature = "op-upgrade")]
         if let Some(params) = &attributes.eip1559_params {
             self.gas_fee.set_parameters_from_attrs(params);
@@ -285,19 +301,85 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
         histogram!("block_build_duration_seconds").record(t0.elapsed().as_secs_f64());
         metrics::counter!("blocks_produced_count").increment(1);
 
-        Ok(())
+        Ok(Some(block_hash))
     }
 
     pub fn add_transaction(&mut self, tx: NormalizedEthTransaction) {
         self.mem_pool.insert(tx);
     }
 
+    #[tracing::instrument(level = "debug", skip(self))]
+    pub(crate) fn forkchoice_update(
+        &mut self,
+        state: ForkchoiceState,
+        payload_id: Option<PayloadId>,
+    ) -> Result<(), UnrecoverableAppFailure> {
+        // We include the payload id here so that it can be marked as in-progress right away
+        // even though the block build job hasn't started yet. This prevents getting an
+        // Unknown payload id error if a `get_payload` request is sent before this
+        // function finishes.
+        if let Some(id) = payload_id {
+            self.payload_queries
+                .get_in_progress()
+                .forkchoice_insert_id(id);
+        }
+        let head_block = self
+            .block_repository
+            .by_hash(&self.storage, state.head_block_hash)
+            .map_err(|e| {
+                tracing::error!(
+                    "Failed to look up new canonical block hash during forkchoice update: {e:?}"
+                );
+                UnrecoverableAppFailure
+            })?
+            .ok_or_else(|| {
+                tracing::error!(
+                    "New canonical head block {:?} not found.",
+                    state.head_block_hash
+                );
+                UnrecoverableAppFailure
+            })?;
+        self.block_repository
+            .forkchoice_update(&mut self.storage, state)
+            .map_err(|e| {
+                tracing::error!("Failed to update forkchoice state: {e:?}");
+                UnrecoverableAppFailure
+            })?;
+        let new_state_root = if head_block.block.header.number == 0 {
+            // For the genesis block we take the state root from the genesis config instead
+            // of the block header because the header root only includes the EVM initial state
+            // to make the rest of OP Stack happy, but in reality we do want to use the state which
+            // also includes all the initial Move contracts.
+            self.genesis_config.initial_state_root
+        } else {
+            head_block.block.header.state_root
+        };
+        self.state.switch_state_root(new_state_root).map_err(|e| {
+            tracing::error!("Failed to update state root during forkchoice update: {e:?}");
+            UnrecoverableAppFailure
+        })?;
+        Ok(())
+    }
+
     pub fn genesis_update(
         &mut self,
         block: ExtendedBlock,
     ) -> Result<(), <D::BlockRepository as BlockRepository>::Err> {
-        self.block_hash_writer.push(0, block.hash);
-        self.block_repository.add(&mut self.storage, block)
+        let genesis_hash = block.hash;
+        self.block_hash_writer.push(0, genesis_hash);
+        self.block_repository.add(&mut self.storage, block)?;
+        (self.on_payload)(self, PayloadId::ZERO, genesis_hash).ok();
+
+        let mut fc = self.block_repository.get_forkchoice_state(&self.storage)?;
+        if fc.head_block_hash == B256::ZERO {
+            fc.finalized_block_hash = genesis_hash;
+            fc.safe_block_hash = genesis_hash;
+            fc.head_block_hash = genesis_hash;
+            self.block_repository
+                .forkchoice_update(&mut self.storage, fc)?;
+        }
+
+        Ok(())
     }
 
     fn execute_transactions(

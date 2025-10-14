@@ -298,10 +298,11 @@ pub trait GenesisStateExt: Sized {
 
 impl<'db, D: Dependencies<'db>> GenesisStateExt for Application<'db, D> {
     fn is_state_empty(&self) -> bool {
-        self.block_queries
-            .latest(&self.storage_reader)
-            .expect("Must access block queries to run app")
-            .is_none()
+        let fc = self
+            .block_queries
+            .get_forkchoice_state(&self.storage_reader)
+            .expect("Must access block queries to run app");
+        fc.head_block_hash == B256::ZERO
     }
 
     fn initialize_genesis_state(&mut self, genesis_config: &GenesisConfig) {

@@ -3,7 +3,7 @@ use {
     alloy::hex,
     umi_api::schema::{
         BlobsBundleV1, ExecutionPayloadV3, ForkchoiceUpdatedResponseV1, GetPayloadResponseV3,
-        PayloadId, PayloadStatusV1, Status,
+        PayloadStatusV1, Status,
     },
     umi_execution::U256,
     umi_shared::primitives::{Address, Bytes, B2048, B256, U64},
@@ -12,7 +12,7 @@ use {
 #[tokio::test]
 async fn test_sending_the_same_payload_twice_produces_one_block() -> anyhow::Result<()> {
     TestContext::run(|ctx| async move {
-        let block_hash = "0x96f5d9746c63cf212c7ad848425c746bcbbdb738352f6b81eac13375a838cec7";
+        let block_hash = ctx.get_head();
 
         let request = serde_json::json!({
             "jsonrpc":"2.0",
@@ -35,21 +35,20 @@ async fn test_sending_the_same_payload_twice_produces_one_block() -> anyhow::Res
                 }
             ]
         });
-        let payload_id = PayloadId::new(265076798596094429);
-        let expected_response = ForkchoiceUpdatedResponseV1 {
-            payload_status: PayloadStatusV1 {
-                status: Status::Valid,
-                latest_valid_hash: Some(B256::new(hex!(
-                    "96f5d9746c63cf212c7ad848425c746bcbbdb738352f6b81eac13375a838cec7"
-                ))),
-                validation_error: None,
-            },
-            payload_id: Some(payload_id),
-        };
 
         let actual_response: ForkchoiceUpdatedResponseV1 = ctx.handle_request(&request)
             .await
             .unwrap();
+
+        let payload_id = actual_response.payload_id.unwrap();
+        let expected_response = ForkchoiceUpdatedResponseV1 {
+            payload_status: PayloadStatusV1 {
+                status: Status::Valid,
+                latest_valid_hash: Some(block_hash),
+                validation_error: None,
+            },
+            payload_id: Some(payload_id),
+        };
 
         assert_eq!(actual_response, expected_response);
 

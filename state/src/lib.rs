@@ -52,6 +52,11 @@ pub trait State {
     /// Applies the `changes` to the blockchain state.
     fn apply(&mut self, changes: Changes) -> Result<(), Self::Err>;
 
+    /// Changes which root is considered the "current" one for the state.
+    /// This is used when the forkchoice update selects a new block to be
+    /// the canonical head.
+    fn switch_state_root(&mut self, root: B256) -> Result<(), Self::Err>;
+
     /// Returns a reference to a [`MoveResolver`] that can resolve both resources and modules on
     /// the current blockchain state.
     fn resolver(&self) -> &(impl MoveResolver + TableResolver);

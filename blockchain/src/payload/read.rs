@@ -132,7 +132,7 @@ impl MaybePayloadResponse {
 
 #[derive(Debug, Default, Clone)]
 pub struct InProgressPayloads {
-    inner: Arc<RwLock<HashMap<PayloadId, broadcast::Sender<PayloadResponse>>>>,
+    inner: Arc<RwLock<HashMap<PayloadId, InProgressPayloadSender>>>,
 }
 
 impl InProgressPayloads {
@@ -144,16 +144,13 @@ impl InProgressPayloads {
             .map(|sender| sender.subscribe())
     }
 
+    pub fn forkchoice_insert_id(&self, id: PayloadId) {
+        self.insert_id_status(id, InProgressPayloadStatus::AwaitingForkchoice)
+            .expect("Inserting `AwaitingForkchoice` status never fails");
+    }
+
     pub fn start_id(&self, id: PayloadId) -> Result<(), AlreadyStarted> {
-        let mut in_progress = self.inner.write().expect("Lock is not poisoned");
-        match in_progress.entry(id) {
-            Entry::Vacant(entry) => {
-                let (sender, _) = broadcast::channel(1);
-                entry.insert(sender);
-                Ok(())
-            }
-            Entry::Occupied(_) => Err(AlreadyStarted),
-        }
+        self.insert_id_status(id, InProgressPayloadStatus::Started)
     }
 
     /// Abort a build job: drop its sender so all receivers see `Err(RecvError::Closed)`.
@@ -179,8 +176,64 @@ impl InProgressPayloads {
             .expect("Lock is not poisoned")
             .remove(&id)
         {
-            sender.send(response).ok();
+            sender.send(response);
         }
+    }
+
+    fn insert_id_status(
+        &self,
+        id: PayloadId,
+        status: InProgressPayloadStatus,
+    ) -> Result<(), AlreadyStarted> {
+        let mut in_progress = self.inner.write().expect("Lock is not poisoned");
+        match in_progress.entry(id) {
+            Entry::Vacant(entry) => {
+                let (sender, _) = broadcast::channel(1);
+                entry.insert(InProgressPayloadSender::new(status, sender));
+                Ok(())
+            }
+            Entry::Occupied(mut entry) if matches!(status, InProgressPayloadStatus::Started) => {
+                let status = entry.get_mut();
+                status.start()
+            }
+            Entry::Occupied(_) => Ok(()),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+struct InProgressPayloadSender {
+    status: InProgressPayloadStatus,
+    sender: broadcast::Sender<PayloadResponse>,
+}
+
+#[derive(Debug, Clone, Copy)]
+enum InProgressPayloadStatus {
+    AwaitingForkchoice,
+    Started,
+}
+
+impl InProgressPayloadSender {
+    fn new(status: InProgressPayloadStatus, sender: broadcast::Sender<PayloadResponse>) -> Self {
+        Self { status, sender }
+    }
+
+    fn start(&mut self) -> Result<(), AlreadyStarted> {
+        match self.status {
+            InProgressPayloadStatus::AwaitingForkchoice => {
+                self.status = InProgressPayloadStatus::Started;
+                Ok(())
+            }
+            InProgressPayloadStatus::Started => Err(AlreadyStarted),
+        }
+    }
+
+    fn send(&self, response: PayloadResponse) {
+        self.sender.send(response).ok();
+    }
+
+    fn subscribe(&self) -> broadcast::Receiver<PayloadResponse> {
+        self.sender.subscribe()
     }
 }
 

@@ -6,8 +6,8 @@ use {
 pub const DATABASES: [&str; 11] = [
     block::DB,
     block::HEIGHT_DB,
+    block::FC_DB,
     state::DB,
-    state::HEIGHT_DB,
     trie::DB,
     trie::ROOT_DB,
     evm_storage_trie::DB,

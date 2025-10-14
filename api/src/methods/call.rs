@@ -46,6 +46,7 @@ mod tests {
         test_case::test_case,
         tokio::sync::mpsc,
         umi_app::{Command, CommandActor, PayloadForExecution},
+        umi_blockchain::{block::ForkchoiceState, payload::MaybePayloadResponse},
         umi_shared::primitives::U64,
     };
 
@@ -109,8 +110,18 @@ mod tests {
                     },
                 payload_id: U64::from(i),
             };
-              state_channel.send(msg).await.unwrap();
-             state_channel.reserve_many(10).await.unwrap();
+            state_channel.send(msg).await.unwrap();
+            state_channel.reserve_many(10).await.unwrap();
+            // Update forkchoice
+            let MaybePayloadResponse::Some(payload) = reader.payload(U64::from(i)).unwrap() else {
+                panic!("Payload must be finished already");
+            };
+            let block_hash = payload.execution_payload.block_hash;
+            let fc = ForkchoiceState {
+                head_block_hash: block_hash, safe_block_hash: block_hash, finalized_block_hash: block_hash,
+            };
+            state_channel.send(Command::ForkchoiceUpdate { state: fc, payload_id: None }).await.unwrap();
+            state_channel.reserve_many(10).await.unwrap();
           }
 
             // Check if the count exists for an address, which returns false
@@ -162,8 +173,18 @@ mod tests {
                     },
                 payload_id: U64::from(i),
             };
-              state_channel.send(msg).await.unwrap();
-             state_channel.reserve_many(10).await.unwrap();
+            state_channel.send(msg).await.unwrap();
+            state_channel.reserve_many(10).await.unwrap();
+            // Update forkchoice
+            let MaybePayloadResponse::Some(payload) = reader.payload(U64::from(i)).unwrap() else {
+                panic!("Payload must be finished already");
+            };
+            let block_hash = payload.execution_payload.block_hash;
+            let fc = ForkchoiceState {
+                head_block_hash: block_hash, safe_block_hash: block_hash, finalized_block_hash: block_hash,
+            };
+            state_channel.send(Command::ForkchoiceUpdate { state: fc, payload_id: None }).await.unwrap();
+            state_channel.reserve_many(10).await.unwrap();
           }
 
             let request: serde_json::Value = serde_json::json!({

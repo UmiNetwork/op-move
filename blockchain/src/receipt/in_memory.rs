@@ -40,11 +40,14 @@ impl ReceiptMemory {
     }
 
     pub fn extend(&mut self, receipts: impl IntoIterator<Item = ExtendedReceipt>) {
-        self.receipts.extend(
-            receipts
-                .into_iter()
-                .map(|receipt| (receipt.transaction_hash, Arc::new(receipt))),
-        );
+        for receipt in receipts {
+            // We need to use `update` instead of `insert` because `evmap` is a multi-map, but
+            // we only want to store a single value for each hash.
+            // With forks it is possible to process the same transaction twice and we only want the
+            // canonical entry to exist in the receipts map.
+            self.receipts
+                .update(receipt.transaction_hash, Arc::new(receipt));
+        }
         self.receipts.refresh();
     }
 }

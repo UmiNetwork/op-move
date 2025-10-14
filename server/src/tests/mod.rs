@@ -1,4 +1,5 @@
 mod evm_contracts;
+mod forkchoice;
 mod get_proof;
 mod integration;
 mod invalid_tx;

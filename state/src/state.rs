@@ -57,6 +57,23 @@ impl<D: DbWithRoot> State for EthTrieState<D> {
             .map_err(|e| TrieError::DB(e.to_string()))
     }
 
+    fn switch_state_root(&mut self, root: B256) -> Result<(), Self::Err> {
+        let old_root = self.state_root.replace(root);
+
+        // Only write to the DB if the root is new.
+        if old_root != Some(root) {
+            self.db()
+                .put_root(root)
+                .map_err(|e| TrieError::DB(e.to_string()))?;
+
+            // Update the resolver
+            let trie = EthTrie::try_from_opt_root(self.db().clone(), Some(root))?;
+            self.resolver = EthTrieResolver::new(trie);
+        }
+
+        Ok(())
+    }
+
     fn resolver(&self) -> &(impl MoveResolver + TableResolver) {
         &self.resolver
     }

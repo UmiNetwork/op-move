@@ -8,7 +8,7 @@ use {
         module_traversal::{TraversalContext, TraversalStorage},
     },
     move_vm_types::{gas::UnmeteredGasMeter, resolver::MoveResolver},
-    std::sync::Arc,
+    std::{collections::HashMap, sync::Arc},
     umi_evm_ext::state::InMemoryStorageTrieRepository,
     umi_execution::{
         check_nonce, create_vm_session, increment_account_nonce, mint_eth, session_id::SessionId,
@@ -26,6 +26,10 @@ impl State for StateSpy {
     fn apply(&mut self, changes: Changes) -> Result<(), Self::Err> {
         self.1.squash(changes.accounts.clone()).unwrap();
         self.0.apply(changes)
+    }
+
+    fn switch_state_root(&mut self, root: B256) -> Result<(), Self::Err> {
+        self.0.switch_state_root(root)
     }
 
     fn resolver(&self) -> &(impl MoveResolver + TableResolver) {
@@ -94,16 +98,18 @@ fn test_query_fetches_latest_balance() {
     let mut state = state.0;
     let addr = AccountAddress::TWO;
 
-    let mut storage = vec![genesis_config.initial_state_root];
+    let mut storage = HashMap::new();
+    storage.insert(B256::default(), genesis_config.initial_state_root);
 
     mint_one_eth(&mut state, addr);
-    storage.push(state.state_root());
+    let mock_block_hash = alloy::primitives::keccak256([0; 32]);
+    storage.insert(mock_block_hash, state.state_root());
 
     let query = InMemoryStateQueries::new(storage, trie_db, genesis_config.initial_state_root);
 
     let actual_balance = query
-        .balance_at(addr, 1)
-        .expect("Block height should exist");
+        .balance_at(addr, mock_block_hash)
+        .expect("Block hash should exist");
     let expected_balance = U256::from(1u64);
 
     assert_eq!(actual_balance, expected_balance);
@@ -130,19 +136,22 @@ fn test_query_fetches_older_balance() {
 
     let addr = AccountAddress::TWO;
 
-    let mut storage = vec![genesis_config.initial_state_root];
+    let mut storage = HashMap::new();
+    storage.insert(B256::default(), genesis_config.initial_state_root);
 
     mint_one_eth(&mut state, addr);
-    storage.push(state.state_root());
+    let bh1 = alloy::primitives::keccak256([0; 32]);
+    storage.insert(bh1, state.state_root());
     mint_one_eth(&mut state, addr);
     mint_one_eth(&mut state, addr);
-    storage.push(state.state_root());
+    let bh2 = alloy::primitives::keccak256([1; 32]);
+    storage.insert(bh2, state.state_root());
 
     let query = InMemoryStateQueries::new(storage, trie_db, genesis_config.initial_state_root);
 
     let actual_balance = query
-        .balance_at(addr, 1)
-        .expect("Block height should exist");
+        .balance_at(addr, bh1)
+        .expect("Block hash should exist");
     let expected_balance = U256::from(1u64);
 
     assert_eq!(actual_balance, expected_balance);
@@ -169,26 +178,29 @@ fn test_query_fetches_latest_and_previous_balance() {
 
     let addr = AccountAddress::TWO;
 
-    let mut storage = vec![genesis_config.initial_state_root];
+    let mut storage = HashMap::new();
+    storage.insert(B256::default(), genesis_config.initial_state_root);
 
     mint_one_eth(&mut state, addr);
-    storage.push(state.state_root());
+    let bh1 = alloy::primitives::keccak256([0; 32]);
+    storage.insert(bh1, state.state_root());
     mint_one_eth(&mut state, addr);
     mint_one_eth(&mut state, addr);
-    storage.push(state.state_root());
+    let bh2 = alloy::primitives::keccak256([1; 32]);
+    storage.insert(bh2, state.state_root());
 
     let query = InMemoryStateQueries::new(storage, trie_db, genesis_config.initial_state_root);
 
     let actual_balance = query
-        .balance_at(addr, 1)
-        .expect("Block height should exist");
+        .balance_at(addr, bh1)
+        .expect("Block hash should exist");
     let expected_balance = U256::from(1u64);
 
     assert_eq!(actual_balance, expected_balance);
 
     let actual_balance = query
-        .balance_at(addr, 2)
-        .expect("Block height should exist");
+        .balance_at(addr, bh2)
+        .expect("Block hash should exist");
     let expected_balance = U256::from(3u64);
 
     assert_eq!(actual_balance, expected_balance);
@@ -215,13 +227,14 @@ fn test_query_fetches_zero_balance_for_non_existent_account() {
         "123456136717634683648732647632874638726487fefefefefeefefefefefff"
     ));
 
-    let storage = vec![genesis_config.initial_state_root];
+    let mut storage = HashMap::new();
+    storage.insert(B256::default(), genesis_config.initial_state_root);
 
     let query = InMemoryStateQueries::new(storage, trie_db, genesis_config.initial_state_root);
 
     let actual_balance = query
-        .balance_at(addr, 0)
-        .expect("Block height should exist");
+        .balance_at(addr, B256::default())
+        .expect("Block hash should exist");
     let expected_balance = U256::ZERO;
 
     assert_eq!(actual_balance, expected_balance);
@@ -292,16 +305,18 @@ fn test_query_fetches_latest_nonce() {
     let mut state = state.0;
     let addr = AccountAddress::TWO;
 
-    let mut storage = vec![genesis_config.initial_state_root];
+    let mut storage = HashMap::new();
+    storage.insert(B256::default(), genesis_config.initial_state_root);
 
     inc_one_nonce(0, &mut state, addr);
-    storage.push(state.state_root());
+    let mock_block_hash = alloy::primitives::keccak256([0; 32]);
+    storage.insert(mock_block_hash, state.state_root());
 
     let query = InMemoryStateQueries::new(storage, trie_db, genesis_config.initial_state_root);
 
     let actual_nonce = query
-        .nonce_at(&evm_storage, addr, 1)
-        .expect("Block height should exist");
+        .nonce_at(&evm_storage, addr, mock_block_hash)
+        .expect("Block hash should exist");
     let expected_nonce = 1u64;
 
     assert_eq!(actual_nonce, expected_nonce);
@@ -328,19 +343,22 @@ fn test_query_fetches_older_nonce() {
 
     let addr = AccountAddress::TWO;
 
-    let mut storage = vec![genesis_config.initial_state_root];
+    let mut storage = HashMap::new();
+    storage.insert(B256::default(), genesis_config.initial_state_root);
 
     inc_one_nonce(0, &mut state, addr);
-    storage.push(state.state_root());
+    let bh1 = alloy::primitives::keccak256([0; 32]);
+    storage.insert(bh1, state.state_root());
     inc_one_nonce(1, &mut state, addr);
     inc_one_nonce(2, &mut state, addr);
-    storage.push(state.state_root());
+    let bh2 = alloy::primitives::keccak256([1; 32]);
+    storage.insert(bh2, state.state_root());
 
     let query = InMemoryStateQueries::new(storage, trie_db, genesis_config.initial_state_root);
 
     let actual_nonce = query
-        .nonce_at(&evm_storage, addr, 1)
-        .expect("Block height should exist");
+        .nonce_at(&evm_storage, addr, bh1)
+        .expect("Block hash should exist");
     let expected_nonce = 1u64;
 
     assert_eq!(actual_nonce, expected_nonce);
@@ -367,26 +385,29 @@ fn test_query_fetches_latest_and_previous_nonce() {
 
     let addr = AccountAddress::TWO;
 
-    let mut storage = vec![genesis_config.initial_state_root];
+    let mut storage = HashMap::new();
+    storage.insert(B256::default(), genesis_config.initial_state_root);
 
     inc_one_nonce(0, &mut state, addr);
-    storage.push(state.state_root());
+    let bh1 = alloy::primitives::keccak256([0; 32]);
+    storage.insert(bh1, state.state_root());
     inc_one_nonce(1, &mut state, addr);
     inc_one_nonce(2, &mut state, addr);
-    storage.push(state.state_root());
+    let bh2 = alloy::primitives::keccak256([1; 32]);
+    storage.insert(bh2, state.state_root());
 
     let query = InMemoryStateQueries::new(storage, trie_db, genesis_config.initial_state_root);
 
     let actual_nonce = query
-        .nonce_at(&evm_storage, addr, 1)
-        .expect("Block height should exist");
+        .nonce_at(&evm_storage, addr, bh1)
+        .expect("Block hash should exist");
     let expected_nonce = 1u64;
 
     assert_eq!(actual_nonce, expected_nonce);
 
     let actual_nonce = query
-        .nonce_at(&evm_storage, addr, 2)
-        .expect("Block height should exist");
+        .nonce_at(&evm_storage, addr, bh2)
+        .expect("Block hash should exist");
     let expected_nonce = 3u64;
 
     assert_eq!(actual_nonce, expected_nonce);
@@ -413,13 +434,14 @@ fn test_query_fetches_zero_nonce_for_non_existent_account() {
         "123456136717634683648732647632874638726487fefefefefeefefefefefff"
     ));
 
-    let storage = vec![genesis_config.initial_state_root];
+    let mut storage = HashMap::new();
+    storage.insert(B256::default(), genesis_config.initial_state_root);
 
     let query = InMemoryStateQueries::new(storage, trie_db, genesis_config.initial_state_root);
 
     let actual_nonce = query
-        .nonce_at(&evm_storage, addr, 0)
-        .expect("Block height should exist");
+        .nonce_at(&evm_storage, addr, B256::default())
+        .expect("Block hash should exist");
     let expected_nonce = 0u64;
 
     assert_eq!(actual_nonce, expected_nonce);

@@ -30,6 +30,7 @@ alloy = { version = "1.0", features = [
   "genesis",
   "getrandom",
   "rlp",
+  "rpc-types-engine",
   "serde",
   "signer-keystore",
 ] }

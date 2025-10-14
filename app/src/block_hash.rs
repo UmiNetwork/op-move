@@ -50,21 +50,40 @@ impl BlockHashRingBuffer {
     where
         B: BlockQueries<Storage = S>,
     {
-        let latest_block = block_query.latest(storage)?.unwrap_or(0);
-
         let mut cache = Self::default();
+        let head_hash = block_query.get_forkchoice_state(storage)?.head_block_hash;
+        let Some(latest_block) = block_query.by_hash(storage, head_hash, false)? else {
+            return Ok(cache);
+        };
 
-        let start_block = if latest_block >= BLOCKHASH_HISTORY_SIZE as u64 {
-            latest_block - BLOCKHASH_HISTORY_SIZE as u64 + 1
+        let latest_height = latest_block.0.header.number;
+        let start_block = if latest_height >= BLOCKHASH_HISTORY_SIZE as u64 {
+            latest_height - BLOCKHASH_HISTORY_SIZE as u64 + 1
         } else {
             0
         };
 
-        for block_num in start_block..=latest_block {
-            if let Ok(Some(block)) = block_query.by_height(storage, block_num, false) {
-                cache.push(block_num, block.0.header.hash);
-            }
+        cache.latest_block = latest_height;
+        let mut current_block = latest_block;
+        while current_block.0.header.number > start_block {
+            let parent_hash = current_block.0.header.parent_hash;
+            let Some(parent_block) = block_query.by_hash(storage, parent_hash, false)? else {
+                break;
+            };
+            let entry = BlockHashEntry {
+                number: current_block.0.header.number,
+                hash: current_block.0.header.hash,
+            };
+            // Note we intentionally `push_front` here because we are building the index
+            // backwards by following parent block links
+            cache.entries.push_front(entry);
+            current_block = parent_block;
         }
+        let entry = BlockHashEntry {
+            number: current_block.0.header.number,
+            hash: current_block.0.header.hash,
+        };
+        cache.entries.push_front(entry);
 
         Ok(cache)
     }
@@ -173,14 +192,9 @@ where
             }
         };
 
-        if let Ok(Some(block)) = self
-            .block_query
-            .by_height(&self.storage, block_number, false)
-        {
-            Some(block.0.header.hash)
-        } else {
-            None
-        }
+        self.block_query
+            .height_to_hash(&self.storage, block_number)
+            .ok()
     }
 }
 
@@ -203,6 +217,7 @@ mod tests {
         alloy::{
             consensus::Header,
             primitives::{U64, ruint::aliases::U256},
+            rpc::types::engine::ForkchoiceState,
         },
         umi_blockchain::block::{Block, BlockResponse, ExtendedBlock},
     };
@@ -286,35 +301,34 @@ mod tests {
         fn by_hash(
             &self,
             _storage: &Self::Storage,
-            _hash: B256,
+            hash: B256,
             _include_transactions: bool,
         ) -> Result<Option<BlockResponse>, Self::Err> {
-            Ok(None)
+            let header = Header::default();
+            let block = Block::new(header, Vec::new());
+            let extended_block = ExtendedBlock::new(hash, U256::ZERO, U64::ZERO, U256::ZERO, block);
+            let response = BlockResponse::from_block_with_transactions(extended_block, Vec::new());
+            Ok(Some(response))
         }
 
-        fn by_height(
+        fn get_forkchoice_state(
             &self,
-            _storage: &Self::Storage,
-            height: u64,
-            _include_transactions: bool,
-        ) -> Result<Option<BlockResponse>, Self::Err> {
-            // Mock storage returns a predictable hash for block numbers >= 1000
-            if height >= 1000 {
-                let hash = B256::from([(height % 256) as u8; 32]);
-                let header = Header::default();
-                let block = Block::new(header, Vec::new());
-                let extended_block =
-                    ExtendedBlock::new(hash, U256::ZERO, U64::ZERO, U256::ZERO, block);
-                let response =
-                    BlockResponse::from_block_with_transactions(extended_block, Vec::new());
-                Ok(Some(response))
-            } else {
-                Ok(None)
-            }
+            storage: &Self::Storage,
+        ) -> Result<ForkchoiceState, Self::Err> {
+            let latest_hash = self.height_to_hash(storage, 2000)?;
+            Ok(ForkchoiceState {
+                head_block_hash: latest_hash,
+                safe_block_hash: latest_hash,
+                finalized_block_hash: latest_hash,
+            })
         }
 
-        fn latest(&self, _storage: &Self::Storage) -> Result<Option<u64>, Self::Err> {
-            Ok(Some(2000))
+        fn height_to_hash(&self, _storage: &Self::Storage, height: u64) -> Result<B256, Self::Err> {
+            if height == 666 {
+                Err(())
+            } else {
+                Ok(B256::from([(height % 256) as u8; 32]))
+            }
         }
     }
 
@@ -343,7 +357,7 @@ mod tests {
         let cache = HybridBlockHashCache::try_from_storage(MockStorage, &MockBlockQueries).unwrap();
 
         // Should return None for blocks not in ring buffer or storage
-        assert_eq!(cache.hash_by_number(500), None);
+        assert_eq!(cache.hash_by_number(666), None);
     }
 
     #[test]

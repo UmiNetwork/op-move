@@ -1,7 +1,7 @@
 #[cfg(feature = "op-upgrade")]
 use umi_blockchain::block::BaseFeeParameters;
 use {
-    alloy::{primitives::Bloom, rlp::Decodable},
+    alloy::{primitives::Bloom, rlp::Decodable, rpc::types::engine::ForkchoiceState},
     op_alloy::consensus::OpTxEnvelope,
     umi_blockchain::{
         block::Header,
@@ -85,6 +85,20 @@ pub enum Command {
     AddTransaction {
         tx: Box<NormalizedEthTransaction>,
     },
+    ForkchoiceUpdate {
+        state: ForkchoiceState,
+        payload_id: Option<PayloadId>,
+    },
+}
+
+impl Command {
+    pub fn payload_id(&self) -> Option<PayloadId> {
+        match self {
+            Self::StartBlockBuild { payload_id, .. } => Some(*payload_id),
+            Self::AddTransaction { .. } => None,
+            Self::ForkchoiceUpdate { payload_id, .. } => *payload_id,
+        }
+    }
 }
 
 pub type RpcBlock = alloy::rpc::types::Block<RpcTransaction>;
