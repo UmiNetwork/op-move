@@ -6,7 +6,9 @@ use {
     },
     heed::RoTxn,
     std::marker::PhantomData,
-    umi_blockchain::block::{BlockQueries, BlockRepository, BlockResponse, ExtendedBlock},
+    umi_blockchain::block::{
+        BlockQueries, BlockRepository, BlockResponse, ExtendedBlock, ForkchoiceState,
+    },
     umi_shared::primitives::B256,
 };
 
@@ -66,18 +68,16 @@ impl BlockRepository for HeedBlockRepository<'_> {
         response
     }
 
-    fn latest(&self, env: &Self::Storage) -> Result<Option<ExtendedBlock>, Self::Err> {
-        let transaction = env.read_txn()?;
+    fn forkchoice_update(
+        &mut self,
+        storage: &mut Self::Storage,
+        state: ForkchoiceState,
+    ) -> Result<(), Self::Err> {
+        todo!()
+    }
 
-        let db = env.block_height_database(&transaction)?;
-
-        let response = db
-            .last(&transaction)?
-            .map(|(_height, hash)| env.block_database(&transaction)?.get(&transaction, &hash));
-
-        transaction.commit()?;
-
-        Ok(response.transpose()?.flatten())
+    fn get_forkchoice_state(&self, storage: &Self::Storage) -> Result<ForkchoiceState, Self::Err> {
+        todo!()
     }
 }
 
@@ -138,34 +138,12 @@ impl BlockQueries for HeedBlockQueries {
         }))
     }
 
-    fn by_height(
-        &self,
-        env: &Self::Storage,
-        height: u64,
-        include_transactions: bool,
-    ) -> Result<Option<BlockResponse>, Self::Err> {
-        let transaction = env.read_txn()?;
-
-        let db = env.block_height_database(&transaction)?;
-
-        db.get(&transaction, &height)?
-            .map(|hash| {
-                transaction.commit()?;
-                self.by_hash(env, hash, include_transactions)
-            })
-            .unwrap_or(Ok(None))
+    fn get_forkchoice_state(&self, storage: &Self::Storage) -> Result<ForkchoiceState, Self::Err> {
+        todo!()
     }
 
-    fn latest(&self, env: &Self::Storage) -> Result<Option<u64>, Self::Err> {
-        let transaction = env.read_txn()?;
-
-        let db = env.block_height_database(&transaction)?;
-
-        let pair = db.last(&transaction)?;
-
-        transaction.commit()?;
-
-        Ok(pair.map(|(height, _hash)| height))
+    fn height_to_hash(&self, storage: &Self::Storage, height: u64) -> Result<B256, Self::Err> {
+        todo!()
     }
 }
 

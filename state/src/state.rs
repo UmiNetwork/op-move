@@ -64,4 +64,6 @@ impl<D: DbWithRoot> State for EthTrieState<D> {
     fn state_root(&self) -> B256 {
         self.state_root.unwrap_or_default()
     }
+
+    // TODO: new method for switching the state root without changes (used with forkchoice updates)
 }

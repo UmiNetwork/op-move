@@ -308,7 +308,7 @@ mod tests {
         umi_app::{Application, CommandActor, HybridBlockHashCache, TestDependencies},
         umi_blockchain::{
             block::{
-                Block, BlockRepository, Eip1559GasFee, InMemoryBlockQueries,
+                Block, BlockRepository, Eip1559GasFee, ForkchoiceState, InMemoryBlockQueries,
                 InMemoryBlockRepository, UmiBlockHash,
             },
             in_memory::{SharedMemoryReader, shared_memory},
@@ -420,6 +420,16 @@ mod tests {
             HybridBlockHashCache::new(memory_reader.clone(), InMemoryBlockQueries);
         let mut repository = InMemoryBlockRepository::new();
         repository.add(&mut memory, genesis_block).unwrap();
+        repository
+            .forkchoice_update(
+                &mut memory,
+                ForkchoiceState {
+                    head_block_hash: head_hash,
+                    safe_block_hash: head_hash,
+                    finalized_block_hash: head_hash,
+                },
+            )
+            .unwrap();
         block_hash_cache.push(0, head_hash);
 
         let trie_db = Arc::new(InMemoryTrieDb::empty());

@@ -4,7 +4,12 @@ use {
         actor::UnrecoverableAppFailure,
         input::{WithExecutionOutcome, WithPayloadAttributes},
     },
-    alloy::{consensus::Receipt, primitives::Bloom, rlp::Encodable},
+    alloy::{
+        consensus::Receipt,
+        primitives::{B256, Bloom},
+        rlp::Encodable,
+        rpc::types::engine::ForkchoiceState,
+    },
     metrics::histogram,
     umi_blockchain::{
         block::{BaseGasFee, Block, BlockHash, BlockRepository, ExtendedBlock, Header},
@@ -29,12 +34,15 @@ use {
 };
 
 impl<'app, D: Dependencies<'app>> Application<'app, D> {
+    /// Build a block from the given payload.
+    /// Returns the hash of the constructed block (if any).
+    /// Returns `None` if the payload was previously executed or is already in progress.
     #[tracing::instrument(level = "debug", skip(self, attributes))]
     pub(crate) fn start_block_build(
         &mut self,
         attributes: PayloadForExecution,
         id: PayloadId,
-    ) -> Result<(), UnrecoverableAppFailure> {
+    ) -> Result<Option<B256>, UnrecoverableAppFailure> {
         let t0 = std::time::Instant::now();
 
         let payload_exists = self
@@ -48,12 +56,12 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             })?
             .is_some();
         if payload_exists {
-            return Ok(());
+            return Ok(None);
         }
         let in_progress_payloads = self.payload_queries.get_in_progress();
         // If there is a job with this id already present, nothing to do
         if in_progress_payloads.start_id(id).is_err() {
-            return Ok(());
+            return Ok(None);
         }
 
         let attributes_txs_len = attributes.transactions.len();
@@ -94,7 +102,10 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
 
         let parent = self
             .block_repository
-            .latest(&self.storage)
+            .get_forkchoice_state(&self.storage)
+            .and_then(|fc| {
+                self.block_repository.by_hash(&self.storage, fc.head_block_hash)
+            })
             .map_err(|e| {
                 tracing::error!("Failure during `start_block_build`. Failed to get latest block from block repository: {e:?}");
                 UnrecoverableAppFailure
@@ -109,7 +120,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 attributes.timestamp
             );
             in_progress_payloads.abort_id(&id);
-            return Ok(());
+            return Ok(None);
         }
         #[cfg(feature = "op-upgrade")]
         if let Some(params) = &attributes.eip1559_params {
@@ -286,19 +297,43 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
         histogram!("block_build_duration_seconds").record(t0.elapsed().as_secs_f64());
         metrics::counter!("blocks_produced_count").increment(1);
 
-        Ok(())
+        Ok(Some(block_hash))
     }
 
     pub fn add_transaction(&mut self, tx: NormalizedEthTransaction) {
         self.mem_pool.insert(tx);
     }
 
+    pub(crate) fn forkchoice_update(
+        &mut self,
+        state: ForkchoiceState,
+    ) -> Result<(), UnrecoverableAppFailure> {
+        self.block_repository
+            .forkchoice_update(&mut self.storage, state)
+            .map_err(|e| {
+                tracing::error!("Failed to update forkchoice state: {e:?}");
+                UnrecoverableAppFailure
+            })
+    }
+
     pub fn genesis_update(
         &mut self,
         block: ExtendedBlock,
     ) -> Result<(), <D::BlockRepository as BlockRepository>::Err> {
-        self.block_hash_writer.push(0, block.hash);
-        self.block_repository.add(&mut self.storage, block)
+        let genesis_hash = block.hash;
+        self.block_hash_writer.push(0, genesis_hash);
+        self.block_repository.add(&mut self.storage, block)?;
+
+        let mut fc = self.block_repository.get_forkchoice_state(&self.storage)?;
+        if fc.head_block_hash == B256::ZERO {
+            fc.finalized_block_hash = genesis_hash;
+            fc.safe_block_hash = genesis_hash;
+            fc.head_block_hash = genesis_hash;
+            self.block_repository
+                .forkchoice_update(&mut self.storage, fc)?;
+        }
+
+        Ok(())
     }
 
     fn execute_transactions(

@@ -23,8 +23,8 @@ use {
     test_case::test_case,
     umi_blockchain::{
         block::{
-            Block, BlockHash, BlockRepository, Eip1559GasFee, Header, InMemoryBlockQueries,
-            InMemoryBlockRepository, UmiBlockHash,
+            Block, BlockHash, BlockRepository, Eip1559GasFee, ForkchoiceState, Header,
+            InMemoryBlockQueries, InMemoryBlockRepository, UmiBlockHash,
         },
         in_memory::shared_memory,
         payload::{InMemoryPayloadQueries, InProgressPayloads, MaybePayloadResponse},
@@ -32,7 +32,9 @@ use {
         state::{BlockHeight, InMemoryStateQueries, MockStateQueries, StateQueries},
         transaction::{InMemoryTransactionQueries, InMemoryTransactionRepository},
     },
-    umi_evm_ext::state::{BlockHashWriter, InMemoryStorageTrieRepository, StorageTrieRepository},
+    umi_evm_ext::state::{
+        BlockHashLookup, BlockHashWriter, InMemoryStorageTrieRepository, StorageTrieRepository,
+    },
     umi_execution::{
         UmiBaseTokenAccounts, create_vm_session,
         session_id::SessionId,
@@ -94,8 +96,18 @@ fn create_app_with_given_queries<SQ: StateQueries + Clone + Send + Sync + 'stati
         let mut block = genesis_block.clone();
         block.block.header.number = i;
         block.hash = block.block.header.hash_slow();
+        repository
+            .forkchoice_update(
+                &mut memory,
+                ForkchoiceState {
+                    head_block_hash: block.hash,
+                    safe_block_hash: block.hash,
+                    finalized_block_hash: block.hash,
+                },
+            )
+            .unwrap();
+        block_hash_cache.push(i, block.hash);
         repository.add(&mut memory, block).unwrap();
-        block_hash_cache.push(i, head_hash);
     }
 
     let mut state = InMemoryState::default();
@@ -218,12 +230,32 @@ fn create_app_with_fake_queries(
     let mut repository = InMemoryBlockRepository::new();
     repository.add(&mut memory, genesis_block.clone()).unwrap();
     block_hash_cache.push(0, head_hash);
+    repository
+        .forkchoice_update(
+            &mut memory,
+            ForkchoiceState {
+                head_block_hash: head_hash,
+                safe_block_hash: head_hash,
+                finalized_block_hash: head_hash,
+            },
+        )
+        .unwrap();
 
     for i in 1..=height {
         let mut block = genesis_block.clone();
         block.block.header.number = i;
         block.hash = block.block.header.hash_slow();
         block_hash_cache.push(i, block.hash);
+        repository
+            .forkchoice_update(
+                &mut memory,
+                ForkchoiceState {
+                    head_block_hash: block.hash,
+                    safe_block_hash: block.hash,
+                    finalized_block_hash: block.hash,
+                },
+            )
+            .unwrap();
         repository.add(&mut memory, block).unwrap();
     }
 
@@ -365,10 +397,15 @@ fn test_nonce_is_fetched_by_height_successfully(
     expected_height: BlockHeight,
 ) {
     let address = Address::new(hex!("11223344556677889900ffeeaabbccddee111111"));
-    let (reader, _app) = create_app_with_given_queries(
+    let (mut reader, _app) = create_app_with_given_queries(
         head_height,
-        MockStateQueries(address.to_move_address(), expected_height),
+        MockStateQueries(address.to_move_address(), B256::default()),
     );
+    let expected_block_hash = reader
+        .block_hash_lookup
+        .hash_by_number(expected_height)
+        .unwrap();
+    reader.state_queries.1 = expected_block_hash;
 
     let actual_nonce = reader.nonce_by_height(address, height).unwrap();
     let expected_nonce = 3;
@@ -388,10 +425,15 @@ fn test_balance_is_fetched_by_height_successfully(
     expected_height: BlockHeight,
 ) {
     let address = Address::new(hex!("44223344556677889900ffeeaabbccddee111111"));
-    let (reader, _app) = create_app_with_given_queries(
+    let (mut reader, _app) = create_app_with_given_queries(
         head_height,
-        MockStateQueries(address.to_move_address(), expected_height),
+        MockStateQueries(address.to_move_address(), B256::default()),
     );
+    let expected_block_hash = reader
+        .block_hash_lookup
+        .hash_by_number(expected_height)
+        .unwrap();
+    reader.state_queries.1 = expected_block_hash;
 
     let actual_balance = reader.balance_by_height(address, height).unwrap();
     let expected_balance = U256::from(5);
@@ -458,13 +500,21 @@ fn test_fetched_balances_are_updated_after_transfer_of_funds() {
     let tx = create_transaction(0);
 
     app.add_transaction(tx);
-    app.start_block_build(
-        PayloadForExecution {
-            timestamp: U64::from(1),
-            ..PayloadForExecution::default()
-        },
-        U64::from(0x03421ee50df45cacu64),
-    )
+    let head_hash = app
+        .start_block_build(
+            PayloadForExecution {
+                timestamp: U64::from(1),
+                ..PayloadForExecution::default()
+            },
+            U64::from(0x03421ee50df45cacu64),
+        )
+        .unwrap()
+        .unwrap();
+    app.forkchoice_update(ForkchoiceState {
+        head_block_hash: head_hash,
+        safe_block_hash: head_hash,
+        finalized_block_hash: head_hash,
+    })
     .unwrap();
 
     let actual_recipient_balance = reader.balance_by_height(to, Latest).unwrap();
@@ -488,13 +538,21 @@ fn test_fetched_nonces_are_updated_after_executing_transaction() {
     let tx = create_transaction(0);
 
     app.add_transaction(tx);
-    app.start_block_build(
-        PayloadForExecution {
-            timestamp: U64::from(1),
-            ..PayloadForExecution::default()
-        },
-        U64::from(0x03421ee50df45cacu64),
-    )
+    let head_hash = app
+        .start_block_build(
+            PayloadForExecution {
+                timestamp: U64::from(1),
+                ..PayloadForExecution::default()
+            },
+            U64::from(0x03421ee50df45cacu64),
+        )
+        .unwrap()
+        .unwrap();
+    app.forkchoice_update(ForkchoiceState {
+        head_block_hash: head_hash,
+        safe_block_hash: head_hash,
+        finalized_block_hash: head_hash,
+    })
     .unwrap();
 
     let actual_recipient_balance = reader.nonce_by_height(to, Latest).unwrap();
@@ -762,8 +820,16 @@ fn test_fee_history_empty_vs_full_blocks(num_txs: usize, expect_zero_ratio: bool
         timestamp: U64::from(1),
         ..Default::default()
     };
-    app.start_block_build(payload.try_into().unwrap(), U64::from(1))
+    let head_hash = app
+        .start_block_build(payload.try_into().unwrap(), U64::from(1))
+        .unwrap()
         .unwrap();
+    app.forkchoice_update(ForkchoiceState {
+        head_block_hash: head_hash,
+        safe_block_hash: head_hash,
+        finalized_block_hash: head_hash,
+    })
+    .unwrap();
 
     let result = reader.fee_history(1, Latest, Some(vec![50.0]));
     assert!(result.is_ok());
@@ -794,16 +860,25 @@ fn test_fee_history_percentile_calculations(
         app.add_transaction(tx);
     }
 
-    app.start_block_build(
-        Payload {
-            gas_limit: U64::from(1_000_000),
-            timestamp: U64::from(1),
-            ..Default::default()
-        }
-        .try_into()
-        .unwrap(),
-        U64::from(1),
-    )
+    let head_hash = app
+        .start_block_build(
+            Payload {
+                gas_limit: U64::from(1_000_000),
+                timestamp: U64::from(1),
+                ..Default::default()
+            }
+            .try_into()
+            .unwrap(),
+            U64::from(1),
+        )
+        .unwrap()
+        .unwrap();
+
+    app.forkchoice_update(ForkchoiceState {
+        head_block_hash: head_hash,
+        safe_block_hash: head_hash,
+        finalized_block_hash: head_hash,
+    })
     .unwrap();
 
     let result = reader.fee_history(1, Latest, Some(percentiles));
@@ -835,16 +910,24 @@ fn test_fee_history_gas_ratio_progression(tx_counts: Vec<usize>, expect_increasi
             nonce += 1;
         }
 
-        app.start_block_build(
-            Payload {
-                timestamp: U64::from(block_num as u64 + 1),
-                gas_limit: U64::from(1_000_000),
-                ..Default::default()
-            }
-            .try_into()
-            .unwrap(),
-            U64::from(block_num as u64 + 1),
-        )
+        let head_hash = app
+            .start_block_build(
+                Payload {
+                    timestamp: U64::from(block_num as u64 + 1),
+                    gas_limit: U64::from(1_000_000),
+                    ..Default::default()
+                }
+                .try_into()
+                .unwrap(),
+                U64::from(block_num as u64 + 1),
+            )
+            .unwrap()
+            .unwrap();
+        app.forkchoice_update(ForkchoiceState {
+            head_block_hash: head_hash,
+            safe_block_hash: head_hash,
+            finalized_block_hash: head_hash,
+        })
         .unwrap();
     }
 
@@ -879,16 +962,24 @@ fn test_fee_history_boundary_percentiles() {
         app.add_transaction(tx);
     }
 
-    app.start_block_build(
-        Payload {
-            gas_limit: U64::from(1_000_000),
-            timestamp: U64::from(1),
-            ..Default::default()
-        }
-        .try_into()
-        .unwrap(),
-        U64::from(1),
-    )
+    let head_hash = app
+        .start_block_build(
+            Payload {
+                gas_limit: U64::from(1_000_000),
+                timestamp: U64::from(1),
+                ..Default::default()
+            }
+            .try_into()
+            .unwrap(),
+            U64::from(1),
+        )
+        .unwrap()
+        .unwrap();
+    app.forkchoice_update(ForkchoiceState {
+        head_block_hash: head_hash,
+        safe_block_hash: head_hash,
+        finalized_block_hash: head_hash,
+    })
     .unwrap();
 
     let percentiles = vec![0.0, 33.33, 66.66, 100.0];
@@ -919,16 +1010,24 @@ fn test_max_priority_fee_low_congestion() {
         app.add_transaction(tx);
     }
 
-    app.start_block_build(
-        Payload {
-            gas_limit: U64::from(1_000_000), // still well within the block limits
-            timestamp: U64::from(1),
-            ..Default::default()
-        }
-        .try_into()
-        .unwrap(),
-        U64::from(1),
-    )
+    let head_hash = app
+        .start_block_build(
+            Payload {
+                gas_limit: U64::from(1_000_000), // still well within the block limits
+                timestamp: U64::from(1),
+                ..Default::default()
+            }
+            .try_into()
+            .unwrap(),
+            U64::from(1),
+        )
+        .unwrap()
+        .unwrap();
+    app.forkchoice_update(ForkchoiceState {
+        head_block_hash: head_hash,
+        safe_block_hash: head_hash,
+        finalized_block_hash: head_hash,
+    })
     .unwrap();
 
     let max_priority_fee = reader.max_priority_fee_per_gas().unwrap();
@@ -953,16 +1052,24 @@ fn test_max_priority_fee_high_congestion() {
         app.add_transaction(tx);
     }
 
-    app.start_block_build(
-        Payload {
-            gas_limit: U64::from(100_000),
-            timestamp: U64::from(1),
-            ..Default::default()
-        }
-        .try_into()
-        .unwrap(),
-        U64::from(1),
-    )
+    let head_hash = app
+        .start_block_build(
+            Payload {
+                gas_limit: U64::from(100_000),
+                timestamp: U64::from(1),
+                ..Default::default()
+            }
+            .try_into()
+            .unwrap(),
+            U64::from(1),
+        )
+        .unwrap()
+        .unwrap();
+    app.forkchoice_update(ForkchoiceState {
+        head_block_hash: head_hash,
+        safe_block_hash: head_hash,
+        finalized_block_hash: head_hash,
+    })
     .unwrap();
 
     let max_priority_fee = reader.max_priority_fee_per_gas().unwrap();
@@ -988,16 +1095,24 @@ fn test_gas_price_high_max_fee() {
         app.add_transaction(tx);
     }
 
-    app.start_block_build(
-        Payload {
-            gas_limit: U64::from(100_000),
-            timestamp: U64::from(1),
-            ..Default::default()
-        }
-        .try_into()
-        .unwrap(),
-        U64::from(1),
-    )
+    let head_hash = app
+        .start_block_build(
+            Payload {
+                gas_limit: U64::from(100_000),
+                timestamp: U64::from(1),
+                ..Default::default()
+            }
+            .try_into()
+            .unwrap(),
+            U64::from(1),
+        )
+        .unwrap()
+        .unwrap();
+    app.forkchoice_update(ForkchoiceState {
+        head_block_hash: head_hash,
+        safe_block_hash: head_hash,
+        finalized_block_hash: head_hash,
+    })
     .unwrap();
 
     let max_priority_fee = reader.max_priority_fee_per_gas().unwrap();
@@ -1016,16 +1131,24 @@ fn test_gas_price_vs_max_priority_fee_difference() {
         app.add_transaction(tx);
     }
 
-    app.start_block_build(
-        Payload {
-            gas_limit: U64::from(1_000_000),
-            timestamp: U64::from(1),
-            ..Default::default()
-        }
-        .try_into()
-        .unwrap(),
-        U64::from(1),
-    )
+    let head_hash = app
+        .start_block_build(
+            Payload {
+                gas_limit: U64::from(1_000_000),
+                timestamp: U64::from(1),
+                ..Default::default()
+            }
+            .try_into()
+            .unwrap(),
+            U64::from(1),
+        )
+        .unwrap()
+        .unwrap();
+    app.forkchoice_update(ForkchoiceState {
+        head_block_hash: head_hash,
+        safe_block_hash: head_hash,
+        finalized_block_hash: head_hash,
+    })
     .unwrap();
 
     let gas_price = reader.gas_price().unwrap();

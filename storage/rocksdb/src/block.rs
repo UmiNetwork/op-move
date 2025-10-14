@@ -6,7 +6,7 @@ use {
     rocksdb::{AsColumnFamilyRef, DB as RocksDb, IteratorMode, WriteBatchWithTransaction},
     std::{marker::PhantomData, sync::Arc},
     umi_blockchain::{
-        block::{BlockQueries, BlockRepository, BlockResponse, ExtendedBlock},
+        block::{BlockQueries, BlockRepository, BlockResponse, ExtendedBlock, ForkchoiceState},
         transaction::ExtendedTransaction,
     },
     umi_shared::primitives::B256,
@@ -47,20 +47,22 @@ impl BlockRepository for RocksDbBlockRepository<'_> {
         db.write(batch)
     }
 
+    fn forkchoice_update(
+        &mut self,
+        storage: &mut Self::Storage,
+        state: ForkchoiceState,
+    ) -> Result<(), Self::Err> {
+        todo!()
+    }
+
     fn by_hash(&self, db: &Self::Storage, hash: B256) -> Result<Option<ExtendedBlock>, Self::Err> {
         Ok(db
             .get_pinned_cf(&block_cf(db), hash)?
             .map(|bytes| ExtendedBlock::from_value(bytes.as_ref())))
     }
 
-    fn latest(&self, db: &Self::Storage) -> Result<Option<ExtendedBlock>, Self::Err> {
-        Ok(db
-            .iterator_cf(&height_cf(db), IteratorMode::End)
-            .next()
-            .transpose()?
-            .map(|(_, hash)| self.by_hash(db, B256::from_slice(hash.as_ref())))
-            .transpose()?
-            .flatten())
+    fn get_forkchoice_state(&self, storage: &Self::Storage) -> Result<ForkchoiceState, Self::Err> {
+        todo!()
     }
 }
 
@@ -114,24 +116,12 @@ impl BlockQueries for RocksDbBlockQueries {
         }))
     }
 
-    fn by_height(
-        &self,
-        db: &Self::Storage,
-        height: u64,
-        include_transactions: bool,
-    ) -> Result<Option<BlockResponse>, Self::Err> {
-        db.get_pinned_cf(&height_cf(db), height.to_key())?
-            .map(|hash| B256::from_slice(hash.as_ref()))
-            .map(|hash| self.by_hash(db, hash, include_transactions))
-            .unwrap_or(Ok(None))
+    fn get_forkchoice_state(&self, storage: &Self::Storage) -> Result<ForkchoiceState, Self::Err> {
+        todo!()
     }
 
-    fn latest(&self, db: &Self::Storage) -> Result<Option<u64>, Self::Err> {
-        Ok(db
-            .iterator_cf(&height_cf(db), IteratorMode::End)
-            .next()
-            .transpose()?
-            .map(|(height, _)| u64::from_key(height.as_ref())))
+    fn height_to_hash(&self, storage: &Self::Storage, height: u64) -> Result<B256, Self::Err> {
+        todo!()
     }
 }
 

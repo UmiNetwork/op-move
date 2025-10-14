@@ -19,7 +19,7 @@ use {
     },
     umi_app::{ApplicationReader, CommandQueue},
     umi_blockchain::{
-        block::{Block, BlockHash, ExtendedBlock, Header},
+        block::{Block, BlockHash, BlockRepository, ExtendedBlock, ForkchoiceState, Header},
         receipt::TransactionReceipt,
         state::MoveResourceResponse,
     },
@@ -53,6 +53,16 @@ impl TestContext<'static> {
         let head = genesis_block.hash;
         let timestamp = genesis_block.block.header.timestamp;
         app.genesis_update(genesis_block).unwrap();
+        app.block_repository
+            .forkchoice_update(
+                &mut app.storage,
+                ForkchoiceState {
+                    head_block_hash: head,
+                    safe_block_hash: head,
+                    finalized_block_hash: head,
+                },
+            )
+            .unwrap();
 
         let (queue, state) = umi_app::create(&mut app, 10);
 
@@ -80,7 +90,12 @@ impl TestContext<'static> {
 
         let response = self.engine_get_payload(payload_id).await?;
 
+        // Update forkchoice head
         self.head = response.execution_payload.block_hash;
+        self.inner_engine_forkchoice_update(serde_json::Value::Null)
+            .await
+            .unwrap();
+        self.queue.wait_for_pending_commands().await;
         Ok(self.head)
     }
 
@@ -88,9 +103,28 @@ impl TestContext<'static> {
         &mut self,
     ) -> anyhow::Result<ForkchoiceUpdatedResponseV1> {
         self.timestamp += 1;
-        let head_hash = self.head;
         let timestamp = self.timestamp;
         let prev_randao = B256::random();
+        self.inner_engine_forkchoice_update(
+        serde_json::json!({
+                "timestamp": format!("{timestamp:#x}"),
+                "prevRandao": format!("{prev_randao}"),
+                "suggestedFeeRecipient": "0x4200000000000000000000000000000000000011",
+                "withdrawals": [],
+                "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "transactions": [
+                    hex::encode(DEPOSIT_TX)
+                ],
+                "gasLimit": "0x1c9c380"
+            })
+        ).await
+    }
+
+    async fn inner_engine_forkchoice_update(
+        &self,
+        payload: serde_json::Value,
+    ) -> anyhow::Result<ForkchoiceUpdatedResponseV1> {
+        let head_hash = self.head;
         let request = serde_json::json!({
             "jsonrpc": "2.0",
             "id": 7,
@@ -101,20 +135,14 @@ impl TestContext<'static> {
                     "safeBlockHash": format!("{head_hash}"),
                     "finalizedBlockHash": format!("{head_hash}")
                 },
-                {
-                    "timestamp": format!("{timestamp:#x}"),
-                    "prevRandao": format!("{prev_randao}"),
-                    "suggestedFeeRecipient": "0x4200000000000000000000000000000000000011",
-                    "withdrawals": [],
-                    "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-                    "transactions": [
-                        hex::encode(DEPOSIT_TX)
-                    ],
-                    "gasLimit": "0x1c9c380"
-                }
+                payload,
             ]
         });
         self.handle_request(&request).await
+    }
+
+    pub fn get_head(&self) -> B256 {
+        self.head
     }
 
     pub async fn engine_get_payload(
@@ -326,6 +354,20 @@ impl TestContext<'static> {
             "method": "eth_getBlockByNumber",
             "params": [
                 format!("{number:#x}"),
+                true
+            ]
+        });
+        let block: GetBlockResponse = self.handle_request(&request).await?;
+        Ok(block)
+    }
+
+    pub async fn get_block_by_hash(&self, block_hash: B256) -> anyhow::Result<GetBlockResponse> {
+        let request = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 10,
+            "method": "eth_getBlockByHash",
+            "params": [
+                block_hash,
                 true
             ]
         });

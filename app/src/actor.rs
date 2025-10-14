@@ -52,11 +52,15 @@ impl<'actor, 'app, D: Dependencies<'app>> CommandActor<'actor, 'app, D> {
             Command::StartBlockBuild {
                 payload_attributes,
                 payload_id,
-            } => app.start_block_build(payload_attributes, payload_id),
+            } => {
+                app.start_block_build(payload_attributes, payload_id)?;
+                Ok(())
+            }
             Command::AddTransaction { tx } => {
                 app.add_transaction(*tx);
                 Ok(())
             }
+            Command::ForkchoiceUpdate { state } => app.forkchoice_update(state),
         }
     }
 

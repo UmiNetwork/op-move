@@ -1,11 +1,28 @@
 use {
     crate::{block::ExtendedBlock, payload::PayloadId},
+    alloy::rpc::types::engine::ForkchoiceState,
     std::{
         collections::HashMap,
         sync::{Arc, RwLock},
     },
     umi_shared::primitives::B256,
 };
+
+#[derive(Debug, Default, Clone)]
+pub struct ForkchoiceMemory {
+    state: Arc<RwLock<ForkchoiceState>>,
+}
+
+impl ForkchoiceMemory {
+    pub fn get(&self) -> ForkchoiceState {
+        *self.state.read().unwrap()
+    }
+
+    pub fn set(&self, mut new_state: ForkchoiceState) {
+        let mut old_state = self.state.write().unwrap();
+        std::mem::swap(&mut new_state, &mut old_state);
+    }
+}
 
 /// A storage for blocks that keeps data in memory.
 ///
@@ -14,7 +31,7 @@ use {
 #[derive(Debug, Default, Clone)]
 pub struct BlockMemory {
     hashes: Arc<RwLock<HashMap<B256, Arc<ExtendedBlock>>>>,
-    heights: Arc<RwLock<HashMap<u64, Arc<ExtendedBlock>>>>,
+    heights: Arc<RwLock<HashMap<u64, B256>>>,
     payload_ids: Arc<RwLock<HashMap<PayloadId, Arc<ExtendedBlock>>>>,
 }
 
@@ -32,7 +49,7 @@ impl BlockMemory {
         self.heights
             .write()
             .unwrap()
-            .insert(block.block.header.number, block.clone());
+            .insert(block.block.header.number, block.hash);
         self.payload_ids
             .write()
             .unwrap()
@@ -43,14 +60,7 @@ impl BlockMemory {
 pub trait ReadBlockMemory {
     fn by_hash(&self, hash: B256) -> Option<ExtendedBlock>;
     fn by_payload_id(&self, payload_id: PayloadId) -> Option<ExtendedBlock>;
-    fn by_height(&self, height: u64) -> Option<ExtendedBlock> {
-        self.map_by_height(height, Clone::clone)
-    }
-    fn map_by_height<U>(&self, height: u64, f: impl FnOnce(&'_ ExtendedBlock) -> U) -> Option<U>;
-    fn height(&self) -> Option<u64>;
-    fn last(&self) -> Option<ExtendedBlock> {
-        self.by_height(self.height()?)
-    }
+    fn height_to_hash(&self, height: u64) -> B256;
 }
 
 impl ReadBlockMemory for BlockMemory {
@@ -70,12 +80,12 @@ impl ReadBlockMemory for BlockMemory {
             .map(|b| ExtendedBlock::clone(b))
     }
 
-    fn map_by_height<U>(&self, height: u64, f: impl FnOnce(&'_ ExtendedBlock) -> U) -> Option<U> {
-        self.heights.read().unwrap().get(&height).map(|b| f(b))
-    }
-
-    fn height(&self) -> Option<u64> {
-        let n = self.heights.read().unwrap().len() as u64;
-        n.checked_sub(1)
+    fn height_to_hash(&self, height: u64) -> B256 {
+        self.heights
+            .read()
+            .unwrap()
+            .get(&height)
+            .copied()
+            .expect("Should only ask for heights that exist")
     }
 }
