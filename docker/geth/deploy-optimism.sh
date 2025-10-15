@@ -6,7 +6,6 @@
 # -x Print out command arguments during execution
 # -a Export all variables
 set -euxa
-. /volume/.env
 WORKDIR="/volume/packages/contracts-bedrock"
 DEPLOY_CONFIG="${WORKDIR}/deploy-config/umi.json"
 L1_DEPLOYMENT="${WORKDIR}/deployments/1337-deploy.json"

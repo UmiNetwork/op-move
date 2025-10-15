@@ -10,7 +10,6 @@ server/src/tests/optimism
 server/db
 server/*.log
 
-!.env
 !api
 !app
 !blockchain

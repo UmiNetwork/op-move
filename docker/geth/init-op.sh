@@ -6,7 +6,6 @@
 # -x Print out command arguments during execution
 # -a Export all variables
 set -euxa
-. /volume/.env
 
 # Ephemeral proof-of-authority network with a pre-funded developer account,
 # with automatic mining when there are pending transactions.

@@ -2,8 +2,6 @@
 # Entrypoint of the op-batcher docker container
 
 set -eu
-. /volume/.env
-L1_RPC_URL="http://127.0.0.1:58138"
 FROM_WALLET=$(ls l1_datadir/keystore | grep -o '.\{40\}$')
 FACTORY_DEPLOYER_ADDRESS="0x3fAB184622Dc19b6109349B94811493BF2a45362"
 NONCE=0
