@@ -86,7 +86,9 @@ impl PayloadQueries for RocksDbPayloadQueries {
         let hash = B256::from_slice(slice.as_ref());
         let response = self
             .by_hash(db, hash)?
-            .map_or(MaybePayloadResponse::Unknown, MaybePayloadResponse::Some);
+            .map_or(MaybePayloadResponse::Unknown, |p| {
+                MaybePayloadResponse::Some(Box::new(p))
+            });
         Ok(response)
     }
 

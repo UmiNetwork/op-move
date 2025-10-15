@@ -36,6 +36,7 @@ pub fn genesis_state_changes(
     resolver: &impl MoveResolver,
     storage_trie: &impl StorageTrieRepository,
 ) -> Result<Changes, Error> {
+    let transaction_id = 0;
     let mut result = ChangeSet::new();
     let empty_changes = AccountChangeSet::new();
     let mut account_changes = AccountChangeSet::new();
@@ -55,7 +56,7 @@ pub fn genesis_state_changes(
                     .map(|(index, data)| {
                         let index = U256::from_be_bytes(index.0);
                         let data = U256::from_be_bytes(data.0);
-                        let mut slot = EvmStorageSlot::new(data);
+                        let mut slot = EvmStorageSlot::new(data, transaction_id);
                         // Original value must be marked as 0 to make sure we
                         // know it is now a new value.
                         slot.original_value = U256::ZERO;
@@ -73,6 +74,7 @@ pub fn genesis_state_changes(
             },
             storage,
             status: AccountStatus::Touched,
+            transaction_id,
         };
         let storage_changes = add_account_changes(
             &address,
@@ -220,22 +222,21 @@ fn add_account_changes(
     // We don't need to push anything if the resource already exists.
     let struct_tag = code_hash_struct_tag(&code_hash);
     let code_resource_exists = resource_exists(&struct_tag);
-    if !code_resource_exists {
-        if let Some(code) = &account.info.code {
-            if !code.is_empty() {
-                let struct_tag = code_hash_struct_tag(&code_hash);
-                let code_value = Value::vector_u8(code.original_bytes());
-                let code = ValueSerDeContext::new()
-                    .serialize(&code_value, &CODE_LAYOUT)
-                    .ok()
-                    .flatten()
-                    .expect("EVM code must serialize");
-                let op = Op::New(code.into());
-                // If the same contract is deployed more than once then the same resource
-                // could be added twice, but that's ok we can just skip the duplicate.
-                result.add_resource_op(struct_tag, op).ok();
-            }
-        }
+    if !code_resource_exists
+        && let Some(code) = &account.info.code
+        && !code.is_empty()
+    {
+        let struct_tag = code_hash_struct_tag(&code_hash);
+        let code_value = Value::vector_u8(code.original_bytes());
+        let code = ValueSerDeContext::new()
+            .serialize(&code_value, &CODE_LAYOUT)
+            .ok()
+            .flatten()
+            .expect("EVM code must serialize");
+        let op = Op::New(code.into());
+        // If the same contract is deployed more than once then the same resource
+        // could be added twice, but that's ok we can just skip the duplicate.
+        result.add_resource_op(struct_tag, op).ok();
     }
 
     Ok(storage_changes)

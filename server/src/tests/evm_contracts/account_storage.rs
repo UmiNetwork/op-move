@@ -169,6 +169,6 @@ async fn check_deployed_address(signer: &mut Signer, ctx: &mut TestContext<'stat
 fn get_logged_height(receipt: &TransactionReceipt) -> U256 {
     let log = receipt.inner.inner.logs().first().unwrap();
     let AccountStorageEvents::TheHeight(height) =
-        AccountStorageEvents::decode_raw_log(log.topics(), &log.data().data, true).unwrap();
+        AccountStorageEvents::decode_raw_log(log.topics(), &log.data().data).unwrap();
     height.height
 }

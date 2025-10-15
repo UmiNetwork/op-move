@@ -6,9 +6,7 @@ use {
             TxEnvelope, TxLegacy,
         },
         eips::{Decodable2718, Encodable2718, eip2930::AccessList},
-        primitives::{
-            Address, B256, Bloom, Bytes, Log, LogData, PrimitiveSignature, TxKind, U256, address,
-        },
+        primitives::{Address, B256, Bloom, Bytes, Log, LogData, Signature, TxKind, U256, address},
         rpc::types::TransactionRequest,
     },
     aptos_types::transaction::{EntryFunction, ModuleBundle, Script},
@@ -132,8 +130,14 @@ impl WrapReceipt for NormalizedExtendedTxEnvelope {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NormalizedExtendedTxEnvelope {
-    Canonical(NormalizedEthTransaction),
+    Canonical(Box<NormalizedEthTransaction>),
     DepositedTx(Sealed<TxDeposit>),
+}
+
+impl NormalizedExtendedTxEnvelope {
+    pub fn canonical(tx: NormalizedEthTransaction) -> Self {
+        Self::Canonical(Box::new(tx))
+    }
 }
 
 impl TryFrom<OpTxEnvelope> for NormalizedExtendedTxEnvelope {
@@ -141,9 +145,9 @@ impl TryFrom<OpTxEnvelope> for NormalizedExtendedTxEnvelope {
 
     fn try_from(value: OpTxEnvelope) -> Result<Self, Self::Error> {
         Ok(match value {
-            OpTxEnvelope::Eip1559(tx) => NormalizedExtendedTxEnvelope::Canonical(tx.try_into()?),
-            OpTxEnvelope::Eip2930(tx) => NormalizedExtendedTxEnvelope::Canonical(tx.try_into()?),
-            OpTxEnvelope::Legacy(tx) => NormalizedExtendedTxEnvelope::Canonical(tx.try_into()?),
+            OpTxEnvelope::Eip1559(tx) => NormalizedExtendedTxEnvelope::canonical(tx.try_into()?),
+            OpTxEnvelope::Eip2930(tx) => NormalizedExtendedTxEnvelope::canonical(tx.try_into()?),
+            OpTxEnvelope::Legacy(tx) => NormalizedExtendedTxEnvelope::canonical(tx.try_into()?),
             OpTxEnvelope::Deposit(tx) => NormalizedExtendedTxEnvelope::DepositedTx(tx),
             OpTxEnvelope::Eip7702(_) => Err(InvalidTransactionCause::UnsupportedType)?,
         })
@@ -152,7 +156,7 @@ impl TryFrom<OpTxEnvelope> for NormalizedExtendedTxEnvelope {
 
 impl From<NormalizedEthTransaction> for NormalizedExtendedTxEnvelope {
     fn from(tx: NormalizedEthTransaction) -> Self {
-        NormalizedExtendedTxEnvelope::Canonical(tx)
+        NormalizedExtendedTxEnvelope::canonical(tx)
     }
 }
 
@@ -305,7 +309,7 @@ pub struct NormalizedEthTransaction {
     /// Set to 0 during conversions to minimize encoding burden, so it needs
     /// to be set manually via [`Self::with_gas_input`].
     pub l1_gas_fee_input: L1GasFeeInput,
-    pub signature: PrimitiveSignature,
+    pub signature: Signature,
 }
 
 impl NormalizedEthTransaction {
@@ -477,7 +481,7 @@ impl From<NormalizedEthTransaction> for OpTxEnvelope {
 impl From<NormalizedExtendedTxEnvelope> for OpTxEnvelope {
     fn from(normalized_envelope: NormalizedExtendedTxEnvelope) -> Self {
         match normalized_envelope {
-            NormalizedExtendedTxEnvelope::Canonical(normalized_tx) => normalized_tx.into(),
+            NormalizedExtendedTxEnvelope::Canonical(normalized_tx) => (*normalized_tx).into(),
             NormalizedExtendedTxEnvelope::DepositedTx(sealed_deposit) => {
                 OpTxEnvelope::Deposit(sealed_deposit)
             }
@@ -597,7 +601,7 @@ impl From<TransactionRequest> for NormalizedEthTransaction {
             tx_type: UmiTxType::Eip1559,
             tx_hash: B256::random(),
             l1_gas_fee_input: L1GasFeeInput::default(),
-            signature: PrimitiveSignature::new(U256::ZERO, U256::ZERO, false),
+            signature: Signature::new(U256::ZERO, U256::ZERO, false),
             original_input: None,
         }
     }
@@ -654,7 +658,7 @@ mod tests {
             source_hash: B256::new(hex!("ad2cd5c72f8d6b25e4da049d76790993af597050965f2aee87e12f98f8c2427f")),
             from: address!("4a04a3191b7a44a99bfd3184f0d2c2c82b98b939"),
             to: TxKind::Call(address!("4200000000000000000000000000000000000007")),
-            mint: Some(0x56bc75e2d63100000_u128),
+            mint: 0x56bc75e2d63100000_u128,
             value: U256::from(0x56bc75e2d63100000_u128),
             gas_limit: 0x77d2e_u64,
             is_system_transaction: false,

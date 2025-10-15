@@ -77,7 +77,7 @@ mod tests {
             address,
             Address::from_str("0x0000000000000000000000000000000000000001").unwrap()
         );
-        assert_eq!(storage_slots, Vec::new());
+        assert_eq!(storage_slots, Vec::<U256>::new());
         match block {
             "latest" => assert_eq!(block_number, BlockNumberOrTag::Latest.into()),
             "pending" => assert_eq!(block_number, BlockNumberOrTag::Pending.into()),

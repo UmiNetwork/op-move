@@ -396,7 +396,7 @@ impl TestContext {
             value: U256::from(amount),
             source_hash: FixedBytes::default(),
             from: to,
-            mint: Some(amount.saturating_to()),
+            mint: amount.saturating_to(),
             gas_limit: u64::MAX,
             is_system_transaction: false,
             input: Vec::new().into(),
@@ -775,7 +775,7 @@ pub fn create_transaction_with_value(
     let signed_tx = TxEnvelope::Eip1559(tx.into_signed(signature));
     let umi_tx: UmiTxEnvelope = signed_tx.try_into().unwrap();
     let normalized_eth_tx: NormalizedEthTransaction = umi_tx.try_into().unwrap();
-    NormalizedExtendedTxEnvelope::Canonical(normalized_eth_tx)
+    NormalizedExtendedTxEnvelope::canonical(normalized_eth_tx)
 }
 
 /// Trait for compilation jobs with common functionality

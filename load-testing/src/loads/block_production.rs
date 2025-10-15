@@ -89,7 +89,7 @@ impl BlockProduction {
                         source_hash: alloy::primitives::keccak256(now.to_be_bytes()),
                         from: DEPOSIT_FROM,
                         to: TxKind::Call(DEPOSIT_TO),
-                        mint: None,
+                        mint: 0,
                         value: U256::ZERO,
                         gas_limit: 1_000_000,
                         is_system_transaction: false,

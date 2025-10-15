@@ -28,10 +28,10 @@ fn config_to_env_vars(config: OptionalConfig) -> impl Iterator<Item = (String, S
         }
     }
 
-    if let Some(http) = config.http {
-        if let Some(addr) = http.addr {
-            vars.push((format!("{PREFIX}_HTTP_ADDR"), addr.to_string()));
-        }
+    if let Some(http) = config.http
+        && let Some(addr) = http.addr
+    {
+        vars.push((format!("{PREFIX}_HTTP_ADDR"), addr.to_string()));
     }
 
     if let Some(db) = config.db {

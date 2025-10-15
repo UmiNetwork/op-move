@@ -99,6 +99,6 @@ async fn test_blockhash_evm_contract() -> anyhow::Result<()> {
 fn get_logged_hash(receipt: &TransactionReceipt) -> B256 {
     let log = receipt.inner.inner.logs().first().unwrap();
     let BlockHashEvents::TheHash(hash) =
-        BlockHashEvents::decode_raw_log(log.topics(), &log.data().data, true).unwrap();
+        BlockHashEvents::decode_raw_log(log.topics(), &log.data().data).unwrap();
     hash.hash
 }

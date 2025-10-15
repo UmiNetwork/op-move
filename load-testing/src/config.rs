@@ -52,7 +52,7 @@ impl LoadTestConfig {
         })
     }
 
-    pub async fn binary_path(&self) -> anyhow::Result<Cow<PathBuf>> {
+    pub async fn binary_path(&self) -> anyhow::Result<Cow<'_, PathBuf>> {
         match &self.binary {
             BinaryPath::Existing(path) => Ok(Cow::Borrowed(path)),
             BinaryPath::Compile => {

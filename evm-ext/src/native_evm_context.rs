@@ -76,9 +76,9 @@ impl<'a> NativeEVMContext<'a> {
 
     pub fn block_env(&self) -> BlockEnv {
         BlockEnv {
-            number: self.block_header.number,
+            number: U256::from(self.block_header.number),
             beneficiary: Address::ZERO,
-            timestamp: self.block_header.timestamp,
+            timestamp: U256::from(self.block_header.timestamp),
             gas_limit: u64::MAX,
             basefee: 0,
             difficulty: U256::ZERO,

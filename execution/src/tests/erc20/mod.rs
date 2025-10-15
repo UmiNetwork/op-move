@@ -180,7 +180,7 @@ fn deploy_mock_erc20(ctx: &mut TestContext, mint_amount: U256) -> Address {
     // We just need a mock to get proper calldata
     let mock_provider = providers::builder::<AnyNetwork>()
         .with_recommended_fillers()
-        .on_http("http://localhost:1234".parse().unwrap());
+        .connect_http("http://localhost:1234".parse().unwrap());
     let deploy = Erc20::deploy_builder(
         &mock_provider,
         "Gold".into(),

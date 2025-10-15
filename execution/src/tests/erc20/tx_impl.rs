@@ -95,13 +95,13 @@ impl interface::Erc20Token for TxImpl {
     fn name(ctx: &TestContext, token_address: Address) -> String {
         let method = Erc20Methods::Name(nameCall {});
         let output = erc20_view_call(ctx, token_address, method);
-        String::abi_decode(&output, true).unwrap()
+        String::abi_decode(&output).unwrap()
     }
 
     fn symbol(ctx: &TestContext, token_address: Address) -> String {
         let method = Erc20Methods::Symbol(symbolCall {});
         let output = erc20_view_call(ctx, token_address, method);
-        String::abi_decode(&output, true).unwrap()
+        String::abi_decode(&output).unwrap()
     }
 }
 
@@ -119,7 +119,7 @@ fn execute_erc20_method(
         .into();
     let outcome = ctx
         .execute_tx(&TestTransaction::new(
-            NormalizedExtendedTxEnvelope::Canonical(tx),
+            NormalizedExtendedTxEnvelope::canonical(tx),
         ))
         .unwrap();
     ctx.state.apply(outcome.changes.move_vm).unwrap();

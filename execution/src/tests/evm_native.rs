@@ -32,7 +32,7 @@ fn test_evm() {
     let mint_amount = parse_ether("1").unwrap();
     let provider = providers::builder::<AnyNetwork>()
         .with_recommended_fillers()
-        .on_http("http://localhost:1234".parse().unwrap());
+        .connect_http("http://localhost:1234".parse().unwrap());
     let deploy = Erc20::deploy_builder(
         &provider,
         "Gold".into(),

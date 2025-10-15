@@ -111,7 +111,7 @@ pub struct AlreadyStarted;
 
 pub enum MaybePayloadResponse {
     Unknown,
-    Some(PayloadResponse),
+    Some(Box<PayloadResponse>),
     Delayed(broadcast::Receiver<PayloadResponse>),
 }
 
@@ -122,7 +122,7 @@ impl MaybePayloadResponse {
 
     pub fn unwrap(self) -> PayloadResponse {
         match self {
-            Self::Some(response) => response,
+            Self::Some(response) => *response,
             Self::Unknown | Self::Delayed(_) => {
                 panic!("Unwrap unknown or delayed payload response")
             }

@@ -61,7 +61,7 @@ impl PayloadQueries for InMemoryPayloadQueries {
             .block_memory
             .by_payload_id(id)
             .map_or(MaybePayloadResponse::Unknown, |block| {
-                MaybePayloadResponse::Some(Self::block_into_payload(storage, block))
+                MaybePayloadResponse::Some(Box::new(Self::block_into_payload(storage, block)))
             });
         Ok(response)
     }

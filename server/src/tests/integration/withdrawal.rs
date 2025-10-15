@@ -35,7 +35,7 @@ pub async fn withdraw_eth_to_l1() -> Result<()> {
 
     let l1_provider = ProviderBuilder::new()
         .wallet(EthereumWallet::from(prefunded_wallet.clone()))
-        .on_http(Url::parse(&var("L1_RPC_URL")?)?);
+        .connect_http(Url::parse(&var("L1_RPC_URL")?)?);
 
     let pre_finalize_balance = l1_provider.get_balance(prefunded_address).await?;
 
@@ -51,7 +51,7 @@ pub async fn withdraw_eth_to_l1() -> Result<()> {
 }
 
 pub async fn withdraw_to_l1(withdraw_tx_hash: B256, l1_wallet: PrivateKeySigner) -> Result<()> {
-    let l2_provider = ProviderBuilder::new().on_http(Url::parse(L2_RPC_URL)?);
+    let l2_provider = ProviderBuilder::new().connect_http(Url::parse(L2_RPC_URL)?);
     let rx = l2_provider
         .get_transaction_receipt(withdraw_tx_hash)
         .await?
@@ -65,7 +65,7 @@ pub async fn withdraw_to_l1(withdraw_tx_hash: B256, l1_wallet: PrivateKeySigner)
         .find(|l| l.address() == WITHDRAW_ADDRESS)
         .unwrap();
     let event = withdraw_event();
-    let decoded = event.decode_log(withdrawal_log.data(), true).unwrap();
+    let decoded = event.decode_log(withdrawal_log.data()).unwrap();
     let (withdrawal_hash, _) = decoded.body.last().unwrap().as_fixed_bytes().unwrap();
 
     // `storage_slot` is calculated based on the Solidity convention for how maps work.
@@ -74,7 +74,7 @@ pub async fn withdraw_to_l1(withdraw_tx_hash: B256, l1_wallet: PrivateKeySigner)
 
     let l1_provider = ProviderBuilder::new()
         .wallet(EthereumWallet::from(l1_wallet))
-        .on_http(Url::parse(&var("L1_RPC_URL")?)?);
+        .connect_http(Url::parse(&var("L1_RPC_URL")?)?);
 
     // Contract used on the L1 for withdrawals
     let portal_address = Address::from_str(OPTIMISM_PORTAL_PROXY)?;
@@ -93,7 +93,6 @@ pub async fn withdraw_to_l1(withdraw_tx_hash: B256, l1_wallet: PrivateKeySigner)
             .call()
             .await
             .unwrap()
-            ._0
             .saturating_to();
 
         // Timeout to prevent this from being an infinite loop if something breaks
@@ -114,18 +113,12 @@ pub async fn withdraw_to_l1(withdraw_tx_hash: B256, l1_wallet: PrivateKeySigner)
     }
 
     // Get the latest L2 block height (according to the L1 contract).
-    let l2_output_index = l2_oracle_contract
-        .latestOutputIndex()
-        .call()
-        .await
-        .unwrap()
-        ._0;
+    let l2_output_index = l2_oracle_contract.latestOutputIndex().call().await.unwrap();
     let l2_output = l2_oracle_contract
         .getL2Output(l2_output_index)
         .call()
         .await
-        .unwrap()
-        ._0;
+        .unwrap();
     let l2_block_number = l2_output.l2BlockNumber as u64;
 
     // Look up the corresponding L2 block
