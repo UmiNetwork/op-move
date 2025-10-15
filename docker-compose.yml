@@ -6,8 +6,13 @@ services:
         - type=registry,ref=ghcr.io/uminetwork/op-node:latest-cache
       dockerfile: docker/shared/Dockerfile
       target: op-node
+    env_file:
+      - .env
     environment:
       JWT_SECRET: "f3099a1d969c4f5aba1a94434c368a84f8d950121feb4a398a67f78453853d1d"
+      L1_RPC_URL: "http://geth:58138"
+      L2_RPC_HTTP_URL: "http://op-move:8545"
+      L2_RPC_AUTH_URL: "http://op-move:8551"
     networks:
       - localnet
     volumes:
@@ -20,6 +25,12 @@ services:
         - type=registry,ref=ghcr.io/uminetwork/op-batcher:latest-cache
       dockerfile: docker/shared/Dockerfile
       target: op-batcher
+    env_file:
+      - .env
+    environment:
+      L1_RPC_URL: "http://geth:58138"
+      L2_RPC_URL: "http://op-move:8545"
+      ROLLUP_RPC_URL: "http://op-node:8547"
     networks:
       - localnet
     volumes:
@@ -32,6 +43,11 @@ services:
         - type=registry,ref=ghcr.io/uminetwork/op-proposer:latest-cache
       dockerfile: docker/shared/Dockerfile
       target: op-proposer
+    env_file:
+      - .env
+    environment:
+      L1_RPC_URL: "http://geth:58138"
+      ROLLUP_RPC_URL: "http://op-node:8547"
     networks:
       - localnet
     volumes:

@@ -70,7 +70,6 @@ COPY --from=optimism /op-proposer /usr/local/bin/
 
 # Copy entrypoint with run privileges
 COPY --chmod=0777 docker/op-proposer/entrypoint.sh ./
-COPY .env ./
 COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
 
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
@@ -90,7 +89,6 @@ COPY --from=optimism /op-batcher /usr/local/bin/
 
 # Copy entrypoint with run privileges
 COPY --chmod=0777 docker/op-batcher/entrypoint.sh ./
-COPY .env ./
 COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
 
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
@@ -148,9 +146,6 @@ COPY --from=go-ethereum /geth /usr/local/bin/
 COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
 COPY --chmod=0777 docker/geth/*.sh server/src/tests/config.sh ./
 
-# Copy environment variables
-COPY .env ./
-
 # Set entrypoint to a script that launches geth
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
 
@@ -169,8 +164,5 @@ COPY --from=optimism /op-node /usr/local/bin/
 
 # Copy entrypoint with run privileges
 COPY --chmod=0777 docker/op-node/entrypoint.sh ./
-
-# Copy ENV file that include Optimism wallet addresses
-COPY .env ./
 
 ENTRYPOINT [ "/volume/entrypoint.sh" ]

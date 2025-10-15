@@ -2,10 +2,7 @@
 # Entrypoint of the op-proposer docker container
 
 set -eux
-. /volume/.env
 SHARED="/volume/shared"
-L1_RPC_URL="http://geth:58138"
-ROLLUP_RPC_URL="http://op-node:8547"
 L1_DEPLOYMENT="${SHARED}/1337-deploy.json"
 TIMEOUT_SECS=1500
 
