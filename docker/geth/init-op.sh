@@ -14,7 +14,7 @@ geth \
   --datadir "${L1_DATADIR}" \
   --rpc.allow-unprotected-txs \
   --http \
-  --http.addr 0.0.0.0 \
+  --http.addr 127.0.0.1 \
   --http.port 58138 \
   --http.corsdomain '*' \
   --http.api 'web3,debug,eth,txpool,net,engine' \

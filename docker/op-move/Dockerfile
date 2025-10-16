@@ -35,24 +35,24 @@ WORKDIR /volume
 
 RUN \
   # Install run dependencies
-  apk add --no-cache clang lld curl build-base linux-headers git openssl-dev \
+  apk add --no-cache bash clang lld curl build-base linux-headers git openssl-dev \
   # Clean up
-  && rm -rf /tmp/* /var/cache/apk/* \
-  # Create directory that is used in relative paths to Move framework snapshot files
-  && mkdir genesis
+  && rm -rf /tmp/* /var/cache/apk/*
 
 # Copy Move framework snapshot files into expected paths
-COPY genesis/aptos.mrb genesis/aptos.mrb
-COPY genesis/sui.mrb genesis/sui.mrb
+COPY genesis/aptos.mrb genesis/sui.mrb genesis/
 
 # Copy L2 genesis config into expected path
 COPY execution/src/tests/res/l2_genesis_tests.json server/src/tests/optimism/packages/contracts-bedrock/deployments/genesis.json
 COPY execution/src/tests/res/bridged_tokens_test.json execution/src/tests/res/bridged_tokens_test.json
 
-# Copy built binary
-COPY --from=build /volume/op-move ./
+# Copy script that waits for other services availability
+COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
 
 # Copy entrypoint with run privileges
 COPY --chmod=0777 docker/op-move/entrypoint.sh ./
+
+# Copy built binary
+COPY --from=build /volume/op-move ./
 
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
