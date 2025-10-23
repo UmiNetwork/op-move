@@ -51,10 +51,19 @@ impl<D: DbWithRoot> State for EthTrieState<D> {
         let root = self
             .trie_mut()
             .insert_change_set_into_merkle_trie(&changes, rng_seed.0)?;
-        self.state_root.replace(root);
-        self.db()
-            .put_root(root)
-            .map_err(|e| TrieError::DB(e.to_string()))
+        self.switch_state_root(root)
+    }
+
+    fn switch_state_root(&mut self, root: B256) -> Result<(), Self::Err> {
+        let old_root = self.state_root.replace(root);
+
+        // Only write to the DB if the root is new.
+        if old_root != Some(root) {
+            self.db()
+                .put_root(root)
+                .map_err(|e| TrieError::DB(e.to_string()))?;
+        }
+        Ok(())
     }
 
     fn resolver(&self) -> &(impl MoveResolver + TableResolver) {
@@ -64,6 +73,4 @@ impl<D: DbWithRoot> State for EthTrieState<D> {
     fn state_root(&self) -> B256 {
         self.state_root.unwrap_or_default()
     }
-
-    // TODO: new method for switching the state root without changes (used with forkchoice updates)
 }

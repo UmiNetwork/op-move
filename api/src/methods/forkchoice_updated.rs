@@ -59,7 +59,15 @@ async fn inner_execute_v3<'reader>(
 
     validate_forkchoice_state(&forkchoice_state, app)?;
 
-    // TODO If proposed head block <= current head block then early exit with valid response.
+    // The engine-api specification says:
+    // > Client software MAY skip an update of the forkchoice state and MUST NOT begin a payload build
+    // > process if `forkchoiceState.headBlockHash` references a VALID ancestor of the head of canonical
+    // > chain, i.e. the ancestor passed payload validation process and deemed VALID.
+    // However, in the [op-stack documentation](https://specs.optimism.io/protocol/exec-engine.html)
+    // it says:
+    // > Nodes may apply L2 blocks out of band ahead of time, and then reorg when L1 data conflicts.
+    // This implies op-node is always allowed to reorg the chain, so we are skipping the check
+    // if the proposed head is a valid ancestor of the current canonical chain.
 
     let head_block_hash = forkchoice_state.head_block_hash;
 
@@ -87,6 +95,14 @@ async fn inner_execute_v3<'reader>(
             app.payload(payload_id)?,
             umi_blockchain::payload::MaybePayloadResponse::Unknown
         ) {
+            // Per the engine-api spec we must:
+            // > Verify that `payloadAttributes.timestamp` is greater than timestamp of
+            // > a block referenced by `forkchoiceState.headBlockHash` and return
+            // `-38003: Invalid payload attributes` on failure.
+            let head_block = app.block_by_hash(head_block_hash, false)?;
+            if attrs.timestamp <= head_block.0.header.timestamp {
+                return Err(JsonRpcError::invalid_attributes());
+            }
             let msg = Command::StartBlockBuild {
                 payload_attributes: attrs,
                 payload_id,

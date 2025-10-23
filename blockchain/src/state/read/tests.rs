@@ -28,6 +28,10 @@ impl State for StateSpy {
         self.0.apply(changes)
     }
 
+    fn switch_state_root(&mut self, root: B256) -> Result<(), Self::Err> {
+        self.0.switch_state_root(root)
+    }
+
     fn resolver(&self) -> &(impl MoveResolver + TableResolver) {
         self.0.resolver()
     }

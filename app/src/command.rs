@@ -308,12 +308,34 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
         &mut self,
         state: ForkchoiceState,
     ) -> Result<(), UnrecoverableAppFailure> {
+        let head_block = self
+            .block_repository
+            .by_hash(&self.storage, state.head_block_hash)
+            .map_err(|e| {
+                tracing::error!(
+                    "Failed to look up new canonical block hash during forkchoice update: {e:?}"
+                );
+                UnrecoverableAppFailure
+            })?
+            .ok_or_else(|| {
+                tracing::error!(
+                    "New canonical head block {:?} not found.",
+                    state.head_block_hash
+                );
+                UnrecoverableAppFailure
+            })?;
         self.block_repository
             .forkchoice_update(&mut self.storage, state)
             .map_err(|e| {
                 tracing::error!("Failed to update forkchoice state: {e:?}");
                 UnrecoverableAppFailure
-            })
+            })?;
+        let new_state_root = head_block.block.header.state_root;
+        self.state.switch_state_root(new_state_root).map_err(|e| {
+            tracing::error!("Failed to update state root during forkchoice update: {e:?}");
+            UnrecoverableAppFailure
+        })?;
+        Ok(())
     }
 
     pub fn genesis_update(
