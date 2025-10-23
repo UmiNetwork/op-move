@@ -12,9 +12,11 @@ use {
     },
     metrics::histogram,
     umi_blockchain::{
-        block::{BaseGasFee, Block, BlockHash, BlockRepository, ExtendedBlock, Header},
+        block::{
+            BaseGasFee, Block, BlockHash, BlockQueries, BlockRepository, ExtendedBlock, Header,
+        },
         payload::{PayloadId, PayloadQueries},
-        receipt::{ExtendedReceipt, ReceiptRepository},
+        receipt::{ExtendedReceipt, ReceiptQueries, ReceiptRepository},
         transaction::{ExtendedTransaction, TransactionRepository},
     },
     umi_evm_ext::{
@@ -84,22 +86,6 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 .collect::<Vec<_>>()
         };
 
-        let new_transactions = transactions
-            .into_iter()
-            .filter_map(|tx|
-                // Do not include transactions we have already processed before
-                match self.receipt_repository.contains(&self.receipt_memory, tx.tx_hash()) {
-                    Ok(false) => Some(Ok(tx)),
-                    Ok(true) => None,
-                    Err(e) => Some(Err(e)),
-                }
-            )
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| {
-                tracing::error!("Failure during `start_block_build`. Receipt queries failed: {e:?}");
-                UnrecoverableAppFailure
-            })?;
-
         let parent = self
             .block_repository
             .get_forkchoice_state(&self.storage)
@@ -111,17 +97,36 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 UnrecoverableAppFailure
             })?
             .expect("Block repository is non-empty (must always at least contain genesis)");
-        // TODO: also check block time (preferrably dynamically from a config) and
-        // ensure build timeout relative to it
-        if parent.block.header.timestamp >= attributes.timestamp.as_limbs()[0] {
-            tracing::error!(
-                "Encountered non-monotonic timestamp. Parent block had {}, received {} in attributes",
-                parent.block.header.timestamp,
-                attributes.timestamp
-            );
-            in_progress_payloads.abort_id(&id);
-            return Ok(None);
-        }
+
+        let new_transactions = transactions
+            .into_iter()
+            .filter_map(|tx|
+                // Do not include transactions we have already processed before
+                match self.receipt_repository.contains(&self.receipt_memory, tx.tx_hash()) {
+                    Ok(false) => Some(Ok(tx)),
+                    Ok(true) => {
+                        // Double check the transaction exists in the current fork
+                        let receipt = self.receipt_queries.by_transaction_hash(&self.receipt_memory_reader, tx.tx_hash()).ok().flatten();
+                        let Some(tx_block_hash) = receipt.and_then(|rx| rx.inner.block_hash) else {
+                            return Some(Ok(tx));
+                        };
+
+                        let is_canonical = self.block_queries.ancestor_check(&self.storage_reader, tx_block_hash, parent.hash).ok().unwrap_or(false);
+                        if is_canonical {
+                            None
+                        } else {
+                            Some(Ok(tx))
+                        }
+                    }
+                    Err(e) => Some(Err(e)),
+                }
+            )
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| {
+                tracing::error!("Failure during `start_block_build`. Receipt queries failed: {e:?}");
+                UnrecoverableAppFailure
+            })?;
+
         #[cfg(feature = "op-upgrade")]
         if let Some(params) = &attributes.eip1559_params {
             self.gas_fee.set_parameters_from_attrs(params);

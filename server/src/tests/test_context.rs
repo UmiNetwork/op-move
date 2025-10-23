@@ -35,6 +35,7 @@ pub struct TestContext<'test> {
     pub queue: CommandQueue,
     pub reader: ApplicationReader<'test, dependency::ReaderDependency>,
     head: B256,
+    finalized_hash: B256,
     pub timestamp: u64,
     path: &'static str,
 }
@@ -71,6 +72,7 @@ impl TestContext<'static> {
             queue,
             reader,
             head,
+            finalized_hash: head,
             timestamp,
             path: "/",
         };
@@ -91,12 +93,28 @@ impl TestContext<'static> {
         let response = self.engine_get_payload(payload_id).await?;
 
         // Update forkchoice head
-        self.head = response.execution_payload.block_hash;
-        self.inner_engine_forkchoice_update(serde_json::Value::Null)
-            .await
-            .unwrap();
-        self.queue.wait_for_pending_commands().await;
+        self.update_head_block(response.execution_payload.block_hash)
+            .await?;
         Ok(self.head)
+    }
+
+    pub async fn update_head_block(&mut self, new_head_hash: B256) -> anyhow::Result<()> {
+        self.head = new_head_hash;
+        self.inner_engine_forkchoice_update(serde_json::Value::Null)
+            .await?;
+        self.queue.wait_for_pending_commands().await;
+        Ok(())
+    }
+
+    pub async fn advance_finalized_block(
+        &mut self,
+        new_finalized_hash: B256,
+    ) -> anyhow::Result<()> {
+        self.finalized_hash = new_finalized_hash;
+        self.inner_engine_forkchoice_update(serde_json::Value::Null)
+            .await?;
+        self.queue.wait_for_pending_commands().await;
+        Ok(())
     }
 
     pub async fn engine_forkchoice_update(
@@ -125,6 +143,7 @@ impl TestContext<'static> {
         payload: serde_json::Value,
     ) -> anyhow::Result<ForkchoiceUpdatedResponseV1> {
         let head_hash = self.head;
+        let finalized_hash = self.finalized_hash;
         let request = serde_json::json!({
             "jsonrpc": "2.0",
             "id": 7,
@@ -133,7 +152,7 @@ impl TestContext<'static> {
                 {
                     "headBlockHash": format!("{head_hash}"),
                     "safeBlockHash": format!("{head_hash}"),
-                    "finalizedBlockHash": format!("{head_hash}")
+                    "finalizedBlockHash": format!("{finalized_hash}")
                 },
                 payload,
             ]
@@ -359,6 +378,17 @@ impl TestContext<'static> {
         });
         let block: GetBlockResponse = self.handle_request(&request).await?;
         Ok(block)
+    }
+
+    pub async fn get_latest_block_number(&self) -> anyhow::Result<u64> {
+        let request = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 10,
+            "method": "eth_blockNumber",
+            "params": []
+        });
+        let result: U256 = self.handle_request(&request).await?;
+        Ok(result.saturating_to())
     }
 
     pub async fn get_block_by_hash(&self, block_hash: B256) -> anyhow::Result<GetBlockResponse> {
