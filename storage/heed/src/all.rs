@@ -3,9 +3,10 @@ use {
     heed::{BytesDecode, BytesEncode, RoTxn, RwTxn, types::LazyDecode},
 };
 
-pub const DATABASES: [&str; 10] = [
+pub const DATABASES: [&str; 11] = [
     block::DB,
     block::HEIGHT_DB,
+    block::FC_DB,
     state::DB,
     trie::DB,
     trie::ROOT_DB,

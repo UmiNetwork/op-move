@@ -41,6 +41,10 @@ impl<R, D: DB> EthTrieStateQueries<R, D> {
 }
 
 impl<R: HashToStateRootIndex, D: DB> EthTrieStateQueries<R, D> {
+    pub fn push_state_root(&self, block_hash: B256, state_root: B256) -> Result<(), R::Err> {
+        self.index.push_state_root(block_hash, state_root)
+    }
+
     fn root_by_hash(&self, hash: B256) -> Result<B256, state::Error> {
         if hash == B256::ZERO {
             return Ok(self.genesis_state_root);

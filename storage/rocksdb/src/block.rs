@@ -1,9 +1,9 @@
 use {
     crate::{
-        generic::{FromKey, FromValue, ToKey, ToValue},
+        generic::{FromValue, ToKey, ToValue},
         transaction,
     },
-    rocksdb::{AsColumnFamilyRef, DB as RocksDb, IteratorMode, WriteBatchWithTransaction},
+    rocksdb::{AsColumnFamilyRef, DB as RocksDb, WriteBatchWithTransaction},
     std::{marker::PhantomData, sync::Arc},
     umi_blockchain::{
         block::{BlockQueries, BlockRepository, BlockResponse, ExtendedBlock, ForkchoiceState},
@@ -14,6 +14,8 @@ use {
 
 pub const BLOCK_COLUMN_FAMILY: &str = "block";
 pub const HEIGHT_COLUMN_FAMILY: &str = "height";
+pub const FC_COLUMN_FAMILY: &str = "forkchoice";
+const FC_KEY: &str = "forkchoice";
 
 #[derive(Debug)]
 pub struct RocksDbBlockRepository<'db>(PhantomData<&'db ()>);
@@ -49,10 +51,12 @@ impl BlockRepository for RocksDbBlockRepository<'_> {
 
     fn forkchoice_update(
         &mut self,
-        storage: &mut Self::Storage,
+        db: &mut Self::Storage,
         state: ForkchoiceState,
     ) -> Result<(), Self::Err> {
-        todo!()
+        let mut batch = WriteBatchWithTransaction::<false>::default();
+        batch.put_cf(&fc_cf(db), FC_KEY, state.to_value());
+        db.write(batch)
     }
 
     fn by_hash(&self, db: &Self::Storage, hash: B256) -> Result<Option<ExtendedBlock>, Self::Err> {
@@ -61,8 +65,12 @@ impl BlockRepository for RocksDbBlockRepository<'_> {
             .map(|bytes| ExtendedBlock::from_value(bytes.as_ref())))
     }
 
-    fn get_forkchoice_state(&self, storage: &Self::Storage) -> Result<ForkchoiceState, Self::Err> {
-        todo!()
+    fn get_forkchoice_state(&self, db: &Self::Storage) -> Result<ForkchoiceState, Self::Err> {
+        let state = db
+            .get_pinned_cf(&fc_cf(db), FC_KEY)?
+            .map(|v| ForkchoiceState::from_value(&v))
+            .unwrap_or_default();
+        Ok(state)
     }
 }
 
@@ -116,12 +124,19 @@ impl BlockQueries for RocksDbBlockQueries {
         }))
     }
 
-    fn get_forkchoice_state(&self, storage: &Self::Storage) -> Result<ForkchoiceState, Self::Err> {
-        todo!()
+    fn get_forkchoice_state(&self, db: &Self::Storage) -> Result<ForkchoiceState, Self::Err> {
+        let state = db
+            .get_pinned_cf(&fc_cf(db), FC_KEY)?
+            .map(|v| ForkchoiceState::from_value(&v))
+            .unwrap_or_default();
+        Ok(state)
     }
 
-    fn height_to_hash(&self, storage: &Self::Storage, height: u64) -> Result<B256, Self::Err> {
-        todo!()
+    fn height_to_hash(&self, db: &Self::Storage, height: u64) -> Result<B256, Self::Err> {
+        let maybe_hash = db
+            .get_pinned_cf(&fc_cf(db), height.to_key())?
+            .map(|hash| B256::from_slice(hash.as_ref()));
+        Ok(maybe_hash.expect("DB access is protected so queried heights always map to hashes"))
     }
 }
 
@@ -132,5 +147,10 @@ pub(crate) fn block_cf(db: &RocksDb) -> impl AsColumnFamilyRef {
 
 fn height_cf(db: &RocksDb) -> impl AsColumnFamilyRef {
     db.cf_handle(HEIGHT_COLUMN_FAMILY)
+        .expect("Column family should exist")
+}
+
+fn fc_cf(db: &RocksDb) -> impl AsColumnFamilyRef {
+    db.cf_handle(FC_COLUMN_FAMILY)
         .expect("Column family should exist")
 }
