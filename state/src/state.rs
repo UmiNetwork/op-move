@@ -51,7 +51,10 @@ impl<D: DbWithRoot> State for EthTrieState<D> {
         let root = self
             .trie_mut()
             .insert_change_set_into_merkle_trie(&changes, rng_seed.0)?;
-        self.switch_state_root(root)
+        self.state_root.replace(root);
+        self.db()
+            .put_root(root)
+            .map_err(|e| TrieError::DB(e.to_string()))
     }
 
     fn switch_state_root(&mut self, root: B256) -> Result<(), Self::Err> {
@@ -62,7 +65,12 @@ impl<D: DbWithRoot> State for EthTrieState<D> {
             self.db()
                 .put_root(root)
                 .map_err(|e| TrieError::DB(e.to_string()))?;
+
+            // Update the resolver
+            let trie = EthTrie::try_from_opt_root(self.db().clone(), Some(root))?;
+            self.resolver = EthTrieResolver::new(trie);
         }
+
         Ok(())
     }
 
