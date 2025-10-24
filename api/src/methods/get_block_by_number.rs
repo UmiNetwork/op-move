@@ -130,7 +130,10 @@ mod tests {
                 finalized_block_hash: block_hash,
             };
             state_channel
-                .send(Command::ForkchoiceUpdate { state: fc })
+                .send(Command::ForkchoiceUpdate {
+                    state: fc,
+                    payload_id: None,
+                })
                 .await
                 .unwrap();
             state_channel.reserve_many(10).await.unwrap();
@@ -175,7 +178,10 @@ mod tests {
                 finalized_block_hash: block_hash,
             };
             state_channel
-                .send(Command::ForkchoiceUpdate { state: fc })
+                .send(Command::ForkchoiceUpdate {
+                    state: fc,
+                    payload_id: None,
+                })
                 .await
                 .unwrap();
             state_channel.reserve_many(10).await.unwrap();

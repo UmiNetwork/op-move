@@ -120,7 +120,7 @@ mod tests {
             let fc = ForkchoiceState {
                 head_block_hash: block_hash, safe_block_hash: block_hash, finalized_block_hash: block_hash,
             };
-            state_channel.send(Command::ForkchoiceUpdate { state: fc }).await.unwrap();
+            state_channel.send(Command::ForkchoiceUpdate { state: fc, payload_id: None }).await.unwrap();
             state_channel.reserve_many(10).await.unwrap();
           }
 
@@ -183,7 +183,7 @@ mod tests {
             let fc = ForkchoiceState {
                 head_block_hash: block_hash, safe_block_hash: block_hash, finalized_block_hash: block_hash,
             };
-            state_channel.send(Command::ForkchoiceUpdate { state: fc }).await.unwrap();
+            state_channel.send(Command::ForkchoiceUpdate { state: fc, payload_id: None }).await.unwrap();
             state_channel.reserve_many(10).await.unwrap();
           }
 

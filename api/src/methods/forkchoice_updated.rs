@@ -71,27 +71,11 @@ async fn inner_execute_v3<'reader>(
 
     let head_block_hash = forkchoice_state.head_block_hash;
 
-    // Update forkchoice state
-    let msg = Command::ForkchoiceUpdate {
-        state: ForkchoiceState {
-            head_block_hash: forkchoice_state.head_block_hash,
-            safe_block_hash: forkchoice_state.safe_block_hash,
-            finalized_block_hash: forkchoice_state.finalized_block_hash,
-        },
-    };
-    queue.send(msg).await;
-
-    let payload_status = PayloadStatusV1 {
-        status: Status::Valid,
-        latest_valid_hash: Some(head_block_hash),
-        validation_error: None,
-    };
-
     // If `payload_attributes` are present then tell state to start producing a new block
-    let payload_id = if let Some(attrs) = payload_attributes {
+    let (payload_id, block_build_command) = if let Some(attrs) = payload_attributes {
         let payload_id =
             payload_id_generator.new_payload_id(attrs.to_payload_id_input(&head_block_hash));
-        if matches!(
+        let block_build_command = if matches!(
             app.payload(payload_id)?,
             umi_blockchain::payload::MaybePayloadResponse::Unknown
         ) {
@@ -103,15 +87,38 @@ async fn inner_execute_v3<'reader>(
             if attrs.timestamp <= head_block.0.header.timestamp {
                 return Err(JsonRpcError::invalid_attributes());
             }
-            let msg = Command::StartBlockBuild {
+            Some(Command::StartBlockBuild {
                 payload_attributes: attrs,
                 payload_id,
-            };
-            queue.send(msg).await;
-        }
-        Some(PayloadId(payload_id))
+            })
+        } else {
+            None
+        };
+        (Some(PayloadId(payload_id)), block_build_command)
     } else {
-        None
+        (None, None)
+    };
+
+    // Update forkchoice state
+    let msg = Command::ForkchoiceUpdate {
+        state: ForkchoiceState {
+            head_block_hash: forkchoice_state.head_block_hash,
+            safe_block_hash: forkchoice_state.safe_block_hash,
+            finalized_block_hash: forkchoice_state.finalized_block_hash,
+        },
+        payload_id: block_build_command.as_ref().and_then(Command::payload_id),
+    };
+    queue.send(msg).await;
+
+    // Send block build command after forkchoice command
+    if let Some(msg) = block_build_command {
+        queue.send(msg).await;
+    }
+
+    let payload_status = PayloadStatusV1 {
+        status: Status::Valid,
+        latest_valid_hash: Some(head_block_hash),
+        validation_error: None,
     };
 
     Ok(ForkchoiceUpdatedResponseV1 {

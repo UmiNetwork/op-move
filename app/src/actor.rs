@@ -60,7 +60,9 @@ impl<'actor, 'app, D: Dependencies<'app>> CommandActor<'actor, 'app, D> {
                 app.add_transaction(*tx);
                 Ok(())
             }
-            Command::ForkchoiceUpdate { state } => app.forkchoice_update(state),
+            Command::ForkchoiceUpdate { state, payload_id } => {
+                app.forkchoice_update(state, payload_id)
+            }
         }
     }
 

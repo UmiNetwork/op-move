@@ -309,10 +309,21 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
         self.mem_pool.insert(tx);
     }
 
+    #[tracing::instrument(level = "debug", skip(self))]
     pub(crate) fn forkchoice_update(
         &mut self,
         state: ForkchoiceState,
+        payload_id: Option<PayloadId>,
     ) -> Result<(), UnrecoverableAppFailure> {
+        // We include the payload id here so that it can be marked as in-progress right away
+        // even though the block build job hasn't started yet. This prevents getting an
+        // Unknown payload id error if a `get_payload` request is sent before this
+        // function finishes.
+        if let Some(id) = payload_id {
+            self.payload_queries
+                .get_in_progress()
+                .forkchoice_insert_id(id);
+        }
         let head_block = self
             .block_repository
             .by_hash(&self.storage, state.head_block_hash)
@@ -335,7 +346,15 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 tracing::error!("Failed to update forkchoice state: {e:?}");
                 UnrecoverableAppFailure
             })?;
-        let new_state_root = head_block.block.header.state_root;
+        let new_state_root = if head_block.block.header.number == 0 {
+            // For the genesis block we take the state root from the genesis config instead
+            // of the block header because the header root only includes the EVM initial state
+            // to make the rest of OP Stack happy, but in reality we do want to use the state which
+            // also includes all the initial Move contracts.
+            self.genesis_config.initial_state_root
+        } else {
+            head_block.block.header.state_root
+        };
         self.state.switch_state_root(new_state_root).map_err(|e| {
             tracing::error!("Failed to update state root during forkchoice update: {e:?}");
             UnrecoverableAppFailure
@@ -350,6 +369,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
         let genesis_hash = block.hash;
         self.block_hash_writer.push(0, genesis_hash);
         self.block_repository.add(&mut self.storage, block)?;
+        (self.on_payload)(self, PayloadId::ZERO, genesis_hash).ok();
 
         let mut fc = self.block_repository.get_forkchoice_state(&self.storage)?;
         if fc.head_block_hash == B256::ZERO {

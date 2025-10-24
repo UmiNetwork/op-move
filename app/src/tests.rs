@@ -510,11 +510,14 @@ fn test_fetched_balances_are_updated_after_transfer_of_funds() {
         )
         .unwrap()
         .unwrap();
-    app.forkchoice_update(ForkchoiceState {
-        head_block_hash: head_hash,
-        safe_block_hash: head_hash,
-        finalized_block_hash: head_hash,
-    })
+    app.forkchoice_update(
+        ForkchoiceState {
+            head_block_hash: head_hash,
+            safe_block_hash: head_hash,
+            finalized_block_hash: head_hash,
+        },
+        None,
+    )
     .unwrap();
 
     let actual_recipient_balance = reader.balance_by_height(to, Latest).unwrap();
@@ -548,11 +551,14 @@ fn test_fetched_nonces_are_updated_after_executing_transaction() {
         )
         .unwrap()
         .unwrap();
-    app.forkchoice_update(ForkchoiceState {
-        head_block_hash: head_hash,
-        safe_block_hash: head_hash,
-        finalized_block_hash: head_hash,
-    })
+    app.forkchoice_update(
+        ForkchoiceState {
+            head_block_hash: head_hash,
+            safe_block_hash: head_hash,
+            finalized_block_hash: head_hash,
+        },
+        None,
+    )
     .unwrap();
 
     let actual_recipient_balance = reader.nonce_by_height(to, Latest).unwrap();
@@ -824,11 +830,14 @@ fn test_fee_history_empty_vs_full_blocks(num_txs: usize, expect_zero_ratio: bool
         .start_block_build(payload.try_into().unwrap(), U64::from(1))
         .unwrap()
         .unwrap();
-    app.forkchoice_update(ForkchoiceState {
-        head_block_hash: head_hash,
-        safe_block_hash: head_hash,
-        finalized_block_hash: head_hash,
-    })
+    app.forkchoice_update(
+        ForkchoiceState {
+            head_block_hash: head_hash,
+            safe_block_hash: head_hash,
+            finalized_block_hash: head_hash,
+        },
+        None,
+    )
     .unwrap();
 
     let result = reader.fee_history(1, Latest, Some(vec![50.0]));
@@ -874,11 +883,14 @@ fn test_fee_history_percentile_calculations(
         .unwrap()
         .unwrap();
 
-    app.forkchoice_update(ForkchoiceState {
-        head_block_hash: head_hash,
-        safe_block_hash: head_hash,
-        finalized_block_hash: head_hash,
-    })
+    app.forkchoice_update(
+        ForkchoiceState {
+            head_block_hash: head_hash,
+            safe_block_hash: head_hash,
+            finalized_block_hash: head_hash,
+        },
+        None,
+    )
     .unwrap();
 
     let result = reader.fee_history(1, Latest, Some(percentiles));
@@ -923,11 +935,14 @@ fn test_fee_history_gas_ratio_progression(tx_counts: Vec<usize>, expect_increasi
             )
             .unwrap()
             .unwrap();
-        app.forkchoice_update(ForkchoiceState {
-            head_block_hash: head_hash,
-            safe_block_hash: head_hash,
-            finalized_block_hash: head_hash,
-        })
+        app.forkchoice_update(
+            ForkchoiceState {
+                head_block_hash: head_hash,
+                safe_block_hash: head_hash,
+                finalized_block_hash: head_hash,
+            },
+            None,
+        )
         .unwrap();
     }
 
@@ -975,11 +990,14 @@ fn test_fee_history_boundary_percentiles() {
         )
         .unwrap()
         .unwrap();
-    app.forkchoice_update(ForkchoiceState {
-        head_block_hash: head_hash,
-        safe_block_hash: head_hash,
-        finalized_block_hash: head_hash,
-    })
+    app.forkchoice_update(
+        ForkchoiceState {
+            head_block_hash: head_hash,
+            safe_block_hash: head_hash,
+            finalized_block_hash: head_hash,
+        },
+        None,
+    )
     .unwrap();
 
     let percentiles = vec![0.0, 33.33, 66.66, 100.0];
@@ -1023,11 +1041,14 @@ fn test_max_priority_fee_low_congestion() {
         )
         .unwrap()
         .unwrap();
-    app.forkchoice_update(ForkchoiceState {
-        head_block_hash: head_hash,
-        safe_block_hash: head_hash,
-        finalized_block_hash: head_hash,
-    })
+    app.forkchoice_update(
+        ForkchoiceState {
+            head_block_hash: head_hash,
+            safe_block_hash: head_hash,
+            finalized_block_hash: head_hash,
+        },
+        None,
+    )
     .unwrap();
 
     let max_priority_fee = reader.max_priority_fee_per_gas().unwrap();
@@ -1065,11 +1086,14 @@ fn test_max_priority_fee_high_congestion() {
         )
         .unwrap()
         .unwrap();
-    app.forkchoice_update(ForkchoiceState {
-        head_block_hash: head_hash,
-        safe_block_hash: head_hash,
-        finalized_block_hash: head_hash,
-    })
+    app.forkchoice_update(
+        ForkchoiceState {
+            head_block_hash: head_hash,
+            safe_block_hash: head_hash,
+            finalized_block_hash: head_hash,
+        },
+        None,
+    )
     .unwrap();
 
     let max_priority_fee = reader.max_priority_fee_per_gas().unwrap();
@@ -1108,11 +1132,14 @@ fn test_gas_price_high_max_fee() {
         )
         .unwrap()
         .unwrap();
-    app.forkchoice_update(ForkchoiceState {
-        head_block_hash: head_hash,
-        safe_block_hash: head_hash,
-        finalized_block_hash: head_hash,
-    })
+    app.forkchoice_update(
+        ForkchoiceState {
+            head_block_hash: head_hash,
+            safe_block_hash: head_hash,
+            finalized_block_hash: head_hash,
+        },
+        None,
+    )
     .unwrap();
 
     let max_priority_fee = reader.max_priority_fee_per_gas().unwrap();
@@ -1144,11 +1171,14 @@ fn test_gas_price_vs_max_priority_fee_difference() {
         )
         .unwrap()
         .unwrap();
-    app.forkchoice_update(ForkchoiceState {
-        head_block_hash: head_hash,
-        safe_block_hash: head_hash,
-        finalized_block_hash: head_hash,
-    })
+    app.forkchoice_update(
+        ForkchoiceState {
+            head_block_hash: head_hash,
+            safe_block_hash: head_hash,
+            finalized_block_hash: head_hash,
+        },
+        None,
+    )
     .unwrap();
 
     let gas_price = reader.gas_price().unwrap();
