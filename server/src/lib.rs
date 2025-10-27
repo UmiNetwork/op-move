@@ -371,9 +371,7 @@ fn create_genesis_block(
     // As defined in <https://specs.optimism.io/protocol/isthmus/exec-engine.html#header-validity-rules>,
     // i.e. a hash of an empty string
     #[cfg(feature = "op-upgrade")]
-    let requests_hash = Some(B256::from(hex!(
-        "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    )));
+    let requests_hash = Some(umi_app::EMPTY_REQUESTS_HASH);
     #[cfg(not(feature = "op-upgrade"))]
     let requests_hash = None;
     let genesis_header = Header {

@@ -174,7 +174,10 @@ fn validate_payload_block_hash(
         blob_gas_used: Some(execution_payload.blob_gas_used.saturating_to()),
         excess_blob_gas: Some(execution_payload.excess_blob_gas.saturating_to()),
         parent_beacon_block_root: Some(parent_beacon_block_root),
+        #[cfg(not(feature = "op-upgrade"))]
         requests_hash: None,
+        #[cfg(feature = "op-upgrade")]
+        requests_hash: Some(umi_app::EMPTY_REQUESTS_HASH),
     };
     let computed_hash = alloy::primitives::keccak256(alloy::rlp::encode(&payload_header));
 
