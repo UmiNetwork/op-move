@@ -152,24 +152,23 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
 
         #[cfg(feature = "op-upgrade")]
         let withdrawals_root = {
-            let evm_db = umi_evm_ext::ResolverBackedDB::new(
+            use umi_blockchain::state::StateQueries;
+
+            Some(self.state_queries.evm_storage_root_at(
                 &self.evm_storage,
-                self.state.resolver(),
-                &(),
+                crate::L2_TO_L1_MESSAGE_PASSER_ADDRESS,
                 header_for_execution.number,
-            );
-            let message_passer_account = evm_db
-            .get_account(&crate::L2_TO_L1_MESSAGE_PASSER_ADDRESS)
+            )
             .map_err(|e| {
                 tracing::error!(
                     "Failure during `start_block_build`. Failed to get L2ToL1MessagePasser account from storage: {e:?}"
                 );
                 UnrecoverableAppFailure
-            })?.expect("L2ToL1MessagePasser is deployed at genesis");
-            Some(message_passer_account.inner.storage_root)
+            })?)
         };
         #[cfg(not(feature = "op-upgrade"))]
-        let withdrawals_root = Some(alloy::consensus::constants::EMPTY_WITHDRAWALS);
+        // Has to be `keccak256(rlp(empty_string_code))`, so we can reuse the ommers value
+        let withdrawals_root = Some(alloy::consensus::constants::EMPTY_OMMER_ROOT_HASH);
 
         let header = Header {
             parent_hash: parent.hash,
