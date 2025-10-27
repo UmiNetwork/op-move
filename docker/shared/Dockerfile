@@ -153,9 +153,6 @@ ENTRYPOINT [ "/volume/entrypoint.sh" ]
 FROM alpine:3.21.2 AS op-node
 WORKDIR /volume
 
-# Copy script that waits for other services availability
-COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
-
 # Copy cast from foundry to wait for op-move
 COPY --from=foundry /cast /usr/local/bin/
 
@@ -164,5 +161,32 @@ COPY --from=optimism /op-node /usr/local/bin/
 
 # Copy entrypoint with run privileges
 COPY --chmod=0777 docker/op-node/entrypoint.sh ./
+
+ENTRYPOINT [ "/volume/entrypoint.sh" ]
+
+# Start from a clean image
+FROM alpine:3.21.2 AS op-node-rep
+WORKDIR /volume
+
+RUN \
+  # Install build dependencies
+  # bash required by wait-for-it
+  # curl required for calling p2p RPC
+  apk upgrade --no-cache \
+  && apk add --no-cache bash curl \
+  # Clean up
+  && rm -rf /tmp/* /var/cache/apk/*
+
+# Copy cast from foundry to wait for op-move
+COPY --from=foundry /cast /usr/local/bin/
+
+# Copy built binary from build image
+COPY --from=optimism /op-node /usr/local/bin/
+
+# Copy script that waits for other services availability
+COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
+
+# Copy entrypoint with run privileges
+COPY --chmod=0777 docker/op-node-rep/entrypoint.sh ./
 
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
