@@ -3,7 +3,7 @@
 set -eux
 
 # Create volumes because swarm cannot do it by itself
-mkdir -p docker/op-move/volume docker/shared/volume
+mkdir -p docker/op-move/volume docker/op-move/volume/db1 docker/op-move/volume/db2 docker/shared/volume docker/shared/volume/1 docker/shared/volume/2
 
 # Initialize local swarm
 [ "$(docker info --format '{{.Swarm.LocalNodeState}}')" = "active" ] || docker swarm init

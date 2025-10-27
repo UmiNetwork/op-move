@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Entrypoint of the geth docker container
 
 # -e Exit if a command fails
@@ -28,14 +28,14 @@ geth \
 GETH_PID="$!"
 
 # Shuts geth down in a way that does not corrupt the datadir
-function shutdown() {
+shutdown() {
   kill -SIGINT "${GETH_PID}"
   wait "${GETH_PID}"
   exit 0
 }
 
 # Trap signal from docker stop to the graceful shutdown function
-trap shutdown SIGTERM
+trap shutdown TERM
 
 # Block on the background geth process
 wait "${GETH_PID}"
