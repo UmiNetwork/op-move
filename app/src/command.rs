@@ -181,6 +181,8 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             excess_blob_gas: Some(0),
             #[cfg(feature = "op-upgrade")]
             extra_data: self.gas_fee.encode_parameters_for_header(),
+            #[cfg(feature = "op-upgrade")]
+            requests_hash: Some(crate::EMPTY_REQUESTS_HASH),
             ..Default::default()
         }
         .with_payload_attributes(attributes)
