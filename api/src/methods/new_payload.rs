@@ -69,14 +69,8 @@ async fn inner_execute<'reader>(
             execution_payload.block_number.saturating_to(),
         ) {
             Ok(root) => Some(root),
-            Err(_) => {
-                return Ok(PayloadStatusV1 {
-                    status: Status::Invalid,
-                    latest_valid_hash: None,
-                    validation_error: Some(
-                        "Failed to compute L2ToL1MessagePasser storage root".into(),
-                    ),
-                });
+            Err(e) => {
+                return Err(JsonRpcError::internal_error(e));
             }
         }
     };
