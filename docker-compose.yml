@@ -13,14 +13,13 @@ services:
       L1_RPC_URL: "http://geth:58138"
       L2_RPC_HTTP_URL: "http://op-move:8545"
       L2_RPC_AUTH_URL: "http://op-move:8551"
-      SYNCMODE: consensus-layer
-      P2P_STATIC: ""
-      P2P_BOOTNODES: ""
-      P2P_ID: "1"
+      RPC_PORT: 8547
+      P2P_PORT: 9003
     networks:
       - localnet
     volumes:
       - ./docker/shared/volume:/volume/shared
+      - ./docker/op-node/volume:/volume/host
     ports:
       - "9003/udp"
       - "9003/tcp"
@@ -29,12 +28,12 @@ services:
       - "host.docker.internal:host-gateway"
 
   op-node-rep:
-    image: ghcr.io/uminetwork/op-node:${UMI_TAG:-latest}
+    image: ghcr.io/uminetwork/op-node-rep:${UMI_TAG:-latest}
     build:
       cache_from:
-        - type=registry,ref=ghcr.io/uminetwork/op-node:latest-cache
+        - type=registry,ref=ghcr.io/uminetwork/op-node-rep:latest-cache
       dockerfile: docker/shared/Dockerfile
-      target: op-node
+      target: op-node-rep
     env_file:
       - .env
     environment:
@@ -42,17 +41,19 @@ services:
       L1_RPC_URL: "http://geth:58138"
       L2_RPC_HTTP_URL: "http://op-move-rep:8545"
       L2_RPC_AUTH_URL: "http://op-move-rep:8551"
+      RPC_PORT: 8547
+      P2P_PORT: 9003
       SEQUENCER_PRIVATE_KEY: "0x589a8c172e0a5bd75a2d55e4ef71470bbf06776e7ab17124fb94cb92163bb05d"
-      SYNCMODE: consensus-layer
-      P2P_STATIC: "/ip4/10.0.1.4/tcp/9003/p2p/16Uiu2HAm6pBeFpcTt4ta6Wgn9D5hmdPHpZLSfL18JdsM754156VW"
-      P2P_BOOTNODES: "enr:-Ka4QI9APD2EhKSxqSSgujuPQqUrxVLOr6CRn9_KOaWEZxdJZ4SNnCSlZxa9qMuatN8h0nWHZpgY25Z6SRJibp8gJ_OGAZnuToj5gmlkgnY0gmlwhB8eoQ6Hb3BzdGFja4TVyAIAiXNlY3AyNTZrMaECqTTfzQ-ZQGr4a-LvQXkwEOgre5pKh7brF2_-sNdRuamDdGNwgiMrg3VkcIIQf4R1ZHA2giMr"
-      P2P_ID: "2"
+      PEER_ADDR: op-node
+      PEER_RPC_PORT: 8547
+      PEER_P2P_PORT: 9003
     networks:
       - localnet
     depends_on:
       - op-node
     volumes:
       - ./docker/shared/volume:/volume/shared
+      - ./docker/op-node-rep/volume:/volume/host
     ports:
       - "9003/udp"
       - "9003/tcp"
@@ -111,7 +112,7 @@ services:
       - localnet
     volumes:
       - ./docker/shared/volume:/volume/shared
-      - ./docker/op-move/volume/db1:/volume/db
+      - ./docker/op-move/volume:/volume/db
     ports:
       - "9000:9000"
       - "8545"
@@ -154,7 +155,7 @@ services:
       - localnet
     volumes:
       - ./docker/shared/volume:/volume/shared
-      - ./docker/op-move/volume/db2:/volume/db
+      - ./docker/op-move-rep/volume:/volume/db
     ports:
       - "9001:9000"
       - "8545"

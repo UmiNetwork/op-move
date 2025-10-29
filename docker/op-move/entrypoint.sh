@@ -6,7 +6,10 @@ SHARED="/volume/shared"
 GENESIS_FILE="${SHARED}/genesis.json"
 TIMEOUT_SECS=1500
 
+# Wait for geth to become online
 wait-for-it -t "${TIMEOUT_SECS}" "$(echo "${L1_RPC_URL}" | cut -c 8-)"
+
+# Wait for geth to deploy Optimism
 while [ ! -f "${GENESIS_FILE}" ]; do sleep 1; done
 
 /volume/op-move --genesis.l2-contract-genesis "${GENESIS_FILE}" &
