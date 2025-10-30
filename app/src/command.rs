@@ -309,6 +309,10 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
         self.mem_pool.insert(tx);
     }
 
+    /// Changes the forkchoice state to the given value
+    /// (i.e. updates the head of the chain, including changing the current state root if needed).
+    /// If a `payload_id` is also given then it is marked as in-progress because the forkchoice
+    /// update always comes before the new block build triggered by providing a payload.
     #[tracing::instrument(level = "debug", skip(self))]
     pub(crate) fn forkchoice_update(
         &mut self,
