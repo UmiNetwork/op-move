@@ -134,7 +134,7 @@ impl BlockQueries for RocksDbBlockQueries {
 
     fn height_to_hash(&self, db: &Self::Storage, height: u64) -> Result<B256, Self::Err> {
         let maybe_hash = db
-            .get_pinned_cf(&fc_cf(db), height.to_key())?
+            .get_pinned_cf(&height_cf(db), height.to_key())?
             .map(|hash| B256::from_slice(hash.as_ref()));
         Ok(maybe_hash.expect("DB access is protected so queried heights always map to hashes"))
     }
