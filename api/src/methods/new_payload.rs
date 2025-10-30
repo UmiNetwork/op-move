@@ -5,7 +5,7 @@ use {
         schema::{ExecutionPayloadV3, GetPayloadResponseV3, PayloadStatusV1, Status},
     },
     alloy::{
-        consensus::{EMPTY_OMMER_ROOT_HASH, Header, constants::EMPTY_WITHDRAWALS},
+        consensus::{EMPTY_OMMER_ROOT_HASH, Header},
         primitives::{B64, Bloom, Bytes, U64, U256},
     },
     umi_app::{ApplicationReader, Dependencies},
@@ -59,7 +59,30 @@ async fn inner_execute<'reader>(
 ) -> Result<PayloadStatusV1, JsonRpcError> {
     // Spec: https://github.com/ethereum/execution-apis/blob/main/src/engine/cancun.md#specification
 
-    if let Err(status) = validate_payload_block_hash(&execution_payload, parent_beacon_block_root) {
+    #[cfg(feature = "op-upgrade")]
+    let withdrawals_root = {
+        use umi_blockchain::state::StateQueries;
+
+        match app.state_queries.evm_storage_root_at(
+            &app.evm_storage,
+            umi_app::L2_TO_L1_MESSAGE_PASSER_ADDRESS,
+            execution_payload.block_number.saturating_to(),
+        ) {
+            Ok(root) => Some(root),
+            Err(e) => {
+                return Err(JsonRpcError::internal_error(e));
+            }
+        }
+    };
+    #[cfg(not(feature = "op-upgrade"))]
+    // Has to be `keccak256(rlp(empty_string_code))`, so we can reuse the ommers value
+    let withdrawals_root = Some(alloy::consensus::constants::EMPTY_OMMER_ROOT_HASH);
+
+    if let Err(status) = validate_payload_block_hash(
+        &execution_payload,
+        parent_beacon_block_root,
+        withdrawals_root,
+    ) {
         return Ok(status);
     }
 
@@ -146,6 +169,7 @@ fn validate_payload_format(
 fn validate_payload_block_hash(
     execution_payload: &ExecutionPayloadV3,
     parent_beacon_block_root: B256,
+    withdrawals_root: Option<B256>,
 ) -> Result<(), PayloadStatusV1> {
     let transactions_root = alloy_trie::root::ordered_trie_root_with_encoder(
         &execution_payload.transactions,
@@ -170,7 +194,7 @@ fn validate_payload_block_hash(
         mix_hash: execution_payload.prev_randao,
         nonce: B64::ZERO,
         base_fee_per_gas: Some(execution_payload.base_fee_per_gas.saturating_to()),
-        withdrawals_root: Some(EMPTY_WITHDRAWALS),
+        withdrawals_root,
         blob_gas_used: Some(execution_payload.blob_gas_used.saturating_to()),
         excess_blob_gas: Some(execution_payload.excess_blob_gas.saturating_to()),
         parent_beacon_block_root: Some(parent_beacon_block_root),

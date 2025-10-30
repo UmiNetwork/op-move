@@ -267,6 +267,24 @@ pub trait StateQueries {
         Ok(storage.get(&index)?.unwrap_or_default())
     }
 
+    /// Queries the blockchain state version corresponding with block `height` for the value of an
+    ///  EVM `account` storage root. Returns 0x0..00 if no account was found.
+    fn evm_storage_root_at(
+        &self,
+        evm_storage: &impl StorageTrieRepository,
+        account: Address,
+        height: BlockHeight,
+    ) -> Result<B256, state::Error> {
+        let resolver = self.resolver_at(height)?;
+
+        // Read account info to get the storage root
+        let evm_db = ResolverBackedDB::new(evm_storage, &resolver, &(), height);
+        let Some(account_info) = evm_db.get_account(&account)? else {
+            return Ok(B256::ZERO);
+        };
+        Ok(account_info.inner.storage_root)
+    }
+
     fn move_list_modules(
         &self,
         account: AccountAddress,
