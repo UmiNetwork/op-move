@@ -275,16 +275,10 @@ pub trait StateQueries {
         &self,
         evm_storage: &impl StorageTrieRepository,
         account: Address,
-        height: BlockHeight,
+        hash: B256,
     ) -> Result<B256, state::Error> {
-        let resolver = self.resolver_at(height)?;
-
-        // Read account info to get the storage root
-        let evm_db = ResolverBackedDB::new(evm_storage, &resolver, &(), height);
-        let Some(account_info) = evm_db.get_account(&account)? else {
-            return Ok(B256::ZERO);
-        };
-        Ok(account_info.inner.storage_root)
+        let resolver = self.resolver_at(hash)?;
+        evm_storage_root_from_trie_and_resolver(account, &resolver, evm_storage)
     }
 
     fn move_list_modules(
@@ -313,6 +307,21 @@ pub trait HashToStateRootIndex {
     type Err: error::Error;
     fn root_by_hash(&self, hash: B256) -> Result<Option<B256>, Self::Err>;
     fn push_state_root(&self, block_hash: B256, state_root: B256) -> Result<(), Self::Err>;
+}
+
+pub fn evm_storage_root_from_trie_and_resolver(
+    account: Address,
+    resolver: &impl MoveResolver,
+    storage_trie: &impl StorageTrieRepository,
+) -> Result<B256, state::Error> {
+    // Read account info to get the storage root
+    // Note: `block_hash_lookup` and `current_block_number` are given default values
+    // because in-EVM block hash resolution is not needed to check account data.
+    let evm_db = ResolverBackedDB::new(storage_trie, resolver, &(), 0);
+    let Some(account_info) = evm_db.get_account(&account)? else {
+        return Ok(B256::ZERO);
+    };
+    Ok(account_info.inner.storage_root)
 }
 
 pub fn proof_from_trie_and_resolver(

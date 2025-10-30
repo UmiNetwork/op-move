@@ -330,17 +330,17 @@ impl<'db, D: Dependencies<'db>> GenesisStateExt for Application<'db, D> {
 
         #[cfg(feature = "op-upgrade")]
         let withdrawals_root = {
-            use umi_blockchain::state::StateQueries;
+            use {
+                umi_blockchain::state::evm_storage_root_from_trie_and_resolver, umi_state::State,
+            };
 
-            Some(
-                self.state_queries
-                    .evm_storage_root_at(
-                        &self.evm_storage,
-                        umi_app::L2_TO_L1_MESSAGE_PASSER_ADDRESS,
-                        0,
-                    )
-                    .expect("Should be able to retrive L2ToL1MessagePasser storage root"),
+            let storage_root = evm_storage_root_from_trie_and_resolver(
+                umi_app::L2_TO_L1_MESSAGE_PASSER_ADDRESS,
+                self.state.resolver(),
+                &self.evm_storage,
             )
+            .expect("Should be able to retrieve L2ToL1MessagePasser storage root");
+            Some(storage_root)
         };
         #[cfg(not(feature = "op-upgrade"))]
         // Has to be `keccak256(rlp(empty_string_code))`, so we can reuse the ommers value

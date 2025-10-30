@@ -66,7 +66,7 @@ async fn inner_execute<'reader>(
         match app.state_queries.evm_storage_root_at(
             &app.evm_storage,
             umi_app::L2_TO_L1_MESSAGE_PASSER_ADDRESS,
-            execution_payload.block_number.saturating_to(),
+            execution_payload.block_hash,
         ) {
             Ok(root) => Some(root),
             Err(e) => {

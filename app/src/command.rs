@@ -168,19 +168,19 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
 
         #[cfg(feature = "op-upgrade")]
         let withdrawals_root = {
-            use umi_blockchain::state::StateQueries;
+            use umi_blockchain::state::evm_storage_root_from_trie_and_resolver;
 
-            Some(self.state_queries.evm_storage_root_at(
-                &self.evm_storage,
+            let storage_root = evm_storage_root_from_trie_and_resolver(
                 crate::L2_TO_L1_MESSAGE_PASSER_ADDRESS,
-                header_for_execution.number,
-            )
-            .map_err(|e| {
+                self.state.resolver(),
+                &self.evm_storage,
+            ).map_err(|e| {
                 tracing::error!(
                     "Failure during `start_block_build`. Failed to get L2ToL1MessagePasser account from storage: {e:?}"
                 );
                 UnrecoverableAppFailure
-            })?)
+            })?;
+            Some(storage_root)
         };
         #[cfg(not(feature = "op-upgrade"))]
         // Has to be `keccak256(rlp(empty_string_code))`, so we can reuse the ommers value
