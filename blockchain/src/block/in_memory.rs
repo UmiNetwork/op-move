@@ -1,6 +1,8 @@
 use {
-    crate::{block::ExtendedBlock, payload::PayloadId},
-    alloy::rpc::types::engine::ForkchoiceState,
+    crate::{
+        block::{ExtendedBlock, ForkchoiceState},
+        payload::PayloadId,
+    },
     std::{
         collections::HashMap,
         sync::{Arc, RwLock},
