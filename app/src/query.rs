@@ -62,8 +62,10 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
     }
 
     pub fn balance_by_height(&self, address: Address, height: BlockNumberOrTag) -> Result<U256> {
-        self.state_queries
-            .balance_at(address.to_move_address(), self.resolve_height(height)?.hash)
+        self.state_queries.balance_at(
+            address.to_move_address(),
+            self.resolve_height_to_header(height)?.hash,
+        )
     }
 
     pub fn evm_bytecode_by_height(
@@ -73,7 +75,10 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
     ) -> Result<Bytes> {
         Ok(self
             .state_queries
-            .evm_bytecode_at(address.to_move_address(), self.resolve_height(height)?.hash)?
+            .evm_bytecode_at(
+                address.to_move_address(),
+                self.resolve_height_to_header(height)?.hash,
+            )?
             .unwrap_or_default())
     }
 
@@ -81,7 +86,7 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         Ok(self.state_queries.nonce_at(
             &self.evm_storage,
             address.to_move_address(),
-            self.resolve_height(height)?.hash,
+            self.resolve_height_to_header(height)?.hash,
         )?)
     }
 
@@ -92,7 +97,11 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         height: BlockNumberOrTag,
     ) -> Result<MoveModuleResponse> {
         self.state_queries
-            .move_module_at(address, module_name, self.resolve_height(height)?.hash)?
+            .move_module_at(
+                address,
+                module_name,
+                self.resolve_height_to_header(height)?.hash,
+            )?
             .ok_or_else(|| Error::User(UserError::MissingModule(module_name.to_string())))
     }
 
@@ -103,7 +112,11 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         height: BlockNumberOrTag,
     ) -> Result<MoveResourceResponse> {
         self.state_queries
-            .move_resource_at(address, resource_name, self.resolve_height(height)?.hash)?
+            .move_resource_at(
+                address,
+                resource_name,
+                self.resolve_height_to_header(height)?.hash,
+            )?
             .ok_or_else(|| Error::User(UserError::MissingResource(resource_name.to_string())))
     }
 
@@ -114,12 +127,12 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         height: BlockNumberOrTag,
     ) -> Result<MoveValueResponse> {
         self.state_queries
-            .table_item_at(handle, request, self.resolve_height(height)?.hash)?
+            .table_item_at(handle, request, self.resolve_height_to_header(height)?.hash)?
             .ok_or_else(|| UserError::MissingTableItem.into())
     }
 
     pub fn storage(&self, address: Address, index: U256, height: BlockNumberOrTag) -> Result<U256> {
-        let hash = self.resolve_height(height)?.hash;
+        let hash = self.resolve_height_to_header(height)?.hash;
         self.state_queries
             .evm_storage_at(&self.evm_storage, address, index, hash)
             .map_err(|_| Error::DatabaseState)
@@ -137,7 +150,7 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         height: BlockNumberOrTag,
         include_transactions: bool,
     ) -> Result<BlockResponse> {
-        let header = self.resolve_height(height)?;
+        let header = self.resolve_height_to_header(height)?;
         self.block_queries
             .by_hash(&self.storage, header.hash, include_transactions)
             .map_err(|_| Error::DatabaseState)?
@@ -201,7 +214,7 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
             }
         }
 
-        let last_block = self.resolve_height(block_number)?;
+        let last_block = self.resolve_height_to_header(block_number)?;
 
         let latest_block_num = self.block_number()?;
         // Genesis block is counted as 0
@@ -304,7 +317,7 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         transaction: TransactionRequest,
         block_number: BlockNumberOrTag,
     ) -> Result<u64> {
-        let header = self.resolve_height(block_number)?;
+        let header = self.resolve_height_to_header(block_number)?;
         let outcome = simulate_transaction(
             transaction,
             &self.state_queries.resolver_at(header.hash)?,
@@ -326,7 +339,7 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         transaction: TransactionRequest,
         block_number: BlockNumberOrTag,
     ) -> Result<Vec<u8>> {
-        let header = self.resolve_height(block_number)?;
+        let header = self.resolve_height_to_header(block_number)?;
         let header_for_execution = HeaderForExecution {
             number: header.number,
             timestamp: header.timestamp,
@@ -404,7 +417,7 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         after: Option<&Identifier>,
         limit: u32,
     ) -> Result<Vec<Identifier>> {
-        let hash = self.resolve_height(height)?.hash;
+        let hash = self.resolve_height_to_header(height)?.hash;
         Ok(self
             .state_queries
             .move_list_modules(address.to_move_address(), hash, after, limit)?)
@@ -417,13 +430,16 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         after: Option<&StructTag>,
         limit: u32,
     ) -> Result<Vec<StructTag>> {
-        let hash = self.resolve_height(height)?.hash;
+        let hash = self.resolve_height_to_header(height)?.hash;
         Ok(self
             .state_queries
             .move_list_resources(address.to_move_address(), hash, after, limit)?)
     }
 
-    fn resolve_height(&self, height: BlockNumberOrTag) -> Result<alloy::rpc::types::eth::Header> {
+    fn resolve_height_to_header(
+        &self,
+        height: BlockNumberOrTag,
+    ) -> Result<alloy::rpc::types::eth::Header> {
         let fc = self
             .block_queries
             .get_forkchoice_state(&self.storage)
@@ -486,7 +502,7 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
 
     fn hash_from_block_id(&self, id: BlockId) -> Result<B256> {
         match id {
-            BlockId::Number(height) => Ok(self.resolve_height(height)?.hash),
+            BlockId::Number(height) => Ok(self.resolve_height_to_header(height)?.hash),
             BlockId::Hash(hash) => Ok(hash.block_hash),
         }
     }
