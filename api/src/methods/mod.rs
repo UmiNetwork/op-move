@@ -234,7 +234,6 @@ pub mod tests {
         channel.send(msg).await.unwrap();
     }
 
-    #[allow(clippy::type_complexity)]
     pub fn create_app_with_mock_state_queries(
         address: AccountAddress,
         height: u64,
