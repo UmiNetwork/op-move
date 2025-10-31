@@ -20,7 +20,7 @@ pub async fn execute<'reader>(
 mod tests {
     use {
         super::*,
-        crate::methods::tests::create_app,
+        crate::methods::tests::{create_app, send_command},
         alloy::eips::BlockNumberOrTag::{self, *},
         test_case::test_case,
         tokio::sync::mpsc,
@@ -118,8 +118,7 @@ mod tests {
                 },
                 payload_id,
             };
-            state_channel.send(msg).await.unwrap();
-            state_channel.reserve_many(10).await.unwrap();
+            send_command(&state_channel, msg).await;
             let MaybePayloadResponse::Some(payload) = reader.payload(payload_id).unwrap() else {
                 panic!("Payload must be finished already");
             };
@@ -129,14 +128,14 @@ mod tests {
                 safe_block_hash: block_hash,
                 finalized_block_hash: block_hash,
             };
-            state_channel
-                .send(Command::ForkchoiceUpdate {
+            send_command(
+                &state_channel,
+                Command::ForkchoiceUpdate {
                     state: fc,
                     payload_id: None,
-                })
-                .await
-                .unwrap();
-            state_channel.reserve_many(10).await.unwrap();
+                },
+            )
+            .await;
 
             let request = example_request(Latest);
             let response = execute(request, &reader).await.unwrap();
@@ -166,8 +165,7 @@ mod tests {
                 },
                 payload_id,
             };
-            state_channel.send(msg).await.unwrap();
-            state_channel.reserve_many(10).await.unwrap();
+            send_command(&state_channel, msg).await;
             let MaybePayloadResponse::Some(payload) = reader.payload(payload_id).unwrap() else {
                 panic!("Payload must be finished already");
             };
@@ -177,14 +175,14 @@ mod tests {
                 safe_block_hash: block_hash,
                 finalized_block_hash: block_hash,
             };
-            state_channel
-                .send(Command::ForkchoiceUpdate {
+            send_command(
+                &state_channel,
+                Command::ForkchoiceUpdate {
                     state: fc,
                     payload_id: None,
-                })
-                .await
-                .unwrap();
-            state_channel.reserve_many(10).await.unwrap();
+                },
+            )
+            .await;
 
             let request = example_request(tag);
             let response = execute(request, &reader).await.unwrap();

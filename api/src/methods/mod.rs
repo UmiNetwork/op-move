@@ -328,4 +328,9 @@ pub mod tests {
             },
         ))
     }
+
+    pub async fn send_command(state_channel: &Sender<Command>, msg: Command) {
+        state_channel.send(msg).await.unwrap();
+        state_channel.reserve_many(10).await.unwrap();
+    }
 }

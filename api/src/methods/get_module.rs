@@ -28,7 +28,7 @@ pub async fn execute<'reader>(
 mod tests {
     use {
         super::*,
-        crate::methods::tests::create_app,
+        crate::methods::tests::{create_app, send_command},
         alloy::eips::BlockNumberOrTag::{self, *},
         test_case::test_case,
         tokio::sync::mpsc,
@@ -197,9 +197,7 @@ mod tests {
                 payload_attributes: Default::default(),
                 payload_id: U64::from(0x03421ee50df45cacu64),
             };
-            state_channel.send(msg).await.unwrap();
-
-            state_channel.reserve_many(10).await.unwrap();
+            send_command(&state_channel, msg).await;
 
             let request = example_request(Latest);
             let response = execute(request, &reader).await.unwrap();
@@ -226,9 +224,7 @@ mod tests {
                 payload_attributes: Default::default(),
                 payload_id: U64::from(0x03421ee50df45cacu64),
             };
-            state_channel.send(msg).await.unwrap();
-
-            state_channel.reserve_many(10).await.unwrap();
+            send_command(&state_channel, msg).await;
 
             let request = example_request(tag);
             let response = execute(request, &reader).await.unwrap();

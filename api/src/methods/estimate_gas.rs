@@ -56,7 +56,7 @@ fn parse_params(
 mod tests {
     use {
         super::*,
-        crate::methods::tests::{create_app, deposit_eth},
+        crate::methods::tests::{create_app, deposit_eth, send_command},
         alloy::primitives::Address,
         std::str::FromStr,
         test_case::test_case,
@@ -150,8 +150,7 @@ mod tests {
                         },
                     payload_id: U64::from(i),
                 };
-                state_channel.send(msg).await.unwrap();
-                state_channel.reserve_many(10).await.unwrap();
+                send_command(&state_channel, msg).await;
                 // Update forkchoice
                 let MaybePayloadResponse::Some(payload) = reader.payload(U64::from(i)).unwrap() else {
                     panic!("Payload must be finished already");
@@ -160,8 +159,7 @@ mod tests {
                 let fc = ForkchoiceState {
                     head_block_hash: block_hash, safe_block_hash: block_hash, finalized_block_hash: block_hash,
                 };
-                state_channel.send(Command::ForkchoiceUpdate { state: fc, payload_id: None }).await.unwrap();
-                state_channel.reserve_many(10).await.unwrap();
+                send_command(&state_channel, Command::ForkchoiceUpdate { state: fc, payload_id: None }).await;
           }
             let expected_response: serde_json::Value = serde_json::from_str(r#""0x63ec""#).unwrap();
             let actual_response = execute(request, &reader, SerializationKind::Bcs).await.unwrap();
