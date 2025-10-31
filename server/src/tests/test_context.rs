@@ -19,7 +19,7 @@ use {
     },
     umi_app::{ApplicationReader, CommandQueue},
     umi_blockchain::{
-        block::{Block, BlockHash, ExtendedBlock, Header},
+        block::{Block, BlockHash, BlockRepository, ExtendedBlock, ForkchoiceState, Header},
         receipt::TransactionReceipt,
         state::MoveResourceResponse,
     },
@@ -35,6 +35,7 @@ pub struct TestContext<'test> {
     pub queue: CommandQueue,
     pub reader: ApplicationReader<'test, dependency::ReaderDependency>,
     head: B256,
+    finalized_hash: B256,
     pub timestamp: u64,
     path: &'static str,
 }
@@ -53,6 +54,16 @@ impl TestContext<'static> {
         let head = genesis_block.hash;
         let timestamp = genesis_block.block.header.timestamp;
         app.genesis_update(genesis_block).unwrap();
+        app.block_repository
+            .forkchoice_update(
+                &mut app.storage,
+                ForkchoiceState {
+                    head_block_hash: head,
+                    safe_block_hash: head,
+                    finalized_block_hash: head,
+                },
+            )
+            .unwrap();
 
         let (queue, state) = umi_app::create(&mut app, 10);
 
@@ -61,6 +72,7 @@ impl TestContext<'static> {
             queue,
             reader,
             head,
+            finalized_hash: head,
             timestamp,
             path: "/",
         };
@@ -80,17 +92,58 @@ impl TestContext<'static> {
 
         let response = self.engine_get_payload(payload_id).await?;
 
-        self.head = response.execution_payload.block_hash;
+        // Update forkchoice head
+        self.update_head_block(response.execution_payload.block_hash)
+            .await?;
         Ok(self.head)
+    }
+
+    pub async fn update_head_block(&mut self, new_head_hash: B256) -> anyhow::Result<()> {
+        self.head = new_head_hash;
+        self.inner_engine_forkchoice_update(serde_json::Value::Null)
+            .await?;
+        self.queue.wait_for_pending_commands().await;
+        Ok(())
+    }
+
+    pub async fn advance_finalized_block(
+        &mut self,
+        new_finalized_hash: B256,
+    ) -> anyhow::Result<()> {
+        self.finalized_hash = new_finalized_hash;
+        self.inner_engine_forkchoice_update(serde_json::Value::Null)
+            .await?;
+        self.queue.wait_for_pending_commands().await;
+        Ok(())
     }
 
     pub async fn engine_forkchoice_update(
         &mut self,
     ) -> anyhow::Result<ForkchoiceUpdatedResponseV1> {
         self.timestamp += 1;
-        let head_hash = self.head;
         let timestamp = self.timestamp;
         let prev_randao = B256::random();
+        self.inner_engine_forkchoice_update(
+        serde_json::json!({
+                "timestamp": format!("{timestamp:#x}"),
+                "prevRandao": format!("{prev_randao}"),
+                "suggestedFeeRecipient": "0x4200000000000000000000000000000000000011",
+                "withdrawals": [],
+                "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "transactions": [
+                    hex::encode(DEPOSIT_TX)
+                ],
+                "gasLimit": "0x1c9c380"
+            })
+        ).await
+    }
+
+    async fn inner_engine_forkchoice_update(
+        &self,
+        payload: serde_json::Value,
+    ) -> anyhow::Result<ForkchoiceUpdatedResponseV1> {
+        let head_hash = self.head;
+        let finalized_hash = self.finalized_hash;
         let request = serde_json::json!({
             "jsonrpc": "2.0",
             "id": 7,
@@ -99,22 +152,16 @@ impl TestContext<'static> {
                 {
                     "headBlockHash": format!("{head_hash}"),
                     "safeBlockHash": format!("{head_hash}"),
-                    "finalizedBlockHash": format!("{head_hash}")
+                    "finalizedBlockHash": format!("{finalized_hash}")
                 },
-                {
-                    "timestamp": format!("{timestamp:#x}"),
-                    "prevRandao": format!("{prev_randao}"),
-                    "suggestedFeeRecipient": "0x4200000000000000000000000000000000000011",
-                    "withdrawals": [],
-                    "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-                    "transactions": [
-                        hex::encode(DEPOSIT_TX)
-                    ],
-                    "gasLimit": "0x1c9c380"
-                }
+                payload,
             ]
         });
         self.handle_request(&request).await
+    }
+
+    pub fn get_head(&self) -> B256 {
+        self.head
     }
 
     pub async fn engine_get_payload(
@@ -326,6 +373,31 @@ impl TestContext<'static> {
             "method": "eth_getBlockByNumber",
             "params": [
                 format!("{number:#x}"),
+                true
+            ]
+        });
+        let block: GetBlockResponse = self.handle_request(&request).await?;
+        Ok(block)
+    }
+
+    pub async fn get_latest_block_number(&self) -> anyhow::Result<u64> {
+        let request = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 10,
+            "method": "eth_blockNumber",
+            "params": []
+        });
+        let result: U256 = self.handle_request(&request).await?;
+        Ok(result.saturating_to())
+    }
+
+    pub async fn get_block_by_hash(&self, block_hash: B256) -> anyhow::Result<GetBlockResponse> {
+        let request = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 10,
+            "method": "eth_getBlockByHash",
+            "params": [
+                block_hash,
                 true
             ]
         });

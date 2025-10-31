@@ -5,7 +5,7 @@ use {
     },
     alloy::{
         rlp::Encodable,
-        rpc::types::{BlockTransactions, Withdrawals},
+        rpc::types::{BlockTransactions, Withdrawals, engine::ForkchoiceState},
     },
     op_alloy::rpc_types::Transaction,
     std::fmt::Debug,
@@ -115,13 +115,19 @@ pub trait BlockRepository: Debug {
 
     fn add(&mut self, storage: &mut Self::Storage, block: ExtendedBlock) -> Result<(), Self::Err>;
 
+    fn forkchoice_update(
+        &mut self,
+        storage: &mut Self::Storage,
+        state: ForkchoiceState,
+    ) -> Result<(), Self::Err>;
+
     fn by_hash(
         &self,
         storage: &Self::Storage,
         hash: B256,
     ) -> Result<Option<ExtendedBlock>, Self::Err>;
 
-    fn latest(&self, storage: &Self::Storage) -> Result<Option<ExtendedBlock>, Self::Err>;
+    fn get_forkchoice_state(&self, storage: &Self::Storage) -> Result<ForkchoiceState, Self::Err>;
 }
 
 pub mod in_memory {
@@ -133,6 +139,7 @@ pub mod in_memory {
             },
             in_memory::SharedMemory,
         },
+        alloy::rpc::types::engine::ForkchoiceState,
         std::convert::Infallible,
         umi_shared::primitives::B256,
     };
@@ -164,6 +171,15 @@ pub mod in_memory {
             Ok(())
         }
 
+        fn forkchoice_update(
+            &mut self,
+            mem: &mut Self::Storage,
+            state: ForkchoiceState,
+        ) -> Result<(), Self::Err> {
+            mem.forkchoice_memory.set(state);
+            Ok(())
+        }
+
         fn by_hash(
             &self,
             mem: &Self::Storage,
@@ -172,8 +188,8 @@ pub mod in_memory {
             Ok(mem.block_memory.by_hash(hash))
         }
 
-        fn latest(&self, mem: &Self::Storage) -> Result<Option<ExtendedBlock>, Self::Err> {
-            Ok(mem.block_memory.last())
+        fn get_forkchoice_state(&self, mem: &Self::Storage) -> Result<ForkchoiceState, Self::Err> {
+            Ok(mem.forkchoice_memory.get())
         }
     }
 }
@@ -190,12 +206,20 @@ mod test_doubles {
             Ok(())
         }
 
+        fn forkchoice_update(
+            &mut self,
+            _: &mut Self::Storage,
+            _: ForkchoiceState,
+        ) -> Result<(), Self::Err> {
+            Ok(())
+        }
+
         fn by_hash(&self, _: &Self::Storage, _: B256) -> Result<Option<ExtendedBlock>, Self::Err> {
             Ok(None)
         }
 
-        fn latest(&self, _: &Self::Storage) -> Result<Option<ExtendedBlock>, Self::Err> {
-            Ok(None)
+        fn get_forkchoice_state(&self, _: &Self::Storage) -> Result<ForkchoiceState, Self::Err> {
+            Err(())
         }
     }
 }

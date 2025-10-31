@@ -7,12 +7,11 @@ use {
             PayloadStatusV1, Status,
         },
     },
-    alloy::primitives::B256,
     umi_app::{
         ApplicationReader, Command, CommandQueue, Dependencies, Payload, PayloadForExecution,
         ToPayloadIdInput,
     },
-    umi_blockchain::payload::NewPayloadId,
+    umi_blockchain::{block::ForkchoiceState, payload::NewPayloadId},
 };
 
 pub async fn execute_v3<'reader>(
@@ -60,29 +59,66 @@ async fn inner_execute_v3<'reader>(
 
     validate_forkchoice_state(&forkchoice_state, app)?;
 
-    let payload_status = PayloadStatusV1 {
-        status: Status::Valid,
-        latest_valid_hash: Some(forkchoice_state.head_block_hash),
-        validation_error: None,
-    };
+    // The engine-api specification says:
+    // > Client software MAY skip an update of the forkchoice state and MUST NOT begin a payload build
+    // > process if `forkchoiceState.headBlockHash` references a VALID ancestor of the head of canonical
+    // > chain, i.e. the ancestor passed payload validation process and deemed VALID.
+    // However, in the [op-stack documentation](https://specs.optimism.io/protocol/exec-engine.html)
+    // it says:
+    // > Nodes may apply L2 blocks out of band ahead of time, and then reorg when L1 data conflicts.
+    // This implies op-node is always allowed to reorg the chain, so we are skipping the check
+    // if the proposed head is a valid ancestor of the current canonical chain.
+
+    let head_block_hash = forkchoice_state.head_block_hash;
 
     // If `payload_attributes` are present then tell state to start producing a new block
-    let payload_id = if let Some(attrs) = payload_attributes {
-        let payload_id = payload_id_generator
-            .new_payload_id(attrs.to_payload_id_input(&forkchoice_state.head_block_hash));
-        if matches!(
+    let (payload_id, block_build_command) = if let Some(attrs) = payload_attributes {
+        let payload_id =
+            payload_id_generator.new_payload_id(attrs.to_payload_id_input(&head_block_hash));
+        let block_build_command = if matches!(
             app.payload(payload_id)?,
             umi_blockchain::payload::MaybePayloadResponse::Unknown
         ) {
-            let msg = Command::StartBlockBuild {
+            // Per the engine-api spec we must:
+            // > Verify that `payloadAttributes.timestamp` is greater than timestamp of
+            // > a block referenced by `forkchoiceState.headBlockHash` and return
+            // `-38003: Invalid payload attributes` on failure.
+            let head_block = app.block_by_hash(head_block_hash, false)?;
+            if attrs.timestamp <= head_block.0.header.timestamp {
+                return Err(JsonRpcError::invalid_attributes());
+            }
+            Some(Command::StartBlockBuild {
                 payload_attributes: attrs,
                 payload_id,
-            };
-            queue.send(msg).await;
-        }
-        Some(PayloadId(payload_id))
+            })
+        } else {
+            None
+        };
+        (Some(PayloadId(payload_id)), block_build_command)
     } else {
-        None
+        (None, None)
+    };
+
+    // Update forkchoice state
+    let msg = Command::ForkchoiceUpdate {
+        state: ForkchoiceState {
+            head_block_hash: forkchoice_state.head_block_hash,
+            safe_block_hash: forkchoice_state.safe_block_hash,
+            finalized_block_hash: forkchoice_state.finalized_block_hash,
+        },
+        payload_id: block_build_command.as_ref().and_then(Command::payload_id),
+    };
+    queue.send(msg).await;
+
+    // Send block build command after forkchoice command
+    if let Some(msg) = block_build_command {
+        queue.send(msg).await;
+    }
+
+    let payload_status = PayloadStatusV1 {
+        status: Status::Valid,
+        latest_valid_hash: Some(head_block_hash),
+        validation_error: None,
     };
 
     Ok(ForkchoiceUpdatedResponseV1 {
@@ -95,25 +131,34 @@ fn validate_forkchoice_state<'reader>(
     forkchoice_state: &ForkchoiceStateV1,
     app: &ApplicationReader<'reader, impl Dependencies<'reader>>,
 ) -> Result<(), JsonRpcError> {
-    // TODO: some of the required checks, such as block validity in terms of PoW terminal
-    // conditions or payload attributes timestamp validation, need the block referenced by
-    // `fc_state.head_block_hash` to already exist. For this to be applicable,
-    // we need to rework the overall engine API flow as currently
-    // we assume that every call to `forkchoice_updated` results in block building only.
+    let current_state = app.get_forkchoice_state()?;
 
-    if forkchoice_state.head_block_hash == B256::ZERO {
+    // Current finalized block must be an ancestor of the newly proposed
+    // finalized block because blocks that are final must always be in the
+    // canonical chain.
+    if !app.ancestor_check(
+        current_state.finalized_block_hash,
+        forkchoice_state.finalized_block_hash,
+    )? {
         return Err(JsonRpcError::invalid_fc_state());
     }
 
-    let current_block_num = app.block_number()?;
-    if current_block_num != 0 {
-        let _finalized_block = app
-            .block_by_hash(forkchoice_state.finalized_block_hash, false)
-            .map_err(|_| JsonRpcError::invalid_fc_state())?;
+    // The proposed finalized block must be an ancestor of the proposed safe block
+    // because the finalized block be in the same canonical chain.
+    if !app.ancestor_check(
+        forkchoice_state.finalized_block_hash,
+        forkchoice_state.safe_block_hash,
+    )? {
+        return Err(JsonRpcError::invalid_fc_state());
+    }
 
-        let _safe_block = app
-            .block_by_hash(forkchoice_state.safe_block_hash, false)
-            .map_err(|_| JsonRpcError::invalid_fc_state())?;
+    // Similarly, the proposed safe block must be an ancestor of the proposed
+    // head block.
+    if !app.ancestor_check(
+        forkchoice_state.safe_block_hash,
+        forkchoice_state.head_block_hash,
+    )? {
+        return Err(JsonRpcError::invalid_fc_state());
     }
 
     Ok(())
@@ -136,9 +181,9 @@ pub(super) mod tests {
                 "method": "engine_forkchoiceUpdatedV3",
                 "params": [
                 {
-                    "finalizedBlockHash": "0x2c7cb7e2f79c2fa31f2b4280e96c34f7de981c6ccf5d0e998b51f5dc798fa53d",
+                    "finalizedBlockHash": "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d",
                     "headBlockHash": "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d",
-                    "safeBlockHash": "0xc9488c812782fac769416f918718107ca8f44f98fd2fe7dbcc12b9f5afa276dd"
+                    "safeBlockHash": "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d"
                 },
                 {
                     "gasLimit": "0x1c9c380",

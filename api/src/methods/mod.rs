@@ -33,11 +33,12 @@ pub mod tests {
             hex::FromHex,
             network::TxSignerSync,
             primitives::{Bytes, FixedBytes, TxKind, hex, utils::parse_ether},
+            rpc::types::engine::ForkchoiceState,
             signers::local::PrivateKeySigner,
         },
         move_core_types::account_address::AccountAddress,
         op_alloy::consensus::TxDeposit,
-        std::{convert::Infallible, sync::Arc},
+        std::sync::Arc,
         tokio::sync::mpsc::Sender,
         umi_app::{
             Application, ApplicationReader, Command, CommandActor, DependenciesThreadSafe,
@@ -45,8 +46,8 @@ pub mod tests {
         },
         umi_blockchain::{
             block::{
-                Block, BlockQueries, BlockRepository, BlockResponse, Eip1559GasFee, Header,
-                InMemoryBlockQueries, InMemoryBlockRepository, UmiBlockHash,
+                Block, BlockRepository, Eip1559GasFee, Header, InMemoryBlockQueries,
+                InMemoryBlockRepository, UmiBlockHash,
             },
             in_memory::shared_memory,
             payload::{InMemoryPayloadQueries, InProgressPayloads},
@@ -92,6 +93,16 @@ pub mod tests {
             HybridBlockHashCache::new(memory_reader.clone(), InMemoryBlockQueries);
         let mut repository = InMemoryBlockRepository::new();
         repository.add(&mut memory, genesis_block).unwrap();
+        repository
+            .forkchoice_update(
+                &mut memory,
+                ForkchoiceState {
+                    head_block_hash: head_hash,
+                    safe_block_hash: head_hash,
+                    finalized_block_hash: head_hash,
+                },
+            )
+            .unwrap();
         block_hash_cache.push(0, head_hash);
 
         let trie_db = Arc::new(InMemoryTrieDb::empty());
@@ -223,7 +234,6 @@ pub mod tests {
         channel.send(msg).await.unwrap();
     }
 
-    #[allow(clippy::type_complexity)]
     pub fn create_app_with_mock_state_queries(
         address: AccountAddress,
         height: u64,
@@ -231,77 +241,63 @@ pub mod tests {
         ApplicationReader<'static, impl DependenciesThreadSafe<'static, State = InMemoryState>>,
         Application<'static, impl DependenciesThreadSafe<'static, State = InMemoryState>>,
     )> {
-        #[derive(Debug, Clone)]
-        struct StubLatest(u64);
+        let genesis_config = GenesisConfig::default();
+        let genesis_header = Header {
+            state_root: genesis_config.initial_state_root,
+            ..Default::default()
+        };
+        let genesis_hash = genesis_header.hash_slow();
+        let genesis_block = Block::new(genesis_header, Vec::new())
+            .into_extended_with_hash(genesis_hash)
+            .with_value(U256::ZERO);
 
-        impl BlockQueries for StubLatest {
-            type Err = Infallible;
-            type Storage = ();
+        let (receipt_memory_reader, receipt_memory) =
+            umi_blockchain::receipt::receipt_memory::new();
+        let (memory_reader, mut memory) = shared_memory::new();
+        let mut block_hash_cache =
+            HybridBlockHashCache::new(memory_reader.clone(), InMemoryBlockQueries);
+        let mut repository = InMemoryBlockRepository::new();
+        repository.add(&mut memory, genesis_block.clone()).unwrap();
+        block_hash_cache.push(0, genesis_hash);
 
-            fn by_hash(
-                &self,
-                _: &Self::Storage,
-                _: B256,
-                _: bool,
-            ) -> Result<Option<BlockResponse>, Self::Err> {
-                unimplemented!("Unexpected call to `by_hash`")
-            }
-
-            fn by_height(
-                &self,
-                _: &Self::Storage,
-                _: u64,
-                _: bool,
-            ) -> Result<Option<BlockResponse>, Self::Err> {
-                unimplemented!("Unexpected call to `by_height`")
-            }
-
-            fn latest(&self, _: &Self::Storage) -> Result<Option<u64>, Self::Err> {
-                Ok(Some(self.0))
-            }
+        for i in 1..=height {
+            let mut block = genesis_block.clone();
+            block.block.header.number = i;
+            block.hash = block.block.header.hash_slow();
+            block_hash_cache.push(i, block.hash);
+            repository
+                .forkchoice_update(
+                    &mut memory,
+                    ForkchoiceState {
+                        head_block_hash: block.hash,
+                        safe_block_hash: block.hash,
+                        finalized_block_hash: block.hash,
+                    },
+                )
+                .unwrap();
+            repository.add(&mut memory, block).unwrap();
         }
 
-        let block_hash_cache = HybridBlockHashCache::new((), StubLatest(height));
+        let expected_hash = repository
+            .get_forkchoice_state(&memory)
+            .unwrap()
+            .head_block_hash;
 
         Box::new((
-            ApplicationReader::<
-                TestDependencies<
-                    MockStateQueries,
-                    _,
-                    _,
-                    UmiBlockHash,
-                    StubLatest,
-                    (),
-                    (),
-                    (),
-                    (),
-                    (),
-                    (),
-                    (),
-                    (),
-                    HybridBlockHashCache<(), StubLatest>,
-                    HybridBlockHashCache<(), StubLatest>,
-                    (),
-                    (),
-                    (),
-                    Eip1559GasFee,
-                    U256,
-                    U256,
-                >,
-            > {
+            ApplicationReader::<TestDependencies<MockStateQueries>> {
                 genesis_config: GenesisConfig::default(),
                 base_token: UmiBaseTokenAccounts::new(AccountAddress::ONE),
                 block_hash_lookup: block_hash_cache.clone(),
-                block_queries: StubLatest(height),
-                payload_queries: (),
-                receipt_queries: (),
-                receipt_memory: (),
-                storage: (),
-                state_queries: MockStateQueries(address, height),
-                evm_storage: (),
-                transaction_queries: (),
+                block_queries: InMemoryBlockQueries,
+                payload_queries: InMemoryPayloadQueries::new(Default::default()),
+                receipt_queries: InMemoryReceiptQueries::new(),
+                receipt_memory: receipt_memory_reader.clone(),
+                storage: memory_reader.clone(),
+                state_queries: MockStateQueries(address, expected_hash),
+                evm_storage: InMemoryStorageTrieRepository::new(),
+                transaction_queries: InMemoryTransactionQueries::new(),
             },
-            Application::<TestDependencies<_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _>> {
+            Application::<TestDependencies<MockStateQueries>> {
                 genesis_config: GenesisConfig::default(),
                 mem_pool: Default::default(),
                 gas_fee: Eip1559GasFee::default(),
@@ -311,25 +307,30 @@ pub mod tests {
                 block_hash: UmiBlockHash,
                 block_hash_writer: block_hash_cache.clone(),
                 block_hash_lookup: block_hash_cache,
-                block_queries: StubLatest(height),
-                block_repository: (),
+                block_queries: InMemoryBlockQueries,
+                block_repository: repository,
                 on_payload: CommandActor::on_payload_noop(),
                 on_tx: CommandActor::on_tx_noop(),
                 on_tx_batch: CommandActor::on_tx_batch_noop(),
-                payload_queries: (),
-                receipt_queries: (),
-                receipt_repository: (),
-                receipt_memory: (),
-                storage: (),
-                receipt_memory_reader: (),
-                storage_reader: (),
+                payload_queries: InMemoryPayloadQueries::new(Default::default()),
+                receipt_queries: InMemoryReceiptQueries::new(),
+                receipt_repository: InMemoryReceiptRepository::new(),
+                receipt_memory,
+                storage: memory,
+                receipt_memory_reader,
+                storage_reader: memory_reader,
                 state: InMemoryState::default(),
-                state_queries: MockStateQueries(address, height),
-                evm_storage: (),
-                transaction_queries: (),
-                transaction_repository: (),
+                state_queries: MockStateQueries(address, expected_hash),
+                evm_storage: InMemoryStorageTrieRepository::new(),
+                transaction_queries: InMemoryTransactionQueries::new(),
+                transaction_repository: InMemoryTransactionRepository::new(),
                 resolver_cache: Default::default(),
             },
         ))
+    }
+
+    pub async fn send_command(state_channel: &Sender<Command>, msg: Command) {
+        state_channel.send(msg).await.unwrap();
+        state_channel.reserve_many(10).await.unwrap();
     }
 }

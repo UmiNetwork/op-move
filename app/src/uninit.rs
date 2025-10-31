@@ -1,6 +1,6 @@
 use {
     crate::{Application, Dependencies},
-    std::sync::Arc,
+    std::{collections::HashMap, sync::Arc},
     umi_blockchain::{block::Eip1559GasFee, state::EthTrieStateQueries},
     umi_evm_ext::state::InMemoryDb,
     umi_execution::U256,
@@ -30,7 +30,7 @@ impl<'app> Dependencies<'app> for Uninitialized {
     type ReceiptStorageReader = ();
     type SharedStorageReader = ();
     type State = InMemoryState;
-    type StateQueries = EthTrieStateQueries<Vec<B256>, InMemoryDb>;
+    type StateQueries = EthTrieStateQueries<HashMap<B256, B256>, InMemoryDb>;
     type StorageTrieRepository = ();
     type TransactionQueries = ();
     type TransactionRepository = ();
@@ -83,8 +83,10 @@ impl<'app> Dependencies<'app> for Uninitialized {
     }
 
     fn state_queries(&self, genesis_config: &GenesisConfig) -> Self::StateQueries {
+        let mut index = HashMap::new();
+        index.insert(B256::default(), genesis_config.initial_state_root);
         EthTrieStateQueries::new(
-            vec![genesis_config.initial_state_root],
+            index,
             Arc::new(InMemoryDb::empty()),
             genesis_config.initial_state_root,
         )

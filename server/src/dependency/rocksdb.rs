@@ -87,10 +87,20 @@ impl<'db> umi_app::Dependencies<'db> for RocksDbDependencies {
 
     fn on_payload() -> &'db Self::OnPayload {
         &|state, id, hash| {
-            state.payload_queries.add_block_hash(id, hash).map_err(|e| {
-                tracing::error!("on_payload callback failed: {e:?}");
-                Error::DatabaseState
-            })
+            state
+                .payload_queries
+                .add_block_hash(id, hash)
+                .map_err(|e| {
+                    tracing::error!("on_payload callback failed: {e:?}");
+                    Error::DatabaseState
+                })?;
+            state
+                .state_queries
+                .push_state_root(hash, state.state.state_root())
+                .map_err(|e| {
+                    tracing::error!("on_payload callback failed: {e:?}");
+                    Error::DatabaseState
+                })
         }
     }
 
@@ -99,15 +109,7 @@ impl<'db> umi_app::Dependencies<'db> for RocksDbDependencies {
     }
 
     fn on_tx_batch() -> &'db Self::OnTxBatch {
-        &|state| {
-            state
-                .state_queries
-                .push_state_root(state.state.state_root())
-                .map_err(|e| {
-                    tracing::error!("on_tx_batch callback failed: {e:?}");
-                    Error::DatabaseState
-                })
-        }
+        CommandActor::on_tx_batch_noop()
     }
 
     fn payload_queries(&self) -> Self::PayloadQueries {
@@ -209,10 +211,20 @@ impl<'db> umi_app::Dependencies<'db> for RocksDbReaderDependencies {
 
     fn on_payload() -> &'db Self::OnPayload {
         &|state, id, hash| {
-            state.payload_queries.add_block_hash(id, hash).map_err(|e| {
-                tracing::error!("on_payload callback failed: {e:?}");
-                Error::DatabaseState
-            })
+            state
+                .payload_queries
+                .add_block_hash(id, hash)
+                .map_err(|e| {
+                    tracing::error!("on_payload callback failed: {e:?}");
+                    Error::DatabaseState
+                })?;
+            state
+                .state_queries
+                .push_state_root(hash, state.state.state_root())
+                .map_err(|e| {
+                    tracing::error!("on_payload callback failed: {e:?}");
+                    Error::DatabaseState
+                })
         }
     }
 
@@ -221,15 +233,7 @@ impl<'db> umi_app::Dependencies<'db> for RocksDbReaderDependencies {
     }
 
     fn on_tx_batch() -> &'db Self::OnTxBatch {
-        &|state| {
-            state
-                .state_queries
-                .push_state_root(state.state.state_root())
-                .map_err(|e| {
-                    tracing::error!("on_tx_batch callback failed: {e:?}");
-                    Error::DatabaseState
-                })
-        }
+        CommandActor::on_tx_batch_noop()
     }
 
     fn payload_queries(&self) -> Self::PayloadQueries {

@@ -298,10 +298,11 @@ pub trait GenesisStateExt: Sized {
 
 impl<'db, D: Dependencies<'db>> GenesisStateExt for Application<'db, D> {
     fn is_state_empty(&self) -> bool {
-        self.block_queries
-            .latest(&self.storage_reader)
-            .expect("Must access block queries to run app")
-            .is_none()
+        let fc = self
+            .block_queries
+            .get_forkchoice_state(&self.storage_reader)
+            .expect("Must access block queries to run app");
+        fc.head_block_hash == B256::ZERO
     }
 
     fn initialize_genesis_state(&mut self, genesis_config: &GenesisConfig) {
@@ -329,17 +330,17 @@ impl<'db, D: Dependencies<'db>> GenesisStateExt for Application<'db, D> {
 
         #[cfg(feature = "op-upgrade")]
         let withdrawals_root = {
-            use umi_blockchain::state::StateQueries;
+            use {
+                umi_blockchain::state::evm_storage_root_from_trie_and_resolver, umi_state::State,
+            };
 
-            Some(
-                self.state_queries
-                    .evm_storage_root_at(
-                        &self.evm_storage,
-                        umi_app::L2_TO_L1_MESSAGE_PASSER_ADDRESS,
-                        0,
-                    )
-                    .expect("Should be able to retrive L2ToL1MessagePasser storage root"),
+            let storage_root = evm_storage_root_from_trie_and_resolver(
+                umi_app::L2_TO_L1_MESSAGE_PASSER_ADDRESS,
+                self.state.resolver(),
+                &self.evm_storage,
             )
+            .expect("Should be able to retrieve L2ToL1MessagePasser storage root");
+            Some(storage_root)
         };
         #[cfg(not(feature = "op-upgrade"))]
         // Has to be `keccak256(rlp(empty_string_code))`, so we can reuse the ommers value

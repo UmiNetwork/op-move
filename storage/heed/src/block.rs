@@ -6,7 +6,9 @@ use {
     },
     heed::RoTxn,
     std::marker::PhantomData,
-    umi_blockchain::block::{BlockQueries, BlockRepository, BlockResponse, ExtendedBlock},
+    umi_blockchain::block::{
+        BlockQueries, BlockRepository, BlockResponse, ExtendedBlock, ForkchoiceState,
+    },
     umi_shared::primitives::B256,
 };
 
@@ -16,10 +18,15 @@ pub type Db = heed::Database<Key, Value>;
 pub type HeightKey = EncodableU64;
 pub type HeightValue = EncodableB256;
 pub type HeightDb = heed::Database<HeightKey, HeightValue>;
+pub type FcKey = EncodableU64;
+pub type FcValue = SerdeJson<ForkchoiceState>;
+pub type FcDb = heed::Database<FcKey, FcValue>;
 pub type EncodableBlock = SerdeJson<ExtendedBlock>;
 
 pub const DB: &str = "block";
 pub const HEIGHT_DB: &str = "height";
+pub const FC_DB: &str = "forkchoice";
+const FC_KEY: u64 = 0;
 
 #[derive(Debug)]
 pub struct HeedBlockRepository<'db>(PhantomData<&'db ()>);
@@ -66,18 +73,23 @@ impl BlockRepository for HeedBlockRepository<'_> {
         response
     }
 
-    fn latest(&self, env: &Self::Storage) -> Result<Option<ExtendedBlock>, Self::Err> {
+    fn forkchoice_update(
+        &mut self,
+        env: &mut Self::Storage,
+        state: ForkchoiceState,
+    ) -> Result<(), Self::Err> {
+        let mut transaction = env.write_txn()?;
+        let db = env.forkchoice_database(&transaction)?;
+        db.put(&mut transaction, &FC_KEY, &state)?;
+        transaction.commit()
+    }
+
+    fn get_forkchoice_state(&self, env: &Self::Storage) -> Result<ForkchoiceState, Self::Err> {
         let transaction = env.read_txn()?;
-
-        let db = env.block_height_database(&transaction)?;
-
-        let response = db
-            .last(&transaction)?
-            .map(|(_height, hash)| env.block_database(&transaction)?.get(&transaction, &hash));
-
+        let db = env.forkchoice_database(&transaction)?;
+        let state = db.get(&transaction, &FC_KEY)?;
         transaction.commit()?;
-
-        Ok(response.transpose()?.flatten())
+        Ok(state.unwrap_or_default())
     }
 }
 
@@ -138,34 +150,24 @@ impl BlockQueries for HeedBlockQueries {
         }))
     }
 
-    fn by_height(
-        &self,
-        env: &Self::Storage,
-        height: u64,
-        include_transactions: bool,
-    ) -> Result<Option<BlockResponse>, Self::Err> {
+    fn get_forkchoice_state(&self, env: &Self::Storage) -> Result<ForkchoiceState, Self::Err> {
         let transaction = env.read_txn()?;
-
-        let db = env.block_height_database(&transaction)?;
-
-        db.get(&transaction, &height)?
-            .map(|hash| {
-                transaction.commit()?;
-                self.by_hash(env, hash, include_transactions)
-            })
-            .unwrap_or(Ok(None))
+        let db = env.forkchoice_database(&transaction)?;
+        let state = db.get(&transaction, &FC_KEY)?;
+        transaction.commit()?;
+        Ok(state.unwrap_or_default())
     }
 
-    fn latest(&self, env: &Self::Storage) -> Result<Option<u64>, Self::Err> {
+    fn height_to_hash(&self, env: &Self::Storage, height: u64) -> Result<B256, Self::Err> {
         let transaction = env.read_txn()?;
-
         let db = env.block_height_database(&transaction)?;
-
-        let pair = db.last(&transaction)?;
-
+        let maybe_hash = db.get(&transaction, &height)?;
         transaction.commit()?;
-
-        Ok(pair.map(|(height, _hash)| height))
+        maybe_hash.ok_or_else(|| {
+            heed::Error::Io(std::io::Error::other(
+                "DB access is protected so queried heights always map to hashes",
+            ))
+        })
     }
 }
 
@@ -173,6 +175,8 @@ pub trait HeedBlockExt {
     fn block_database(&self, rtxn: &RoTxn) -> heed::Result<HeedDb<Key, Value>>;
 
     fn block_height_database(&self, rtxn: &RoTxn) -> heed::Result<HeedDb<HeightKey, HeightValue>>;
+
+    fn forkchoice_database(&self, rtxn: &RoTxn) -> heed::Result<HeedDb<FcKey, FcValue>>;
 }
 
 impl HeedBlockExt for heed::Env {
@@ -188,6 +192,14 @@ impl HeedBlockExt for heed::Env {
         let db: HeightDb = self
             .open_database(rtxn, Some(HEIGHT_DB))?
             .expect("Block height database should exist");
+
+        Ok(HeedDb(db))
+    }
+
+    fn forkchoice_database(&self, rtxn: &RoTxn) -> heed::Result<HeedDb<FcKey, FcValue>> {
+        let db: FcDb = self
+            .open_database(rtxn, Some(FC_DB))?
+            .expect("Forkchoice database should exist");
 
         Ok(HeedDb(db))
     }

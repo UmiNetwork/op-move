@@ -71,9 +71,9 @@ pub trait StateQueries {
     fn balance_at(
         &self,
         account: AccountAddress,
-        height: BlockHeight,
+        hash: B256,
     ) -> umi_shared::error::Result<Balance> {
-        let resolver = self.resolver_at(height)?;
+        let resolver = self.resolver_at(hash)?;
 
         quick_get_eth_balance(&account, &resolver)
     }
@@ -84,9 +84,9 @@ pub trait StateQueries {
         &self,
         evm_storage: &impl StorageTrieRepository,
         account: AccountAddress,
-        height: BlockHeight,
+        hash: B256,
     ) -> Result<Nonce, state::Error> {
-        let resolver = self.resolver_at(height)?;
+        let resolver = self.resolver_at(hash)?;
 
         Ok(quick_get_nonce(&account, &resolver, evm_storage))
     }
@@ -98,7 +98,7 @@ pub trait StateQueries {
         evm_storage: &impl StorageTrieRepository,
         account: AccountAddress,
         storage_slots: &[U256],
-        height: BlockHeight,
+        hash: B256,
     ) -> Result<ProofResponse, state::Error>;
 
     /// Queries the blockchain state version corresponding with block `height` for the
@@ -106,10 +106,10 @@ pub trait StateQueries {
     fn evm_bytecode_at(
         &self,
         account: AccountAddress,
-        height: BlockHeight,
+        hash: B256,
     ) -> Result<Option<Bytes>, state::Error> {
         let address = account.to_eth_address();
-        let resolver = self.resolver_at(height)?;
+        let resolver = self.resolver_at(hash)?;
         let struct_tag = account_info_struct_tag(&address);
 
         let meta_data = resolver.get_module_metadata(&struct_tag.module_id());
@@ -160,13 +160,13 @@ pub trait StateQueries {
         &self,
         account: AccountAddress,
         name: &str,
-        height: BlockHeight,
+        hash: B256,
     ) -> Result<Option<MoveModuleResponse>, state::Error> {
         let Ok(ident) = Identifier::new(name) else {
             return Ok(None);
         };
         let module_id = ModuleId::new(account, ident);
-        let resolver = self.resolver_at(height)?;
+        let resolver = self.resolver_at(hash)?;
         let Some(bytes) = resolver.get_module(&module_id)? else {
             return Ok(None);
         };
@@ -187,13 +187,13 @@ pub trait StateQueries {
         &self,
         account: AccountAddress,
         name: &str,
-        height: BlockHeight,
+        hash: B256,
     ) -> Result<Option<MoveResourceResponse>, umi_shared::error::Error> {
         let Ok(struct_tag) = StructTag::from_str(name) else {
             return Ok(None);
         };
 
-        let resolver = self.resolver_at(height)?;
+        let resolver = self.resolver_at(hash)?;
 
         let (Some(bytes), _) = resolver.get_resource_bytes_with_metadata_and_layout(
             &account,
@@ -215,7 +215,7 @@ pub trait StateQueries {
         &self,
         handle: &TableHandle,
         request: TableItemRequest,
-        height: BlockHeight,
+        hash: B256,
     ) -> Result<Option<MoveValueResponse>, umi_shared::error::Error> {
         let key_type = request
             .key_type
@@ -227,7 +227,7 @@ pub trait StateQueries {
             .try_into()
             .map_err(|_| UserError::IncorrectTypeLayout)?;
 
-        let resolver = self.resolver_at(height)?;
+        let resolver = self.resolver_at(hash)?;
         let converter = UmiMoveConverter::new(&resolver);
 
         let key = converter.try_into_vm_value(&key_type, request.key)?;
@@ -251,12 +251,14 @@ pub trait StateQueries {
         evm_storage: &impl StorageTrieRepository,
         account: Address,
         index: U256,
-        height: BlockHeight,
+        hash: B256,
     ) -> Result<U256, state::Error> {
-        let resolver = self.resolver_at(height)?;
+        let resolver = self.resolver_at(hash)?;
 
         // Read account info to get the storage root
-        let evm_db = ResolverBackedDB::new(evm_storage, &resolver, &(), height);
+        // Note: `block_hash_lookup` and `current_block_number` are given default values
+        // because in-EVM block hash resolution is not needed to check account data.
+        let evm_db = ResolverBackedDB::new(evm_storage, &resolver, &(), 0);
         let Some(account_info) = evm_db.get_account(&account)? else {
             return Ok(U256::ZERO);
         };
@@ -267,28 +269,22 @@ pub trait StateQueries {
         Ok(storage.get(&index)?.unwrap_or_default())
     }
 
-    /// Queries the blockchain state version corresponding with block `height` for the value of an
+    /// Queries the blockchain state version corresponding with block `hash` for the value of an
     ///  EVM `account` storage root. Returns 0x0..00 if no account was found.
-    fn evm_storage_root_at(
+    fn evm_storage_root_from_block_hash(
         &self,
         evm_storage: &impl StorageTrieRepository,
         account: Address,
-        height: BlockHeight,
+        hash: B256,
     ) -> Result<B256, state::Error> {
-        let resolver = self.resolver_at(height)?;
-
-        // Read account info to get the storage root
-        let evm_db = ResolverBackedDB::new(evm_storage, &resolver, &(), height);
-        let Some(account_info) = evm_db.get_account(&account)? else {
-            return Ok(B256::ZERO);
-        };
-        Ok(account_info.inner.storage_root)
+        let resolver = self.resolver_at(hash)?;
+        evm_storage_root_from_trie_and_resolver(account, &resolver, evm_storage)
     }
 
     fn move_list_modules(
         &self,
         account: AccountAddress,
-        height: BlockHeight,
+        hash: B256,
         after: Option<&Identifier>,
         limit: u32,
     ) -> Result<Vec<Identifier>, state::Error>;
@@ -296,22 +292,36 @@ pub trait StateQueries {
     fn move_list_resources(
         &self,
         account: AccountAddress,
-        height: BlockHeight,
+        hash: B256,
         after: Option<&StructTag>,
         limit: u32,
     ) -> Result<Vec<StructTag>, state::Error>;
 
     fn resolver_at(
         &self,
-        height: BlockHeight,
+        hash: B256,
     ) -> Result<impl MoveResolver + TableResolver + CompiledModuleView + '_, state::Error>;
 }
 
-pub trait HeightToStateRootIndex {
+pub trait HashToStateRootIndex {
     type Err: error::Error;
-    fn root_by_height(&self, height: BlockHeight) -> Result<Option<B256>, Self::Err>;
-    fn height(&self) -> Result<BlockHeight, Self::Err>;
-    fn push_state_root(&self, state_root: B256) -> Result<(), Self::Err>;
+    fn root_by_hash(&self, hash: B256) -> Result<Option<B256>, Self::Err>;
+    fn push_state_root(&self, block_hash: B256, state_root: B256) -> Result<(), Self::Err>;
+}
+
+pub fn evm_storage_root_from_trie_and_resolver(
+    account: Address,
+    resolver: &impl MoveResolver,
+    storage_trie: &impl StorageTrieRepository,
+) -> Result<B256, state::Error> {
+    // Read account info to get the storage root
+    // Note: `block_hash_lookup` and `current_block_number` are given default values
+    // because in-EVM block hash resolution is not needed to check account data.
+    let evm_db = ResolverBackedDB::new(storage_trie, resolver, &(), 0);
+    let Some(account_info) = evm_db.get_account(&account)? else {
+        return Ok(B256::ZERO);
+    };
+    Ok(account_info.inner.storage_root)
 }
 
 pub fn proof_from_trie_and_resolver(

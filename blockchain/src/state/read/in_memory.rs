@@ -2,7 +2,7 @@ use {
     crate::{
         block::ReadBlockMemory,
         in_memory::SharedMemoryReader,
-        state::{BlockHeight, EthTrieStateQueries, read::model::HeightToStateRootIndex},
+        state::{EthTrieStateQueries, read::model::HashToStateRootIndex},
     },
     std::convert::Infallible,
     umi_shared::primitives::B256,
@@ -11,23 +11,17 @@ use {
 pub type InMemoryStateQueries<R = SharedMemoryReader, D = umi_state::InMemoryTrieDb> =
     EthTrieStateQueries<R, D>;
 
-impl HeightToStateRootIndex for SharedMemoryReader {
+impl HashToStateRootIndex for SharedMemoryReader {
     type Err = Infallible;
 
-    fn root_by_height(&self, height: BlockHeight) -> Result<Option<B256>, Self::Err> {
+    fn root_by_hash(&self, hash: B256) -> Result<Option<B256>, Self::Err> {
         Ok(self
             .block_memory
-            .map_by_height(height, |v| v.block.header.state_root))
+            .by_hash(hash)
+            .map(|b| b.block.header.state_root))
     }
 
-    fn height(&self) -> Result<BlockHeight, Self::Err> {
-        Ok(self
-            .block_memory
-            .height()
-            .expect("Genesis should not be missing"))
-    }
-
-    fn push_state_root(&self, _state_root: B256) -> Result<(), Self::Err> {
+    fn push_state_root(&self, _block_hash: B256, _state_root: B256) -> Result<(), Self::Err> {
         Ok(())
     }
 }

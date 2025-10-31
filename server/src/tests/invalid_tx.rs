@@ -27,7 +27,7 @@ async fn test_invalid_transaction() -> anyhow::Result<()> {
         ctx.queue.wait_for_pending_commands().await;
         let payload = ctx.engine_get_payload(update.payload_id.unwrap()).await?;
         let block = ctx
-            .get_block_by_number(payload.execution_payload.block_number.saturating_to())
+            .get_block_by_hash(payload.execution_payload.block_hash)
             .await?;
 
         // Confirm payload is accepted

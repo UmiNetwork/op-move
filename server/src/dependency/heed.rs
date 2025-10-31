@@ -86,10 +86,20 @@ impl<'db> umi_app::Dependencies<'db> for HeedDependencies {
 
     fn on_payload() -> &'db Self::OnPayload {
         &|state, id, hash| {
-            state.payload_queries.add_block_hash(id, hash).map_err(|e| {
-                tracing::error!("on_payload callback failed: {e:?}");
-                Error::DatabaseState
-            })
+            state
+                .payload_queries
+                .add_block_hash(id, hash)
+                .map_err(|e| {
+                    tracing::error!("on_payload callback failed: {e:?}");
+                    Error::DatabaseState
+                })?;
+            state
+                .state_queries
+                .push_state_root(hash, state.state.state_root())
+                .map_err(|e| {
+                    tracing::error!("on_payload callback failed: {e:?}");
+                    Error::DatabaseState
+                })
         }
     }
 
@@ -98,15 +108,7 @@ impl<'db> umi_app::Dependencies<'db> for HeedDependencies {
     }
 
     fn on_tx_batch() -> &'db Self::OnTxBatch {
-        &|state| {
-            state
-                .state_queries
-                .push_state_root(state.state.state_root())
-                .map_err(|e| {
-                    tracing::error!("on_tx_batch callback failed: {e:?}");
-                    Error::DatabaseState
-                })
-        }
+        CommandActor::on_tx_batch_noop()
     }
 
     fn payload_queries(&self) -> Self::PayloadQueries {
@@ -205,10 +207,20 @@ impl<'db> umi_app::Dependencies<'db> for HeedReaderDependencies {
 
     fn on_payload() -> &'db Self::OnPayload {
         &|state, id, hash| {
-            state.payload_queries.add_block_hash(id, hash).map_err(|e| {
-                tracing::error!("on_payload callback failed: {e:?}");
-                Error::DatabaseState
-            })
+            state
+                .payload_queries
+                .add_block_hash(id, hash)
+                .map_err(|e| {
+                    tracing::error!("on_payload callback failed: {e:?}");
+                    Error::DatabaseState
+                })?;
+            state
+                .state_queries
+                .push_state_root(hash, state.state.state_root())
+                .map_err(|e| {
+                    tracing::error!("on_payload callback failed: {e:?}");
+                    Error::DatabaseState
+                })
         }
     }
 
@@ -217,15 +229,7 @@ impl<'db> umi_app::Dependencies<'db> for HeedReaderDependencies {
     }
 
     fn on_tx_batch() -> &'db Self::OnTxBatch {
-        &|state| {
-            state
-                .state_queries
-                .push_state_root(state.state.state_root())
-                .map_err(|e| {
-                    tracing::error!("on_tx_batch callback failed: {e:?}");
-                    Error::DatabaseState
-                })
-        }
+        CommandActor::on_tx_batch_noop()
     }
 
     fn payload_queries(&self) -> Self::PayloadQueries {
@@ -311,11 +315,11 @@ fn create_db(args: umi_server_args::Database) -> umi_storage_heed::Env {
         let _: block::HeightDb = env
             .create_database(&mut transaction, Some(block::HEIGHT_DB))
             .expect("Database should be new");
+        let _: block::FcDb = env
+            .create_database(&mut transaction, Some(block::FC_DB))
+            .expect("Database should be new");
         let _: state::Db = env
             .create_database(&mut transaction, Some(state::DB))
-            .expect("Database should be new");
-        let _: state::HeightDb = env
-            .create_database(&mut transaction, Some(state::HEIGHT_DB))
             .expect("Database should be new");
         let _: trie::Db = env
             .create_database(&mut transaction, Some(trie::DB))

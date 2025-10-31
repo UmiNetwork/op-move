@@ -20,11 +20,12 @@ pub async fn execute<'reader>(
 mod tests {
     use {
         super::*,
-        crate::methods::tests::create_app,
+        crate::methods::tests::{create_app, send_command},
         alloy::eips::BlockNumberOrTag::{self, *},
         test_case::test_case,
         tokio::sync::mpsc,
         umi_app::{Command, CommandActor, PayloadForExecution, TestDependencies},
+        umi_blockchain::{block::ForkchoiceState, payload::MaybePayloadResponse},
         umi_shared::primitives::U64,
     };
 
@@ -108,17 +109,33 @@ mod tests {
             let response = execute(request, &reader).await.unwrap();
             assert_eq!(get_block_number_from_response(response), "0x0");
 
-            // Create a block, so the block height becomes 1
+            // Create a block, and update forkchoice so the block height becomes 1
+            let payload_id = U64::from(0x03421ee50df45cacu64);
             let msg = Command::StartBlockBuild {
                 payload_attributes: PayloadForExecution {
                     timestamp: U64::from(1),
                     ..Default::default()
                 },
-                payload_id: U64::from(0x03421ee50df45cacu64),
+                payload_id,
             };
-            state_channel.send(msg).await.unwrap();
-
-            state_channel.reserve_many(10).await.unwrap();
+            send_command(&state_channel, msg).await;
+            let MaybePayloadResponse::Some(payload) = reader.payload(payload_id).unwrap() else {
+                panic!("Payload must be finished already");
+            };
+            let block_hash = payload.execution_payload.block_hash;
+            let fc = ForkchoiceState {
+                head_block_hash: block_hash,
+                safe_block_hash: block_hash,
+                finalized_block_hash: block_hash,
+            };
+            send_command(
+                &state_channel,
+                Command::ForkchoiceUpdate {
+                    state: fc,
+                    payload_id: None,
+                },
+            )
+            .await;
 
             let request = example_request(Latest);
             let response = execute(request, &reader).await.unwrap();
@@ -140,16 +157,32 @@ mod tests {
         let state: CommandActor<TestDependencies> = CommandActor::new(rx, &mut app);
 
         umi_app::run_with_actor(state, async move {
+            let payload_id = U64::from(0x03421ee50df45cacu64);
             let msg = Command::StartBlockBuild {
                 payload_attributes: PayloadForExecution {
                     timestamp: U64::from(1),
                     ..Default::default()
                 },
-                payload_id: U64::from(0x03421ee50df45cacu64),
+                payload_id,
             };
-            state_channel.send(msg).await.unwrap();
-
-            state_channel.reserve_many(10).await.unwrap();
+            send_command(&state_channel, msg).await;
+            let MaybePayloadResponse::Some(payload) = reader.payload(payload_id).unwrap() else {
+                panic!("Payload must be finished already");
+            };
+            let block_hash = payload.execution_payload.block_hash;
+            let fc = ForkchoiceState {
+                head_block_hash: block_hash,
+                safe_block_hash: block_hash,
+                finalized_block_hash: block_hash,
+            };
+            send_command(
+                &state_channel,
+                Command::ForkchoiceUpdate {
+                    state: fc,
+                    payload_id: None,
+                },
+            )
+            .await;
 
             let request = example_request(tag);
             let response = execute(request, &reader).await.unwrap();

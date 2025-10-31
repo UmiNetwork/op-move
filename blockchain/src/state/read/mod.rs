@@ -14,8 +14,9 @@ pub use {
     eth_trie::EthTrieStateQueries,
     in_memory::InMemoryStateQueries,
     model::{
-        Balance, BlockHeight, HeightToStateRootIndex, Nonce, ProofResponse, StateQueries,
-        StorageProof, Version, proof_from_trie_and_resolver,
+        Balance, BlockHeight, HashToStateRootIndex, Nonce, ProofResponse, StateQueries,
+        StorageProof, Version, evm_storage_root_from_trie_and_resolver,
+        proof_from_trie_and_resolver,
     },
     response::*,
 };

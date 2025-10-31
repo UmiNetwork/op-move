@@ -17,7 +17,7 @@ use {
         block::{
             BaseGasFee, BlockQueries, BlockResponse,
             DEFAULT_EIP1559_BASE_FEE_MAX_CHANGE_DENOMINATOR, DEFAULT_EIP1559_ELASTICITY_MULTIPLIER,
-            Eip1559GasFee,
+            Eip1559GasFee, ForkchoiceState,
         },
         payload::{MaybePayloadResponse, PayloadId, PayloadQueries, PayloadResponse},
         receipt::{ReceiptQueries, TransactionReceipt},
@@ -41,9 +41,9 @@ pub(crate) const MIN_SUGGESTED_PRIORITY_FEE: u128 = 1_000_000;
 pub(crate) const MAX_SUGGESTED_PRIORITY_FEE: u128 = 500_000_000_000;
 
 #[derive(Debug)]
-enum BlockNumberOrHash {
-    Number(u64),
-    Hash(B256),
+enum FeeHistoryBlockId {
+    RangeEnd(B256),
+    LoopBody(B256),
 }
 
 impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
@@ -62,8 +62,10 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
     }
 
     pub fn balance_by_height(&self, address: Address, height: BlockNumberOrTag) -> Result<U256> {
-        self.state_queries
-            .balance_at(address.to_move_address(), self.resolve_height(height)?)
+        self.state_queries.balance_at(
+            address.to_move_address(),
+            self.resolve_height_to_header(height)?.hash,
+        )
     }
 
     pub fn evm_bytecode_by_height(
@@ -73,7 +75,10 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
     ) -> Result<Bytes> {
         Ok(self
             .state_queries
-            .evm_bytecode_at(address.to_move_address(), self.resolve_height(height)?)?
+            .evm_bytecode_at(
+                address.to_move_address(),
+                self.resolve_height_to_header(height)?.hash,
+            )?
             .unwrap_or_default())
     }
 
@@ -81,7 +86,7 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         Ok(self.state_queries.nonce_at(
             &self.evm_storage,
             address.to_move_address(),
-            self.resolve_height(height)?,
+            self.resolve_height_to_header(height)?.hash,
         )?)
     }
 
@@ -92,7 +97,11 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         height: BlockNumberOrTag,
     ) -> Result<MoveModuleResponse> {
         self.state_queries
-            .move_module_at(address, module_name, self.resolve_height(height)?)?
+            .move_module_at(
+                address,
+                module_name,
+                self.resolve_height_to_header(height)?.hash,
+            )?
             .ok_or_else(|| Error::User(UserError::MissingModule(module_name.to_string())))
     }
 
@@ -103,7 +112,11 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         height: BlockNumberOrTag,
     ) -> Result<MoveResourceResponse> {
         self.state_queries
-            .move_resource_at(address, resource_name, self.resolve_height(height)?)?
+            .move_resource_at(
+                address,
+                resource_name,
+                self.resolve_height_to_header(height)?.hash,
+            )?
             .ok_or_else(|| Error::User(UserError::MissingResource(resource_name.to_string())))
     }
 
@@ -114,14 +127,14 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         height: BlockNumberOrTag,
     ) -> Result<MoveValueResponse> {
         self.state_queries
-            .table_item_at(handle, request, self.resolve_height(height)?)?
+            .table_item_at(handle, request, self.resolve_height_to_header(height)?.hash)?
             .ok_or_else(|| UserError::MissingTableItem.into())
     }
 
     pub fn storage(&self, address: Address, index: U256, height: BlockNumberOrTag) -> Result<U256> {
-        let height = self.resolve_height(height)?;
+        let hash = self.resolve_height_to_header(height)?.hash;
         self.state_queries
-            .evm_storage_at(&self.evm_storage, address, index, height)
+            .evm_storage_at(&self.evm_storage, address, index, hash)
             .map_err(|_| Error::DatabaseState)
     }
 
@@ -137,18 +150,38 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         height: BlockNumberOrTag,
         include_transactions: bool,
     ) -> Result<BlockResponse> {
-        let resolved_height = self.resolve_height(height)?;
+        let header = self.resolve_height_to_header(height)?;
         self.block_queries
-            .by_height(&self.storage, resolved_height, include_transactions)
+            .by_hash(&self.storage, header.hash, include_transactions)
             .map_err(|_| Error::DatabaseState)?
-            .ok_or(Error::User(UserError::InvalidBlockHeight(resolved_height)))
+            .ok_or(Error::User(UserError::InvalidBlockHeight(header.number)))
+    }
+
+    pub fn get_forkchoice_state(&self) -> Result<ForkchoiceState> {
+        self.block_queries
+            .get_forkchoice_state(&self.storage)
+            .map_err(|_| Error::DatabaseState)
     }
 
     pub fn block_number(&self) -> Result<u64> {
+        let fc = self
+            .block_queries
+            .get_forkchoice_state(&self.storage)
+            .map_err(|_| Error::DatabaseState)?;
+        let block = self
+            .block_queries
+            .by_hash(&self.storage, fc.head_block_hash, false)
+            .map_err(|_| Error::DatabaseState)?;
+        let height = block
+            .map(|b| b.0.header.number)
+            .ok_or(Error::InvariantViolation(InvariantViolation::GenesisBlock))?;
+        Ok(height)
+    }
+
+    pub fn ancestor_check(&self, maybe_ancestor: B256, head: B256) -> Result<bool> {
         self.block_queries
-            .latest(&self.storage)
-            .map_err(|_| Error::DatabaseState)?
-            .ok_or(Error::InvariantViolation(InvariantViolation::GenesisBlock))
+            .ancestor_check(&self.storage, maybe_ancestor, head)
+            .map_err(|_| Error::DatabaseState)
     }
 
     pub fn fee_history(
@@ -181,7 +214,7 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
             }
         }
 
-        let last_block = self.resolve_height(block_number)?;
+        let last_block = self.resolve_height_to_header(block_number)?;
 
         let latest_block_num = self.block_number()?;
         // Genesis block is counted as 0
@@ -189,7 +222,7 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         // As block count was clipped above,
         // saturating sub is technically not needed, but it's still better
         // to err on the safe side
-        let oldest_block = (last_block + 1).saturating_sub(block_count);
+        let oldest_block = (last_block.number + 1).saturating_sub(block_count);
 
         // base fees (and blob base fees) array should include the fee of the next block past the
         // end of the range as well
@@ -201,8 +234,8 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         match reward_percentiles {
             None => {
                 total_reward = None;
-                let mut current_block_num = last_block;
-                let mut current_block_id = BlockNumberOrHash::Number(last_block);
+                let mut current_block_num = last_block.number;
+                let mut current_block_id = FeeHistoryBlockId::RangeEnd(last_block.hash);
                 while current_block_num >= oldest_block {
                     let parent_hash = self.collect_fee_history_for_block(
                         &mut base_fees,
@@ -214,14 +247,14 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
                     if parent_hash.is_zero() || current_block_num == 0 {
                         break;
                     }
-                    current_block_id = BlockNumberOrHash::Hash(parent_hash);
+                    current_block_id = FeeHistoryBlockId::LoopBody(parent_hash);
                     current_block_num = current_block_num.saturating_sub(1);
                 }
             }
             Some(percentiles) => {
                 let mut inner_total_reward = Vec::with_capacity(block_count as usize);
-                let mut current_block_num = last_block;
-                let mut current_block_id = BlockNumberOrHash::Number(last_block);
+                let mut current_block_num = last_block.number;
+                let mut current_block_id = FeeHistoryBlockId::RangeEnd(last_block.hash);
                 while current_block_num >= oldest_block {
                     let parent_hash = self.collect_fee_history_for_block(
                         &mut base_fees,
@@ -250,7 +283,7 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
                     if parent_hash.is_zero() || current_block_num == 0 {
                         break;
                     }
-                    current_block_id = BlockNumberOrHash::Hash(parent_hash);
+                    current_block_id = FeeHistoryBlockId::LoopBody(parent_hash);
                     current_block_num -= 1;
                 }
                 total_reward = Some(inner_total_reward);
@@ -284,14 +317,14 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         transaction: TransactionRequest,
         block_number: BlockNumberOrTag,
     ) -> Result<u64> {
-        let block_height = self.resolve_height(block_number)?;
+        let header = self.resolve_height_to_header(block_number)?;
         let outcome = simulate_transaction(
             transaction,
-            &self.state_queries.resolver_at(block_height)?,
+            &self.state_queries.resolver_at(header.hash)?,
             &self.evm_storage,
             &self.genesis_config,
             &self.base_token,
-            block_height,
+            header.number,
             &self.block_hash_lookup,
         );
 
@@ -306,23 +339,18 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         transaction: TransactionRequest,
         block_number: BlockNumberOrTag,
     ) -> Result<Vec<u8>> {
-        let height = self.resolve_height(block_number)?;
-        let block_header = self
-            .block_queries
-            .by_height(&self.storage, height, false)
-            .map_err(|_| Error::DatabaseState)?
-            .map(|block| HeaderForExecution {
-                number: height,
-                timestamp: block.0.header.timestamp,
-                prev_randao: block.0.header.mix_hash,
-                chain_id: self.genesis_config.chain_id,
-            })
-            .unwrap_or_default();
+        let header = self.resolve_height_to_header(block_number)?;
+        let header_for_execution = HeaderForExecution {
+            number: header.number,
+            timestamp: header.timestamp,
+            prev_randao: header.mix_hash,
+            chain_id: self.genesis_config.chain_id,
+        };
         call_transaction(
             transaction,
-            &self.state_queries.resolver_at(height)?,
+            &self.state_queries.resolver_at(header.hash)?,
             &self.evm_storage,
-            block_header,
+            header_for_execution,
             &self.genesis_config,
             &self.base_token,
             &self.block_hash_lookup,
@@ -360,12 +388,12 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         storage_slots: Vec<U256>,
         height: BlockId,
     ) -> Result<ProofResponse> {
-        let height = self.height_from_block_id(height)?;
+        let hash = self.hash_from_block_id(height)?;
         Ok(self.state_queries.proof_at(
             &self.evm_storage,
             address.to_move_address(),
             &storage_slots,
-            height,
+            hash,
         )?)
     }
 
@@ -389,10 +417,10 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         after: Option<&Identifier>,
         limit: u32,
     ) -> Result<Vec<Identifier>> {
-        let height = self.resolve_height(height)?;
+        let hash = self.resolve_height_to_header(height)?.hash;
         Ok(self
             .state_queries
-            .move_list_modules(address.to_move_address(), height, after, limit)?)
+            .move_list_modules(address.to_move_address(), hash, after, limit)?)
     }
 
     pub fn move_list_resources(
@@ -402,42 +430,80 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         after: Option<&StructTag>,
         limit: u32,
     ) -> Result<Vec<StructTag>> {
-        let height = self.resolve_height(height)?;
-        Ok(self.state_queries.move_list_resources(
-            address.to_move_address(),
-            height,
-            after,
-            limit,
-        )?)
+        let hash = self.resolve_height_to_header(height)?.hash;
+        Ok(self
+            .state_queries
+            .move_list_resources(address.to_move_address(), hash, after, limit)?)
     }
 
-    fn resolve_height(&self, height: BlockNumberOrTag) -> Result<u64> {
+    fn resolve_height_to_header(
+        &self,
+        height: BlockNumberOrTag,
+    ) -> Result<alloy::rpc::types::eth::Header> {
+        let fc = self
+            .block_queries
+            .get_forkchoice_state(&self.storage)
+            .map_err(|_| Error::DatabaseState)?;
         let latest = self
             .block_queries
-            .latest(&self.storage)
+            .by_hash(&self.storage, fc.head_block_hash, false)
             .map_err(|_| Error::DatabaseState)?
-            .ok_or(Error::InvariantViolation(InvariantViolation::GenesisBlock))?;
+            .ok_or(Error::User(UserError::InvalidBlockHash(fc.head_block_hash)))?;
         match height {
-            Number(height) if height <= latest => Ok(height),
-            Finalized | Pending | Latest | Safe => Ok(latest),
-            Earliest => Ok(0),
-            Number(invalid_height) => {
+            Pending | Latest => Ok(latest.0.header),
+            Finalized => {
+                let finalized = self
+                    .block_queries
+                    .by_hash(&self.storage, fc.finalized_block_hash, false)
+                    .map_err(|_| Error::DatabaseState)?
+                    .ok_or(Error::User(UserError::InvalidBlockHash(
+                        fc.finalized_block_hash,
+                    )))?;
+                Ok(finalized.0.header)
+            }
+            Safe => {
+                let safe = self
+                    .block_queries
+                    .by_hash(&self.storage, fc.safe_block_hash, false)
+                    .map_err(|_| Error::DatabaseState)?
+                    .ok_or(Error::User(UserError::InvalidBlockHash(fc.safe_block_hash)))?;
+                Ok(safe.0.header)
+            }
+            Earliest => {
+                let height = 0;
+                let hash = self
+                    .block_queries
+                    .height_to_hash(&self.storage, height)
+                    .map_err(|_| Error::DatabaseState)?;
+                let block = self
+                    .block_queries
+                    .by_hash(&self.storage, hash, false)
+                    .map_err(|_| Error::DatabaseState)?
+                    .ok_or(Error::User(UserError::InvalidBlockHeight(height)))?;
+                Ok(block.0.header)
+            }
+            Number(invalid_height) if invalid_height > latest.0.header.number => {
                 Err(Error::User(UserError::InvalidBlockHeight(invalid_height)))
+            }
+            Number(height) => {
+                let hash = self
+                    .block_queries
+                    .height_to_hash(&self.storage, height)
+                    .map_err(|_| Error::DatabaseState)?;
+                let block = self
+                    .block_queries
+                    .by_hash(&self.storage, hash, false)
+                    .map_err(|_| Error::DatabaseState)?
+                    .ok_or(Error::User(UserError::InvalidBlockHeight(height)))?;
+                Ok(block.0.header)
             }
         }
     }
 
-    fn height_from_block_id(&self, id: BlockId) -> Result<u64> {
+    fn hash_from_block_id(&self, id: BlockId) -> Result<B256> {
         match id {
-            BlockId::Number(height) => Ok(self.resolve_height(height)?),
-            BlockId::Hash(h) => {
-                let block = self
-                    .block_queries
-                    .by_hash(&self.storage, h.block_hash, false)
-                    .map_err(|_| Error::DatabaseState)?
-                    .ok_or(Error::User(UserError::InvalidBlockHash(h.block_hash)))?;
-                Ok(block.0.header.number)
-            }
+            BlockId::Number(height) => Ok(self.resolve_height_to_header(height)?.hash),
+            BlockId::Hash(hash) => Ok(hash.block_hash),
         }
     }
 
@@ -446,17 +512,16 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         base_fees: &mut Vec<u128>,
         gas_used_ratios: &mut Vec<f64>,
         total_reward: &mut Vec<Vec<u128>>,
-        block_id: BlockNumberOrHash,
+        block_id: FeeHistoryBlockId,
         mut acc_total_reward: F,
     ) -> Result<B256>
     where
         F: FnMut(&mut Vec<Vec<u128>>, u64, &[(u128, u64)]),
     {
         let curr_block = match block_id {
-            BlockNumberOrHash::Number(height) => {
-                self.block_by_height(BlockNumberOrTag::Number(height), false)?
+            FeeHistoryBlockId::RangeEnd(hash) | FeeHistoryBlockId::LoopBody(hash) => {
+                self.block_by_hash(hash, false)?
             }
-            BlockNumberOrHash::Hash(hash) => self.block_by_hash(hash, false)?,
         };
         let Header {
             gas_limit,
@@ -473,7 +538,7 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         // For the last block, instead of querying block repo again, we resort to direct calculation
         // so that we also account for the range ending with the latest block. This comes before
         // the remaining calculation as we're iterating in reverse
-        if matches!(block_id, BlockNumberOrHash::Number(_)) {
+        if matches!(block_id, FeeHistoryBlockId::RangeEnd(_)) {
             #[cfg_attr(not(feature = "op-upgrade"), allow(unused_mut))]
             let mut gas_fee = Eip1559GasFee::new(
                 DEFAULT_EIP1559_ELASTICITY_MULTIPLIER,
