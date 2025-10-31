@@ -63,7 +63,7 @@ async fn inner_execute<'reader>(
     let withdrawals_root = {
         use umi_blockchain::state::StateQueries;
 
-        match app.state_queries.evm_storage_root_at(
+        match app.state_queries.evm_storage_root_from_block_hash(
             &app.evm_storage,
             umi_app::L2_TO_L1_MESSAGE_PASSER_ADDRESS,
             execution_payload.block_hash,

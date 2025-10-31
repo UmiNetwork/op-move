@@ -269,9 +269,9 @@ pub trait StateQueries {
         Ok(storage.get(&index)?.unwrap_or_default())
     }
 
-    /// Queries the blockchain state version corresponding with block `height` for the value of an
+    /// Queries the blockchain state version corresponding with block `hash` for the value of an
     ///  EVM `account` storage root. Returns 0x0..00 if no account was found.
-    fn evm_storage_root_at(
+    fn evm_storage_root_from_block_hash(
         &self,
         evm_storage: &impl StorageTrieRepository,
         account: Address,
