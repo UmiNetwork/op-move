@@ -54,6 +54,7 @@ mod tests {
         let (reader, _app) = create_app();
         let request = example_request(Number(0));
 
+        #[cfg(not(feature = "op-upgrade"))]
         let expected_response: serde_json::Value = serde_json::from_str(r#"
         {
             "hash": "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d",
@@ -73,6 +74,31 @@ mod tests {
             "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
             "nonce": "0x0000000000000000",
             "size": "0x1f0",
+            "uncles": [],
+            "transactions": [],
+            "withdrawals": []
+        }"#).unwrap();
+
+        #[cfg(feature = "op-upgrade")]
+        let expected_response: serde_json::Value = serde_json::from_str(r#"
+        {
+            "hash": "0xe56ec7ba741931e8c55b7f654a6e56ed61cf8b8279bf5e3ef6ac86a11eb33a9d",
+            "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+            "miner": "0x0000000000000000000000000000000000000000",
+            "stateRoot": "0x7a60fc9568ab4beac4305f381312125963c32ffb7a0d5b3afdd4a9ecca902348",
+            "transactionsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+            "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+            "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "difficulty": "0x0",
+            "number": "0x0",
+            "gasLimit": "0x0",
+            "gasUsed": "0x0",
+            "timestamp": "0x0",
+            "extraData": "0x000000000800000002",
+            "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "nonce": "0x0000000000000000",
+            "size": "0x1f9",
             "uncles": [],
             "transactions": [],
             "withdrawals": []

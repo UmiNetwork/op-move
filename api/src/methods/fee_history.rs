@@ -139,7 +139,15 @@ mod tests {
             "id": 1
         });
 
-        let expected_response: serde_json::Value = serde_json::json!({"baseFeePerGas": ["0x0", "0x0"], "gasUsedRatio": [0.0], "baseFeePerBlobGas": ["0x0", "0x0"], "blobGasUsedRatio": [0.0], "oldestBlock": "0x0", "reward": [["0x0"]]});
+        let expected_response: serde_json::Value = serde_json::json!({
+            "baseFeePerGas": ["0x0", "0x0"],
+            "gasUsedRatio": [0.0],
+            "baseFeePerBlobGas": ["0x0", "0x0"],
+            "blobGasUsedRatio": [0.0],
+            "oldestBlock": "0x0",
+            "reward": [["0x0"]]
+        });
+
         let response = execute(request, &reader).await.unwrap();
 
         assert_eq!(response, expected_response);

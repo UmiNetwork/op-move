@@ -224,6 +224,13 @@ fn create_app_with_fake_queries(
         .with_value(U256::ZERO);
     genesis_block.block.header.base_fee_per_gas = Some(base_fee);
 
+    let gas_fee = Eip1559GasFee::default();
+    #[cfg(feature = "op-upgrade")]
+    {
+        use umi_blockchain::block::BaseGasFee;
+        genesis_block.block.header.extra_data = gas_fee.encode_parameters_for_header();
+    }
+
     let (memory_reader, mut memory) = shared_memory::new();
     let mut block_hash_cache =
         HybridBlockHashCache::new(memory_reader.clone(), InMemoryBlockQueries);
@@ -318,7 +325,7 @@ fn create_app_with_fake_queries(
             evm_storage,
             transaction_queries: InMemoryTransactionQueries::new(),
             transaction_repository: InMemoryTransactionRepository::new(),
-            gas_fee: Eip1559GasFee::default(),
+            gas_fee,
             l1_fee: U256::ZERO,
             l2_fee: U256::ZERO,
             resolver_cache: Default::default(),

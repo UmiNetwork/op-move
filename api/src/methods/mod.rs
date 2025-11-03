@@ -81,9 +81,17 @@ pub mod tests {
             state_root: genesis_config.initial_state_root,
             ..Default::default()
         };
-        let genesis_block = Block::new(genesis_header, Vec::new())
+        #[cfg_attr(not(feature = "op-upgrade"), allow(unused_mut))]
+        let mut genesis_block = Block::new(genesis_header, Vec::new())
             .into_extended_with_hash(head_hash)
             .with_value(U256::ZERO);
+
+        let gas_fee = Eip1559GasFee::default();
+        #[cfg(feature = "op-upgrade")]
+        {
+            use umi_blockchain::block::BaseGasFee;
+            genesis_block.block.header.extra_data = gas_fee.encode_parameters_for_header();
+        }
 
         let size = genesis_block.byte_length(Vec::new());
         let genesis_block = genesis_block.with_size(size);
@@ -141,7 +149,7 @@ pub mod tests {
             Application {
                 mem_pool: Default::default(),
                 genesis_config,
-                gas_fee: Eip1559GasFee::default(),
+                gas_fee,
                 base_token: UmiBaseTokenAccounts::new(AccountAddress::ONE),
                 l1_fee: U256::ZERO,
                 l2_fee: U256::ZERO,
