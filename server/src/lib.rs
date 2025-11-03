@@ -1,5 +1,8 @@
 use {
-    alloy::consensus::{proofs::state_root_unhashed, EMPTY_OMMER_ROOT_HASH, EMPTY_ROOT_HASH},
+    alloy::consensus::{
+        constants::EMPTY_WITHDRAWALS, proofs::state_root_unhashed, EMPTY_OMMER_ROOT_HASH,
+        EMPTY_ROOT_HASH,
+    },
     jsonwebtoken::{DecodingKey, Validation},
     serde::Serialize,
     std::{
@@ -344,7 +347,7 @@ impl<'db, D: Dependencies<'db>> GenesisStateExt for Application<'db, D> {
         };
         #[cfg(not(feature = "op-upgrade"))]
         // Has to be `keccak256(rlp(empty_string_code))`, so we can reuse the ommers value
-        let withdrawals_root = Some(EMPTY_OMMER_ROOT_HASH);
+        let withdrawals_root = Some(EMPTY_WITHDRAWALS);
 
         let genesis_block =
             create_genesis_block(&self.block_hash, genesis_config, withdrawals_root);

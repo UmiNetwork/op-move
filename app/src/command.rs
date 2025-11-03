@@ -184,7 +184,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
         };
         #[cfg(not(feature = "op-upgrade"))]
         // Has to be `keccak256(rlp(empty_string_code))`, so we can reuse the ommers value
-        let withdrawals_root = Some(alloy::consensus::constants::EMPTY_OMMER_ROOT_HASH);
+        let withdrawals_root = Some(alloy::consensus::constants::EMPTY_WITHDRAWALS);
 
         let header = Header {
             parent_hash: parent.hash,
