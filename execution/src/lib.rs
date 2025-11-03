@@ -1,9 +1,13 @@
+#[cfg(not(feature = "op-upgrade"))]
+pub use gas::{CreateEcotoneL1GasFee, EcotoneGasFee};
+#[cfg(feature = "op-upgrade")]
+pub use gas::{CreateFjordL1GasFee, FjordGasFee};
 pub use {
     alloy::primitives::U256,
     eth_token::{BaseTokenAccounts, UmiBaseTokenAccounts, mint_eth, quick_get_eth_balance},
     gas::{
-        CreateEcotoneL1GasFee, CreateL1GasFee, CreateL2GasFee, CreateUmiL2GasFee, EcotoneGasFee,
-        L1GasFee, L1GasFeeInput, L2GasFee, L2GasFeeInput, UmiGasFee,
+        CreateL1GasFee, CreateL2GasFee, CreateUmiL2GasFee, L1GasFee, L1GasFeeInput, L2GasFee,
+        L2GasFeeInput, UmiGasFee,
     },
     nonces::{check_nonce, increment_account_nonce, quick_get_nonce},
 };
