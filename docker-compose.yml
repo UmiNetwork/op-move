@@ -97,10 +97,10 @@ services:
       - ./docker/shared/volume:/volume/shared
 
   op-move:
-    image: ghcr.io/uminetwork/op-move:${UMI_TAG:-latest}
+    image: ghcr.io/uminetwork/op-move-rep:${UMI_TAG:-latest}
     build:
       cache_from:
-        - type=registry,ref=ghcr.io/uminetwork/op-move:latest-cache
+        - type=registry,ref=ghcr.io/uminetwork/op-move-rep:latest-cache
       dockerfile: docker/op-move/Dockerfile
       args:
         - RUST_TOOLCHAIN
