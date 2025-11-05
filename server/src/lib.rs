@@ -343,7 +343,7 @@ impl<'db, D: Dependencies<'db>> GenesisStateExt for Application<'db, D> {
             Some(storage_root)
         };
         #[cfg(not(feature = "op-upgrade"))]
-        // Has to be `keccak256(rlp(empty_string_code))`, so we can reuse the ommers value
+        // Has to be `keccak256(rlp(empty_string_code))`
         let withdrawals_root = Some(alloy::consensus::constants::EMPTY_WITHDRAWALS);
 
         let genesis_block =

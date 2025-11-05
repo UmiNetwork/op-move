@@ -75,7 +75,7 @@ async fn inner_execute<'reader>(
         }
     };
     #[cfg(not(feature = "op-upgrade"))]
-    // Has to be `keccak256(rlp(empty_string_code))`, so we can reuse the ommers value
+    // Has to be `keccak256(rlp(empty_string_code))`
     let withdrawals_root = Some(alloy::consensus::constants::EMPTY_WITHDRAWALS);
 
     if let Err(status) = validate_payload_block_hash(
