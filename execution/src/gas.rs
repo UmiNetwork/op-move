@@ -270,20 +270,19 @@ impl FjordGasFee {
 #[cfg(feature = "op-upgrade")]
 impl L1GasFee for FjordGasFee {
     fn l1_fee(&self, input: L1GasFeeInput) -> U256 {
-        use umi_shared::primitives::I256;
-
         // The spec <https://specs.optimism.io/protocol/fjord/exec-engine.html#fjord-l1-cost-fee-changes-fastlz-estimator>
-        // returns a `U256` as the final result, so we can widen the types in advance while
-        // adding the intercept sign (due to clunkiness of converting from non-ruint types).
-        let intercept = -I256::from_raw(U256::from(Self::INTERCEPT_ABS));
+        // returns a `U256` as the final result, so we can widen the types in advance.
+        let intercept = U256::from(Self::INTERCEPT_ABS);
         let min_tx_size = U256::from(Self::MIN_TX_SIZE);
         let fast_lz_coef = U256::from(Self::FAST_LZ_COEF);
         let fast_lz_size = input.fast_lz_size;
 
         let estimated_size_scaled = {
-            let scaled = I256::from(fast_lz_coef * fast_lz_size) + intercept;
-            let min_scaled = I256::from(min_tx_size * U256::from(1_000_000));
-            U256::from(scaled.max(min_scaled))
+            let min_scaled = min_tx_size * U256::from(1_000_000);
+            let scaled = (fast_lz_coef * fast_lz_size)
+                .checked_sub(intercept)
+                .unwrap_or(min_scaled);
+            scaled.max(min_scaled)
         };
 
         let weighted_gas_price = Self::GAS_PRICE_MULTIPLIER * self.base_fee_scalar * self.base_fee
