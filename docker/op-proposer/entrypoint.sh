@@ -20,4 +20,20 @@ op-proposer \
     --private-key "${PROPOSER_PRIVATE_KEY}" \
     --l1-eth-rpc "${L1_RPC_URL}" \
     --num-confirmations 1 \
-    --allow-non-finalized true
+    --allow-non-finalized true &
+
+# Get the PID of the process launched in the background
+PID="$!"
+
+# Shuts down in a way that does not corrupt the datadir
+shutdown() {
+  kill -SIGINT "${PID}"
+  wait "${PID}"
+  exit 0
+}
+
+# Trap signal from docker stop to the graceful shutdown function
+trap shutdown TERM
+
+# Block on the background process
+wait "${PID}"
