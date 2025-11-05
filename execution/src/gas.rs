@@ -100,24 +100,51 @@ pub trait L2GasFee {
 pub struct L1GasFeeInput {
     zero_bytes: U256,
     non_zero_bytes: U256,
+    #[cfg(feature = "op-upgrade")]
+    fast_lz_size: U256,
 }
 
 impl L1GasFeeInput {
+    #[cfg(not(feature = "op-upgrade"))]
     pub fn new(zero_bytes: U256, non_zero_bytes: U256) -> Self {
         Self {
             zero_bytes,
             non_zero_bytes,
         }
     }
+
+    #[cfg(feature = "op-upgrade")]
+    pub fn new(zero_bytes: U256, non_zero_bytes: U256, fast_lz_size: U256) -> Self {
+        Self {
+            zero_bytes,
+            non_zero_bytes,
+            fast_lz_size,
+        }
+    }
 }
 
 impl<T: AsRef<[u8]>> From<T> for L1GasFeeInput {
+    #[cfg(not(feature = "op-upgrade"))]
     fn from(value: T) -> Self {
         let tx_data = value.as_ref();
         let zero_bytes = U256::from(tx_data.iter().filter(|&&v| v == 0).count());
         let non_zero_bytes = U256::from(tx_data.len()) - zero_bytes;
 
         Self::new(zero_bytes, non_zero_bytes)
+    }
+
+    #[cfg(feature = "op-upgrade")]
+    fn from(value: T) -> Self {
+        let tx_data = value.as_ref();
+        let zero_bytes = U256::from(tx_data.iter().filter(|&&v| v == 0).count());
+        let non_zero_bytes = U256::from(tx_data.len()) - zero_bytes;
+        // From FastLZ binding docs: the output buffer must be at least 5% larger than the input buffer and can not be smaller than 66 bytes.
+        let mut output = vec![0u8; tx_data.len() * 21 / 20 + 66];
+        let fast_lz_size = fastlz::compress(tx_data, &mut output)
+            .expect("Compression can only panic on out buffer overflow")
+            .len();
+
+        Self::new(zero_bytes, non_zero_bytes, U256::from(fast_lz_size))
     }
 }
 
@@ -147,6 +174,7 @@ impl From<(u64, u128)> for L2GasFeeInput {
     }
 }
 
+#[cfg(not(feature = "op-upgrade"))]
 #[derive(Debug)]
 pub struct EcotoneGasFee {
     base_fee: U256,
@@ -155,6 +183,7 @@ pub struct EcotoneGasFee {
     blob_base_fee_scalar: U256,
 }
 
+#[cfg(not(feature = "op-upgrade"))]
 impl EcotoneGasFee {
     const ZERO_BYTE_MULTIPLIER: U256 = U256::from_limbs([4, 0, 0, 0]);
     const GAS_PRICE_MULTIPLIER: U256 = U256::from_limbs([16, 0, 0, 0]);
@@ -174,6 +203,7 @@ impl EcotoneGasFee {
     }
 }
 
+#[cfg(not(feature = "op-upgrade"))]
 impl L1GasFee for EcotoneGasFee {
     fn l1_fee(&self, input: L1GasFeeInput) -> U256 {
         let zero_bytes = input.zero_bytes;
@@ -185,6 +215,82 @@ impl L1GasFee for EcotoneGasFee {
             + self.blob_base_fee_scalar * self.blob_base_fee;
 
         tx_compressed_size * weighted_gas_price
+    }
+
+    fn l1_block_info(&self, input: L1GasFeeInput) -> Option<L1BlockInfo> {
+        Some(L1BlockInfo {
+            l1_gas_price: Some(self.base_fee.saturating_to()),
+            l1_gas_used: None,
+            l1_fee: Some(self.l1_fee(input).saturating_to()),
+            l1_fee_scalar: None,
+            l1_base_fee_scalar: Some(self.base_fee_scalar.saturating_to()),
+            l1_blob_base_fee: Some(self.blob_base_fee.saturating_to()),
+            l1_blob_base_fee_scalar: Some(self.blob_base_fee_scalar.saturating_to()),
+            // TODO: These fields are at operator discretion and were introduced with
+            // Isthmus hard fork (<https://gov.optimism.io/t/upgrade-proposal-15-isthmus-hard-fork/9804>).
+            // They are not set by default yet, but might be in the future, so we track it in a separate issue. (#327)
+            operator_fee_scalar: None,
+            operator_fee_constant: None,
+        })
+    }
+}
+
+#[cfg(feature = "op-upgrade")]
+#[derive(Debug)]
+pub struct FjordGasFee {
+    base_fee: U256,
+    base_fee_scalar: U256,
+    blob_base_fee: U256,
+    blob_base_fee_scalar: U256,
+}
+
+#[cfg(feature = "op-upgrade")]
+impl FjordGasFee {
+    const GAS_PRICE_MULTIPLIER: U256 = U256::from_limbs([16, 0, 0, 0]);
+    /// Absolute part of the negative intercept
+    const INTERCEPT_ABS: u32 = 42_585_600;
+    const FAST_LZ_COEF: u32 = 836_500;
+    const MIN_TX_SIZE: u32 = 100;
+
+    pub fn new(
+        base_fee: U256,
+        base_fee_scalar: u32,
+        blob_base_fee: U256,
+        blob_base_fee_scalar: u32,
+    ) -> Self {
+        Self {
+            base_fee,
+            base_fee_scalar: U256::from(base_fee_scalar),
+            blob_base_fee,
+            blob_base_fee_scalar: U256::from(blob_base_fee_scalar),
+        }
+    }
+}
+
+#[cfg(feature = "op-upgrade")]
+impl L1GasFee for FjordGasFee {
+    fn l1_fee(&self, input: L1GasFeeInput) -> U256 {
+        // The spec <https://specs.optimism.io/protocol/fjord/exec-engine.html#fjord-l1-cost-fee-changes-fastlz-estimator>
+        // returns a `U256` as the final result, so we can widen the types in advance.
+        let intercept = U256::from(Self::INTERCEPT_ABS);
+        let min_tx_size = U256::from(Self::MIN_TX_SIZE);
+        let fast_lz_coef = U256::from(Self::FAST_LZ_COEF);
+        let fast_lz_size = input.fast_lz_size;
+
+        let estimated_size_scaled = {
+            let min_scaled = min_tx_size * U256::from(1_000_000);
+            let scaled = (fast_lz_coef * fast_lz_size)
+                .checked_sub(intercept)
+                .unwrap_or(min_scaled);
+            scaled.max(min_scaled)
+        };
+
+        let weighted_gas_price = Self::GAS_PRICE_MULTIPLIER * self.base_fee_scalar * self.base_fee
+            + self.blob_base_fee_scalar * self.blob_base_fee;
+
+        // We scale down by 1e6 instead of 1e12 to preserve the previous Ecotone omission of
+        // a 1e6 divisor.
+        estimated_size_scaled * weighted_gas_price / U256::from(1_000_000)
     }
 
     fn l1_block_info(&self, input: L1GasFeeInput) -> Option<L1BlockInfo> {
@@ -228,8 +334,13 @@ pub trait CreateL1GasFee {
     fn for_deposit(&self, data: &[u8]) -> impl L1GasFee + 'static;
 }
 
+#[cfg(not(feature = "op-upgrade"))]
 pub struct CreateEcotoneL1GasFee;
 
+#[cfg(feature = "op-upgrade")]
+pub struct CreateFjordL1GasFee;
+
+#[cfg(not(feature = "op-upgrade"))]
 impl CreateL1GasFee for CreateEcotoneL1GasFee {
     fn for_deposit(&self, data: &[u8]) -> impl L1GasFee + 'static {
         let l1_base_fee = U256::from_be_slice(&data[36..68]);
@@ -240,6 +351,25 @@ impl CreateL1GasFee for CreateEcotoneL1GasFee {
             u32::from_be_bytes(data[8..12].try_into().expect("Slice should be 4 bytes"));
 
         EcotoneGasFee::new(
+            l1_base_fee,
+            l1_base_fee_scalar,
+            l1_blob_base_fee,
+            l1_blob_base_fee_scalar,
+        )
+    }
+}
+
+#[cfg(feature = "op-upgrade")]
+impl CreateL1GasFee for CreateFjordL1GasFee {
+    fn for_deposit(&self, data: &[u8]) -> impl L1GasFee + 'static {
+        let l1_base_fee = U256::from_be_slice(&data[36..68]);
+        let l1_blob_base_fee = U256::from_be_slice(&data[68..100]);
+        let l1_base_fee_scalar =
+            u32::from_be_bytes(data[4..8].try_into().expect("Slice should be 4 bytes"));
+        let l1_blob_base_fee_scalar =
+            u32::from_be_bytes(data[8..12].try_into().expect("Slice should be 4 bytes"));
+
+        FjordGasFee::new(
             l1_base_fee,
             l1_base_fee_scalar,
             l1_blob_base_fee,

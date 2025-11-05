@@ -85,9 +85,15 @@ async fn test_sending_the_same_payload_twice_produces_one_block() -> anyhow::Res
                 gas_limit: U64::from_limbs([30000000]),
                 gas_used: U64::from_limbs([139445]),
                 timestamp: U64::from_limbs([1747148047]),
+                #[cfg(not(feature = "op-upgrade"))]
                 extra_data: Bytes::new(),
+                #[cfg(feature = "op-upgrade")]
+                extra_data: Bytes::from_iter(std::iter::repeat_n(0, 9)),
                 base_fee_per_gas: U256::ZERO,
+                #[cfg(not(feature = "op-upgrade"))]
                 block_hash: B256::new(hex!("578b8802675384e248b4ad6ed2e8d29adb2a66ddf256fd5291c2cb3ac5bb9ab3")),
+                #[cfg(feature = "op-upgrade")]
+                block_hash: B256::new(hex!("6d1e41bbfc1204953bb13e6ae76d31a6a6cde7570faac666f9cb7a415c1537e5")),
                 transactions: vec![Bytes::from_static(&hex!("7ef8f8a08c2449b17ee7c7ad9a93f6dbd0ac4d3a666f5c3183aa19f8c2dcc8a310cc878894deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000022950000c5f4f00000000000000010000000068235d0e00000000000000200000000000000000000000000000000000000000000000000000000000d9858400000000000000000000000000000000000000000000000000000000000000015d16200108a6cd9dd5bcf4b1e8670dafbb7854a380091e3e3da33ed07cf8214f0000000000000000000000008c67a7b8624044f8f672e9ec374dfa596f01afb9"))],
                 withdrawals: vec![],
                 blob_gas_used: U64::ZERO,
