@@ -1,7 +1,7 @@
 use {
     self::erc20_factory::OptimismMintableERC20Factory::OptimismMintableERC20Created,
     super::*,
-    alloy::sol_types::SolEvent,
+    alloy::{rpc::types::TransactionReceipt, sol_types::SolEvent},
     move_vm_runtime::session::SerializedReturnValues,
     umi_evm_ext::{
         erc20::abi_bindings::Erc20, extract_evm_result, EVM_NATIVE_ADDRESS,
@@ -163,9 +163,35 @@ pub async fn withdraw_erc20_token_from_l2_to_l1(
         .unwrap();
     assert_eq!(initial_allowance, U256::ZERO);
 
-    erc20::l2_erc20_approve(wallet, l2_address, spender, amount, l2_rpc_url)
+    let approve_receipt = erc20::l2_erc20_approve(wallet, l2_address, spender, amount, l2_rpc_url)
         .await
         .unwrap();
+
+    let approve_block_number = approve_receipt
+        .block_number
+        .expect("Receipt has a block number");
+
+    // We need to wait for the block which contains the approve
+    // receipt to become the head of the chain.
+    let provider = ProviderBuilder::new()
+        .wallet(EthereumWallet::from(wallet.to_owned()))
+        .connect_http(Url::parse(l2_rpc_url)?);
+    let waiting_start = std::time::Instant::now();
+    loop {
+        let block_number = provider
+            .get_block_number()
+            .await
+            .inspect_err(|e| println!("WARN: failed to get block number {e:?}"))
+            .unwrap_or_default();
+        if block_number >= approve_block_number {
+            break;
+        }
+        if waiting_start.elapsed() > Duration::from_secs(OP_BRIDGE_IN_SECS) {
+            panic!("No new blocks built in over {OP_BRIDGE_IN_SECS} seconds!");
+        }
+        tokio::time::sleep(Duration::from_secs(OP_BRIDGE_POLL_IN_SECS)).await;
+    }
+
     let allowance = erc20::l2_erc20_allowance(l2_address, owner_address, spender, l2_rpc_url)
         .await
         .unwrap();
@@ -298,7 +324,7 @@ pub async fn l2_erc20_approve(
     spender: Address,
     amount: U256,
     rpc_url: &str,
-) -> Result<()> {
+) -> Result<TransactionReceipt> {
     let from_address = from_wallet.address();
     let provider = ProviderBuilder::new()
         .wallet(EthereumWallet::from(from_wallet.to_owned()))
@@ -334,5 +360,5 @@ pub async fn l2_erc20_approve(
         .await?;
 
     assert!(receipt.inner.is_success(), "ERC-20 approve should succeed");
-    Ok(())
+    Ok(receipt)
 }
