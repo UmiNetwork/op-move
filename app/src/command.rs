@@ -436,6 +436,16 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                         .unwrap_or(U256::ZERO),
                     l2_fee: l2_fee.clone(),
                     l2_input: l2_gas_input,
+                    #[cfg(feature = "op-upgrade")]
+                    operator_cost: l1_fee
+                        .as_ref()
+                        .map(|v| v.operator_fee(normalized_tx.gas_limit()))
+                        .unwrap_or(U256::ZERO),
+                    #[cfg(feature = "op-upgrade")]
+                    operator_scalar: l1_fee
+                        .as_ref()
+                        .map(|v| v.operator_fee_scalar())
+                        .unwrap_or(U256::ZERO),
                     base_token: &self.base_token,
                     block_header: block_header.clone(),
                     block_hash_lookup: &self.block_hash_lookup,

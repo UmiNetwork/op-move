@@ -2,6 +2,7 @@
 pub use gas::{CreateEcotoneL1GasFee, EcotoneGasFee};
 #[cfg(feature = "op-upgrade")]
 pub use gas::{CreateFjordL1GasFee, FjordGasFee};
+
 pub use {
     alloy::primitives::U256,
     eth_token::{BaseTokenAccounts, UmiBaseTokenAccounts, mint_eth, quick_get_eth_balance},
@@ -150,6 +151,10 @@ pub struct CanonicalExecutionInput<'input, S, ST, F, B, H> {
     pub l1_cost: U256,
     pub l2_fee: F,
     pub l2_input: L2GasFeeInput,
+    #[cfg(feature = "op-upgrade")]
+    pub operator_scalar: U256,
+    #[cfg(feature = "op-upgrade")]
+    pub operator_cost: U256,
     pub base_token: &'input B,
     pub block_header: HeaderForExecution,
     pub block_hash_lookup: &'input H,

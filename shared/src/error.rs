@@ -164,6 +164,9 @@ pub enum InvalidTransactionCause {
     FailedToPayL1Fee,
     #[error("Failed to pay L2 fee")]
     FailedToPayL2Fee,
+    #[cfg(feature = "op-upgrade")]
+    #[error("Failed to pay operator fee")]
+    FailedToPayOperatorFee,
     #[error("Given gas price {0} is too high. Must be less than u64::MAX.")]
     InvalidGasPrice(u128),
 }

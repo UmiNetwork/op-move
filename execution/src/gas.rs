@@ -90,6 +90,10 @@ impl NormalizedEthTransaction {
 pub trait L1GasFee {
     fn l1_fee(&self, input: L1GasFeeInput) -> U256;
     fn l1_block_info(&self, input: L1GasFeeInput) -> Option<L1BlockInfo>;
+    #[cfg(feature = "op-upgrade")]
+    fn operator_fee(&self, _gas_limit: u64) -> U256;
+    #[cfg(feature = "op-upgrade")]
+    fn operator_fee_scalar(&self) -> U256;
 }
 
 pub trait L2GasFee {
@@ -226,9 +230,6 @@ impl L1GasFee for EcotoneGasFee {
             l1_base_fee_scalar: Some(self.base_fee_scalar.saturating_to()),
             l1_blob_base_fee: Some(self.blob_base_fee.saturating_to()),
             l1_blob_base_fee_scalar: Some(self.blob_base_fee_scalar.saturating_to()),
-            // TODO: These fields are at operator discretion and were introduced with
-            // Isthmus hard fork (<https://gov.optimism.io/t/upgrade-proposal-15-isthmus-hard-fork/9804>).
-            // They are not set by default yet, but might be in the future, so we track it in a separate issue. (#327)
             operator_fee_scalar: None,
             operator_fee_constant: None,
         })
@@ -242,6 +243,8 @@ pub struct FjordGasFee {
     base_fee_scalar: U256,
     blob_base_fee: U256,
     blob_base_fee_scalar: U256,
+    operator_fee_scalar: U256,
+    operator_fee_constant: U256,
 }
 
 #[cfg(feature = "op-upgrade")]
@@ -257,12 +260,16 @@ impl FjordGasFee {
         base_fee_scalar: u32,
         blob_base_fee: U256,
         blob_base_fee_scalar: u32,
+        operator_fee_scalar: u32,
+        operator_fee_constant: u64,
     ) -> Self {
         Self {
             base_fee,
             base_fee_scalar: U256::from(base_fee_scalar),
             blob_base_fee,
             blob_base_fee_scalar: U256::from(blob_base_fee_scalar),
+            operator_fee_scalar: U256::from(operator_fee_scalar),
+            operator_fee_constant: U256::from(operator_fee_constant),
         }
     }
 }
@@ -302,12 +309,20 @@ impl L1GasFee for FjordGasFee {
             l1_base_fee_scalar: Some(self.base_fee_scalar.saturating_to()),
             l1_blob_base_fee: Some(self.blob_base_fee.saturating_to()),
             l1_blob_base_fee_scalar: Some(self.blob_base_fee_scalar.saturating_to()),
-            // TODO: These fields are at operator discretion and were introduced with
-            // Isthmus hard fork (<https://gov.optimism.io/t/upgrade-proposal-15-isthmus-hard-fork/9804>).
-            // They are not set by default yet, but might be in the future, so we track it in a separate issue. (#327)
-            operator_fee_scalar: None,
-            operator_fee_constant: None,
+            operator_fee_scalar: Some(self.operator_fee_scalar.saturating_to()),
+            operator_fee_constant: Some(self.operator_fee_constant.saturating_to()),
         })
+    }
+
+    fn operator_fee(&self, gas_limit: u64) -> U256 {
+        // TODO: add the 1e6 multiplier (#569)
+        U256::from(gas_limit)
+            .saturating_mul(self.operator_fee_scalar)
+            .saturating_add(self.operator_fee_constant)
+    }
+
+    fn operator_fee_scalar(&self) -> U256 {
+        self.operator_fee_scalar
     }
 }
 
@@ -362,18 +377,30 @@ impl CreateL1GasFee for CreateEcotoneL1GasFee {
 #[cfg(feature = "op-upgrade")]
 impl CreateL1GasFee for CreateFjordL1GasFee {
     fn for_deposit(&self, data: &[u8]) -> impl L1GasFee + 'static {
-        let l1_base_fee = U256::from_be_slice(&data[36..68]);
-        let l1_blob_base_fee = U256::from_be_slice(&data[68..100]);
+        // Sanity check for the `L1BlockInfo` having all recent fields
+        if data.len() != 176 {
+            tracing::warn!("Received L1BlockInfo that wasn't Isthmus ready");
+        }
+
+        // As specified in <https://specs.optimism.io/protocol/isthmus/l1-attributes.html>
         let l1_base_fee_scalar =
             u32::from_be_bytes(data[4..8].try_into().expect("Slice should be 4 bytes"));
         let l1_blob_base_fee_scalar =
             u32::from_be_bytes(data[8..12].try_into().expect("Slice should be 4 bytes"));
+        let l1_base_fee = U256::from_be_slice(&data[36..68]);
+        let l1_blob_base_fee = U256::from_be_slice(&data[68..100]);
+        let operator_fee_scalar =
+            u32::from_be_bytes(data[164..168].try_into().expect("Slice should be 4 bytes"));
+        let operator_fee_constant =
+            u64::from_be_bytes(data[168..176].try_into().expect("Slice should be 8 bytes"));
 
         FjordGasFee::new(
             l1_base_fee,
             l1_base_fee_scalar,
             l1_blob_base_fee,
             l1_blob_base_fee_scalar,
+            operator_fee_scalar,
+            operator_fee_constant,
         )
     }
 }
@@ -409,6 +436,16 @@ mod tests {
 
         fn l1_block_info(&self, _input: L1GasFeeInput) -> Option<L1BlockInfo> {
             None
+        }
+
+        #[cfg(feature = "op-upgrade")]
+        fn operator_fee(&self, _gas_limit: u64) -> U256 {
+            U256::ZERO
+        }
+
+        #[cfg(feature = "op-upgrade")]
+        fn operator_fee_scalar(&self) -> U256 {
+            U256::ZERO
         }
     }
 
