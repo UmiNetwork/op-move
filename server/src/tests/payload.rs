@@ -97,7 +97,7 @@ async fn test_sending_the_same_payload_twice_produces_one_block() -> anyhow::Res
                 extra_data: Bytes::from_iter(std::iter::repeat_n(0, 9)),
                 base_fee_per_gas: U256::ZERO,
                 #[cfg(not(feature = "op-upgrade"))]
-                block_hash: B256::new(hex!("697183dc6d590291df6afed449c722b54501edbc3ccea1f3098215bab18d085e")),
+                block_hash: B256::new(hex!("7aa5dd9536347f85a095b366604dbff3140777e1d118413e17ff7673696b8d9f")),
                 #[cfg(feature = "op-upgrade")]
                 block_hash: B256::new(hex!("db21af46037ccc77a155c29288849c1e11ce935b4ea94da766d2c1bd34f90fe1")),
                 transactions: vec![Bytes::from_iter(DEPOSIT_TX)],
