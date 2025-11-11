@@ -1,5 +1,5 @@
 use {
-    crate::tests::test_context::TestContext,
+    crate::tests::test_context::{TestContext, DEPOSIT_TX},
     alloy::hex,
     umi_api::schema::{
         BlobsBundleV1, ExecutionPayloadV3, ForkchoiceUpdatedResponseV1, GetPayloadResponseV3,
@@ -30,7 +30,7 @@ async fn test_sending_the_same_payload_twice_produces_one_block() -> anyhow::Res
                     "suggestedFeeRecipient":"0x4200000000000000000000000000000000000011",
                     "withdrawals":[],
                     "parentBeaconBlockRoot":"0x0000000000000000000000000000000000000000000000000000000000000000",
-                    "transactions":["0x7ef8f8a08c2449b17ee7c7ad9a93f6dbd0ac4d3a666f5c3183aa19f8c2dcc8a310cc878894deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000022950000c5f4f00000000000000010000000068235d0e00000000000000200000000000000000000000000000000000000000000000000000000000d9858400000000000000000000000000000000000000000000000000000000000000015d16200108a6cd9dd5bcf4b1e8670dafbb7854a380091e3e3da33ed07cf8214f0000000000000000000000008c67a7b8624044f8f672e9ec374dfa596f01afb9"],
+                    "transactions":[ hex::encode(DEPOSIT_TX) ],
                     "gasLimit":"0x1c9c380"
                 }
             ]
@@ -77,13 +77,19 @@ async fn test_sending_the_same_payload_twice_produces_one_block() -> anyhow::Res
             execution_payload: ExecutionPayloadV3 {
                 parent_hash: B256::new(hex!("14d3698a2c6b14767ab3707f4c07586d72e6db14e523e8701e667908d39e06c2")),
                 fee_recipient: Address::new(hex!("4200000000000000000000000000000000000011")),
-                state_root: B256::new(hex!("22c63aa31d594982918a3926008ae719087c1a5490c8245706eca934696a10d1")),
-                receipts_root: B256::new(hex!("0d4c87e20ba9c234ff06a6a6668099b1cfe4fd956ecf9a0d257b8ffd067c1c5a")),
+                state_root: B256::new(hex!("4a9f5effd03badf1fd514c50a7fb49ee7639a48110e5f09d5a345db3614ec92a")),
+                #[cfg(not(feature = "op-upgrade"))]
+                receipts_root: B256::new(hex!("22be36dff53ef8da81f4e83975db185d076920d1773031d748cca48d193cbf24")),
+                #[cfg(feature = "op-upgrade")]
+                receipts_root: B256::new(hex!("efb37db18e32368e95ad9c735b57e1d4bbab95111d559214daa0fc4259b3c6f9")),
                 logs_bloom: B2048::new(hex!("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")),
                 prev_randao: B256::new(hex!("dd9b0c0d88d7d9e5fe6718d97f5f2cfd9d825cf6265a39c08650de249e138339")),
                 block_number: U64::from_limbs([1]),
                 gas_limit: U64::from_limbs([30000000]),
-                gas_used: U64::from_limbs([139445]),
+                #[cfg(not(feature = "op-upgrade"))]
+                gas_used: U64::from_limbs([119461]),
+                #[cfg(feature = "op-upgrade")]
+                gas_used: U64::from_limbs([119509]),
                 timestamp: U64::from_limbs([1747148047]),
                 #[cfg(not(feature = "op-upgrade"))]
                 extra_data: Bytes::new(),
@@ -91,10 +97,10 @@ async fn test_sending_the_same_payload_twice_produces_one_block() -> anyhow::Res
                 extra_data: Bytes::from_iter(std::iter::repeat_n(0, 9)),
                 base_fee_per_gas: U256::ZERO,
                 #[cfg(not(feature = "op-upgrade"))]
-                block_hash: B256::new(hex!("697183dc6d590291df6afed449c722b54501edbc3ccea1f3098215bab18d085e")),
+                block_hash: B256::new(hex!("7aa5dd9536347f85a095b366604dbff3140777e1d118413e17ff7673696b8d9f")),
                 #[cfg(feature = "op-upgrade")]
-                block_hash: B256::new(hex!("6d1e41bbfc1204953bb13e6ae76d31a6a6cde7570faac666f9cb7a415c1537e5")),
-                transactions: vec![Bytes::from_static(&hex!("7ef8f8a08c2449b17ee7c7ad9a93f6dbd0ac4d3a666f5c3183aa19f8c2dcc8a310cc878894deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e2000022950000c5f4f00000000000000010000000068235d0e00000000000000200000000000000000000000000000000000000000000000000000000000d9858400000000000000000000000000000000000000000000000000000000000000015d16200108a6cd9dd5bcf4b1e8670dafbb7854a380091e3e3da33ed07cf8214f0000000000000000000000008c67a7b8624044f8f672e9ec374dfa596f01afb9"))],
+                block_hash: B256::new(hex!("db21af46037ccc77a155c29288849c1e11ce935b4ea94da766d2c1bd34f90fe1")),
+                transactions: vec![Bytes::from_iter(DEPOSIT_TX)],
                 withdrawals: vec![],
                 blob_gas_used: U64::ZERO,
                 excess_blob_gas: U64::ZERO,
