@@ -11,6 +11,12 @@ use {
     umi_shared::primitives::U256,
 };
 
+#[cfg(not(feature = "op-upgrade"))]
+const ECOTONE_CALLDATA_SIZE: usize = 164;
+
+#[cfg(feature = "op-upgrade")]
+const FJORD_CALLDATA_SIZE: usize = 176;
+
 pub fn new_gas_meter(
     genesis_config: &GenesisConfig,
     gas_limit: u64,
@@ -358,6 +364,13 @@ pub struct CreateFjordL1GasFee;
 #[cfg(not(feature = "op-upgrade"))]
 impl CreateL1GasFee for CreateEcotoneL1GasFee {
     fn for_deposit(&self, data: &[u8]) -> impl L1GasFee + 'static {
+        if data.len() != ECOTONE_CALLDATA_SIZE {
+            tracing::warn!(
+                "Received L1BlockInfo that wasn't Ecotone size: expected {}, got {}",
+                ECOTONE_CALLDATA_SIZE,
+                data.len(),
+            );
+        }
         let l1_base_fee = U256::from_be_slice(&data[36..68]);
         let l1_blob_base_fee = U256::from_be_slice(&data[68..100]);
         let l1_base_fee_scalar =
@@ -378,8 +391,12 @@ impl CreateL1GasFee for CreateEcotoneL1GasFee {
 impl CreateL1GasFee for CreateFjordL1GasFee {
     fn for_deposit(&self, data: &[u8]) -> impl L1GasFee + 'static {
         // Sanity check for the `L1BlockInfo` having all recent fields
-        if data.len() != 176 {
-            tracing::warn!("Received L1BlockInfo that wasn't Isthmus ready");
+        if data.len() != FJORD_CALLDATA_SIZE {
+            tracing::warn!(
+                "Received L1BlockInfo that wasn't Isthmus size: expected {}, got {}",
+                FJORD_CALLDATA_SIZE,
+                data.len(),
+            );
         }
 
         // As specified in <https://specs.optimism.io/protocol/isthmus/l1-attributes.html>
