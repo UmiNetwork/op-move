@@ -92,27 +92,6 @@ rm *.json
 
 Getting rid of `l1_datadir` and `op-move` db files is a given too.
 
-The command for `geth` is exactly same as before. We also need to prefund the admin/batcher etc. accounts and deploy the optimism factory contract.
-The actual prefunded geth dev address may be different. Alternatively it can be done just like in docker deployment by using the keystore in L1 datadir.
-Another point is that `op-deployer apply` only works after L1 safe head has sufficiently progressed, so we can repeat funding txs in a loop to reach
-~150 blocks:
-
-```bash
-
-for i in {1..30}; do
-  cast send --rpc-url http://localhost:58138 --from 0x71562b71999873db5b286df957af199ec94617f7 --unlocked --value 10ether 0x2611596AA00F8438d75f1daF893CF264366fc668
-  cast send --rpc-url http://localhost:58138 --from 0x71562b71999873db5b286df957af199ec94617f7 --unlocked --value 10ether  0x7111d029cDD94Eaed215439F9269564Cf9dCE403
-  cast send --rpc-url http://localhost:58138 --from 0x71562b71999873db5b286df957af199ec94617f7 --unlocked --value 10ether 0x89D740330E773E42edF98Bba1D8D1D6C545D78a6
-  cast send --rpc-url http://localhost:58138 --from 0x71562b71999873db5b286df957af199ec94617f7 --unlocked --value 10ether   0x8C67a7B8624044F8F672E9EC374dFa596f01aFB9
-  cast send --rpc-url http://localhost:58138 --from 0x71562b71999873db5b286df957af199ec94617f7 --unlocked --value 10ether 0xb846C69FA1f6D2DC86Ee44553f67Bbb86e007d08
-done
-
-cast send --rpc-url http://localhost:58138 --from 0x71562b71999873db5b286df957af199ec94617f7 --unlocked --value 1ether 0x3fAB184622Dc19b6109349B94811493BF2a45362
-
-cast publish --rpc-url localhost:58138 0xf8a58085174876e800830186a08080b853604580600e600039806000f350fe7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf31ba02222222222222222222222222222222222222222222222222222222222222222a02222222222222222222222222222222222222222222222222222222222222222
-
-```
-
 The first deployment step is generating an intent file:
 
 ```bash
@@ -228,8 +207,31 @@ cp -r l1_datadir/ /tmp/geth-copy
 geth dumpgenesis --datadir /tmp/geth-copy > l1_genesis.json
 ```
 
+The command for `geth` is exactly same as before.
+
 ```bash
 geth --dev --dev.period 3 --datadir ./l1_datadir --rpc.allow-unprotected-txs --http --http.addr 0.0.0.0 --http.port 58138 --http.corsdomain "*" --http.api web3,debug,eth,txpool,net,engine
+```
+
+We also need to prefund the admin/batcher etc. accounts and deploy the optimism factory contract.
+The actual prefunded geth dev address may be different. Alternatively it can be done just like in docker deployment by using the keystore in L1 datadir.
+Another point is that `op-deployer apply` only works after L1 safe head has sufficiently progressed, so we can repeat funding txs in a loop to reach
+~150 blocks:
+
+```bash
+
+for i in {1..30}; do
+  cast send --rpc-url http://localhost:58138 --from 0x71562b71999873db5b286df957af199ec94617f7 --unlocked --value 10ether 0x2611596AA00F8438d75f1daF893CF264366fc668
+  cast send --rpc-url http://localhost:58138 --from 0x71562b71999873db5b286df957af199ec94617f7 --unlocked --value 10ether  0x7111d029cDD94Eaed215439F9269564Cf9dCE403
+  cast send --rpc-url http://localhost:58138 --from 0x71562b71999873db5b286df957af199ec94617f7 --unlocked --value 10ether 0x89D740330E773E42edF98Bba1D8D1D6C545D78a6
+  cast send --rpc-url http://localhost:58138 --from 0x71562b71999873db5b286df957af199ec94617f7 --unlocked --value 10ether   0x8C67a7B8624044F8F672E9EC374dFa596f01aFB9
+  cast send --rpc-url http://localhost:58138 --from 0x71562b71999873db5b286df957af199ec94617f7 --unlocked --value 10ether 0xb846C69FA1f6D2DC86Ee44553f67Bbb86e007d08
+done
+
+cast send --rpc-url http://localhost:58138 --from 0x71562b71999873db5b286df957af199ec94617f7 --unlocked --value 1ether 0x3fAB184622Dc19b6109349B94811493BF2a45362
+
+cast publish --rpc-url localhost:58138 0xf8a58085174876e800830186a08080b853604580600e600039806000f350fe7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf31ba02222222222222222222222222222222222222222222222222222222222222222a02222222222222222222222222222222222222222222222222222222222222222
+
 ```
 
 For node only last flag is new:
