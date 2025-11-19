@@ -11,7 +11,10 @@ use {
         ApplicationReader, Command, CommandQueue, Dependencies, Payload, PayloadForExecution,
         ToPayloadIdInput,
     },
-    umi_blockchain::{block::ForkchoiceState, payload::NewPayloadId},
+    umi_blockchain::{
+        block::ForkchoiceState,
+        payload::{NewPayloadId, PayloadQueries},
+    },
 };
 
 pub async fn execute_v3<'reader>(
@@ -79,6 +82,11 @@ async fn inner_execute_v3<'reader>(
             app.payload(payload_id)?,
             umi_blockchain::payload::MaybePayloadResponse::Unknown
         ) {
+            // We insert the payload id immediately to prevent any race between command execution
+            // and op-node trying to get this payload
+            app.payload_queries
+                .get_in_progress()
+                .forkchoice_insert_id(payload_id);
             // Per the engine-api spec we must:
             // > Verify that `payloadAttributes.timestamp` is greater than timestamp of
             // > a block referenced by `forkchoiceState.headBlockHash` and return
@@ -325,5 +333,27 @@ pub(super) mod tests {
 
             assert_eq!(response, expected_response);
         }).await;
+    }
+
+    #[tokio::test]
+    async fn test_payload_id_registered_before_commands_run() {
+        let (reader, _app) = create_app();
+        let (tx, _) = tokio::sync::mpsc::channel(4);
+        let (killshot, _) = tokio::sync::broadcast::channel(1);
+        let queue = umi_app::CommandQueue::new(tx, killshot);
+
+        let request = example_request();
+        let response = execute_v3(request, queue, &reader, &0x03421ee50df45cacu64)
+            .await
+            .unwrap();
+        let response: ForkchoiceUpdatedResponseV1 = serde_json::from_value(response).unwrap();
+
+        let payload_id = response
+            .payload_id
+            .expect("forkchoiceUpdated should return payload id")
+            .0;
+
+        let in_progress = reader.payload_queries.get_in_progress();
+        assert!(in_progress.get_delayed(&payload_id).is_some());
     }
 }
