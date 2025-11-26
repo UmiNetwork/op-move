@@ -43,6 +43,7 @@ const L2_MINT_ERC20_GAS_LIMIT: u32 = 100_000;
 
 const L2_STANDARD_BRIDGE_ADDRESS: Address = address!("4200000000000000000000000000000000000010");
 
+#[derive(Debug)]
 pub struct Erc20AddressPair {
     pub l1_address: Address,
     pub l2_address: Address,
@@ -58,6 +59,7 @@ pub async fn deploy_l1_token(from_wallet: &PrivateKeySigner, rpc_url: &str) -> R
         .wallet(EthereumWallet::from(from_wallet.to_owned()))
         .connect_http(Url::parse(rpc_url)?);
 
+    dbg!("deploying");
     let contract = Erc20::deploy(
         provider,
         NAME.into(),
@@ -66,14 +68,16 @@ pub async fn deploy_l1_token(from_wallet: &PrivateKeySigner, rpc_url: &str) -> R
         U256::MAX,
     )
     .await?;
+    dbg!(&contract);
 
-    let bridge_address = Address::from_str(L1_STANDARD_BRIDGE_PROXY)?;
+    let bridge_address = Address::from_str(l1_standard_bridge_proxy())?;
     contract
         .approve(bridge_address, U256::MAX)
         .send()
         .await?
         .watch()
         .await?;
+    dbg!("approved");
 
     Ok(*contract.address())
 }
@@ -87,7 +91,7 @@ pub async fn deploy_l2_token(
 ) -> Result<Address> {
     let factory_address = alloy::primitives::address!("4200000000000000000000000000000000000012");
     let provider = ProviderBuilder::new()
-        .wallet(EthereumWallet::from(from_wallet.to_owned()))
+        .wallet(EthereumWallet::from(dbg!(from_wallet.to_owned())))
         .connect_http(Url::parse(rpc_url)?);
 
     let contract = erc20_factory::OptimismMintableERC20Factory::new(factory_address, provider);
@@ -97,6 +101,7 @@ pub async fn deploy_l2_token(
         .await?
         .get_receipt()
         .await?;
+    dbg!(&receipt);
     let event_signature = OptimismMintableERC20Created::SIGNATURE_HASH;
     let event = receipt
         .inner
@@ -108,6 +113,7 @@ pub async fn deploy_l2_token(
                 .unwrap_or(false)
         })
         .expect("OptimismMintableERC20Factory emits log");
+    dbg!(&event);
     let event = event
         .log_decode::<OptimismMintableERC20Created>()
         .expect("Event is type OptimismMintableERC20Created");
@@ -128,7 +134,7 @@ pub async fn deposit_l1_token(
         .wallet(EthereumWallet::from(from_wallet.to_owned()))
         .connect_http(Url::parse(rpc_url)?);
 
-    let bridge_address = Address::from_str(L1_STANDARD_BRIDGE_PROXY)?;
+    let bridge_address = Address::from_str(l1_standard_bridge_proxy())?;
     let bridge_contract = bridge_l1::L1StandardBridge::new(bridge_address, provider);
     let receipt = bridge_contract
         .depositERC20(
@@ -142,6 +148,7 @@ pub async fn deposit_l1_token(
         .await?
         .get_receipt()
         .await?;
+    dbg!(&receipt);
     assert!(receipt.inner.is_success(), "ERC-20 deposit should succeed");
     Ok(())
 }
@@ -153,6 +160,7 @@ pub async fn withdraw_erc20_token_from_l2_to_l1(
     amount: U256,
     l1_rpc_url: &str,
     l2_rpc_url: &str,
+    chlg: &challenger::ChallengerTask,
 ) -> Result<()> {
     let owner_address = wallet.address();
 
@@ -189,6 +197,7 @@ pub async fn withdraw_erc20_token_from_l2_to_l1(
         if waiting_start.elapsed() > Duration::from_secs(OP_BRIDGE_IN_SECS) {
             panic!("No new blocks built in over {OP_BRIDGE_IN_SECS} seconds!");
         }
+        dbg!("waiting approve block <= head");
         tokio::time::sleep(Duration::from_secs(OP_BRIDGE_POLL_IN_SECS)).await;
     }
 
@@ -221,8 +230,9 @@ pub async fn withdraw_erc20_token_from_l2_to_l1(
     let initial_balance = l1_token.balanceOf(owner_address).call().await?;
 
     // Prove withdraw on L1
+    dbg!("about to wthrd erc20");
     let withdraw_tx_hash = receipt.transaction_hash;
-    super::withdrawal::withdraw_to_l1(withdraw_tx_hash, wallet.clone()).await?;
+    super::withdrawal::withdraw_to_l1(withdraw_tx_hash, wallet.clone(), chlg).await?;
 
     // Check final balance
     let final_balance = l1_token.balanceOf(owner_address).call().await?;

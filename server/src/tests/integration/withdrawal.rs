@@ -1,30 +1,38 @@
 //! Code related to OP-stack withdrawal flow.
 //! (Separated into its own module because there is a lot of it.)
 
-use super::*;
+use {super::*, alloy::sol_types::SolValue};
 
-#[allow(clippy::too_many_arguments)]
-mod op_oracle {
+mod op_dgf {
     alloy::sol!(
         #[sol(rpc)]
-        L2OutputOracle,
-        "src/tests/res/L2OutputOracle.json"
+        DisputeGameFactory,
+        "src/tests/res/DisputeGameFactory.json"
+    );
+}
+
+mod op_pdg {
+    alloy::sol!(
+        #[sol(rpc)]
+        PermissionedDisputeGame,
+        "src/tests/res/PermissionedDisputeGame.json"
     );
 }
 
 mod op_portal {
     alloy::sol!(
         #[sol(rpc)]
+        #[derive(Debug)]
         OptimismPortal,
         "src/tests/res/OptimismPortal.json"
     );
 }
 
-const MAX_WITHDRAWAL_TIMEOUT: u64 = 10 * 60;
+const MAX_WITHDRAWAL_TIMEOUT: u64 = 16 * 60;
 const WITHDRAW_ADDRESS: Address =
     alloy::primitives::address!("4200000000000000000000000000000000000016");
 
-pub async fn withdraw_eth_to_l1() -> Result<()> {
+pub async fn withdraw_eth_to_l1(chlg: &challenger::ChallengerTask) -> Result<()> {
     let amount = "1";
     let prefunded_wallet = get_prefunded_wallet().await?;
     let prefunded_address = prefunded_wallet.address();
@@ -39,7 +47,8 @@ pub async fn withdraw_eth_to_l1() -> Result<()> {
 
     let pre_finalize_balance = l1_provider.get_balance(prefunded_address).await?;
 
-    withdraw_to_l1(withdraw_tx_hash, prefunded_wallet).await?;
+    dbg!("about withdr");
+    withdraw_to_l1(withdraw_tx_hash, prefunded_wallet, chlg).await?;
 
     let post_finalize_balance = l1_provider.get_balance(prefunded_address).await?;
     assert!(
@@ -50,7 +59,11 @@ pub async fn withdraw_eth_to_l1() -> Result<()> {
     Ok(())
 }
 
-pub async fn withdraw_to_l1(withdraw_tx_hash: B256, l1_wallet: PrivateKeySigner) -> Result<()> {
+pub async fn withdraw_to_l1(
+    withdraw_tx_hash: B256,
+    l1_wallet: PrivateKeySigner,
+    chlg: &challenger::ChallengerTask,
+) -> Result<()> {
     let l2_provider = ProviderBuilder::new().connect_http(Url::parse(L2_RPC_URL)?);
     let rx = l2_provider
         .get_transaction_receipt(withdraw_tx_hash)
@@ -66,7 +79,9 @@ pub async fn withdraw_to_l1(withdraw_tx_hash: B256, l1_wallet: PrivateKeySigner)
         .unwrap();
     let event = withdraw_event();
     let decoded = event.decode_log(withdrawal_log.data()).unwrap();
+    dbg!(&decoded);
     let (withdrawal_hash, _) = decoded.body.last().unwrap().as_fixed_bytes().unwrap();
+    dbg!(&withdrawal_hash);
 
     // `storage_slot` is calculated based on the Solidity convention for how maps work.
     let slot_preimage = [withdrawal_hash, &[0u8; 32]].concat();
@@ -77,60 +92,77 @@ pub async fn withdraw_to_l1(withdraw_tx_hash: B256, l1_wallet: PrivateKeySigner)
         .connect_http(Url::parse(&var("L1_RPC_URL")?)?);
 
     // Contract used on the L1 for withdrawals
-    let portal_address = Address::from_str(OPTIMISM_PORTAL_PROXY)?;
+    let portal_address = Address::from_str(optimism_portal_proxy())?;
     let portal_contract = op_portal::OptimismPortal::new(portal_address, &l1_provider);
 
     // Contract used on the L1 to keep track of the L2 state
-    let oracle_address = Address::from_str(L2_OUTPUT_ORACLE_PROXY)?;
-    let l2_oracle_contract = op_oracle::L2OutputOracle::new(oracle_address, &l1_provider);
+    let game_factory_address = Address::from_str(dispute_game_factory_proxy())?;
+    let game_factory = op_dgf::DisputeGameFactory::new(game_factory_address, &l1_provider);
 
     // Wait for proposer to push new blocks top L1
-    let withdraw_block_number = withdrawal_log.block_number.unwrap();
+    let withdraw_block_number = dbg!(withdrawal_log.block_number.unwrap());
     let now = Instant::now();
-    loop {
-        let l2_block_number: u64 = l2_oracle_contract
-            .latestBlockNumber()
-            .call()
-            .await
-            .unwrap()
-            .saturating_to();
-
+    let (game_idx, game_block_num) = loop {
         // Timeout to prevent this from being an infinite loop if something breaks
-        if now.elapsed().as_secs() > MAX_WITHDRAWAL_TIMEOUT {
-            anyhow::bail!(
-                "WITHDRAW ERROR: L1 contract `L2OutputOracleProxy` not updated to block containing withdraw within 10 minutes. CurrentBlock={l2_block_number} TargetBlock={withdraw_block_number}"
+
+        let game_count_resolved = dbg!(chlg.curr_idx());
+        let games = game_factory
+            .findLatestGames(1, U256::from(game_count_resolved), U256::from(3))
+            .call()
+            .await?;
+
+        dbg!(&games.len());
+
+        let mut found_game_idx = U256::ZERO;
+        let mut found_game_block_num = 0;
+        for game in games.iter().rev() {
+            dbg!("found game");
+            dbg!(game.timestamp);
+            dbg!("good root claim", game.rootClaim);
+            let game_idx = dbg!(game.index);
+            let game = game_factory.gameAtIndex(game_idx).call().await?;
+            let game_addr = game.proxy_;
+            let permissioned_game = op_pdg::PermissionedDisputeGame::new(game_addr, &l1_provider);
+            // If the latest L2 block number that the L1 knows about
+            // is larger than the block where the withdraw happened then we
+            // can move on to the next step. Otherwise we wait before
+            // checking again.
+            let game_block_number = dbg!(permissioned_game.l2BlockNumber().call().await?);
+
+            if now.elapsed().as_secs() > MAX_WITHDRAWAL_TIMEOUT {
+                anyhow::bail!(
+                "WITHDRAW ERROR: L1 contract `DisputeGameFactory` not updated to block containing withdraw within 10 minutes. CurrentBlock={game_block_number} TargetBlock={withdraw_block_number}"
             );
+            }
+
+            let game_status = dbg!(permissioned_game.status().call().await?);
+            // DEFENDER_WINS
+            if game_status == 2 && game_block_number > withdraw_block_number {
+                found_game_idx = game_idx;
+                found_game_block_num = game_block_number.saturating_to::<u64>();
+                break;
+            }
         }
 
-        // If the latest L2 block number that the L1 knows about
-        // is larger than the block where the withdraw happened then we
-        // can move on to the next step. Otherwise we wait before
-        // checking again.
-        if l2_block_number >= withdraw_block_number {
-            break;
+        if found_game_idx != U256::ZERO {
+            dbg!(&found_game_idx);
+            dbg!(&found_game_block_num);
+            break (found_game_idx, found_game_block_num);
         }
-        tokio::time::sleep(Duration::from_secs(OP_BRIDGE_IN_SECS)).await;
-    }
 
-    // Get the latest L2 block height (according to the L1 contract).
-    let l2_output_index = l2_oracle_contract.latestOutputIndex().call().await.unwrap();
-    let l2_output = l2_oracle_contract
-        .getL2Output(l2_output_index)
-        .call()
-        .await
-        .unwrap();
-    let l2_block_number = l2_output.l2BlockNumber as u64;
+        tokio::time::sleep(Duration::from_secs(30)).await;
+    };
 
     // Look up the corresponding L2 block
     let block = l2_provider
-        .get_block_by_number(l2_block_number.into())
+        .get_block_by_number(game_block_num.into())
         .await?
         .unwrap();
 
     // Get the merkle proof for the withdrawal L2 contract at that height
     let proof = l2_provider
         .get_proof(WITHDRAW_ADDRESS, vec![storage_slot])
-        .number(l2_block_number)
+        .number(game_block_num)
         .await?;
 
     // Prepare args for the OptimismPortal contract
@@ -145,14 +177,15 @@ pub async fn withdraw_to_l1(withdraw_tx_hash: B256, l1_wallet: PrivateKeySigner)
     let output_proof = op_portal::Types::OutputRootProof {
         version: Default::default(),
         stateRoot: block.header.state_root,
-        messagePasserStorageRoot: proof.storage_hash,
+        messagePasserStorageRoot: block.header.withdrawals_root.unwrap(),
         latestBlockhash: block.header.hash,
     };
+    dbg!(&output_proof);
 
     // Submit proof of withdrawal to L1
     let prove_tx = portal_contract.proveWithdrawalTransaction(
         withdraw_tx.clone(),
-        l2_output_index,
+        game_idx,
         output_proof,
         proof.storage_proof[0].proof.clone(),
     );
@@ -160,11 +193,11 @@ pub async fn withdraw_to_l1(withdraw_tx_hash: B256, l1_wallet: PrivateKeySigner)
     let pending = prove_tx
         .send()
         .await
-        .inspect_err(|e| println!("Prove Err {e:?}"))?;
+        .inspect_err(|e| println!("Prove Err in pending: {e:?}"))?;
     let prove_tx_hash = pending
         .watch()
         .await
-        .inspect_err(|e| println!("Prove Err {e:?}"))?;
+        .inspect_err(|e| println!("Prove Err in waiting conf: {e:?}"))?;
 
     let prove_rx = l1_provider
         .get_transaction_receipt(prove_tx_hash)
@@ -172,8 +205,9 @@ pub async fn withdraw_to_l1(withdraw_tx_hash: B256, l1_wallet: PrivateKeySigner)
         .unwrap();
     assert!(prove_rx.status(), "Prove Tx failed");
 
-    // Wait for finalization
-    tokio::time::sleep(Duration::from_secs(OP_BRIDGE_IN_SECS)).await;
+    // Wait for finalization, it should be max(proofTimestamp + PROOF_MATURITY_DELAY_SECONDS,
+    // resolutionTimestamp + DISPUTE_GAME_FINALITY_DELAY_SECONDS)
+    tokio::time::sleep(Duration::from_secs(30)).await;
 
     // Finalize withdrawal
     let pending = portal_contract
