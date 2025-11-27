@@ -134,7 +134,25 @@ batcher = "0x8C67a7B8624044F8F672E9EC374dFa596f01aFB9"
 proposer = "0xb846C69FA1f6D2DC86Ee44553f67Bbb86e007d08"
 # should it be a separate address?
 challenger = "0x2611596AA00F8438d75f1daF893CF264366fc668"
+
+[globalDeployOverrides]
+faultGameWithdrawalDelay = 30
+preimageOracleChallengePeriod = 15
+proofMaturityDelaySeconds = 30
+disputeGameFinalityDelaySeconds = 30
+faultGameMaxDepth = 44
+faultGameSplitDepth = 14
+faultGameClockExtension = 7
+faultGameMaxClockDuration = 30
 ```
+
+The final section above makes sure that fault game parameters are not default, and thus
+withdrawals can proceed within a reasonable amount of time for the integration test to
+pass instead of 3.5 days.
+
+These can be adjusted relatively freely as long as
+`max(preimageOracleChallengePeriod + faultGameClockExtension, faultGameClockExtension * 2) <= faultGameMaxClockDuration`
+which is enforced by OPCM during contract init, otherwise it reverts.
 
 After this, all the steps to deploy contracts on the L1 follow:
 
@@ -175,8 +193,17 @@ op-deployer inspect rollup 42069 > rollup.json
 op-deployer inspect genesis 42069 > genesis.json
 ```
 
-These are need to run `op-node` and `op-move` respectively. Some other useful addresses (e.g. all L1 deployments)
-can be generated with other `op-deployer inspect ...` subcommands.
+These are need to run `op-node` and `op-move` respectively.
+
+```bash
+op-deployer inspect l1 42069 > l1.json
+cp l1.json ../../../res/
+```
+
+As the new addresses are changing with each deployment, the revamped integration test
+expects a fresh version of the L1 addresses file in its `res/` subdir.
+
+Some other useful addresses (e.g. deployment config) can be generated with other `op-deployer inspect ...` subcommands.
 
 The updated commands to run the components are as follows.
 
@@ -310,4 +337,13 @@ proposer seems to work fine without it:
 
 ```bash
 cast send $GAME_FACTORY_ADDRESS 'setInitBond(uint32,uint256)' 1 8000000000000000 --rpc-url localhost:58138 --private-key 0x3ae90739336cd848513adb4a5d6cae372b64135fb4d214aa1a25948a21c7b7fd
+```
+
+As a final step, though we can't directly run `op-challenger` as a daemon (due to it requiring a beacon node setup), we can still
+use it for open games resolution with consequent bond redistribution etc. So it is expected to be built and available in `$PATH`, i.e.
+
+```bash
+cd server/src/tests/optimism
+make op-challenger
+mv op-challenger/bin/op-challenger ~/go/bin/
 ```
