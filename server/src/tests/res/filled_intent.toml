@@ -1,0 +1,46 @@
+configType = "custom"
+l1ChainID = 1337
+fundDevAccounts = false
+l1ContractsLocator = "embedded"
+l2ContractsLocator = "embedded"
+
+[superchainRoles]
+SuperchainProxyAdminOwner = "0x2611596AA00F8438d75f1daF893CF264366fc668"
+SuperchainGuardian = "0x2611596AA00F8438d75f1daF893CF264366fc668"
+ProtocolVersionsOwner = "0x2611596AA00F8438d75f1daF893CF264366fc668"
+Challenger = "0x2611596AA00F8438d75f1daF893CF264366fc668"
+
+[[chains]]
+id = "0x000000000000000000000000000000000000000000000000000000000000a455"
+baseFeeVaultRecipient = "0x2611596AA00F8438d75f1daF893CF264366fc668"
+l1FeeVaultRecipient = "0x2611596AA00F8438d75f1daF893CF264366fc668"
+sequencerFeeVaultRecipient = "0x2611596AA00F8438d75f1daF893CF264366fc668"
+operatorFeeVaultRecipient = "0x2611596AA00F8438d75f1daF893CF264366fc668"
+eip1559DenominatorCanyon = 50
+eip1559Denominator = 50
+eip1559Elasticity = 6
+gasLimit = 60000000
+operatorFeeScalar = 0
+operatorFeeConstant = 0
+chainFeesRecipient = "0x2611596AA00F8438d75f1daF893CF264366fc668"
+minBaseFee = 1000000000
+daFootprintGasScalar = 0
+
+[chains.roles]
+l1ProxyAdminOwner = "0x2611596AA00F8438d75f1daF893CF264366fc668"
+l2ProxyAdminOwner = "0x2611596AA00F8438d75f1daF893CF264366fc668"
+systemConfigOwner = "0x2611596AA00F8438d75f1daF893CF264366fc668"
+unsafeBlockSigner = "0x2611596AA00F8438d75f1daF893CF264366fc668"
+batcher = "0x8C67a7B8624044F8F672E9EC374dFa596f01aFB9"
+proposer = "0xb846C69FA1f6D2DC86Ee44553f67Bbb86e007d08"
+challenger = "0x2611596AA00F8438d75f1daF893CF264366fc668"
+
+[globalDeployOverrides]
+faultGameWithdrawalDelay = 30
+preimageOracleChallengePeriod = 15
+proofMaturityDelaySeconds = 30
+disputeGameFinalityDelaySeconds = 30
+faultGameMaxDepth = 44
+faultGameSplitDepth = 14
+faultGameClockExtension = 7
+faultGameMaxClockDuration = 30
