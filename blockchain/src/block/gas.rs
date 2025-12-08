@@ -91,6 +91,10 @@ pub trait BaseGasFee {
         &mut self,
         extra_data: Bytes,
     ) -> Result<(), umi_shared::error::Error>;
+
+    #[cfg(feature = "op-upgrade")]
+    fn set_parameters_from_attrs(&mut self, eip1559_params: &BaseFeeParameters);
+
     #[cfg(feature = "op-upgrade")]
     fn encode_parameters_for_header(&self) -> Bytes;
 }
@@ -191,7 +195,13 @@ impl BaseGasFee for Eip1559GasFee {
         // in the header, but absent from the attributes
         let encoded = U64::from_be_slice(&extra_data.slice(1..9));
         let params = BaseFeeParameters::decode(encoded)?;
-        match params {
+        self.set_parameters_from_attrs(&params);
+        Ok(())
+    }
+
+    #[cfg(feature = "op-upgrade")]
+    fn set_parameters_from_attrs(&mut self, eip1559_params: &BaseFeeParameters) {
+        match eip1559_params {
             BaseFeeParameters::Default => {
                 self.base_fee_max_change_denominator =
                     DEFAULT_EIP1559_BASE_FEE_MAX_CHANGE_DENOMINATOR;
@@ -201,11 +211,10 @@ impl BaseGasFee for Eip1559GasFee {
                 denominator,
                 elasticity,
             } => {
-                self.base_fee_max_change_denominator = denominator;
-                self.elasticity_multiplier = elasticity;
+                self.base_fee_max_change_denominator = *denominator;
+                self.elasticity_multiplier = *elasticity;
             }
         }
-        Ok(())
     }
 
     #[cfg(feature = "op-upgrade")]

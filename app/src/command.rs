@@ -128,11 +128,15 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             })?;
 
         #[cfg(feature = "op-upgrade")]
-        self.gas_fee
+        if let Some(params) = &attributes.eip1559_params {
+            self.gas_fee.set_parameters_from_attrs(params);
+        } else {
+            self.gas_fee
             .set_parameters_from_extra_data(parent.block.header.extra_data).map_err(|e| {
                 tracing::error!("Failure during `start_block_build`. Post-Isthmus parent block `extra_data` had wrong format: {e:?}");
                 UnrecoverableAppFailure
             })?;
+        }
         let base_fee = self.gas_fee.base_fee_per_gas(
             parent.block.header.gas_limit,
             parent.block.header.gas_used,
