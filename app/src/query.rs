@@ -545,23 +545,7 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
                 DEFAULT_EIP1559_BASE_FEE_MAX_CHANGE_DENOMINATOR,
             );
             #[cfg(feature = "op-upgrade")]
-            {
-                use {alloy::primitives::U64, umi_blockchain::block::BaseFeeParameters};
-
-                // OP uses this field for dynamic EIP-1559 parameters only. The format is
-                // <https://specs.optimism.io/protocol/holocene/exec-engine.html#eip-1559-parameters-in-block-header>
-                if extra_data.len() != 9 {
-                    return Err(Error::extra_data_invariant_violation());
-                };
-
-                // As during block build the parameters are parsed from a byte-encoded field
-                // in payload attributes, we have to do some conversions to read it from the
-                // block header, most importantly skipping the version byte that is present
-                // in the header, but absent from the attributes
-                let encoded = U64::from_be_slice(&extra_data.slice(1..9));
-                let params = BaseFeeParameters::decode(encoded)?;
-                gas_fee.set_parameters_from_attrs(&params);
-            }
+            gas_fee.set_parameters_from_extra_data(extra_data)?;
             let next_block_base_fee = gas_fee.base_fee_per_gas(
                 gas_limit,
                 block_gas_used,

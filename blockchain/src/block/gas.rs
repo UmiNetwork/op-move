@@ -57,17 +57,17 @@ impl BaseFeeParameters {
         }
     }
     pub fn encode(&self) -> u64 {
-        match self {
-            BaseFeeParameters::Default => 0u64,
+        let (denominator, elasticity): (u64, u64) = match self {
+            BaseFeeParameters::Default => (
+                DEFAULT_EIP1559_BASE_FEE_MAX_CHANGE_DENOMINATOR.get().into(),
+                DEFAULT_EIP1559_ELASTICITY_MULTIPLIER.get().into(),
+            ),
             BaseFeeParameters::Custom {
                 denominator,
                 elasticity,
-            } => {
-                let denominator: u64 = denominator.get().into();
-                let elasticity: u64 = elasticity.get().into();
-                (denominator << 32) + elasticity
-            }
-        }
+            } => (denominator.get().into(), elasticity.get().into()),
+        };
+        (denominator << 32) + elasticity
     }
 }
 
@@ -87,7 +87,14 @@ pub trait BaseGasFee {
     ) -> u64;
 
     #[cfg(feature = "op-upgrade")]
-    fn set_parameters_from_attrs(&mut self, params: &BaseFeeParameters);
+    fn set_parameters_from_extra_data(
+        &mut self,
+        extra_data: Bytes,
+    ) -> Result<(), umi_shared::error::Error>;
+
+    #[cfg(feature = "op-upgrade")]
+    fn set_parameters_from_attrs(&mut self, eip1559_params: &BaseFeeParameters);
+
     #[cfg(feature = "op-upgrade")]
     fn encode_parameters_for_header(&self) -> Bytes;
 }
@@ -169,6 +176,27 @@ impl BaseGasFee for Eip1559GasFee {
             }
             Ordering::Equal => parent_base_fee_per_gas,
         }
+    }
+
+    #[cfg(feature = "op-upgrade")]
+    fn set_parameters_from_extra_data(
+        &mut self,
+        extra_data: Bytes,
+    ) -> Result<(), umi_shared::error::Error> {
+        // OP uses this field for dynamic EIP-1559 parameters only. The format is
+        // <https://specs.optimism.io/protocol/holocene/exec-engine.html#eip-1559-parameters-in-block-header>
+        if extra_data.len() != 9 {
+            return Err(umi_shared::error::Error::extra_data_invariant_violation());
+        };
+
+        // As during block build the parameters are parsed from a byte-encoded field
+        // in payload attributes, we have to do some conversions to read it from the
+        // block header, most importantly skipping the version byte that is present
+        // in the header, but absent from the attributes
+        let encoded = U64::from_be_slice(&extra_data.slice(1..9));
+        let params = BaseFeeParameters::decode(encoded)?;
+        self.set_parameters_from_attrs(&params);
+        Ok(())
     }
 
     #[cfg(feature = "op-upgrade")]
