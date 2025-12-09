@@ -36,13 +36,14 @@ pub struct ChallengerTask {
 impl ChallengerTask {
     pub fn new() -> Self {
         let should_stop = Arc::new(AtomicBool::new(false));
+        let l1_addr = L1Addresses::load().unwrap();
         let games = Command::new("op-challenger")
             .args([
                 "list-games",
                 "--l1-eth-rpc",
                 &var("L1_RPC_URL").unwrap(),
                 "--game-factory-address",
-                dispute_game_factory_proxy(),
+                &l1_addr.dispute_game_factory_proxy.to_string(),
             ])
             .output()
             .unwrap();
@@ -65,14 +66,13 @@ impl ChallengerTask {
                 .enable_all()
                 .build()?;
             runtime.block_on(async {
-                println!("Attempting resolution");
                 let admin_key = var("ADMIN_PRIVATE_KEY").unwrap();
                 let signer = PrivateKeySigner::from_str(&admin_key).unwrap();
                 let provider = ProviderBuilder::new()
                     .wallet(EthereumWallet::from(signer))
                     .connect_http(Url::parse(&var("L1_RPC_URL")?)?);
 
-                let game_factory_address = Address::from_str(dispute_game_factory_proxy())?;
+                let game_factory_address = l1_addr.dispute_game_factory_proxy;
                 let game_factory = op_dgf::DisputeGameFactory::new(game_factory_address, &provider);
                 loop {
                     if thread_stop.load(Ordering::Relaxed) {
@@ -84,7 +84,7 @@ impl ChallengerTask {
                         .call()
                         .await?
                         .proxy_;
-                    dbg!(next_game_addr);
+                    eprintln!("Processing game address {next_game_addr}...");
                     for _ in 1..7 {
                         let resolve_claim = Command::new("op-challenger")
                             .args([
@@ -100,10 +100,10 @@ impl ChallengerTask {
                             ])
                             .output()?;
                         if resolve_claim.status.code() != Some(0) {
-                            dbg!("batch was not there yet");
+                            eprintln!("Game was not ready yet, retrying...");
                             tokio::time::sleep(Duration::from_secs(10)).await;
                         } else {
-                            dbg!("resolved claim");
+                            eprintln!("Resolved a game claim");
                             break;
                         }
                     }

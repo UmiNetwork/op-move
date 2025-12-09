@@ -1,7 +1,7 @@
 //! Code related to OP-stack withdrawal flow.
 //! (Separated into its own module because there is a lot of it.)
 
-use {super::*, alloy::sol_types::SolValue};
+use super::*;
 
 mod op_dgf {
     alloy::sol!(
@@ -32,7 +32,10 @@ const MAX_WITHDRAWAL_TIMEOUT: u64 = 16 * 60;
 const WITHDRAW_ADDRESS: Address =
     alloy::primitives::address!("4200000000000000000000000000000000000016");
 
-pub async fn withdraw_eth_to_l1(chlg: &challenger::ChallengerTask) -> Result<()> {
+pub async fn withdraw_eth_to_l1(
+    chlg: &challenger::ChallengerTask,
+    l1_proxies: &L1Addresses,
+) -> Result<()> {
     let amount = "1";
     let prefunded_wallet = get_prefunded_wallet().await?;
     let prefunded_address = prefunded_wallet.address();
@@ -47,8 +50,7 @@ pub async fn withdraw_eth_to_l1(chlg: &challenger::ChallengerTask) -> Result<()>
 
     let pre_finalize_balance = l1_provider.get_balance(prefunded_address).await?;
 
-    dbg!("about withdr");
-    withdraw_to_l1(withdraw_tx_hash, prefunded_wallet, chlg).await?;
+    withdraw_to_l1(withdraw_tx_hash, prefunded_wallet, chlg, l1_proxies).await?;
 
     let post_finalize_balance = l1_provider.get_balance(prefunded_address).await?;
     assert!(
@@ -63,6 +65,7 @@ pub async fn withdraw_to_l1(
     withdraw_tx_hash: B256,
     l1_wallet: PrivateKeySigner,
     chlg: &challenger::ChallengerTask,
+    l1_addr: &L1Addresses,
 ) -> Result<()> {
     let l2_provider = ProviderBuilder::new().connect_http(Url::parse(L2_RPC_URL)?);
     let rx = l2_provider
@@ -79,9 +82,7 @@ pub async fn withdraw_to_l1(
         .unwrap();
     let event = withdraw_event();
     let decoded = event.decode_log(withdrawal_log.data()).unwrap();
-    dbg!(&decoded);
     let (withdrawal_hash, _) = decoded.body.last().unwrap().as_fixed_bytes().unwrap();
-    dbg!(&withdrawal_hash);
 
     // `storage_slot` is calculated based on the Solidity convention for how maps work.
     let slot_preimage = [withdrawal_hash, &[0u8; 32]].concat();
@@ -92,51 +93,44 @@ pub async fn withdraw_to_l1(
         .connect_http(Url::parse(&var("L1_RPC_URL")?)?);
 
     // Contract used on the L1 for withdrawals
-    let portal_address = Address::from_str(optimism_portal_proxy())?;
-    let portal_contract = op_portal::OptimismPortal::new(portal_address, &l1_provider);
+    let portal_contract =
+        op_portal::OptimismPortal::new(l1_addr.optimism_portal_proxy, &l1_provider);
 
     // Contract used on the L1 to keep track of the L2 state
-    let game_factory_address = Address::from_str(dispute_game_factory_proxy())?;
-    let game_factory = op_dgf::DisputeGameFactory::new(game_factory_address, &l1_provider);
+    let game_factory =
+        op_dgf::DisputeGameFactory::new(l1_addr.dispute_game_factory_proxy, &l1_provider);
 
     // Wait for proposer to push new blocks top L1
-    let withdraw_block_number = dbg!(withdrawal_log.block_number.unwrap());
+    let withdraw_block_number = withdrawal_log.block_number.unwrap();
     let now = Instant::now();
     let (game_idx, game_block_num) = loop {
-        // Timeout to prevent this from being an infinite loop if something breaks
-
-        let game_count_resolved = dbg!(chlg.curr_idx());
+        let game_count_resolved = chlg.curr_idx();
         let games = game_factory
             .findLatestGames(1, U256::from(game_count_resolved), U256::from(3))
             .call()
             .await?;
 
-        dbg!(&games.len());
-
         let mut found_game_idx = U256::ZERO;
         let mut found_game_block_num = 0;
         for game in games.iter().rev() {
-            dbg!("found game");
-            dbg!(game.timestamp);
-            dbg!("good root claim", game.rootClaim);
-            let game_idx = dbg!(game.index);
+            let game_idx = game.index;
             let game = game_factory.gameAtIndex(game_idx).call().await?;
-            let game_addr = game.proxy_;
-            let permissioned_game = op_pdg::PermissionedDisputeGame::new(game_addr, &l1_provider);
+            let permissioned_game = op_pdg::PermissionedDisputeGame::new(game.proxy_, &l1_provider);
             // If the latest L2 block number that the L1 knows about
             // is larger than the block where the withdraw happened then we
             // can move on to the next step. Otherwise we wait before
             // checking again.
-            let game_block_number = dbg!(permissioned_game.l2BlockNumber().call().await?);
+            let game_block_number = permissioned_game.l2BlockNumber().call().await?;
 
+            // Timeout to prevent this from being an infinite loop if something breaks
             if now.elapsed().as_secs() > MAX_WITHDRAWAL_TIMEOUT {
                 anyhow::bail!(
                 "WITHDRAW ERROR: L1 contract `DisputeGameFactory` not updated to block containing withdraw within 10 minutes. CurrentBlock={game_block_number} TargetBlock={withdraw_block_number}"
             );
             }
 
-            let game_status = dbg!(permissioned_game.status().call().await?);
-            // DEFENDER_WINS
+            let game_status = permissioned_game.status().call().await?;
+            // DEFENDER_WINS status
             if game_status == 2 && game_block_number > withdraw_block_number {
                 found_game_idx = game_idx;
                 found_game_block_num = game_block_number.saturating_to::<u64>();
@@ -145,8 +139,6 @@ pub async fn withdraw_to_l1(
         }
 
         if found_game_idx != U256::ZERO {
-            dbg!(&found_game_idx);
-            dbg!(&found_game_block_num);
             break (found_game_idx, found_game_block_num);
         }
 
@@ -180,7 +172,6 @@ pub async fn withdraw_to_l1(
         messagePasserStorageRoot: block.header.withdrawals_root.unwrap(),
         latestBlockhash: block.header.hash,
     };
-    dbg!(&output_proof);
 
     // Submit proof of withdrawal to L1
     let prove_tx = portal_contract.proveWithdrawalTransaction(
@@ -205,8 +196,8 @@ pub async fn withdraw_to_l1(
         .unwrap();
     assert!(prove_rx.status(), "Prove Tx failed");
 
-    // Wait for finalization, it should be max(proofTimestamp + PROOF_MATURITY_DELAY_SECONDS,
-    // resolutionTimestamp + DISPUTE_GAME_FINALITY_DELAY_SECONDS)
+    // Wait for finalization readiness, it should happen within `max(proofTimestamp + PROOF_MATURITY_DELAY_SECONDS,
+    // resolutionTimestamp + DISPUTE_GAME_FINALITY_DELAY_SECONDS)`
     tokio::time::sleep(Duration::from_secs(30)).await;
 
     // Finalize withdrawal
