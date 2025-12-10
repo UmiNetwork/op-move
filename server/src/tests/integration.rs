@@ -16,6 +16,7 @@ use {
     aptos_types::transaction::{EntryFunction, ModuleBundle},
     move_binary_format::CompiledModule,
     move_core_types::{ident_str, language_storage::ModuleId, value::MoveValue},
+    serde::Deserialize,
     std::{
         env::var,
         io::Read,
@@ -29,18 +30,35 @@ use {
     umi_shared::primitives::ToMoveAddress,
 };
 
+/// NOTE: With the current OP stack, this file generates different addresses each time,
+/// thus the file contents need to be updated on reruns (via `op-deployer inspect l1 42069 > l1.json`)
+const L1_FILE_PATH: &str = "src/tests/res/l1.json";
 const L2_RPC_URL: &str = "http://localhost:8545";
-const OP_BRIDGE_IN_SECS: u64 = 2 * 60; // Allow up to two minutes for bridging
+const OP_BRIDGE_IN_SECS: u64 = 10 * 60;
 const OP_BRIDGE_POLL_IN_SECS: u64 = 5;
 const TXN_RECEIPT_WAIT_IN_MILLIS: u64 = 100;
 
-// These proxy addresses come from the contract deployments file `1337-deploy.json`
-const L1_STANDARD_BRIDGE_PROXY: &str = "0xC8088D0362Bb4AC757ca77e211C30503d39CEf48";
-const L2_OUTPUT_ORACLE_PROXY: &str = "0x44C44C1f26aA5b81047DbFd2682F85b78Bd265a8";
-const OPTIMISM_PORTAL_PROXY: &str = "0x63F7A1fB6b1C1F0B620cEDF99bE217C5E3e8871D";
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct L1Addresses {
+    l1_standard_bridge_proxy: Address,
+    optimism_portal_proxy: Address,
+    dispute_game_factory_proxy: Address,
+}
 
+impl L1Addresses {
+    pub fn load() -> Result<Self> {
+        let content = std::fs::read_to_string(L1_FILE_PATH)
+            .with_context(|| format!("Failed to read L1 addresses from {}", L1_FILE_PATH))?;
+
+        serde_json::from_str(&content)
+            .with_context(|| format!("Failed to parse L1 addresses from {}", L1_FILE_PATH))
+    }
+}
+
+mod challenger;
 mod erc20;
-mod withdrawal;
+pub mod withdrawal;
 
 pub fn create_move_counter_contract_bytecode(address: Address) -> Vec<u8> {
     let bytecode_hex = std::fs::read_to_string("src/tests/res/counter.hex").unwrap();
@@ -75,51 +93,63 @@ pub fn set_module_address(bytecode: Vec<u8>, address: Address) -> Vec<u8> {
 async fn test_on_ethereum() -> Result<()> {
     dotenvy::dotenv().expect(".env file not found");
 
+    let chlg = challenger::ChallengerTask::new();
+
+    let l1_addresses = L1Addresses::load()?;
+
     // 1. Test out the OP bridge
-    use_optimism_bridge().await?;
+    use_optimism_bridge(&chlg, &l1_addresses).await?;
 
     // 2. Test out a simple Move contract
     deploy_move_counter().await?;
 
+    chlg.shutdown();
+
     Ok(())
 }
 
-async fn use_optimism_bridge() -> Result<()> {
+async fn use_optimism_bridge(
+    chlg: &challenger::ChallengerTask,
+    l1_proxies: &L1Addresses,
+) -> Result<()> {
     // Deposit via standard bridge
-    deposit_eth_to_l2(Address::from_str(L1_STANDARD_BRIDGE_PROXY)?).await?;
+    deposit_eth_to_l2(l1_proxies.l1_standard_bridge_proxy).await?;
     // Deposit via Optimism Portal
-    deposit_eth_to_l2(Address::from_str(OPTIMISM_PORTAL_PROXY)?).await?;
+    deposit_eth_to_l2(l1_proxies.optimism_portal_proxy).await?;
 
     let erc20_deposit_amount = U256::from(1234);
     let erc20::Erc20AddressPair {
         l1_address,
         l2_address,
-    } = deposit_erc20_to_l2(erc20_deposit_amount).await?;
+    } = deposit_erc20_to_l2(erc20_deposit_amount, l1_proxies).await?;
 
-    withdrawal::withdraw_eth_to_l1().await?;
+    withdrawal::withdraw_eth_to_l1(chlg, l1_proxies).await?;
 
     let erc20_withdrawal_amount = erc20_deposit_amount;
     erc20::withdraw_erc20_token_from_l2_to_l1(
         &get_prefunded_wallet().await?,
         l1_address,
         l2_address,
+        l1_proxies,
         erc20_withdrawal_amount,
         &var("L1_RPC_URL").expect("Missing Ethereum L1 RPC URL"),
         L2_RPC_URL,
+        chlg,
     )
     .await?;
+
     Ok(())
 }
 
 async fn deposit_eth_to_l2(bridge_address: Address) -> Result<()> {
-    let amount = "100";
+    let amount = "10";
     let prefunded_wallet = get_prefunded_wallet().await?;
 
     let pre_deposit_balance = get_op_balance(prefunded_wallet.address()).await?;
     l1_send_ethers(&prefunded_wallet, bridge_address, amount, false).await?;
 
     let now = Instant::now();
-    let expected_balance = pre_deposit_balance + parse_ether(amount)?;
+    let expected_balance = pre_deposit_balance + dbg!(parse_ether(amount)?);
     while get_op_balance(prefunded_wallet.address()).await? != expected_balance {
         if now.elapsed().as_secs() > OP_BRIDGE_IN_SECS {
             anyhow::bail!(
@@ -131,17 +161,29 @@ async fn deposit_eth_to_l2(bridge_address: Address) -> Result<()> {
     Ok(())
 }
 
-async fn deposit_erc20_to_l2(amount: U256) -> Result<erc20::Erc20AddressPair> {
+async fn deposit_erc20_to_l2(
+    amount: U256,
+    l1_proxies: &L1Addresses,
+) -> Result<erc20::Erc20AddressPair> {
     let l1_rpc = var("L1_RPC_URL").expect("Missing Ethereum L1 RPC URL");
     let from_wallet = get_prefunded_wallet().await?;
     let receiver = from_wallet.address();
 
     // Deploy ERC-20 token to bridge
-    let l1_address = erc20::deploy_l1_token(&from_wallet, &l1_rpc).await?;
+    let l1_address =
+        erc20::deploy_l1_token(&from_wallet, &l1_rpc, l1_proxies.l1_standard_bridge_proxy).await?;
     // Create corresponding token on L2
     let l2_address = erc20::deploy_l2_token(&from_wallet, l1_address, L2_RPC_URL).await?;
     // Perform deposit
-    erc20::deposit_l1_token(&from_wallet, l1_address, l2_address, amount, &l1_rpc).await?;
+    erc20::deposit_l1_token(
+        &from_wallet,
+        l1_address,
+        l2_address,
+        l1_proxies.l1_standard_bridge_proxy,
+        amount,
+        &l1_rpc,
+    )
+    .await?;
 
     let poll_start = Instant::now();
     while erc20::l2_erc20_balance_of(l2_address, receiver, L2_RPC_URL).await? != amount {

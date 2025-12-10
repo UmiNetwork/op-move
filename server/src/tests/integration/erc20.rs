@@ -43,6 +43,7 @@ const L2_MINT_ERC20_GAS_LIMIT: u32 = 100_000;
 
 const L2_STANDARD_BRIDGE_ADDRESS: Address = address!("4200000000000000000000000000000000000010");
 
+#[derive(Debug)]
 pub struct Erc20AddressPair {
     pub l1_address: Address,
     pub l2_address: Address,
@@ -52,7 +53,11 @@ pub struct Erc20AddressPair {
 /// For convenience, this function also calls `approve` on the new
 /// ERC-20 token allowing the `L1StandardBridgeProxy` to spend the newly
 /// created tokens.
-pub async fn deploy_l1_token(from_wallet: &PrivateKeySigner, rpc_url: &str) -> Result<Address> {
+pub async fn deploy_l1_token(
+    from_wallet: &PrivateKeySigner,
+    rpc_url: &str,
+    bridge_address: Address,
+) -> Result<Address> {
     let from_address = from_wallet.address();
     let provider = ProviderBuilder::new()
         .wallet(EthereumWallet::from(from_wallet.to_owned()))
@@ -67,7 +72,6 @@ pub async fn deploy_l1_token(from_wallet: &PrivateKeySigner, rpc_url: &str) -> R
     )
     .await?;
 
-    let bridge_address = Address::from_str(L1_STANDARD_BRIDGE_PROXY)?;
     contract
         .approve(bridge_address, U256::MAX)
         .send()
@@ -121,6 +125,7 @@ pub async fn deposit_l1_token(
     from_wallet: &PrivateKeySigner,
     l1_address: Address,
     l2_address: Address,
+    bridge_address: Address,
     amount: U256,
     rpc_url: &str,
 ) -> Result<()> {
@@ -128,7 +133,6 @@ pub async fn deposit_l1_token(
         .wallet(EthereumWallet::from(from_wallet.to_owned()))
         .connect_http(Url::parse(rpc_url)?);
 
-    let bridge_address = Address::from_str(L1_STANDARD_BRIDGE_PROXY)?;
     let bridge_contract = bridge_l1::L1StandardBridge::new(bridge_address, provider);
     let receipt = bridge_contract
         .depositERC20(
@@ -146,13 +150,16 @@ pub async fn deposit_l1_token(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 pub async fn withdraw_erc20_token_from_l2_to_l1(
     wallet: &PrivateKeySigner,
     l1_address: Address,
     l2_address: Address,
+    l1_proxies: &L1Addresses,
     amount: U256,
     l1_rpc_url: &str,
     l2_rpc_url: &str,
+    chlg: &challenger::ChallengerTask,
 ) -> Result<()> {
     let owner_address = wallet.address();
 
@@ -222,7 +229,7 @@ pub async fn withdraw_erc20_token_from_l2_to_l1(
 
     // Prove withdraw on L1
     let withdraw_tx_hash = receipt.transaction_hash;
-    super::withdrawal::withdraw_to_l1(withdraw_tx_hash, wallet.clone()).await?;
+    super::withdrawal::withdraw_to_l1(withdraw_tx_hash, wallet.clone(), chlg, l1_proxies).await?;
 
     // Check final balance
     let final_balance = l1_token.balanceOf(owner_address).call().await?;
