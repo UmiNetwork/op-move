@@ -6,8 +6,8 @@ SHARED="/volume/shared"
 L1_DEPLOYMENT="${SHARED}/l1.json"
 TIMEOUT_SECS=1500
 
-wait-for-it -t "${TIMEOUT_SECS}" "$(echo ${L1_RPC_URL} | cut -c 8-)"
-wait-for-it -t "${TIMEOUT_SECS}" "$(echo ${ROLLUP_RPC_URL} | cut -c 8-)"
+wait-for-it -t "${TIMEOUT_SECS}" "$(echo "${L1_RPC_URL}" | cut -c 8-)"
+wait-for-it -t "${TIMEOUT_SECS}" "$(echo "${ROLLUP_RPC_URL}" | cut -c 8-)"
 
 # Read the game factory address from the list of deployed contract addresses
 GAME_FACTORY_ADDRESS=$(grep DisputeGameFactoryProxy "${L1_DEPLOYMENT}" | cut -d"\"" -f4)

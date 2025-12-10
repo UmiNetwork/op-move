@@ -76,6 +76,26 @@ COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
 
 # Start from a clean image
+FROM alpine:3.21.2 AS op-challenger
+WORKDIR /volume
+
+RUN \
+  # bash required by wait-for-it
+  apk add --no-cache bash jq \
+  # Clean up
+  && rm -rf /tmp/* /var/cache/apk/*
+
+# Copy helpers and built binary from build image
+COPY --from=foundry /cast /usr/local/bin/
+COPY --from=optimism /op-challenger /usr/local/bin/
+
+# Copy entrypoint with run privileges
+COPY --chmod=0777 docker/op-challenger/entrypoint.sh ./
+COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
+
+ENTRYPOINT [ "/volume/entrypoint.sh" ]
+
+# Start from a clean image
 FROM alpine:3.21.2 AS op-batcher
 WORKDIR /volume
 
