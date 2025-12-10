@@ -32,10 +32,7 @@ const MAX_WITHDRAWAL_TIMEOUT: u64 = 16 * 60;
 const WITHDRAW_ADDRESS: Address =
     alloy::primitives::address!("4200000000000000000000000000000000000016");
 
-pub async fn withdraw_eth_to_l1(
-    chlg: &challenger::ChallengerTask,
-    l1_proxies: &L1Addresses,
-) -> Result<()> {
+pub async fn withdraw_eth_to_l1(l1_proxies: &L1Addresses) -> Result<()> {
     let amount = "1";
     let prefunded_wallet = get_prefunded_wallet().await?;
     let prefunded_address = prefunded_wallet.address();
@@ -50,7 +47,7 @@ pub async fn withdraw_eth_to_l1(
 
     let pre_finalize_balance = l1_provider.get_balance(prefunded_address).await?;
 
-    withdraw_to_l1(withdraw_tx_hash, prefunded_wallet, chlg, l1_proxies).await?;
+    withdraw_to_l1(withdraw_tx_hash, prefunded_wallet, l1_proxies).await?;
 
     let post_finalize_balance = l1_provider.get_balance(prefunded_address).await?;
     assert!(
@@ -64,7 +61,6 @@ pub async fn withdraw_eth_to_l1(
 pub async fn withdraw_to_l1(
     withdraw_tx_hash: B256,
     l1_wallet: PrivateKeySigner,
-    chlg: &challenger::ChallengerTask,
     l1_addr: &L1Addresses,
 ) -> Result<()> {
     let l2_provider = ProviderBuilder::new().connect_http(Url::parse(L2_RPC_URL)?);
@@ -104,9 +100,9 @@ pub async fn withdraw_to_l1(
     let withdraw_block_number = withdrawal_log.block_number.unwrap();
     let now = Instant::now();
     let (game_idx, game_block_num) = loop {
-        let game_count_resolved = chlg.curr_idx();
+        let game_count_total = game_factory.gameCount().call().await?;
         let games = game_factory
-            .findLatestGames(1, U256::from(game_count_resolved), U256::from(3))
+            .findLatestGames(1, game_count_total, U256::from(3))
             .call()
             .await?;
 
