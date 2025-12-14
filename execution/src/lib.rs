@@ -1,6 +1,3 @@
-#[cfg(not(feature = "op-upgrade"))]
-pub use gas::{CreateEcotoneL1GasFee, EcotoneGasFee};
-#[cfg(feature = "op-upgrade")]
 pub use gas::{CreateFjordL1GasFee, FjordGasFee};
 
 pub use {
@@ -151,9 +148,7 @@ pub struct CanonicalExecutionInput<'input, S, ST, F, B, H> {
     pub l1_cost: U256,
     pub l2_fee: F,
     pub l2_input: L2GasFeeInput,
-    #[cfg(feature = "op-upgrade")]
     pub operator_scalar: U256,
-    #[cfg(feature = "op-upgrade")]
     pub operator_cost: U256,
     pub base_token: &'input B,
     pub block_header: HeaderForExecution,

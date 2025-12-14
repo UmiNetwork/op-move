@@ -528,10 +528,7 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
             gas_used: block_gas_used,
             base_fee_per_gas,
             parent_hash,
-            #[cfg(feature = "op-upgrade")]
             extra_data,
-            #[cfg(not(feature = "op-upgrade"))]
-                extra_data: _,
             ..
         } = curr_block.0.header.inner;
 
@@ -539,12 +536,10 @@ impl<'app, D: Dependencies<'app>> ApplicationReader<'app, D> {
         // so that we also account for the range ending with the latest block. This comes before
         // the remaining calculation as we're iterating in reverse
         if matches!(block_id, FeeHistoryBlockId::RangeEnd(_)) {
-            #[cfg_attr(not(feature = "op-upgrade"), allow(unused_mut))]
             let mut gas_fee = Eip1559GasFee::new(
                 DEFAULT_EIP1559_ELASTICITY_MULTIPLIER,
                 DEFAULT_EIP1559_BASE_FEE_MAX_CHANGE_DENOMINATOR,
             );
-            #[cfg(feature = "op-upgrade")]
             gas_fee.set_parameters_from_extra_data(extra_data)?;
             let next_block_base_fee = gas_fee.base_fee_per_gas(
                 gas_limit,

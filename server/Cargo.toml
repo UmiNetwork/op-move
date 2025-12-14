@@ -6,13 +6,6 @@ edition = "2021"
 
 [features]
 default = []
-op-upgrade = [
-  "umi-api/op-upgrade",
-  "umi-app/op-upgrade",
-  "umi-blockchain/op-upgrade",
-  "umi-execution/op-upgrade",
-  "umi-shared/op-upgrade",
-]
 storage = ["storage-lmdb"]
 storage-lmdb = ["umi-storage-heed"]
 storage-rocksdb = ["umi-storage-rocksdb"]

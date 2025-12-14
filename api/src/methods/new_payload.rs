@@ -59,7 +59,6 @@ async fn inner_execute<'reader>(
 ) -> Result<PayloadStatusV1, JsonRpcError> {
     // Spec: https://github.com/ethereum/execution-apis/blob/main/src/engine/cancun.md#specification
 
-    #[cfg(feature = "op-upgrade")]
     let withdrawals_root = {
         use umi_blockchain::state::StateQueries;
 
@@ -74,9 +73,6 @@ async fn inner_execute<'reader>(
             }
         }
     };
-    #[cfg(not(feature = "op-upgrade"))]
-    // Has to be `keccak256(rlp(empty_string_code))`
-    let withdrawals_root = Some(alloy::consensus::constants::EMPTY_WITHDRAWALS);
 
     if let Err(status) = validate_payload_block_hash(
         &execution_payload,
@@ -154,15 +150,6 @@ fn validate_payload_format(
         });
     }
 
-    #[cfg(not(feature = "op-upgrade"))]
-    if execution_payload.block_number != U64::ZERO && !execution_payload.extra_data.is_empty() {
-        return Err(PayloadStatusV1 {
-            status: Status::Invalid,
-            latest_valid_hash: None,
-            validation_error: Some("Pre-holocene payload extraData should be empty".into()),
-        });
-    }
-
     Ok(())
 }
 
@@ -198,9 +185,6 @@ fn validate_payload_block_hash(
         blob_gas_used: Some(execution_payload.blob_gas_used.saturating_to()),
         excess_blob_gas: Some(execution_payload.excess_blob_gas.saturating_to()),
         parent_beacon_block_root: Some(parent_beacon_block_root),
-        #[cfg(not(feature = "op-upgrade"))]
-        requests_hash: None,
-        #[cfg(feature = "op-upgrade")]
         requests_hash: Some(umi_app::EMPTY_REQUESTS_HASH),
     };
     let computed_hash = alloy::primitives::keccak256(alloy::rlp::encode(&payload_header));

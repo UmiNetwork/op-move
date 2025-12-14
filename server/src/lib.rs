@@ -21,6 +21,7 @@ use {
     umi_blockchain::{
         block::{Block, BlockHash, BlockQueries, ExtendedBlock, Header},
         payload::{NewPayloadId, StatePayloadId},
+        state::evm_storage_root_from_trie_and_resolver,
     },
     umi_genesis::config::GenesisConfig,
     umi_server_args::{
@@ -31,6 +32,7 @@ use {
         hex,
         primitives::{ToSaturatedU64, B2048, B256, B64, U256},
     },
+    umi_state::State,
     warp::{
         http::{header::CONTENT_TYPE, HeaderMap, HeaderValue},
         hyper::Response,
@@ -342,12 +344,7 @@ impl<'db, D: Dependencies<'db>> GenesisStateExt for Application<'db, D> {
             &mut self.evm_storage,
         );
 
-        #[cfg(feature = "op-upgrade")]
         let withdrawals_root = {
-            use {
-                umi_blockchain::state::evm_storage_root_from_trie_and_resolver, umi_state::State,
-            };
-
             let storage_root = evm_storage_root_from_trie_and_resolver(
                 umi_app::L2_TO_L1_MESSAGE_PASSER_ADDRESS,
                 self.state.resolver(),
@@ -356,9 +353,6 @@ impl<'db, D: Dependencies<'db>> GenesisStateExt for Application<'db, D> {
             .expect("Should be able to retrieve L2ToL1MessagePasser storage root");
             Some(storage_root)
         };
-        #[cfg(not(feature = "op-upgrade"))]
-        // Has to be `keccak256(rlp(empty_string_code))`
-        let withdrawals_root = Some(alloy::consensus::constants::EMPTY_WITHDRAWALS);
 
         let genesis_block =
             create_genesis_block(&self.block_hash, genesis_config, withdrawals_root);
@@ -386,10 +380,7 @@ fn create_genesis_block(
 ) -> ExtendedBlock {
     // As defined in <https://specs.optimism.io/protocol/isthmus/exec-engine.html#header-validity-rules>,
     // i.e. a hash of an empty string
-    #[cfg(feature = "op-upgrade")]
     let requests_hash = Some(umi_app::EMPTY_REQUESTS_HASH);
-    #[cfg(not(feature = "op-upgrade"))]
-    let requests_hash = None;
     let genesis_header = Header {
         base_fee_per_gas: genesis_config
             .l2_contract_genesis

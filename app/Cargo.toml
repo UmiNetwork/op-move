@@ -6,9 +6,6 @@ edition.workspace = true
 
 [features]
 default = []
-op-upgrade = [
-  "umi-blockchain/op-upgrade",
-]
 test-doubles = [
   "umi-blockchain/test-doubles",
   "umi-execution/test-doubles",

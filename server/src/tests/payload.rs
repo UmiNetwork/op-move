@@ -1,6 +1,6 @@
 use {
     crate::tests::test_context::{TestContext, DEPOSIT_TX},
-    alloy::hex,
+    alloy::{hex, hex::FromHex},
     umi_api::schema::{
         BlobsBundleV1, ExecutionPayloadV3, ForkchoiceUpdatedResponseV1, GetPayloadResponseV3,
         PayloadStatusV1, Status,
@@ -78,28 +78,16 @@ async fn test_sending_the_same_payload_twice_produces_one_block() -> anyhow::Res
                 parent_hash: B256::new(hex!("14d3698a2c6b14767ab3707f4c07586d72e6db14e523e8701e667908d39e06c2")),
                 fee_recipient: Address::new(hex!("4200000000000000000000000000000000000011")),
                 state_root: B256::new(hex!("4a9f5effd03badf1fd514c50a7fb49ee7639a48110e5f09d5a345db3614ec92a")),
-                #[cfg(not(feature = "op-upgrade"))]
-                receipts_root: B256::new(hex!("22be36dff53ef8da81f4e83975db185d076920d1773031d748cca48d193cbf24")),
-                #[cfg(feature = "op-upgrade")]
                 receipts_root: B256::new(hex!("efb37db18e32368e95ad9c735b57e1d4bbab95111d559214daa0fc4259b3c6f9")),
                 logs_bloom: B2048::new(hex!("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")),
                 prev_randao: B256::new(hex!("dd9b0c0d88d7d9e5fe6718d97f5f2cfd9d825cf6265a39c08650de249e138339")),
                 block_number: U64::from_limbs([1]),
                 gas_limit: U64::from_limbs([30000000]),
-                #[cfg(not(feature = "op-upgrade"))]
-                gas_used: U64::from_limbs([119461]),
-                #[cfg(feature = "op-upgrade")]
                 gas_used: U64::from_limbs([119509]),
                 timestamp: U64::from_limbs([1747148047]),
-                #[cfg(not(feature = "op-upgrade"))]
-                extra_data: Bytes::new(),
-                #[cfg(feature = "op-upgrade")]
-                extra_data: Bytes::from_iter(std::iter::repeat_n(0, 9)),
+                extra_data: Bytes::from_hex("0x00000000fa00000006").unwrap(),
                 base_fee_per_gas: U256::ZERO,
-                #[cfg(not(feature = "op-upgrade"))]
-                block_hash: B256::new(hex!("7aa5dd9536347f85a095b366604dbff3140777e1d118413e17ff7673696b8d9f")),
-                #[cfg(feature = "op-upgrade")]
-                block_hash: B256::new(hex!("db21af46037ccc77a155c29288849c1e11ce935b4ea94da766d2c1bd34f90fe1")),
+                block_hash: B256::new(hex!("0xe361abcdabf1b8511af1d0be207e80a36585a708ce94a95020a46db0f42276cb")),
                 transactions: vec![Bytes::from_iter(DEPOSIT_TX)],
                 withdrawals: vec![],
                 blob_gas_used: U64::ZERO,

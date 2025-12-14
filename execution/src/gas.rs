@@ -11,10 +11,6 @@ use {
     umi_shared::primitives::U256,
 };
 
-#[cfg(not(feature = "op-upgrade"))]
-const ECOTONE_CALLDATA_SIZE: usize = 164;
-
-#[cfg(feature = "op-upgrade")]
 const FJORD_CALLDATA_SIZE: usize = 176;
 
 pub fn new_gas_meter(
@@ -96,9 +92,7 @@ impl NormalizedEthTransaction {
 pub trait L1GasFee {
     fn l1_fee(&self, input: L1GasFeeInput) -> U256;
     fn l1_block_info(&self, input: L1GasFeeInput) -> Option<L1BlockInfo>;
-    #[cfg(feature = "op-upgrade")]
     fn operator_fee(&self, _gas_limit: u64) -> U256;
-    #[cfg(feature = "op-upgrade")]
     fn operator_fee_scalar(&self) -> U256;
 }
 
@@ -110,20 +104,10 @@ pub trait L2GasFee {
 pub struct L1GasFeeInput {
     zero_bytes: U256,
     non_zero_bytes: U256,
-    #[cfg(feature = "op-upgrade")]
     fast_lz_size: U256,
 }
 
 impl L1GasFeeInput {
-    #[cfg(not(feature = "op-upgrade"))]
-    pub fn new(zero_bytes: U256, non_zero_bytes: U256) -> Self {
-        Self {
-            zero_bytes,
-            non_zero_bytes,
-        }
-    }
-
-    #[cfg(feature = "op-upgrade")]
     pub fn new(zero_bytes: U256, non_zero_bytes: U256, fast_lz_size: U256) -> Self {
         Self {
             zero_bytes,
@@ -134,16 +118,6 @@ impl L1GasFeeInput {
 }
 
 impl<T: AsRef<[u8]>> From<T> for L1GasFeeInput {
-    #[cfg(not(feature = "op-upgrade"))]
-    fn from(value: T) -> Self {
-        let tx_data = value.as_ref();
-        let zero_bytes = U256::from(tx_data.iter().filter(|&&v| v == 0).count());
-        let non_zero_bytes = U256::from(tx_data.len()) - zero_bytes;
-
-        Self::new(zero_bytes, non_zero_bytes)
-    }
-
-    #[cfg(feature = "op-upgrade")]
     fn from(value: T) -> Self {
         let tx_data = value.as_ref();
         let zero_bytes = U256::from(tx_data.iter().filter(|&&v| v == 0).count());
@@ -184,65 +158,6 @@ impl From<(u64, u128)> for L2GasFeeInput {
     }
 }
 
-#[cfg(not(feature = "op-upgrade"))]
-#[derive(Debug)]
-pub struct EcotoneGasFee {
-    base_fee: U256,
-    base_fee_scalar: U256,
-    blob_base_fee: U256,
-    blob_base_fee_scalar: U256,
-}
-
-#[cfg(not(feature = "op-upgrade"))]
-impl EcotoneGasFee {
-    const ZERO_BYTE_MULTIPLIER: U256 = U256::from_limbs([4, 0, 0, 0]);
-    const GAS_PRICE_MULTIPLIER: U256 = U256::from_limbs([16, 0, 0, 0]);
-
-    pub fn new(
-        base_fee: U256,
-        base_fee_scalar: u32,
-        blob_base_fee: U256,
-        blob_base_fee_scalar: u32,
-    ) -> Self {
-        Self {
-            base_fee,
-            base_fee_scalar: U256::from(base_fee_scalar),
-            blob_base_fee,
-            blob_base_fee_scalar: U256::from(blob_base_fee_scalar),
-        }
-    }
-}
-
-#[cfg(not(feature = "op-upgrade"))]
-impl L1GasFee for EcotoneGasFee {
-    fn l1_fee(&self, input: L1GasFeeInput) -> U256 {
-        let zero_bytes = input.zero_bytes;
-        let non_zero_bytes = input.non_zero_bytes;
-        let tx_compressed_size = (zero_bytes * Self::ZERO_BYTE_MULTIPLIER
-            + non_zero_bytes * Self::GAS_PRICE_MULTIPLIER)
-            / Self::GAS_PRICE_MULTIPLIER;
-        let weighted_gas_price = Self::GAS_PRICE_MULTIPLIER * self.base_fee_scalar * self.base_fee
-            + self.blob_base_fee_scalar * self.blob_base_fee;
-
-        tx_compressed_size * weighted_gas_price
-    }
-
-    fn l1_block_info(&self, input: L1GasFeeInput) -> Option<L1BlockInfo> {
-        Some(L1BlockInfo {
-            l1_gas_price: Some(self.base_fee.saturating_to()),
-            l1_gas_used: None,
-            l1_fee: Some(self.l1_fee(input).saturating_to()),
-            l1_fee_scalar: None,
-            l1_base_fee_scalar: Some(self.base_fee_scalar.saturating_to()),
-            l1_blob_base_fee: Some(self.blob_base_fee.saturating_to()),
-            l1_blob_base_fee_scalar: Some(self.blob_base_fee_scalar.saturating_to()),
-            operator_fee_scalar: None,
-            operator_fee_constant: None,
-        })
-    }
-}
-
-#[cfg(feature = "op-upgrade")]
 #[derive(Debug)]
 pub struct FjordGasFee {
     base_fee: U256,
@@ -253,7 +168,6 @@ pub struct FjordGasFee {
     operator_fee_constant: U256,
 }
 
-#[cfg(feature = "op-upgrade")]
 impl FjordGasFee {
     const GAS_PRICE_MULTIPLIER: U256 = U256::from_limbs([16, 0, 0, 0]);
     /// Absolute part of the negative intercept
@@ -280,7 +194,6 @@ impl FjordGasFee {
     }
 }
 
-#[cfg(feature = "op-upgrade")]
 impl L1GasFee for FjordGasFee {
     fn l1_fee(&self, input: L1GasFeeInput) -> U256 {
         // The spec <https://specs.optimism.io/protocol/fjord/exec-engine.html#fjord-l1-cost-fee-changes-fastlz-estimator>
@@ -355,39 +268,8 @@ pub trait CreateL1GasFee {
     fn for_deposit(&self, data: &[u8]) -> impl L1GasFee + 'static;
 }
 
-#[cfg(not(feature = "op-upgrade"))]
-pub struct CreateEcotoneL1GasFee;
-
-#[cfg(feature = "op-upgrade")]
 pub struct CreateFjordL1GasFee;
 
-#[cfg(not(feature = "op-upgrade"))]
-impl CreateL1GasFee for CreateEcotoneL1GasFee {
-    fn for_deposit(&self, data: &[u8]) -> impl L1GasFee + 'static {
-        if data.len() != ECOTONE_CALLDATA_SIZE {
-            tracing::warn!(
-                "Received L1BlockInfo that wasn't Ecotone size: expected {}, got {}",
-                ECOTONE_CALLDATA_SIZE,
-                data.len(),
-            );
-        }
-        let l1_base_fee = U256::from_be_slice(&data[36..68]);
-        let l1_blob_base_fee = U256::from_be_slice(&data[68..100]);
-        let l1_base_fee_scalar =
-            u32::from_be_bytes(data[4..8].try_into().expect("Slice should be 4 bytes"));
-        let l1_blob_base_fee_scalar =
-            u32::from_be_bytes(data[8..12].try_into().expect("Slice should be 4 bytes"));
-
-        EcotoneGasFee::new(
-            l1_base_fee,
-            l1_base_fee_scalar,
-            l1_blob_base_fee,
-            l1_blob_base_fee_scalar,
-        )
-    }
-}
-
-#[cfg(feature = "op-upgrade")]
 impl CreateL1GasFee for CreateFjordL1GasFee {
     fn for_deposit(&self, data: &[u8]) -> impl L1GasFee + 'static {
         // Sanity check for the `L1BlockInfo` having all recent fields
@@ -455,12 +337,10 @@ mod tests {
             None
         }
 
-        #[cfg(feature = "op-upgrade")]
         fn operator_fee(&self, _gas_limit: u64) -> U256 {
             U256::ZERO
         }
 
-        #[cfg(feature = "op-upgrade")]
         fn operator_fee_scalar(&self) -> U256 {
             U256::ZERO
         }

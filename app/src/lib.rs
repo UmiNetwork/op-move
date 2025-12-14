@@ -25,10 +25,8 @@ mod tests;
 #[cfg(any(feature = "test-doubles", test))]
 mod uninit;
 
-#[cfg(feature = "op-upgrade")]
 pub const L2_TO_L1_MESSAGE_PASSER_ADDRESS: alloy::primitives::Address =
     alloy::primitives::address!("0x4200000000000000000000000000000000000016");
 
-#[cfg(feature = "op-upgrade")]
 pub const EMPTY_REQUESTS_HASH: alloy::primitives::B256 =
     alloy::primitives::b256!("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");

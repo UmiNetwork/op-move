@@ -73,9 +73,7 @@ pub fn simulate_transaction(
         base_token,
         block_header,
         block_hash_lookup,
-        #[cfg(feature = "op-upgrade")]
         operator_scalar: U256::ZERO,
-        #[cfg(feature = "op-upgrade")]
         operator_cost: U256::ZERO,
     };
 
@@ -123,7 +121,6 @@ pub fn call_transaction(
         genesis_config,
         l1_cost: U256::ZERO,
         l2_cost: U256::ZERO,
-        #[cfg(feature = "op-upgrade")]
         operator_cost: U256::ZERO,
         base_token,
         module_storage: &code_storage,

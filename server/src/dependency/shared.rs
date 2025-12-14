@@ -26,9 +26,6 @@ macro_rules! impl_shared {
         type BlockHash = umi_blockchain::block::UmiBlockHash;
         type BaseTokenAccounts = umi_execution::UmiBaseTokenAccounts;
         type BaseGasFee = umi_blockchain::block::Eip1559GasFee;
-        #[cfg(not(feature = "op-upgrade"))]
-        type CreateL1GasFee = umi_execution::CreateEcotoneL1GasFee;
-        #[cfg(feature = "op-upgrade")]
         type CreateL1GasFee = umi_execution::CreateFjordL1GasFee;
         type CreateL2GasFee = umi_execution::CreateUmiL2GasFee;
 
@@ -43,12 +40,6 @@ macro_rules! impl_shared {
             )
         }
 
-        #[cfg(not(feature = "op-upgrade"))]
-        fn create_l1_gas_fee() -> Self::CreateL1GasFee {
-            umi_execution::CreateEcotoneL1GasFee
-        }
-
-        #[cfg(feature = "op-upgrade")]
         fn create_l1_gas_fee() -> Self::CreateL1GasFee {
             umi_execution::CreateFjordL1GasFee
         }

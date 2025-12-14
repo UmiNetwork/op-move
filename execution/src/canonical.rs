@@ -59,7 +59,6 @@ pub struct CanonicalVerificationInput<'input, 'a, 'r, 'l, B, MS> {
     pub genesis_config: &'input GenesisConfig,
     pub l1_cost: U256,
     pub l2_cost: U256,
-    #[cfg(feature = "op-upgrade")]
     pub operator_cost: U256,
     pub base_token: &'input B,
     pub module_storage: &'input MS,
@@ -105,7 +104,6 @@ pub(super) fn verify_transaction<B: BaseTokenAccounts, MS: ModuleStorage>(
         )
         .map_err(|_| InvalidTransaction(InvalidTransactionCause::FailedToPayL1Fee))?;
 
-    #[cfg(feature = "op-upgrade")]
     input
         .base_token
         .charge_gas_cost(
@@ -205,7 +203,6 @@ pub(super) fn execute_canonical_transaction<
         genesis_config: input.genesis_config,
         l1_cost: input.l1_cost,
         l2_cost,
-        #[cfg(feature = "op-upgrade")]
         operator_cost: input.operator_cost,
         base_token: input.base_token,
         module_storage: &code_storage,
@@ -351,7 +348,6 @@ pub(super) fn execute_canonical_transaction<
         let used_l2_cost = input.l2_fee.l2_fee(used_l2_input);
         // We only need the operator fee scalar for computing the difference as the constant part
         // is never refunded
-        #[cfg(feature = "op-upgrade")]
         let used_operator_cost = U256::from(gas_used).saturating_mul(input.operator_scalar);
 
         // Refunds should not be metered as they're supposed to always succeed
@@ -370,7 +366,6 @@ pub(super) fn execute_canonical_transaction<
                 )
             })?;
 
-        #[cfg(feature = "op-upgrade")]
         input
             .base_token
             .refund_gas_cost(

@@ -127,12 +127,12 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 UnrecoverableAppFailure
             })?;
 
-        #[cfg(feature = "op-upgrade")]
         if let Some(params) = &attributes.eip1559_params {
             self.gas_fee.set_parameters_from_attrs(params);
         } else {
+            dbg!(&parent.block.header);
             self.gas_fee
-            .set_parameters_from_extra_data(parent.block.header.extra_data).map_err(|e| {
+            .set_parameters_from_extra_data(dbg!(parent.block.header.extra_data)).map_err(|e| {
                 tracing::error!("Failure during `start_block_build`. Post-Isthmus parent block `extra_data` had wrong format: {e:?}");
                 UnrecoverableAppFailure
             })?;
@@ -172,7 +172,6 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
         }
         let total_tip = execution_outcome.total_tip;
 
-        #[cfg(feature = "op-upgrade")]
         let withdrawals_root = {
             use umi_blockchain::state::evm_storage_root_from_trie_and_resolver;
 
@@ -188,9 +187,6 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             })?;
             Some(storage_root)
         };
-        #[cfg(not(feature = "op-upgrade"))]
-        // Has to be `keccak256(rlp(empty_string_code))`
-        let withdrawals_root = Some(alloy::consensus::constants::EMPTY_WITHDRAWALS);
 
         let header = Header {
             parent_hash: parent.hash,
@@ -200,9 +196,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             base_fee_per_gas: Some(base_fee),
             blob_gas_used: Some(0),
             excess_blob_gas: Some(0),
-            #[cfg(feature = "op-upgrade")]
             extra_data: self.gas_fee.encode_parameters_for_header(),
-            #[cfg(feature = "op-upgrade")]
             requests_hash: Some(crate::EMPTY_REQUESTS_HASH),
             ..Default::default()
         }
@@ -442,12 +436,10 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                         .unwrap_or(U256::ZERO),
                     l2_fee: l2_fee.clone(),
                     l2_input: l2_gas_input,
-                    #[cfg(feature = "op-upgrade")]
                     operator_cost: l1_fee
                         .as_ref()
                         .map(|v| v.operator_fee(normalized_tx.gas_limit()))
                         .unwrap_or(U256::ZERO),
-                    #[cfg(feature = "op-upgrade")]
                     operator_scalar: l1_fee
                         .as_ref()
                         .map(|v| v.operator_fee_scalar())
