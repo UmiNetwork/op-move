@@ -337,9 +337,7 @@ impl TestContext {
                         base_token: &(),
                         block_header: Default::default(),
                         block_hash_lookup: &(),
-                        #[cfg(feature = "op-upgrade")]
                         operator_scalar: U256::ZERO,
-                        #[cfg(feature = "op-upgrade")]
                         operator_cost: U256::ZERO,
                     }
                     .into(),
@@ -370,9 +368,7 @@ impl TestContext {
                         base_token: umi_base_token,
                         block_header: Default::default(),
                         block_hash_lookup: &(),
-                        #[cfg(feature = "op-upgrade")]
                         operator_scalar: U256::ZERO,
-                        #[cfg(feature = "op-upgrade")]
                         operator_cost: U256::ZERO,
                     }
                     .into(),

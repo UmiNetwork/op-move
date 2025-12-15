@@ -1,12 +1,10 @@
 use {
+    crate::block::BaseFeeParameters,
     alloy::eips::eip4895::Withdrawal,
     sha2::{Digest, Sha256},
     std::convert::identity,
     umi_shared::primitives::{Address, B256, U64},
 };
-
-#[cfg(feature = "op-upgrade")]
-use crate::block::BaseFeeParameters;
 
 pub type PayloadId = U64;
 
@@ -25,7 +23,6 @@ pub struct NewPayloadIdInput<'a> {
     transactions: Option<Vec<B256>>,
     no_tx_pool: Option<bool>,
     gas_limit: u64,
-    #[cfg(feature = "op-upgrade")]
     eip1559_params: Option<u64>,
 }
 
@@ -52,7 +49,6 @@ impl<'a> NewPayloadIdInput<'a> {
             gas_limit,
             transactions: None,
             no_tx_pool: None,
-            #[cfg(feature = "op-upgrade")]
             eip1559_params: None,
         }
     }
@@ -79,7 +75,6 @@ impl<'a> NewPayloadIdInput<'a> {
     }
 
     /// Creates this input with `eip1559_params`.
-    #[cfg(feature = "op-upgrade")]
     pub fn with_eip1559_params(mut self, gas_params: &BaseFeeParameters) -> Self {
         self.eip1559_params = Some(gas_params.encode());
         self
@@ -135,7 +130,6 @@ impl NewPayloadId for StatePayloadId {
         }
         hasher.update(input.gas_limit.to_be_bytes());
 
-        #[cfg(feature = "op-upgrade")]
         if let Some(eip1559_params) = input.eip1559_params {
             hasher.update(eip1559_params.to_be_bytes());
         }
@@ -216,7 +210,6 @@ mod tests {
             transactions: None,
             no_tx_pool: None,
             gas_limit: 0,
-            #[cfg(feature = "op-upgrade")]
             eip1559_params: None,
         });
         let expected_payload_id = PayloadId::from(expected_payload_id);

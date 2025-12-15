@@ -23,7 +23,7 @@ use {
     test_case::test_case,
     umi_blockchain::{
         block::{
-            Block, BlockHash, BlockRepository, Eip1559GasFee, ForkchoiceState, Header,
+            BaseGasFee, Block, BlockHash, BlockRepository, Eip1559GasFee, ForkchoiceState, Header,
             InMemoryBlockQueries, InMemoryBlockRepository, UmiBlockHash,
         },
         in_memory::shared_memory,
@@ -225,11 +225,7 @@ fn create_app_with_fake_queries(
     genesis_block.block.header.base_fee_per_gas = Some(base_fee);
 
     let gas_fee = Eip1559GasFee::default();
-    #[cfg(feature = "op-upgrade")]
-    {
-        use umi_blockchain::block::BaseGasFee;
-        genesis_block.block.header.extra_data = gas_fee.encode_parameters_for_header();
-    }
+    genesis_block.block.header.extra_data = gas_fee.encode_parameters_for_header();
 
     let (memory_reader, mut memory) = shared_memory::new();
     let mut block_hash_cache =
@@ -347,8 +343,7 @@ fn test_build_block_hash() {
         parent_beacon_block_root: Default::default(),
         transactions: Vec::new(),
         gas_limit: U64::from(0x1c9c380),
-        #[cfg(feature = "op-upgrade")]
-        eip1559_params: Some(U64::from_be_slice(&hex!("0x000000fa00000006"))),
+        eip1559_params: Some(U64::from_be_slice(&hex!("000000fa00000006"))),
         no_tx_pool: None,
     };
 

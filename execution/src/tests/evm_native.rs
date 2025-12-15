@@ -152,9 +152,7 @@ fn test_solidity_fixed_bytes() {
                 base_token: &(),
                 block_header: HeaderForExecution::default(),
                 block_hash_lookup: &(),
-                #[cfg(feature = "op-upgrade")]
                 operator_scalar: U256::ZERO,
-                #[cfg(feature = "op-upgrade")]
                 operator_cost: U256::ZERO,
             };
             execute_transaction(input.into(), &mut Default::default()).unwrap()

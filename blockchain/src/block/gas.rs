@@ -2,7 +2,6 @@
 
 use std::{cmp::Ordering, num::NonZeroU32};
 
-#[cfg(feature = "op-upgrade")]
 use alloy::primitives::{Bytes, U64};
 
 pub const DEFAULT_EIP1559_ELASTICITY_MULTIPLIER: NonZeroU32 =
@@ -10,7 +9,6 @@ pub const DEFAULT_EIP1559_ELASTICITY_MULTIPLIER: NonZeroU32 =
 pub const DEFAULT_EIP1559_BASE_FEE_MAX_CHANGE_DENOMINATOR: NonZeroU32 =
     NonZeroU32::new(250).expect("Supplied a non-zero value");
 
-#[cfg(feature = "op-upgrade")]
 /// Represents base fee parameters as they are passed from payload attributes
 /// or block headers. This is different from [`Eip1559GasFee`] in the sense
 /// that it doesn't represent the current state of the blockchain, but a
@@ -25,7 +23,6 @@ pub enum BaseFeeParameters {
     },
 }
 
-#[cfg(feature = "op-upgrade")]
 impl BaseFeeParameters {
     pub fn new(denominator: NonZeroU32, elasticity: NonZeroU32) -> Self {
         if elasticity == DEFAULT_EIP1559_ELASTICITY_MULTIPLIER
@@ -86,16 +83,13 @@ pub trait BaseGasFee {
         parent_base_fee_per_gas: u64,
     ) -> u64;
 
-    #[cfg(feature = "op-upgrade")]
     fn set_parameters_from_extra_data(
         &mut self,
         extra_data: Bytes,
     ) -> Result<(), umi_shared::error::Error>;
 
-    #[cfg(feature = "op-upgrade")]
     fn set_parameters_from_attrs(&mut self, eip1559_params: &BaseFeeParameters);
 
-    #[cfg(feature = "op-upgrade")]
     fn encode_parameters_for_header(&self) -> Bytes;
 }
 
@@ -178,7 +172,6 @@ impl BaseGasFee for Eip1559GasFee {
         }
     }
 
-    #[cfg(feature = "op-upgrade")]
     fn set_parameters_from_extra_data(
         &mut self,
         extra_data: Bytes,
@@ -199,7 +192,6 @@ impl BaseGasFee for Eip1559GasFee {
         Ok(())
     }
 
-    #[cfg(feature = "op-upgrade")]
     fn set_parameters_from_attrs(&mut self, eip1559_params: &BaseFeeParameters) {
         match eip1559_params {
             BaseFeeParameters::Default => {
@@ -217,7 +209,6 @@ impl BaseGasFee for Eip1559GasFee {
         }
     }
 
-    #[cfg(feature = "op-upgrade")]
     fn encode_parameters_for_header(&self) -> Bytes {
         let mut out = Vec::with_capacity(9);
 
