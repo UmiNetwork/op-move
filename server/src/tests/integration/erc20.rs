@@ -150,7 +150,6 @@ pub async fn deposit_l1_token(
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
 pub async fn withdraw_erc20_token_from_l2_to_l1(
     wallet: &PrivateKeySigner,
     l1_address: Address,
@@ -159,7 +158,6 @@ pub async fn withdraw_erc20_token_from_l2_to_l1(
     amount: U256,
     l1_rpc_url: &str,
     l2_rpc_url: &str,
-    chlg: &challenger::ChallengerTask,
 ) -> Result<()> {
     let owner_address = wallet.address();
 
@@ -229,7 +227,7 @@ pub async fn withdraw_erc20_token_from_l2_to_l1(
 
     // Prove withdraw on L1
     let withdraw_tx_hash = receipt.transaction_hash;
-    super::withdrawal::withdraw_to_l1(withdraw_tx_hash, wallet.clone(), chlg, l1_proxies).await?;
+    super::withdrawal::withdraw_to_l1(withdraw_tx_hash, wallet.clone(), l1_proxies).await?;
 
     // Check final balance
     let final_balance = l1_token.balanceOf(owner_address).call().await?;

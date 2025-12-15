@@ -6,6 +6,12 @@ use {
     umi_shared::primitives::{MoveAddress, B256},
 };
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum Command {
+    Run(Config),
+    PrintGenesisRoot(Genesis),
+}
+
 #[derive(PartialEq, Debug, Clone)]
 pub struct Config {
     pub auth: AuthSocket,
@@ -107,6 +113,16 @@ pub struct OptionalGenesis {
     pub l2_contract_genesis: Option<Box<Path>>,
     #[arg(long = "genesis.token-list", id = "genesis.token-list")]
     pub token_list: Option<Box<Path>>,
+    /// Compute the initial state root based on given genesis config values.
+    /// Prints the result and exits the program.
+    /// Ignores the value of `--genesis.initial_state_root` (if present).
+    /// This function is useful for obtaining the value of `--genesis.initial_state_root`
+    /// when it is not known.
+    #[arg(
+        long = "genesis.print-initial-state-root",
+        id = "genesis.print-initial-state-root"
+    )]
+    pub print_initial_state_root: Option<bool>,
 }
 
 #[derive(Deserialize, ValueEnum, PartialEq, Debug, Clone)]
@@ -118,7 +134,7 @@ pub enum DatabaseBackend {
 
 #[derive(Debug, Clone, Error)]
 #[error("Missing field `{0}`")]
-pub struct MissingField(&'static str);
+pub struct MissingField(pub &'static str);
 
 impl TryFrom<OptionalConfig> for Config {
     type Error = MissingField;
@@ -264,6 +280,7 @@ impl OptionalGenesis {
             treasury,
             l2_contract_genesis,
             token_list,
+            print_initial_state_root,
         } = other;
 
         self.chain_id = chain_id.or(self.chain_id);
@@ -271,6 +288,7 @@ impl OptionalGenesis {
         self.treasury = treasury.or(self.treasury);
         self.l2_contract_genesis = l2_contract_genesis.or(self.l2_contract_genesis);
         self.token_list = token_list.or(self.token_list);
+        self.print_initial_state_root = print_initial_state_root.or(self.print_initial_state_root);
 
         self
     }

@@ -5,17 +5,21 @@ set -eux
 WORKDIR="/volume"
 SHARED="${WORKDIR}/shared"
 ROLLUP_FILE="${SHARED}/rollup.json"
+L1_GENESIS_FILE="${SHARED}/l1_genesis.json"
 JWT_FILE="${WORKDIR}/jwt.txt"
 P2P_DIR="${WORKDIR}/host/p2p"
 
 # Dump JWT secret token to a file that gets passed as op-node CLI argument
-echo "${JWT_SECRET}" > "${JWT_FILE}"
+echo "${JWT_SECRET}" >"${JWT_FILE}"
 
 # Make dir for persistent P2P data
 mkdir -p ${P2P_DIR}
 
 # Wait for op-move to serve the genesis block
-while [ "$(cast block 0 --rpc-url "${L2_RPC_HTTP_URL}" >/dev/null 2>&1 ; echo $?)" -ne 0 ]; do sleep 1; done
+while [ "$(
+  cast block 0 --rpc-url "${L2_RPC_HTTP_URL}" >/dev/null 2>&1
+  echo $?
+)" -ne 0 ]; do sleep 1; done
 
 # Wait for geth to deploy Optimism
 while [ ! -f "${ROLLUP_FILE}" ]; do sleep 1; done
@@ -39,12 +43,13 @@ op-node \
   --p2p.sequencer.key "${SEQUENCER_PRIVATE_KEY}" \
   --p2p.priv.path "${P2P_DIR}/priv.txt" \
   --p2p.peerstore.path "${P2P_DIR}/peerstore_db" \
-  --p2p.discovery.path "${P2P_DIR}/discovery_db" &
+  --p2p.discovery.path "${P2P_DIR}/discovery_db" \
+  --rollup.l1-chain-config "${L1_GENESIS_FILE}" &
 
-# Get the PID of the geth process launched in the background
+# Get the PID of the op-node process launched in the background
 PID="$!"
 
-# Shuts geth down in a way that does not corrupt the datadir
+# Shuts op-node down in a way that does not corrupt the datadir
 shutdown() {
   kill -SIGINT "${PID}"
   wait "${PID}"
@@ -54,5 +59,5 @@ shutdown() {
 # Trap signal from docker stop to the graceful shutdown function
 trap shutdown TERM
 
-# Block on the background geth process
+# Block on the background op-node process
 wait "${PID}"

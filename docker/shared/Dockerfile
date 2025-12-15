@@ -7,52 +7,53 @@ ARG TARGETARCH
 RUN \
   # Download and extract foundry binaries
   if [ "$TARGETARCH" = "amd64" ]; then \
-    wget https://github.com/foundry-rs/foundry/releases/download/v1.2.3/foundry_v1.2.3_alpine_amd64.tar.gz && \
-    tar -xzf foundry_v1.2.3_alpine_amd64.tar.gz; \
+  wget https://github.com/foundry-rs/foundry/releases/download/v1.2.3/foundry_v1.2.3_alpine_amd64.tar.gz && \
+  tar -xzf foundry_v1.2.3_alpine_amd64.tar.gz; \
   elif [ "$TARGETARCH" = "arm64" ]; then \
-    wget https://github.com/foundry-rs/foundry/releases/download/v1.2.3/foundry_v1.2.3_alpine_arm64.tar.gz && \
-    tar -xzf foundry_v1.2.3_alpine_arm64.tar.gz; \
+  wget https://github.com/foundry-rs/foundry/releases/download/v1.2.3/foundry_v1.2.3_alpine_arm64.tar.gz && \
+  tar -xzf foundry_v1.2.3_alpine_arm64.tar.gz; \
   else \
-    echo "Unsupported architecture"; exit 1; \
+  echo "Unsupported architecture"; exit 1; \
   fi \
   # Clean up
   && rm -rf $(ls -d /* /etc/* | grep -v -e ^/cast$ -e ^/forge$ -e ^/sys$ -e ^/proc$ -e ^/dev -e ^/etc$ -e ^/etc/hosts$ -e ^/etc/resolv.conf$)
 
 # Start from an image with go 1.22, the most recent version that works with this version of Optimism
-FROM golang:1.22-alpine AS optimism
+FROM golang:1.24-alpine AS optimism
 
 # Copy forge from foundry to install dependencies for contracts
 COPY --from=foundry /forge /usr/local/bin/
 
+# Copy only the specific Solidity compiler versions needed
+COPY --from=ethereum/solc:0.8.15 /usr/bin/solc /root/.svm/0.8.15/solc-0.8.15
+COPY --from=ethereum/solc:0.8.19 /usr/bin/solc /root/.svm/0.8.19/solc-0.8.19
+COPY --from=ethereum/solc:0.8.25 /usr/bin/solc /root/.svm/0.8.25/solc-0.8.25
+COPY --from=ethereum/solc:0.8.30 /usr/bin/solc /root/.svm/0.8.30/solc-0.8.30
+
 RUN \
   # Install build dependencies
-  apk add --no-cache git make bash \
-  # Clone optimism at specific version
-  && git clone https://github.com/ethereum-optimism/optimism /volume --branch v1.7.6 --depth 1 \
+  apk add --no-cache git make bash just \
+  # Clone optimism at specific version (options must precede repo/target path)
+  && git clone --branch v1.16.2 --depth 1 https://github.com/ethereum-optimism/optimism /volume \
   # Build optimism binaries and files required for op-node startup
-  && make --directory /volume cannon-prestate op-node op-batcher op-proposer \
-  # Install forge dependencies for contracts
-  && forge install --root /volume/packages/contracts-bedrock \
+  && make --directory /volume op-node op-batcher op-proposer op-challenger \
+  # Build op-deployer for L1 deployment separately as it's not part of the main Makefile
+  && cd /volume/op-deployer && just build \
+  && cd / \
   # Move build artifacts to the root directory
   && mv \
-    # Only the built binaries we need
-    /volume/op-node/bin/op-node \
-    /volume/op-batcher/bin/op-batcher \
-    /volume/op-proposer/bin/op-proposer \
-    # Files required for op-node startup
-    /volume/op-program/bin/prestate.json \
-    /volume/op-program/bin/meta.json \
-    /volume/op-program/bin/prestate-proof.json \
-    # Contracts and dependencies needed for OP Stack deployment
-    /volume/packages/contracts-bedrock \
-    # Git directory to keep the right commit checked out
-    /volume/.git / \
+  # Only the built binaries we need
+  /volume/op-node/bin/op-node \
+  /volume/op-batcher/bin/op-batcher \
+  /volume/op-proposer/bin/op-proposer \
+  /volume/op-challenger/bin/op-challenger \
+  /volume/op-deployer/bin/op-deployer \
+  / \
   # Clean up
   && rm -rf $(ls -d /* /etc/* | grep -v \
-    -e ^/op-node$ -e ^/op-batcher$ -e ^/op-proposer$ \
-    -e ^/prestate.json$ -e ^/meta.json$ -e ^/prestate-proof.json$ \
-    -e ^/contracts-bedrock$ -e ^/.git$ \
-    -e ^/sys$ -e ^/proc$ -e ^/dev -e ^/etc$ -e ^/etc/hosts$ -e ^/etc/resolv.conf$ \
+  -e ^/op-node$ -e ^/op-batcher$ -e ^/op-proposer$ -e ^/op-challenger$ \
+  -e ^/op-deployer$ \
+  -e ^/sys$ -e ^/proc$ -e ^/dev -e ^/etc$ -e ^/etc/hosts$ -e ^/etc/resolv.conf$ \
   )
 
 # Start from a clean image
@@ -70,6 +71,26 @@ COPY --from=optimism /op-proposer /usr/local/bin/
 
 # Copy entrypoint with run privileges
 COPY --chmod=0777 docker/op-proposer/entrypoint.sh ./
+COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
+
+ENTRYPOINT [ "/volume/entrypoint.sh" ]
+
+# Start from a clean image
+FROM alpine:3.21.2 AS op-challenger
+WORKDIR /volume
+
+RUN \
+  # bash required by wait-for-it
+  apk add --no-cache bash jq \
+  # Clean up
+  && rm -rf /tmp/* /var/cache/apk/*
+
+# Copy helpers and built binary from build image
+COPY --from=foundry /cast /usr/local/bin/
+COPY --from=optimism /op-challenger /usr/local/bin/
+
+# Copy entrypoint with run privileges
+COPY --chmod=0777 docker/op-challenger/entrypoint.sh ./
 COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
 
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
@@ -93,14 +114,14 @@ COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
 
 ENTRYPOINT [ "/volume/entrypoint.sh" ]
 
-# Start from an image that can install go 1.22, the most recent working version for this geth version
-FROM alpine:3.20.7 AS go-ethereum
+# Start from an image that already includes Go 1.24, which matches the go.mod requirement
+FROM golang:1.24-alpine AS go-ethereum
 
 RUN \
   # Install build dependencies
-  apk add --no-cache git make go linux-headers \
+  apk add --no-cache git make linux-headers \
   # Clone geth sources
-  && git clone https://github.com/ethereum/go-ethereum /volume --branch v1.14.6 --depth 1 \
+  && git clone https://github.com/ethereum/go-ethereum /volume --branch v1.16.7 --depth 1 \
   # Build geth
   && make --directory /volume geth \
   # Move geth binary to root directory
@@ -129,12 +150,10 @@ RUN \
 COPY --from=ethereum/solc:0.8.15 /usr/bin/solc /root/.svm/0.8.15/solc-0.8.15
 COPY --from=ethereum/solc:0.8.19 /usr/bin/solc /root/.svm/0.8.19/solc-0.8.19
 COPY --from=ethereum/solc:0.8.25 /usr/bin/solc /root/.svm/0.8.25/solc-0.8.25
+COPY --from=ethereum/solc:0.8.30 /usr/bin/solc /root/.svm/0.8.30/solc-0.8.30
 
 # Copy files for Optimism L1 deployment and L2 genesis initialization
-COPY --from=optimism /contracts-bedrock /volume/packages/contracts-bedrock
-COPY --from=optimism /.git /volume/.git
-COPY --from=optimism /prestate.json /meta.json /prestate-proof.json /volume/op-program/bin/
-COPY --from=optimism /op-node /usr/local/bin/
+COPY --from=optimism /op-deployer /usr/local/bin/
 
 # Copy built binaries of foundry tools
 COPY --from=foundry /cast /forge /usr/local/bin/
@@ -144,7 +163,7 @@ COPY --from=go-ethereum /geth /usr/local/bin/
 
 # Copy scripts and genesis config generator with run privileges
 COPY --chmod=0777 docker/shared/wait-for-it.sh /usr/local/bin/wait-for-it
-COPY --chmod=0777 docker/geth/*.sh server/src/tests/config.sh ./
+COPY --chmod=0777 docker/geth/*.sh server/src/tests/res/filled_intent.toml ./
 
 # Set entrypoint to a script that launches geth
 ENTRYPOINT [ "/volume/entrypoint.sh" ]

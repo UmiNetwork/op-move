@@ -4,6 +4,7 @@
 set -eux
 SHARED="/volume/shared"
 GENESIS_FILE="${SHARED}/genesis.json"
+STATE_ROOT_FILE="${SHARED}/genesis_root.txt"
 TIMEOUT_SECS=1500
 
 # Wait for geth to become online
@@ -12,7 +13,15 @@ wait-for-it -t "${TIMEOUT_SECS}" "$(echo "${L1_RPC_URL}" | cut -c 8-)"
 # Wait for geth to deploy Optimism
 while [ ! -f "${GENESIS_FILE}" ]; do sleep 1; done
 
-/volume/op-move --genesis.l2-contract-genesis "${GENESIS_FILE}" &
+# Compute genesis state root
+/volume/op-move \
+	--genesis.l2-contract-genesis "${GENESIS_FILE}" \
+	--genesis.print-initial-state-root true | head -n2 | tail -n1 > $STATE_ROOT_FILE
+
+# Run op-move with correct root
+/volume/op-move \
+	--genesis.l2-contract-genesis "${GENESIS_FILE}" \
+	--genesis.initial-state-root $(cat $STATE_ROOT_FILE) &
 
 # Get the PID of the geth process launched in the background
 PID="$!"

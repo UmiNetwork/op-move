@@ -96,6 +96,25 @@ services:
     volumes:
       - ./docker/shared/volume:/volume/shared
 
+  op-challenger:
+    image: ghcr.io/uminetwork/op-challenger:${UMI_TAG:-latest}
+    build:
+      cache_from:
+        - type=registry,ref=ghcr.io/uminetwork/op-challenger:latest-cache
+      dockerfile: docker/shared/Dockerfile
+      target: op-challenger
+    env_file:
+      - .env
+    environment:
+      L1_RPC_URL: "http://geth:58138"
+    depends_on:
+      - geth
+      - op-proposer
+    networks:
+      - localnet
+    volumes:
+      - ./docker/shared/volume:/volume/shared
+
   op-move:
     image: ghcr.io/uminetwork/op-move-rep:${UMI_TAG:-latest}
     build:

@@ -3,24 +3,27 @@
 
 set -eux
 SHARED="/volume/shared"
-L1_DEPLOYMENT="${SHARED}/1337-deploy.json"
+L1_DEPLOYMENT="${SHARED}/l1.json"
 TIMEOUT_SECS=1500
 
-wait-for-it -t "${TIMEOUT_SECS}" "$(echo ${L1_RPC_URL} | cut -c 8-)"
-wait-for-it -t "${TIMEOUT_SECS}" "$(echo ${ROLLUP_RPC_URL} | cut -c 8-)"
+wait-for-it -t "${TIMEOUT_SECS}" "$(echo "${L1_RPC_URL}" | cut -c 8-)"
+wait-for-it -t "${TIMEOUT_SECS}" "$(echo "${ROLLUP_RPC_URL}" | cut -c 8-)"
 
-# Read the oracle address from the list of deployed contract addresses
-L2_ORACLE_PROXY=$(grep L2OutputOracleProxy "${L1_DEPLOYMENT}" | cut -d"\"" -f4)
+# Read the game factory address from the list of deployed contract addresses
+GAME_FACTORY_ADDRESS=$(grep DisputeGameFactoryProxy "${L1_DEPLOYMENT}" | cut -d"\"" -f4)
+echo "${GAME_FACTORY_ADDRESS}"
 
 op-proposer \
-    --poll-interval 12s \
-    --rpc.port 8560 \
-    --rollup-rpc "${ROLLUP_RPC_URL}" \
-    --l2oo-address "${L2_ORACLE_PROXY}" \
-    --private-key "${PROPOSER_PRIVATE_KEY}" \
-    --l1-eth-rpc "${L1_RPC_URL}" \
-    --num-confirmations 1 \
-    --allow-non-finalized true &
+  --poll-interval 12s \
+  --rpc.port 8560 \
+  --rollup-rpc "${ROLLUP_RPC_URL}" \
+  --game-factory-address "${GAME_FACTORY_ADDRESS}" \
+  --private-key "${PROPOSER_PRIVATE_KEY}" \
+  --l1-eth-rpc "${L1_RPC_URL}" \
+  --num-confirmations 1 \
+  --game-type 1 \
+  --proposal-interval 1m \
+  --allow-non-finalized true &
 
 # Get the PID of the process launched in the background
 PID="$!"

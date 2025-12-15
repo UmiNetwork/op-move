@@ -22,7 +22,6 @@ use {
         io::Read,
         path::PathBuf,
         process::Command,
-        str::FromStr,
         time::{Duration, Instant},
     },
     tokio::fs,
@@ -30,9 +29,9 @@ use {
     umi_shared::primitives::ToMoveAddress,
 };
 
-/// NOTE: With the current OP stack, this file generates different addresses each time,
-/// thus the file contents need to be updated on reruns (via `op-deployer inspect l1 42069 > l1.json`)
-const L1_FILE_PATH: &str = "src/tests/res/l1.json";
+// NOTE: as this is the docker mount volume folder, the L1
+// addresses should be from the current stack run there
+const L1_FILE_PATH: &str = "../docker/shared/volume/l1.json";
 const L2_RPC_URL: &str = "http://localhost:8545";
 const OP_BRIDGE_IN_SECS: u64 = 10 * 60;
 const OP_BRIDGE_POLL_IN_SECS: u64 = 5;
@@ -56,7 +55,6 @@ impl L1Addresses {
     }
 }
 
-mod challenger;
 mod erc20;
 pub mod withdrawal;
 
@@ -93,25 +91,18 @@ pub fn set_module_address(bytecode: Vec<u8>, address: Address) -> Vec<u8> {
 async fn test_on_ethereum() -> Result<()> {
     dotenvy::dotenv().expect(".env file not found");
 
-    let chlg = challenger::ChallengerTask::new();
-
     let l1_addresses = L1Addresses::load()?;
 
     // 1. Test out the OP bridge
-    use_optimism_bridge(&chlg, &l1_addresses).await?;
+    use_optimism_bridge(&l1_addresses).await?;
 
     // 2. Test out a simple Move contract
     deploy_move_counter().await?;
 
-    chlg.shutdown();
-
     Ok(())
 }
 
-async fn use_optimism_bridge(
-    chlg: &challenger::ChallengerTask,
-    l1_proxies: &L1Addresses,
-) -> Result<()> {
+async fn use_optimism_bridge(l1_proxies: &L1Addresses) -> Result<()> {
     // Deposit via standard bridge
     deposit_eth_to_l2(l1_proxies.l1_standard_bridge_proxy).await?;
     // Deposit via Optimism Portal
@@ -123,7 +114,7 @@ async fn use_optimism_bridge(
         l2_address,
     } = deposit_erc20_to_l2(erc20_deposit_amount, l1_proxies).await?;
 
-    withdrawal::withdraw_eth_to_l1(chlg, l1_proxies).await?;
+    withdrawal::withdraw_eth_to_l1(l1_proxies).await?;
 
     let erc20_withdrawal_amount = erc20_deposit_amount;
     erc20::withdraw_erc20_token_from_l2_to_l1(
@@ -134,7 +125,6 @@ async fn use_optimism_bridge(
         erc20_withdrawal_amount,
         &var("L1_RPC_URL").expect("Missing Ethereum L1 RPC URL"),
         L2_RPC_URL,
-        chlg,
     )
     .await?;
 
@@ -149,7 +139,7 @@ async fn deposit_eth_to_l2(bridge_address: Address) -> Result<()> {
     l1_send_ethers(&prefunded_wallet, bridge_address, amount, false).await?;
 
     let now = Instant::now();
-    let expected_balance = pre_deposit_balance + dbg!(parse_ether(amount)?);
+    let expected_balance = pre_deposit_balance + parse_ether(amount)?;
     while get_op_balance(prefunded_wallet.address()).await? != expected_balance {
         if now.elapsed().as_secs() > OP_BRIDGE_IN_SECS {
             anyhow::bail!(

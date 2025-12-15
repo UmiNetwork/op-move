@@ -6,13 +6,13 @@ FROM_WALLET=$(ls l1_datadir/keystore | grep -o '.\{40\}$')
 FACTORY_DEPLOYER_ADDRESS="0x3fAB184622Dc19b6109349B94811493BF2a45362"
 NONCE=0
 
-for _ in $(seq 10) ; do
+for _ in $(seq 30); do
   sleep 0.1
   TX_HASH=$(curl "${L1_RPC_URL}" \
     -s \
     -X POST \
     -H "Content-Type: application/json" \
-    --data "{\"method\":\"eth_sendTransaction\",\"params\":[{\"from\":\"0x${FROM_WALLET}\",\"to\":\"${ADMIN_ADDRESS}\",\"value\":\"0x8ac7230489e80000\",\"type\":\"0x2\",\"nonce\":\"$(printf  "0x%x" ${NONCE})\"}],\"id\":1,\"jsonrpc\":\"2.0\"}" | jq .result)
+    --data "{\"method\":\"eth_sendTransaction\",\"params\":[{\"from\":\"0x${FROM_WALLET}\",\"to\":\"${ADMIN_ADDRESS}\",\"value\":\"0x8ac7230489e80000\",\"type\":\"0x2\",\"nonce\":\"$(printf "0x%x" ${NONCE})\"}],\"id\":1,\"jsonrpc\":\"2.0\"}" | jq .result)
   echo "${TX_HASH}"
   NONCE=$((NONCE + 1))
 
@@ -21,7 +21,7 @@ for _ in $(seq 10) ; do
     -s \
     -X POST \
     -H "Content-Type: application/json" \
-    --data "{\"method\":\"eth_sendTransaction\",\"params\":[{\"from\":\"0x${FROM_WALLET}\",\"to\":\"${BATCHER_ADDRESS}\",\"value\":\"0x8ac7230489e80000\",\"type\":\"0x2\",\"nonce\":\"$(printf  "0x%x" ${NONCE})\"}],\"id\":1,\"jsonrpc\":\"2.0\"}"
+    --data "{\"method\":\"eth_sendTransaction\",\"params\":[{\"from\":\"0x${FROM_WALLET}\",\"to\":\"${BATCHER_ADDRESS}\",\"value\":\"0x8ac7230489e80000\",\"type\":\"0x2\",\"nonce\":\"$(printf "0x%x" ${NONCE})\"}],\"id\":1,\"jsonrpc\":\"2.0\"}"
   NONCE=$((NONCE + 1))
 
   sleep 0.1

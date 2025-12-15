@@ -23,7 +23,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/git \
   # RocksDB breaks the build with libclang.so not found https://github.com/apache/skywalking/issues/10439
   # Aptos-core breaks the build with `disable_lifo_slot` not found https://github.com/aptos-labs/aptos-core/issues/5655 \
   RUSTFLAGS="-C target-feature=-crt-static --cfg tokio_unstable" \
-  cargo build --bin op-move --release --features storage \
+  cargo build --bin op-move --release --features storage,op-upgrade \
   # Copy binary out of target directory, else it's removed by the cache mount
   && mv target/release/op-move /volume/op-move
 
