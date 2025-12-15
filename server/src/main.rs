@@ -5,13 +5,27 @@ use {
 };
 
 fn main() {
-    let args = ConfigBuilder::new()
+    let command = ConfigBuilder::new()
         .layer(defaults())
         .layer(FileLayer::toml())
         .layer(EnvLayer::new())
         .layer(CliLayer::new())
         .try_build()
         .expect("Must build config to run app");
+
+    let args = match command {
+        umi_server_args::Command::Run(args) => args,
+        umi_server_args::Command::PrintGenesisRoot(genesis) => {
+            println!("Starting state root computation (this may take a while) ...");
+            let given_root = genesis.initial_state_root;
+            let root = umi_server::compute_genesis_state_root(genesis);
+            println!("{root}");
+            if given_root != root {
+                println!("WARN: given root not equal to computed root.");
+            }
+            return;
+        }
+    };
 
     PrometheusBuilder::new()
         .with_http_listener(([0, 0, 0, 0], 9000))

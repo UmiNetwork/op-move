@@ -9,9 +9,13 @@ pub use {
 
 use {
     self::config::GenesisConfig,
+    alloy::primitives::B256,
     move_core_types::effects::ChangeSet,
-    umi_evm_ext::state::{StorageTrieRepository, StorageTriesChanges},
-    umi_state::{Changes, InMemoryState, State},
+    std::sync::Arc,
+    umi_evm_ext::state::{
+        InMemoryDb, InMemoryStorageTrieRepository, StorageTrieRepository, StorageTriesChanges,
+    },
+    umi_state::{Changes, EthTrieState, InMemoryState, State},
 };
 
 pub mod config;
@@ -22,6 +26,21 @@ mod bridged_tokens;
 mod l2_contracts;
 mod serde;
 mod vm;
+
+/// Function to compute the initial state root from scratch in memory
+/// (ignoring the `initial_state_root` field) using the given config.
+pub fn compute_state_root(config: &GenesisConfig) -> B256 {
+    let storage_trie = InMemoryStorageTrieRepository::new();
+    let vm = UmiVm::new(config);
+
+    let (changes, _) = build(&vm, config, &storage_trie);
+
+    let db = InMemoryDb::empty();
+    let mut state = EthTrieState::empty(Arc::new(db));
+
+    state.apply(changes).expect("Changes should be applicable");
+    state.state_root()
+}
 
 pub fn build(
     vm: &UmiVm,
@@ -86,4 +105,11 @@ pub fn build_and_apply(
 ) {
     let (changes, evm_storage) = build(vm, config, storage_trie);
     apply(changes, evm_storage, config, state, storage_trie);
+}
+
+#[test]
+fn test_compute_state_root() {
+    let config = GenesisConfig::default();
+    let computed_root = compute_state_root(&config);
+    assert_eq!(computed_root, config.initial_state_root);
 }

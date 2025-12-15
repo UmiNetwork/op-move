@@ -1,6 +1,6 @@
 use {
     crate::{declaration::OptionalConfig, stack::Layer},
-    clap::Parser,
+    clap::{error::ErrorKind, Parser},
     std::{
         env::{self, ArgsOs},
         ffi::OsString,
@@ -20,7 +20,13 @@ impl<Args: IntoIterator<Item: Into<OsString> + Clone>> Layer for CliLayer<Args> 
     type Err = clap::Error;
 
     fn try_load(self) -> Result<OptionalConfig, Self::Err> {
-        OptionalConfig::try_parse_from(self.0)
+        match OptionalConfig::try_parse_from(self.0) {
+            Ok(config) => Ok(config),
+            Err(e) if matches!(e.kind(), ErrorKind::DisplayHelp | ErrorKind::DisplayVersion) => {
+                e.exit()
+            }
+            Err(other) => Err(other),
+        }
     }
 }
 

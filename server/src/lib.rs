@@ -99,6 +99,7 @@ pub fn defaults() -> DefaultLayer {
                 )
                 .into(),
             ),
+            print_initial_state_root: None,
         }),
         max_buffered_commands: Some(1_000),
     })
@@ -140,6 +141,19 @@ pub fn set_global_tracing_subscriber() {
         .with_span_events(FmtSpan::FULL)
         .finish();
     tracing::subscriber::set_global_default(subscriber).expect("Failed to set tracing subscriber");
+}
+
+pub fn compute_genesis_state_root(genesis: umi_server_args::Genesis) -> B256 {
+    let genesis_config = GenesisConfig::try_new(
+        genesis.chain_id,
+        genesis.initial_state_root,
+        genesis.treasury,
+        genesis.l2_contract_genesis.as_ref(),
+        genesis.token_list.as_ref(),
+    )
+    .expect("Must construct genesis config to run the app");
+
+    umi_genesis::compute_state_root(&genesis_config)
 }
 
 pub async fn run_with_runtimes(args: Config, rts: ServerRuntimes<'_>) {

@@ -1,5 +1,8 @@
 use {
-    crate::declaration::{Config, OptionalConfig},
+    crate::{
+        declaration::{Command, OptionalConfig},
+        MissingField,
+    },
     std::{convert::Infallible, error::Error as StdError},
     thiserror::Error,
 };
@@ -62,11 +65,23 @@ impl<L> ConfigBuilder<L> {
 }
 
 impl<L: Layer> ConfigBuilder<L> {
-    pub fn try_build(self) -> Result<Config, Box<dyn StdError>>
+    pub fn try_build(self) -> Result<Command, Box<dyn StdError>>
     where
         <L as Layer>::Err: 'static,
     {
-        Ok(self.0.try_load()?.try_into()?)
+        let optional_config = self.0.try_load()?;
+        let should_print = optional_config
+            .genesis
+            .as_ref()
+            .and_then(|g| g.print_initial_state_root)
+            .unwrap_or(false);
+        let command = if should_print {
+            let genesis = optional_config.genesis.ok_or(MissingField("genesis"))?;
+            Command::PrintGenesisRoot(genesis.try_into()?)
+        } else {
+            Command::Run(optional_config.try_into()?)
+        };
+        Ok(command)
     }
 }
 
@@ -118,6 +133,7 @@ mod tests {
                     treasury: Some(MoveAddress::ZERO),
                     l2_contract_genesis: Some(Path::new("l2").into()),
                     token_list: Some(Path::new("tokens").into()),
+                    print_initial_state_root: None,
                 }),
             }))
             .layer(StubLayer(OptionalConfig {
@@ -130,7 +146,7 @@ mod tests {
             }))
             .try_build()
             .unwrap();
-        let expected_config = Config {
+        let expected_config = crate::Config {
             auth: AuthSocket {
                 addr: auth_addr,
                 jwt_secret: String::new(),
@@ -151,6 +167,6 @@ mod tests {
             },
         };
 
-        assert_eq!(actual_config, expected_config);
+        assert_eq!(actual_config, Command::Run(expected_config));
     }
 }
