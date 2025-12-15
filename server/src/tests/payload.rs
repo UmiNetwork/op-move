@@ -75,7 +75,7 @@ async fn test_sending_the_same_payload_twice_produces_one_block() -> anyhow::Res
 
         let expected_response: GetPayloadResponseV3 = GetPayloadResponseV3 {
             execution_payload: ExecutionPayloadV3 {
-                parent_hash: B256::new(hex!("14d3698a2c6b14767ab3707f4c07586d72e6db14e523e8701e667908d39e06c2")),
+                parent_hash: block_hash,
                 fee_recipient: Address::new(hex!("4200000000000000000000000000000000000011")),
                 state_root: B256::new(hex!("4a9f5effd03badf1fd514c50a7fb49ee7639a48110e5f09d5a345db3614ec92a")),
                 receipts_root: B256::new(hex!("efb37db18e32368e95ad9c735b57e1d4bbab95111d559214daa0fc4259b3c6f9")),
@@ -87,7 +87,7 @@ async fn test_sending_the_same_payload_twice_produces_one_block() -> anyhow::Res
                 timestamp: U64::from_limbs([1747148047]),
                 extra_data: Bytes::from_hex("0x00000000fa00000006").unwrap(),
                 base_fee_per_gas: U256::ZERO,
-                block_hash: B256::new(hex!("0xe361abcdabf1b8511af1d0be207e80a36585a708ce94a95020a46db0f42276cb")),
+                block_hash: B256::new(hex!("0xceb36188f9df6553736c040545129f4da2e725ff4b0a3e2d3a1865f0eabcd5ce")),
                 transactions: vec![Bytes::from_iter(DEPOSIT_TX)],
                 withdrawals: vec![],
                 blob_gas_used: U64::ZERO,

@@ -450,6 +450,8 @@ fn create_test_genesis_block(
 ) -> ExtendedBlock {
     let genesis_header = Header {
         state_root: genesis_config.initial_state_root,
+        // Set the extra data field to have the default gas parameters.
+        extra_data: vec![0x00, 0x00, 0x00, 0x00, 0xfa, 0x00, 0x00, 0x00, 0x06].into(),
         ..Default::default()
     };
     let hash = block_hash.block_hash(&genesis_header);

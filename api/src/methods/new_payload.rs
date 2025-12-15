@@ -398,6 +398,9 @@ mod tests {
         let genesis_block = {
             let mut tmp = Block::default();
             tmp.header.state_root = genesis_config.initial_state_root;
+            // Set the extra data field to have the default gas parameters.
+            tmp.header.extra_data =
+                vec![0x00, 0x00, 0x00, 0x00, 0xfa, 0x00, 0x00, 0x00, 0x06].into();
             tmp.into_extended_with_hash(head_hash)
         };
 

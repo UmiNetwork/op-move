@@ -130,9 +130,8 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
         if let Some(params) = &attributes.eip1559_params {
             self.gas_fee.set_parameters_from_attrs(params);
         } else {
-            dbg!(&parent.block.header);
             self.gas_fee
-            .set_parameters_from_extra_data(dbg!(parent.block.header.extra_data)).map_err(|e| {
+            .set_parameters_from_extra_data(parent.block.header.extra_data).map_err(|e| {
                 tracing::error!("Failure during `start_block_build`. Post-Isthmus parent block `extra_data` had wrong format: {e:?}");
                 UnrecoverableAppFailure
             })?;

@@ -176,17 +176,9 @@ impl BaseGasFee for Eip1559GasFee {
         &mut self,
         extra_data: Bytes,
     ) -> Result<(), umi_shared::error::Error> {
-        dbg!("extra_dataing");
-        #[cfg(any(test, feature = "test-doubles"))]
-        if extra_data.is_empty() {
-            // Pre-Isthmus blocks omit the dynamic parameters; should only be relevant for tests
-            self.set_parameters_from_attrs(&BaseFeeParameters::Default);
-            return Ok(());
-        }
         // OP uses this field for dynamic EIP-1559 parameters only. The format is
         // <https://specs.optimism.io/protocol/holocene/exec-engine.html#eip-1559-parameters-in-block-header>
         if extra_data.len() != 9 {
-            dbg!("got errored");
             return Err(umi_shared::error::Error::extra_data_invariant_violation());
         };
 
