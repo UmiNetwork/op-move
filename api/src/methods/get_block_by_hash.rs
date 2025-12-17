@@ -57,10 +57,10 @@ mod tests {
             "gasLimit": "0x0",
             "gasUsed": "0x0",
             "timestamp": "0x0",
-            "extraData": "0x000000000800000002",
+            "extraData": "0x0100000008000000020000000000000000",
             "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
             "nonce": "0x0000000000000000",
-            "size": "0x1f9",
+            "size": "0x201",
             "uncles": [],
             "transactions": [],
             "withdrawals": []

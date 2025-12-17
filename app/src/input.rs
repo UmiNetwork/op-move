@@ -2,7 +2,7 @@ use {
     alloy::{primitives::Bloom, rlp::Decodable, rpc::types::engine::ForkchoiceState},
     op_alloy::consensus::OpTxEnvelope,
     umi_blockchain::{
-        block::{BaseFeeParameters, Header},
+        block::{BaseFeeParameters, EIP1559FeeParameters, Header},
         payload::{NewPayloadIdInput, PayloadId},
     },
     umi_execution::transaction::{NormalizedEthTransaction, NormalizedExtendedTxEnvelope},
@@ -18,8 +18,9 @@ pub struct Payload {
     pub parent_beacon_block_root: B256,
     pub transactions: Vec<Bytes>,
     pub gas_limit: U64,
-    pub eip1559_params: Option<U64>,
+    pub eip1559_params: U64,
     pub no_tx_pool: Option<bool>,
+    pub min_base_fee: u64,
 }
 
 /// Internal representation of [`Payload`] that has its `transactions`
@@ -33,8 +34,8 @@ pub struct PayloadForExecution {
     pub parent_beacon_block_root: B256,
     pub transactions: Vec<NormalizedExtendedTxEnvelope>,
     pub gas_limit: U64,
-    pub eip1559_params: Option<umi_blockchain::block::BaseFeeParameters>,
     pub no_tx_pool: Option<bool>,
+    pub base_fee_params: umi_blockchain::block::BaseFeeParameters,
 }
 
 impl TryFrom<Payload> for PayloadForExecution {
@@ -49,10 +50,11 @@ impl TryFrom<Payload> for PayloadForExecution {
             transactions.push(op_tx.try_into()?);
         }
 
-        let parsed_params = value
-            .eip1559_params
-            .map(BaseFeeParameters::decode)
-            .transpose()?;
+        let eip1559_params = EIP1559FeeParameters::decode(value.eip1559_params)?;
+        let base_fee_params = BaseFeeParameters {
+            min_base_fee: value.min_base_fee,
+            eip1559_params,
+        };
 
         Ok(Self {
             timestamp: value.timestamp,
@@ -62,8 +64,8 @@ impl TryFrom<Payload> for PayloadForExecution {
             parent_beacon_block_root: value.parent_beacon_block_root,
             transactions,
             gas_limit: value.gas_limit,
-            eip1559_params: parsed_params,
             no_tx_pool: value.no_tx_pool,
+            base_fee_params,
         })
     }
 }
@@ -129,7 +131,7 @@ pub trait ToPayloadIdInput<'a> {
 
 impl<'a> ToPayloadIdInput<'a> for PayloadForExecution {
     fn to_payload_id_input(&'a self, head: &'a B256) -> NewPayloadIdInput<'a> {
-        let mut input = NewPayloadIdInput::new_v3(
+        NewPayloadIdInput::new_v3(
             head,
             self.timestamp.into_limbs()[0],
             &self.prev_randao,
@@ -143,12 +145,8 @@ impl<'a> ToPayloadIdInput<'a> for PayloadForExecution {
                 .map(ToWithdrawal::to_withdrawal)
                 .collect::<Vec<_>>(),
         )
-        .with_transaction_hashes(self.transactions.iter().map(|tx| tx.tx_hash()));
-        if let Some(eip1559_params) = &self.eip1559_params {
-            input = input.with_eip1559_params(eip1559_params);
-        }
-
-        input
+        .with_transaction_hashes(self.transactions.iter().map(|tx| tx.tx_hash()))
+        .with_eip1559_params(&self.base_fee_params.eip1559_params)
     }
 }
 

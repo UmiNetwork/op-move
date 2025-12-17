@@ -24,7 +24,7 @@ mod tests {
         std::sync::Arc,
         umi_app::{Application, CommandActor, HybridBlockHashCache, TestDependencies},
         umi_blockchain::{
-            block::{Eip1559GasFee, InMemoryBlockQueries, InMemoryBlockRepository, UmiBlockHash},
+            block::{InMemoryBlockQueries, InMemoryBlockRepository, JovianGasFee, UmiBlockHash},
             in_memory::shared_memory,
             payload::{InMemoryPayloadQueries, InProgressPayloads},
             receipt::{InMemoryReceiptQueries, InMemoryReceiptRepository, receipt_memory},
@@ -77,7 +77,7 @@ mod tests {
                 mem_pool: Default::default(),
                 resolver_cache: Default::default(),
                 genesis_config,
-                gas_fee: Eip1559GasFee::default(),
+                gas_fee: JovianGasFee::default(),
                 base_token: UmiBaseTokenAccounts::new(AccountAddress::ONE),
                 l1_fee: U256::ZERO,
                 l2_fee: U256::ZERO,

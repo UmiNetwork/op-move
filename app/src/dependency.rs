@@ -316,7 +316,7 @@ mod test_doubles {
         ST = umi_evm_ext::state::InMemoryStorageTrieRepository,
         TQ = umi_blockchain::transaction::InMemoryTransactionQueries,
         TR = umi_blockchain::transaction::InMemoryTransactionRepository,
-        BF = umi_blockchain::block::Eip1559GasFee,
+        BF = umi_blockchain::block::JovianGasFee,
         F1 = U256,
         F2 = U256,
     >(

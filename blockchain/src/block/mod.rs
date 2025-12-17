@@ -21,7 +21,7 @@ pub use {
     alloy::rpc::types::engine::ForkchoiceState,
     gas::{
         BaseFeeParameters, BaseGasFee, DEFAULT_EIP1559_BASE_FEE_MAX_CHANGE_DENOMINATOR,
-        DEFAULT_EIP1559_ELASTICITY_MULTIPLIER, Eip1559GasFee,
+        DEFAULT_EIP1559_ELASTICITY_MULTIPLIER, EIP1559FeeParameters, JovianGasFee,
     },
     hash::{BlockHash, UmiBlockHash},
     in_memory::{BlockMemory, ForkchoiceMemory, ReadBlockMemory},

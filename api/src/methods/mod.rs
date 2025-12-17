@@ -46,8 +46,8 @@ pub mod tests {
         },
         umi_blockchain::{
             block::{
-                BaseGasFee, Block, BlockRepository, Eip1559GasFee, Header, InMemoryBlockQueries,
-                InMemoryBlockRepository, UmiBlockHash,
+                BaseGasFee, Block, BlockRepository, Header, InMemoryBlockQueries,
+                InMemoryBlockRepository, JovianGasFee, UmiBlockHash,
             },
             in_memory::shared_memory,
             payload::{InMemoryPayloadQueries, InProgressPayloads},
@@ -85,7 +85,7 @@ pub mod tests {
             .into_extended_with_hash(head_hash)
             .with_value(U256::ZERO);
 
-        let gas_fee = Eip1559GasFee::default();
+        let gas_fee = JovianGasFee::default();
         genesis_block.block.header.extra_data = gas_fee.encode_parameters_for_header();
 
         let size = genesis_block.byte_length(Vec::new());
@@ -303,7 +303,7 @@ pub mod tests {
             Application::<TestDependencies<MockStateQueries>> {
                 genesis_config: GenesisConfig::default(),
                 mem_pool: Default::default(),
-                gas_fee: Eip1559GasFee::default(),
+                gas_fee: JovianGasFee::default(),
                 base_token: UmiBaseTokenAccounts::new(AccountAddress::ONE),
                 l1_fee: U256::ZERO,
                 l2_fee: U256::ZERO,

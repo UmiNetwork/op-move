@@ -1,7 +1,7 @@
 use {
     crate::{Application, Dependencies},
     std::{collections::HashMap, sync::Arc},
-    umi_blockchain::{block::Eip1559GasFee, state::EthTrieStateQueries},
+    umi_blockchain::{block::JovianGasFee, state::EthTrieStateQueries},
     umi_evm_ext::state::InMemoryDb,
     umi_execution::U256,
     umi_genesis::config::GenesisConfig,
@@ -34,7 +34,7 @@ impl<'app> Dependencies<'app> for Uninitialized {
     type StorageTrieRepository = ();
     type TransactionQueries = ();
     type TransactionRepository = ();
-    type BaseGasFee = Eip1559GasFee;
+    type BaseGasFee = JovianGasFee;
     type CreateL1GasFee = U256;
     type CreateL2GasFee = U256;
 
@@ -99,7 +99,7 @@ impl<'app> Dependencies<'app> for Uninitialized {
     fn transaction_repository() -> Self::TransactionRepository {}
 
     fn base_gas_fee() -> Self::BaseGasFee {
-        Eip1559GasFee::default()
+        JovianGasFee::default()
     }
 
     fn create_l1_gas_fee() -> Self::CreateL1GasFee {
