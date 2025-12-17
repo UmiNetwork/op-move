@@ -59,9 +59,8 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-      - uses: auguwu/clippy-action@1.4.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Clippy
+        run: cargo clippy --all-targets --workspace -- -Dclippy::all
 
   format:
     name: Format
