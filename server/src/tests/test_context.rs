@@ -130,6 +130,8 @@ impl TestContext<'static> {
                 "suggestedFeeRecipient": "0x4200000000000000000000000000000000000011",
                 "withdrawals": [],
                 "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "eip1559Params": "0x0000000000000000",
+                "minBaseFee": 0,
                 "transactions": [
                     hex::encode(DEPOSIT_TX)
                 ],

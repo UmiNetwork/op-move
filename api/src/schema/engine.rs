@@ -61,8 +61,13 @@ pub struct PayloadAttributesV3 {
     pub parent_beacon_block_root: B256,
     pub transactions: Vec<Bytes>,
     pub gas_limit: U64,
-    pub eip1559_params: Option<U64>,
+    // Note: post-Holocene upgrade this is a required field.
+    // See https://specs.optimism.io/protocol/holocene/exec-engine.html
+    pub eip1559_params: U64,
     pub no_tx_pool: Option<bool>,
+    // Note: post-Jovian upgrade this is a required field.
+    // See https://specs.optimism.io/protocol/jovian/exec-engine.html
+    pub min_base_fee: U64,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -283,6 +288,7 @@ impl From<PayloadAttributesV3> for Payload {
             gas_limit: value.gas_limit,
             eip1559_params: value.eip1559_params,
             no_tx_pool: value.no_tx_pool,
+            min_base_fee: value.min_base_fee.saturating_to(),
         }
     }
 }

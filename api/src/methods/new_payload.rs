@@ -292,8 +292,8 @@ mod tests {
         umi_app::{Application, CommandActor, HybridBlockHashCache, TestDependencies},
         umi_blockchain::{
             block::{
-                Block, BlockRepository, Eip1559GasFee, ForkchoiceState, InMemoryBlockQueries,
-                InMemoryBlockRepository, UmiBlockHash,
+                Block, BlockRepository, ForkchoiceState, InMemoryBlockQueries,
+                InMemoryBlockRepository, JovianGasFee, UmiBlockHash,
             },
             in_memory::{SharedMemoryReader, shared_memory},
             payload::{InMemoryPayloadQueries, InProgressPayloads},
@@ -439,7 +439,7 @@ mod tests {
         let mut app = Application::<TestDependencies<_, _, _, _>> {
             mem_pool: Default::default(),
             genesis_config: genesis_config.clone(),
-            gas_fee: Eip1559GasFee::default(),
+            gas_fee: JovianGasFee::default(),
             base_token: (),
             l1_fee: U256::ZERO,
             l2_fee: U256::ZERO,
@@ -489,7 +489,7 @@ mod tests {
                 _,
                 _,
                 InMemoryTransactionRepository,
-                Eip1559GasFee,
+                JovianGasFee,
                 U256,
                 U256,
             >,
@@ -530,6 +530,8 @@ mod tests {
                             "transactions": [
                             "0x7ef8f8a0d449f5de7f558fa593dce80637d3a3f52cfaaee2913167371dd6ffd9014e431d94deaddeaddeaddeaddeaddeaddeaddeaddead00019442000000000000000000000000000000000000158080830f424080b8a4440a5e20000f424000000000000000000000000100000000666c9d8b0000000000000028000000000000000000000000000000000000000000000000000000000049165f0000000000000000000000000000000000000000000000000000000000000001d05450763214e6060d285b39ef5fe51ef9526395e5cef6ecb27ba06f9598f27d000000000000000000000000e25583099ba105d9ec0a67f5ae86d90e50036425"
                             ],
+                            "eip1559Params": "0x0000000000000000",
+                            "minBaseFee": 0,
                             "gasLimit": "0x1c9c380"
                         }
                         ]

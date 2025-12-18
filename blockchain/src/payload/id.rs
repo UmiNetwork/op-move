@@ -1,5 +1,5 @@
 use {
-    crate::block::BaseFeeParameters,
+    crate::block::EIP1559FeeParameters,
     alloy::eips::eip4895::Withdrawal,
     sha2::{Digest, Sha256},
     std::convert::identity,
@@ -75,7 +75,7 @@ impl<'a> NewPayloadIdInput<'a> {
     }
 
     /// Creates this input with `eip1559_params`.
-    pub fn with_eip1559_params(mut self, gas_params: &BaseFeeParameters) -> Self {
+    pub fn with_eip1559_params(mut self, gas_params: &EIP1559FeeParameters) -> Self {
         self.eip1559_params = Some(gas_params.encode());
         self
     }

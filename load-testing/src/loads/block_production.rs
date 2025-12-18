@@ -107,8 +107,9 @@ impl BlockProduction {
                     parent_beacon_block_root: PARENT_BEACON_BLOCK_ROOT,
                     transactions: vec![deposit_transaction],
                     gas_limit: U64::from_limbs([GAS_LIMIT]),
-                    eip1559_params: None,
+                    eip1559_params: Default::default(),
                     no_tx_pool: None,
+                    min_base_fee: Default::default(),
                 };
 
                 // Race the forkchoice update call against the shutdown channel to ensure

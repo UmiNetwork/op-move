@@ -31,6 +31,8 @@ async fn test_sending_the_same_payload_twice_produces_one_block() -> anyhow::Res
                     "withdrawals":[],
                     "parentBeaconBlockRoot":"0x0000000000000000000000000000000000000000000000000000000000000000",
                     "transactions":[ hex::encode(DEPOSIT_TX) ],
+                    "eip1559Params": "0x0000000000000000",
+                    "minBaseFee": 0,
                     "gasLimit":"0x1c9c380"
                 }
             ]
@@ -85,9 +87,9 @@ async fn test_sending_the_same_payload_twice_produces_one_block() -> anyhow::Res
                 gas_limit: U64::from_limbs([30000000]),
                 gas_used: U64::from_limbs([119509]),
                 timestamp: U64::from_limbs([1747148047]),
-                extra_data: Bytes::from_hex("0x00000000fa00000006").unwrap(),
+                extra_data: Bytes::from_hex("0x01000000fa000000060000000000000000").unwrap(),
                 base_fee_per_gas: U256::ZERO,
-                block_hash: B256::new(hex!("0xceb36188f9df6553736c040545129f4da2e725ff4b0a3e2d3a1865f0eabcd5ce")),
+                block_hash: B256::new(hex!("0xc32927cee779a78672abcf4204ce9097f5bafa755a8e5a4efa66484ada23311d")),
                 transactions: vec![Bytes::from_iter(DEPOSIT_TX)],
                 withdrawals: vec![],
                 blob_gas_used: U64::ZERO,

@@ -23,8 +23,8 @@ use {
     test_case::test_case,
     umi_blockchain::{
         block::{
-            BaseGasFee, Block, BlockHash, BlockRepository, Eip1559GasFee, ForkchoiceState, Header,
-            InMemoryBlockQueries, InMemoryBlockRepository, UmiBlockHash,
+            BaseGasFee, Block, BlockHash, BlockRepository, ForkchoiceState, Header,
+            InMemoryBlockQueries, InMemoryBlockRepository, JovianGasFee, UmiBlockHash,
         },
         in_memory::shared_memory,
         payload::{InMemoryPayloadQueries, InProgressPayloads, MaybePayloadResponse},
@@ -162,7 +162,7 @@ fn create_app_with_given_queries<SQ: StateQueries + Clone + Send + Sync + 'stati
             evm_storage,
             transaction_queries: InMemoryTransactionQueries::new(),
             transaction_repository: InMemoryTransactionRepository::new(),
-            gas_fee: Eip1559GasFee::default(),
+            gas_fee: JovianGasFee::default(),
             l1_fee: U256::ZERO,
             l2_fee: U256::ZERO,
             resolver_cache: Default::default(),
@@ -224,7 +224,7 @@ fn create_app_with_fake_queries(
         .with_value(U256::ZERO);
     genesis_block.block.header.base_fee_per_gas = Some(base_fee);
 
-    let gas_fee = Eip1559GasFee::default();
+    let gas_fee = JovianGasFee::default();
     genesis_block.block.header.extra_data = gas_fee.encode_parameters_for_header();
 
     let (memory_reader, mut memory) = shared_memory::new();
@@ -343,8 +343,9 @@ fn test_build_block_hash() {
         parent_beacon_block_root: Default::default(),
         transactions: Vec::new(),
         gas_limit: U64::from(0x1c9c380),
-        eip1559_params: Some(U64::from_be_slice(&hex!("000000fa00000006"))),
+        eip1559_params: U64::from_be_slice(&hex!("000000fa00000006")),
         no_tx_pool: None,
+        min_base_fee: 0,
     };
 
     let execution_outcome = ExecutionOutcome {

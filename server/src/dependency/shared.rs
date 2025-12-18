@@ -25,7 +25,7 @@ macro_rules! impl_shared {
     () => {
         type BlockHash = umi_blockchain::block::UmiBlockHash;
         type BaseTokenAccounts = umi_execution::UmiBaseTokenAccounts;
-        type BaseGasFee = umi_blockchain::block::Eip1559GasFee;
+        type BaseGasFee = umi_blockchain::block::JovianGasFee;
         type CreateL1GasFee = umi_execution::CreateFjordL1GasFee;
         type CreateL2GasFee = umi_execution::CreateUmiL2GasFee;
 
@@ -34,9 +34,10 @@ macro_rules! impl_shared {
         }
 
         fn base_gas_fee() -> Self::BaseGasFee {
-            umi_blockchain::block::Eip1559GasFee::new(
+            umi_blockchain::block::JovianGasFee::new(
                 umi_blockchain::block::DEFAULT_EIP1559_ELASTICITY_MULTIPLIER,
                 umi_blockchain::block::DEFAULT_EIP1559_BASE_FEE_MAX_CHANGE_DENOMINATOR,
+                0,
             )
         }
 
