@@ -92,6 +92,7 @@ impl NormalizedEthTransaction {
 pub trait L1GasFee {
     fn l1_fee(&self, input: L1GasFeeInput) -> U256;
     fn l1_block_info(&self, input: L1GasFeeInput) -> Option<L1BlockInfo>;
+    fn da_footprint(&self, input: L1GasFeeInput) -> u64;
     fn operator_fee(&self, _gas_limit: u64) -> U256;
     fn operator_fee_scalar(&self) -> U256;
 }
@@ -195,22 +196,24 @@ impl JovianGasFee {
             da_footprint_gas_scalar,
         }
     }
+
+    fn linear_size_estimate_scaled(&self, fast_lz_size: U256) -> U256 {
+        // The spec <https://specs.optimism.io/protocol/fjord/exec-engine.html#fjord-l1-cost-fee-changes-fastlz-estimator>
+        // returns a `U256` as the final result, so we can widen the types in advance.
+        let intercept = U256::from(Self::INTERCEPT_ABS);
+        let fast_lz_coef = U256::from(Self::FAST_LZ_COEF);
+
+        (fast_lz_coef * fast_lz_size).saturating_sub(intercept)
+    }
 }
 
 impl L1GasFee for JovianGasFee {
     fn l1_fee(&self, input: L1GasFeeInput) -> U256 {
-        // The spec <https://specs.optimism.io/protocol/fjord/exec-engine.html#fjord-l1-cost-fee-changes-fastlz-estimator>
-        // returns a `U256` as the final result, so we can widen the types in advance.
-        let intercept = U256::from(Self::INTERCEPT_ABS);
         let min_tx_size = U256::from(Self::MIN_TX_SIZE);
-        let fast_lz_coef = U256::from(Self::FAST_LZ_COEF);
-        let fast_lz_size = input.fast_lz_size;
 
         let estimated_size_scaled = {
             let min_scaled = min_tx_size * U256::from(1_000_000);
-            let scaled = (fast_lz_coef * fast_lz_size)
-                .checked_sub(intercept)
-                .unwrap_or(min_scaled);
+            let scaled = self.linear_size_estimate_scaled(input.fast_lz_size);
             scaled.max(min_scaled)
         };
 
@@ -235,6 +238,14 @@ impl L1GasFee for JovianGasFee {
             operator_fee_constant: Some(self.operator_fee_constant.saturating_to()),
             da_footprint_gas_scalar: Some(self.da_footprint_gas_scalar),
         })
+    }
+
+    fn da_footprint(&self, input: L1GasFeeInput) -> u64 {
+        let linear_estimate: u64 = (self.linear_size_estimate_scaled(input.fast_lz_size)
+            / U256::from(1_000_000))
+        .saturating_to();
+        let da_usage_estimate = std::cmp::max(Self::MIN_TX_SIZE.into(), linear_estimate);
+        da_usage_estimate.saturating_mul(self.da_footprint_gas_scalar.into())
     }
 
     fn operator_fee(&self, gas_limit: u64) -> U256 {
@@ -279,7 +290,7 @@ impl CreateL1GasFee for CreateFjordL1GasFee {
         // Sanity check for the `L1BlockInfo` having all recent fields
         if data.len() != JOVIAN_CALLDATA_SIZE {
             tracing::warn!(
-                "Received L1BlockInfo that wasn't Isthmus size: expected {}, got {}",
+                "Received L1BlockInfo that wasn't Jovian size: expected {}, got {}",
                 JOVIAN_CALLDATA_SIZE,
                 data.len(),
             );
@@ -342,6 +353,10 @@ mod tests {
 
         fn l1_block_info(&self, _input: L1GasFeeInput) -> Option<L1BlockInfo> {
             None
+        }
+
+        fn da_footprint(&self, _input: L1GasFeeInput) -> u64 {
+            0
         }
 
         fn operator_fee(&self, _gas_limit: u64) -> U256 {

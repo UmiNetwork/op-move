@@ -44,6 +44,9 @@ pub struct ExtendedReceipt {
     pub block_hash: B256,
     pub block_number: u64,
     pub block_timestamp: u64,
+    /// DA footprint of the transaction, see spec
+    /// https://specs.optimism.io/protocol/jovian/exec-engine.html
+    pub da_footprint: u64,
 }
 
 impl ExtendedReceipt {

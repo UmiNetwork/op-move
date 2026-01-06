@@ -107,6 +107,7 @@ pub struct ExecutionOutcome {
     pub logs_bloom: B2048,
     pub gas_used: U64,
     pub total_tip: U256,
+    pub total_da_footprint: U64,
 }
 
 pub(crate) trait WithExecutionOutcome {
@@ -120,6 +121,7 @@ impl WithExecutionOutcome for Header {
             receipts_root: outcome.receipts_root,
             logs_bloom: Bloom::new(outcome.logs_bloom.0),
             gas_used: outcome.gas_used.to_u64(),
+            blob_gas_used: Some(outcome.total_da_footprint.to_u64()),
             ..self
         }
     }

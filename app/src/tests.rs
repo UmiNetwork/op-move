@@ -358,6 +358,7 @@ fn test_build_block_hash() {
         logs_bloom: Default::default(),
         gas_used: U64::from(0x272a2),
         total_tip: Default::default(),
+        total_da_footprint: U64::from(0x1234),
     };
 
     let header = Header {
@@ -383,7 +384,7 @@ fn test_build_block_hash() {
     assert_eq!(
         hash,
         B256::new(hex!(
-            "c9f7a6ef5311bf49b8322a92f3d75bd5c505ee613323fb58c7166c3511a62bcf"
+            "69d339730fd1a9a717e6e90476966691b430173fa4c21fbc97cceeb0e96c8a40"
         ))
     );
 }
