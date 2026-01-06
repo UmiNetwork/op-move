@@ -6,7 +6,7 @@ use {
     super::*,
     crate::tests::test_context::TestContext,
     alloy::{
-        consensus::transaction::SignerRecoverable,
+        consensus::{transaction::SignerRecoverable, TxReceipt},
         eips::BlockNumberOrTag,
         primitives::{B256, U256},
         sol_types::{SolCall, SolEventInterface},
@@ -54,7 +54,7 @@ async fn test_block_env_evm_contract() -> anyhow::Result<()> {
         let bytecode = alloy::hex::decode(evm_contract::BYTE_CODE_HEX).unwrap();
         let tx = deploy_evm_contract(chain_id, &bytecode);
         let receipt = ctx.execute_transaction(tx).await.unwrap();
-        assert!(receipt.inner.inner.is_success());
+        assert!(receipt.inner.inner.status());
         let contract_address = receipt.inner.contract_address.unwrap();
 
         // 2.a check the `msg.sender` as a transaction

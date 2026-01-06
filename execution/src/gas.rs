@@ -11,7 +11,7 @@ use {
     umi_shared::primitives::U256,
 };
 
-const FJORD_CALLDATA_SIZE: usize = 176;
+const JOVIAN_CALLDATA_SIZE: usize = 178;
 
 pub fn new_gas_meter(
     genesis_config: &GenesisConfig,
@@ -159,16 +159,17 @@ impl From<(u64, u128)> for L2GasFeeInput {
 }
 
 #[derive(Debug)]
-pub struct FjordGasFee {
+pub struct JovianGasFee {
     base_fee: U256,
     base_fee_scalar: U256,
     blob_base_fee: U256,
     blob_base_fee_scalar: U256,
     operator_fee_scalar: U256,
     operator_fee_constant: U256,
+    da_footprint_gas_scalar: u16,
 }
 
-impl FjordGasFee {
+impl JovianGasFee {
     const GAS_PRICE_MULTIPLIER: U256 = U256::from_limbs([16, 0, 0, 0]);
     /// Absolute part of the negative intercept
     const INTERCEPT_ABS: u32 = 42_585_600;
@@ -182,6 +183,7 @@ impl FjordGasFee {
         blob_base_fee_scalar: u32,
         operator_fee_scalar: u32,
         operator_fee_constant: u64,
+        da_footprint_gas_scalar: u16,
     ) -> Self {
         Self {
             base_fee,
@@ -190,11 +192,12 @@ impl FjordGasFee {
             blob_base_fee_scalar: U256::from(blob_base_fee_scalar),
             operator_fee_scalar: U256::from(operator_fee_scalar),
             operator_fee_constant: U256::from(operator_fee_constant),
+            da_footprint_gas_scalar,
         }
     }
 }
 
-impl L1GasFee for FjordGasFee {
+impl L1GasFee for JovianGasFee {
     fn l1_fee(&self, input: L1GasFeeInput) -> U256 {
         // The spec <https://specs.optimism.io/protocol/fjord/exec-engine.html#fjord-l1-cost-fee-changes-fastlz-estimator>
         // returns a `U256` as the final result, so we can widen the types in advance.
@@ -230,6 +233,7 @@ impl L1GasFee for FjordGasFee {
             l1_blob_base_fee_scalar: Some(self.blob_base_fee_scalar.saturating_to()),
             operator_fee_scalar: Some(self.operator_fee_scalar.saturating_to()),
             operator_fee_constant: Some(self.operator_fee_constant.saturating_to()),
+            da_footprint_gas_scalar: Some(self.da_footprint_gas_scalar),
         })
     }
 
@@ -273,10 +277,10 @@ pub struct CreateFjordL1GasFee;
 impl CreateL1GasFee for CreateFjordL1GasFee {
     fn for_deposit(&self, data: &[u8]) -> impl L1GasFee + 'static {
         // Sanity check for the `L1BlockInfo` having all recent fields
-        if data.len() != FJORD_CALLDATA_SIZE {
+        if data.len() != JOVIAN_CALLDATA_SIZE {
             tracing::warn!(
                 "Received L1BlockInfo that wasn't Isthmus size: expected {}, got {}",
-                FJORD_CALLDATA_SIZE,
+                JOVIAN_CALLDATA_SIZE,
                 data.len(),
             );
         }
@@ -292,14 +296,17 @@ impl CreateL1GasFee for CreateFjordL1GasFee {
             u32::from_be_bytes(data[164..168].try_into().expect("Slice should be 4 bytes"));
         let operator_fee_constant =
             u64::from_be_bytes(data[168..176].try_into().expect("Slice should be 8 bytes"));
+        let da_footprint_gas_scalar =
+            u16::from_be_bytes(data[176..178].try_into().expect("Slice is 2 bytes"));
 
-        FjordGasFee::new(
+        JovianGasFee::new(
             l1_base_fee,
             l1_base_fee_scalar,
             l1_blob_base_fee,
             l1_blob_base_fee_scalar,
             operator_fee_scalar,
             operator_fee_constant,
+            da_footprint_gas_scalar,
         )
     }
 }

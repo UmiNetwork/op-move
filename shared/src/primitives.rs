@@ -6,7 +6,7 @@ pub use {
 use {
     alloy::consensus::{Receipt, ReceiptWithBloom},
     move_core_types::{account_address::AccountAddress, u256::U256 as MoveU256},
-    op_alloy::consensus::{OpDepositReceipt, OpDepositReceiptWithBloom, OpReceiptEnvelope},
+    op_alloy::consensus::{OpDepositReceipt, OpReceipt, OpReceiptEnvelope},
 };
 
 pub trait ToEthAddress {
@@ -104,57 +104,49 @@ impl ToMoveU256 for u128 {
 pub fn with_rpc_logs(
     receipt: &OpReceiptEnvelope,
     logs: Vec<alloy::rpc::types::Log>,
-) -> OpReceiptEnvelope<alloy::rpc::types::Log> {
+) -> ReceiptWithBloom<OpReceipt<alloy::rpc::types::Log>> {
     match receipt {
-        OpReceiptEnvelope::Legacy(receipt_with_bloom) => {
-            OpReceiptEnvelope::Legacy(ReceiptWithBloom {
-                receipt: Receipt {
-                    status: receipt_with_bloom.receipt.status,
-                    cumulative_gas_used: receipt_with_bloom.receipt.cumulative_gas_used,
-                    logs,
-                },
-                logs_bloom: receipt_with_bloom.logs_bloom,
-            })
-        }
-        OpReceiptEnvelope::Eip2930(receipt_with_bloom) => {
-            OpReceiptEnvelope::Eip2930(ReceiptWithBloom {
-                receipt: Receipt {
-                    status: receipt_with_bloom.receipt.status,
-                    cumulative_gas_used: receipt_with_bloom.receipt.cumulative_gas_used,
-                    logs,
-                },
-                logs_bloom: receipt_with_bloom.logs_bloom,
-            })
-        }
-        OpReceiptEnvelope::Eip1559(receipt_with_bloom) => {
-            OpReceiptEnvelope::Eip1559(ReceiptWithBloom {
-                receipt: Receipt {
-                    status: receipt_with_bloom.receipt.status,
-                    cumulative_gas_used: receipt_with_bloom.receipt.cumulative_gas_used,
-                    logs,
-                },
-                logs_bloom: receipt_with_bloom.logs_bloom,
-            })
-        }
-        OpReceiptEnvelope::Deposit(op_deposit_receipt_with_bloom) => {
-            OpReceiptEnvelope::Deposit(OpDepositReceiptWithBloom {
-                receipt: OpDepositReceipt {
-                    inner: Receipt {
-                        status: op_deposit_receipt_with_bloom.receipt.inner.status,
-                        cumulative_gas_used: op_deposit_receipt_with_bloom
-                            .receipt
-                            .inner
-                            .cumulative_gas_used,
-                        logs,
-                    },
-                    deposit_nonce: op_deposit_receipt_with_bloom.receipt.deposit_nonce,
-                    deposit_receipt_version: op_deposit_receipt_with_bloom
+        OpReceiptEnvelope::Legacy(receipt_with_bloom) => ReceiptWithBloom {
+            receipt: OpReceipt::Legacy(Receipt {
+                status: receipt_with_bloom.receipt.status,
+                cumulative_gas_used: receipt_with_bloom.receipt.cumulative_gas_used,
+                logs,
+            }),
+            logs_bloom: receipt_with_bloom.logs_bloom,
+        },
+        OpReceiptEnvelope::Eip2930(receipt_with_bloom) => ReceiptWithBloom {
+            receipt: OpReceipt::Eip2930(Receipt {
+                status: receipt_with_bloom.receipt.status,
+                cumulative_gas_used: receipt_with_bloom.receipt.cumulative_gas_used,
+                logs,
+            }),
+            logs_bloom: receipt_with_bloom.logs_bloom,
+        },
+        OpReceiptEnvelope::Eip1559(receipt_with_bloom) => ReceiptWithBloom {
+            receipt: OpReceipt::Eip1559(Receipt {
+                status: receipt_with_bloom.receipt.status,
+                cumulative_gas_used: receipt_with_bloom.receipt.cumulative_gas_used,
+                logs,
+            }),
+            logs_bloom: receipt_with_bloom.logs_bloom,
+        },
+        OpReceiptEnvelope::Deposit(op_deposit_receipt_with_bloom) => ReceiptWithBloom {
+            receipt: OpReceipt::Deposit(OpDepositReceipt {
+                inner: Receipt {
+                    status: op_deposit_receipt_with_bloom.receipt.inner.status,
+                    cumulative_gas_used: op_deposit_receipt_with_bloom
                         .receipt
-                        .deposit_receipt_version,
+                        .inner
+                        .cumulative_gas_used,
+                    logs,
                 },
-                logs_bloom: op_deposit_receipt_with_bloom.logs_bloom,
-            })
-        }
+                deposit_nonce: op_deposit_receipt_with_bloom.receipt.deposit_nonce,
+                deposit_receipt_version: op_deposit_receipt_with_bloom
+                    .receipt
+                    .deposit_receipt_version,
+            }),
+            logs_bloom: op_deposit_receipt_with_bloom.logs_bloom,
+        },
         _ => unreachable!(),
     }
 }

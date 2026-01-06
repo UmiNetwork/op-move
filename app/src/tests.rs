@@ -5,7 +5,7 @@ use {
         query::{MAX_SUGGESTED_PRIORITY_FEE, MIN_SUGGESTED_PRIORITY_FEE},
     },
     alloy::{
-        consensus::{SignableTransaction, TxEip1559, TxEnvelope},
+        consensus::{SignableTransaction, TxEip1559, TxEnvelope, TxReceipt},
         eips::BlockNumberOrTag::{self, *},
         hex,
         network::TxSignerSync,
