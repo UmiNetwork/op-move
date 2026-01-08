@@ -6,7 +6,7 @@ use {
     },
     alloy::{
         consensus::{EMPTY_OMMER_ROOT_HASH, Header},
-        primitives::{B64, Bloom, Bytes, U64, U256},
+        primitives::{B64, Bloom, Bytes, U256},
     },
     umi_app::{ApplicationReader, Dependencies},
     umi_shared::primitives::B256,
@@ -110,18 +110,6 @@ fn validate_payload_format(
     expected_blob_versioned_hashes: Vec<B256>,
     execution_requests: Option<Vec<Bytes>>,
 ) -> Result<(), PayloadStatusV1> {
-    // Anything EIP-4844 related is disabled in Optimism (<https://specs.optimism.io/protocol/exec-engine.html#ecotone-disable-blob-transactions>)
-    // and Umi, as we have chosen to reject this tx kind at the API border. Thus for Engine API
-    // all the values should be 0.
-    if execution_payload.excess_blob_gas != U64::ZERO
-        || execution_payload.blob_gas_used != U64::ZERO
-    {
-        return Err(PayloadStatusV1 {
-            status: Status::Invalid,
-            latest_valid_hash: None,
-            validation_error: Some("Unexpected non-zero blob gas fields".into()),
-        });
-    }
     if !expected_blob_versioned_hashes.is_empty() {
         return Err(PayloadStatusV1 {
             status: Status::Invalid,
