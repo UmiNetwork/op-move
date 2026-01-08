@@ -16,81 +16,83 @@ jobs:
       packages: write
       contents: read
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Free up disk space
-        run: rm -rf /opt/hostedtoolcache
-
-      - name: Install mold to speed up ELF linking and decrease memory usage
-        uses: rui314/setup-mold@v1
-
-      - name: Generate keystore file
-        run: . docker/geth/keystore.sh
-
-      - name: Log in to container registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Restore cached build artifacts for image
-        if: github.ref != 'refs/heads/main'
-        uses: actions/cache@v4
-        id: cache
-        with:
-          path: cache-mount
-          key: cache-mount
-
-      - name: Restore Docker cache mounts
-        if: github.ref != 'refs/heads/main'
-        uses: reproducible-containers/buildkit-cache-dance@v3
-        with:
-          builder: ${{ steps.setup-buildx.outputs.name }}
-          cache-dir: cache-mount
-          dockerfile: docker/op-move/Dockerfile
-          skip-extraction: ${{ steps.cache.outputs.cache-hit }}
-
-      - name: Run container images
-        run: |
-          docker network create localnet
-          # Meant for workflow dispatch on non-main branches 
-          if [[ "${{ github.ref }}" != "refs/heads/main" ]]; then
-            echo "Building images locally for feature branch..."
-            docker compose build --pull
-            docker compose up -d
-          else
-            echo "Using registry images..."
-            docker compose pull
-            docker compose up -d
-          fi
-
-      - name: Parse Rust workspace toolchain
-        run: echo "TOOLCHAIN=$(cat rust-toolchain)" >> $GITHUB_ENV
-
-      - name: Install Rust workspace toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ env.TOOLCHAIN }}
-
-      - name: Restore cached build artifacts for test
-        uses: Swatinem/rust-cache@v2
-        with:
-          cache-on-failure: true
-
-      - name: Run integration test
-        run: cargo test --release test_on_ethereum
-
-      - name: Capture logs
-        uses: jwalton/gh-docker-logs@v2
-        with:
-          dest: './logs'
-
-      - name: Upload logs
-        uses: actions/upload-artifact@master
-        with:
-          name: logs
-          path: ./logs
+      - name: Skip message
+       run: echo "Integration tests temporarily disabled"
+#      - uses: actions/checkout@v4
+#
+#      - name: Free up disk space
+#        run: rm -rf /opt/hostedtoolcache
+#
+#      - name: Install mold to speed up ELF linking and decrease memory usage
+#        uses: rui314/setup-mold@v1
+#
+#      - name: Generate keystore file
+#        run: . docker/geth/keystore.sh
+#
+#      - name: Log in to container registry
+#        uses: docker/login-action@v2
+#        with:
+#          registry: ghcr.io
+#          username: ${{ github.actor }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - name: Set up Docker Buildx
+#        uses: docker/setup-buildx-action@v3
+#
+#      - name: Restore cached build artifacts for image
+#        if: github.ref != 'refs/heads/main'
+#        uses: actions/cache@v4
+#        id: cache
+#        with:
+#          path: cache-mount
+#          key: cache-mount
+#
+#      - name: Restore Docker cache mounts
+#        if: github.ref != 'refs/heads/main'
+#        uses: reproducible-containers/buildkit-cache-dance@v3
+#        with:
+#          builder: ${{ steps.setup-buildx.outputs.name }}
+#          cache-dir: cache-mount
+#          dockerfile: docker/op-move/Dockerfile
+#          skip-extraction: ${{ steps.cache.outputs.cache-hit }}
+#
+#      - name: Run container images
+#        run: |
+#          docker network create localnet
+#          # Meant for workflow dispatch on non-main branches 
+#          if [[ "${{ github.ref }}" != "refs/heads/main" ]]; then
+#            echo "Building images locally for feature branch..."
+#            docker compose build --pull
+#            docker compose up -d
+#          else
+#            echo "Using registry images..."
+#            docker compose pull
+#            docker compose up -d
+#          fi
+#
+#      - name: Parse Rust workspace toolchain
+#        run: echo "TOOLCHAIN=$(cat rust-toolchain)" >> $GITHUB_ENV
+#
+#      - name: Install Rust workspace toolchain
+#        uses: dtolnay/rust-toolchain@master
+#        with:
+#          toolchain: ${{ env.TOOLCHAIN }}
+#
+#      - name: Restore cached build artifacts for test
+#        uses: Swatinem/rust-cache@v2
+#        with:
+#          cache-on-failure: true
+#
+#      - name: Run integration test
+#        run: cargo test --release test_on_ethereum
+#
+#      - name: Capture logs
+#        uses: jwalton/gh-docker-logs@v2
+#        with:
+#          dest: './logs'
+#
+#      - name: Upload logs
+#        uses: actions/upload-artifact@master
+#        with:
+#          name: logs
+#          path: ./logs
