@@ -397,6 +397,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
         let mut executed_transactions = Vec::new();
         let mut transactions = transactions.peekable();
         let mut cumulative_gas_used = 0u128;
+        let mut cumulative_da_footprint: u64 = 0;
         let mut logs_bloom = Bloom::ZERO;
         let mut tx_index = 0;
         let mut log_offset = 0;
@@ -466,6 +467,15 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 .as_ref()
                 .and_then(|x| x.l1_block_info(normalized_tx.l1_gas_fee_input()));
 
+            let da_footprint = match &normalized_tx {
+                NormalizedExtendedTxEnvelope::DepositedTx(_) => 0,
+                NormalizedExtendedTxEnvelope::Canonical(tx) => l1_fee
+                    .as_ref()
+                    .map(|x| x.da_footprint(tx.l1_gas_fee_input.clone()))
+                    .unwrap_or_default(),
+            };
+            cumulative_da_footprint += da_footprint;
+
             self.on_tx(outcome.changes.move_vm.clone().accounts)
                 .map_err(|e| {
                     tracing::error!(
@@ -528,6 +538,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 block_hash: Default::default(),
                 block_number: block_header.number,
                 block_timestamp: block_header.timestamp,
+                da_footprint,
             });
 
             executed_transactions.push(normalized_tx);
@@ -556,6 +567,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             receipts_root,
             logs_bloom,
             total_tip,
+            total_da_footprint: U64::from(cumulative_da_footprint),
         };
         Ok((outcome, receipts, executed_transactions))
     }

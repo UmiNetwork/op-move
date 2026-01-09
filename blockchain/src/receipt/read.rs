@@ -48,8 +48,10 @@ impl From<ExtendedReceipt> for TransactionReceipt {
                 block_number: Some(rx.block_number),
                 gas_used: rx.gas_used,
                 effective_gas_price: rx.l2_gas_price,
-                // Always None because we do not support eip-4844 transactions
-                blob_gas_used: None,
+                // Set based on DA footprint, see Jovian spec:
+                // https://specs.optimism.io/protocol/jovian/exec-engine.html
+                blob_gas_used: Some(rx.da_footprint),
+                // Still None even post-Jovian
                 blob_gas_price: None,
                 from: rx.from,
                 to: rx.to,

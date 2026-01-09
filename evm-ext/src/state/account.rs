@@ -9,13 +9,13 @@ use {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Account {
-    pub inner: consensus::Account,
+    pub inner: consensus::TrieAccount,
 }
 
 impl Account {
     pub fn new(nonce: u64, balance: U256, code_hash: B256, storage_root: B256) -> Self {
         Self {
-            inner: consensus::Account {
+            inner: consensus::TrieAccount {
                 nonce,
                 balance,
                 storage_root,

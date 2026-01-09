@@ -1,4 +1,4 @@
-pub use gas::{CreateFjordL1GasFee, FjordGasFee};
+pub use gas::{CreateFjordL1GasFee, JovianGasFee};
 
 pub use {
     alloy::primitives::U256,

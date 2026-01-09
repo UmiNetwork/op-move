@@ -23,6 +23,7 @@ mod tests {
             request::SerializationKind,
             schema::{ForkchoiceUpdatedResponseV1, GetPayloadResponseV3},
         },
+        alloy::consensus::TxReceipt,
         std::iter,
         umi_blockchain::receipt::TransactionReceipt,
     };

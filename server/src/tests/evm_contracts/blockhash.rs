@@ -3,6 +3,7 @@ use {
     super::*,
     crate::tests::test_context::TestContext,
     alloy::{
+        consensus::TxReceipt,
         primitives::B256,
         sol_types::{SolCall, SolEventInterface},
     },
@@ -38,7 +39,7 @@ async fn test_blockhash_evm_contract() -> anyhow::Result<()> {
         // 1. Deploy contract in block with height = 1
         let tx = deploy_evm_contract(chain_id, evm_contract::BYTE_CODE);
         let receipt = ctx.execute_transaction(tx).await.unwrap();
-        assert!(receipt.inner.inner.is_success());
+        assert!(receipt.inner.inner.status());
         let contract_address = receipt.inner.contract_address.unwrap();
 
         // 2. Call `getBlockHash` function in block with heights <= 3

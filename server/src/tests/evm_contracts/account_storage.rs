@@ -3,6 +3,7 @@ use {
     super::*,
     crate::tests::test_context::TestContext,
     alloy::{
+        consensus::TxReceipt,
         eips::BlockNumberOrTag,
         primitives::U256,
         rpc::types::TransactionRequest,
@@ -43,7 +44,7 @@ async fn test_storage_evm_contract() -> anyhow::Result<()> {
         // 1. Deploy contract in block with height = 1
         let tx = deploy_evm_contract(chain_id, evm_contract::BYTE_CODE);
         let receipt = ctx.execute_transaction(tx).await.unwrap();
-        assert!(receipt.inner.inner.is_success());
+        assert!(receipt.inner.inner.status());
         let contract_address = receipt.inner.contract_address.unwrap();
 
         // 2. Call `set` function in blocks at heights 2 and 3
@@ -89,7 +90,7 @@ async fn test_get_storage_at_evm_contract() -> anyhow::Result<()> {
         // 1. Deploy contract in block with height = 1
         let tx = deploy_evm_contract(chain_id, evm_contract::BYTE_CODE);
         let receipt = ctx.execute_transaction(tx).await.unwrap();
-        assert!(receipt.inner.inner.is_success());
+        assert!(receipt.inner.inner.status());
         let contract_address = receipt.inner.contract_address.unwrap();
 
         // Storage index for first slot (0)
@@ -160,7 +161,7 @@ async fn check_deployed_address(signer: &mut Signer, ctx: &mut TestContext<'stat
     let expected_contract_address = signer.address().create(nonce);
     let tx = signer.deploy(evm_contract::BYTE_CODE);
     let receipt = ctx.execute_transaction(tx).await.unwrap();
-    assert!(receipt.inner.inner.is_success());
+    assert!(receipt.inner.inner.status());
     let contract_address = receipt.inner.contract_address.unwrap();
     assert_eq!(contract_address, expected_contract_address);
     expected_contract_address
