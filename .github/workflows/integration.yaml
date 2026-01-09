@@ -17,7 +17,7 @@ jobs:
       contents: read
     steps:
       - name: Skip message
-       run: echo "Integration tests temporarily disabled"
+        run: echo "Integration tests temporarily disabled"
 #      - uses: actions/checkout@v4
 #
 #      - name: Free up disk space

@@ -12,6 +12,7 @@ use {
 };
 
 const JOVIAN_CALLDATA_SIZE: usize = 178;
+const DA_SCALING_FACTOR: u64 = 1_000_000;
 
 pub fn new_gas_meter(
     genesis_config: &GenesisConfig,
@@ -242,7 +243,7 @@ impl L1GasFee for JovianGasFee {
 
     fn da_footprint(&self, input: L1GasFeeInput) -> u64 {
         let linear_estimate: u64 = (self.linear_size_estimate_scaled(input.fast_lz_size)
-            / U256::from(1_000_000))
+            / U256::from(DA_SCALING_FACTOR))
         .saturating_to();
         let da_usage_estimate = std::cmp::max(Self::MIN_TX_SIZE.into(), linear_estimate);
         da_usage_estimate.saturating_mul(self.da_footprint_gas_scalar.into())
