@@ -8,11 +8,14 @@ use {
     move_core_types::{account_address::AccountAddress, ident_str},
     op_alloy::rpc_types::L1BlockInfo,
     umi_genesis::config::GenesisConfig,
-    umi_shared::primitives::U256,
+    umi_shared::primitives::{U256, u32_to_u256, u64_to_u256},
 };
 
 const JOVIAN_CALLDATA_SIZE: usize = 178;
-const DA_SCALING_FACTOR: u64 = 1_000_000;
+const ESTIMATED_SIZE_SCALING_FACTOR: U256 = u32_to_u256(1_000_000);
+const L1_COST_DIVIDING_FACTOR: U256 = u64_to_u256(1_000_000_000_000);
+const DA_SCALING_FACTOR: U256 = u32_to_u256(1_000_000);
+const OPERATOR_FEE_SCALING_FACTOR: U256 = u32_to_u256(100);
 
 pub fn new_gas_meter(
     genesis_config: &GenesisConfig,
@@ -189,11 +192,11 @@ impl JovianGasFee {
     ) -> Self {
         Self {
             base_fee,
-            base_fee_scalar: U256::from(base_fee_scalar),
+            base_fee_scalar: u32_to_u256(base_fee_scalar),
             blob_base_fee,
-            blob_base_fee_scalar: U256::from(blob_base_fee_scalar),
-            operator_fee_scalar: U256::from(operator_fee_scalar),
-            operator_fee_constant: U256::from(operator_fee_constant),
+            blob_base_fee_scalar: u32_to_u256(blob_base_fee_scalar),
+            operator_fee_scalar: u32_to_u256(operator_fee_scalar),
+            operator_fee_constant: u64_to_u256(operator_fee_constant),
             da_footprint_gas_scalar,
         }
     }
@@ -201,19 +204,20 @@ impl JovianGasFee {
     fn linear_size_estimate_scaled(&self, fast_lz_size: U256) -> U256 {
         // The spec <https://specs.optimism.io/protocol/fjord/exec-engine.html#fjord-l1-cost-fee-changes-fastlz-estimator>
         // returns a `U256` as the final result, so we can widen the types in advance.
-        let intercept = U256::from(Self::INTERCEPT_ABS);
-        let fast_lz_coef = U256::from(Self::FAST_LZ_COEF);
+        let intercept = u32_to_u256(Self::INTERCEPT_ABS);
+        let fast_lz_coef = u32_to_u256(Self::FAST_LZ_COEF);
 
         (fast_lz_coef * fast_lz_size).saturating_sub(intercept)
     }
 }
 
 impl L1GasFee for JovianGasFee {
+    // See spec https://specs.optimism.io/protocol/fjord/exec-engine.html#l1-cost-fees-l1-fee-vault
     fn l1_fee(&self, input: L1GasFeeInput) -> U256 {
-        let min_tx_size = U256::from(Self::MIN_TX_SIZE);
+        let min_tx_size = u32_to_u256(Self::MIN_TX_SIZE);
 
         let estimated_size_scaled = {
-            let min_scaled = min_tx_size * U256::from(1_000_000);
+            let min_scaled = min_tx_size * ESTIMATED_SIZE_SCALING_FACTOR;
             let scaled = self.linear_size_estimate_scaled(input.fast_lz_size);
             scaled.max(min_scaled)
         };
@@ -221,9 +225,7 @@ impl L1GasFee for JovianGasFee {
         let weighted_gas_price = Self::GAS_PRICE_MULTIPLIER * self.base_fee_scalar * self.base_fee
             + self.blob_base_fee_scalar * self.blob_base_fee;
 
-        // We scale down by 1e6 instead of 1e12 to preserve the previous Ecotone omission of
-        // a 1e6 divisor.
-        estimated_size_scaled * weighted_gas_price / U256::from(1_000_000)
+        estimated_size_scaled * weighted_gas_price / L1_COST_DIVIDING_FACTOR
     }
 
     fn l1_block_info(&self, input: L1GasFeeInput) -> Option<L1BlockInfo> {
@@ -243,16 +245,16 @@ impl L1GasFee for JovianGasFee {
 
     fn da_footprint(&self, input: L1GasFeeInput) -> u64 {
         let linear_estimate: u64 = (self.linear_size_estimate_scaled(input.fast_lz_size)
-            / U256::from(DA_SCALING_FACTOR))
-        .saturating_to();
+            / DA_SCALING_FACTOR)
+            .saturating_to();
         let da_usage_estimate = std::cmp::max(Self::MIN_TX_SIZE.into(), linear_estimate);
         da_usage_estimate.saturating_mul(self.da_footprint_gas_scalar.into())
     }
 
     fn operator_fee(&self, gas_limit: u64) -> U256 {
-        // TODO: add the 1e6 multiplier (#569)
-        U256::from(gas_limit)
+        u64_to_u256(gas_limit)
             .saturating_mul(self.operator_fee_scalar)
+            .saturating_mul(OPERATOR_FEE_SCALING_FACTOR) // New in Jovian spec
             .saturating_add(self.operator_fee_constant)
     }
 
@@ -272,7 +274,7 @@ pub struct UmiGasFee {
 impl L2GasFee for UmiGasFee {
     fn l2_fee(&self, input: L2GasFeeInput) -> U256 {
         U256::from(input.effective_gas_price)
-            .saturating_mul(U256::from(input.gas_limit))
+            .saturating_mul(u64_to_u256(input.gas_limit))
             .saturating_mul(self.gas_fee_multiplier)
     }
 }
