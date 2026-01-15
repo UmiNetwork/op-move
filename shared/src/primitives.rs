@@ -101,6 +101,14 @@ impl ToMoveU256 for u128 {
     }
 }
 
+pub const fn u32_to_u256(x: u32) -> U256 {
+    U256::from_limbs([x as u64, 0, 0, 0])
+}
+
+pub const fn u64_to_u256(x: u64) -> U256 {
+    U256::from_limbs([x, 0, 0, 0])
+}
+
 pub fn with_rpc_logs(
     receipt: &OpReceiptEnvelope,
     logs: Vec<alloy::rpc::types::Log>,
