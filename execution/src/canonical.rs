@@ -403,6 +403,9 @@ pub(super) fn execute_canonical_transaction<
         evm_changes.storage,
     );
 
+    let tx_hash = input.tx_hash;
+    tracing::debug!("canonical_execution_result tx_hash={tx_hash} vm_outcome={vm_outcome:?}");
+
     match vm_outcome {
         Ok(_) => Ok(TransactionExecutionOutcome::new(
             Ok(()),
