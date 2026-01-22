@@ -7,6 +7,28 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
     const ENOT_SUCCESS: u64 = 1;
 
 
+    public fun encoding_overhead(
+    ): EvmResult {
+        let data = vector[221, 213, 164, 15];
+
+        let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
+        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
+        emit_evm_logs(&result);
+        result
+    }
+
+
+    public fun floor_calldata_overhead(
+    ): EvmResult {
+        let data = vector[228, 110, 36, 90];
+
+        let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
+        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
+        emit_evm_logs(&result);
+        result
+    }
+
+
     public fun message_version(
     ): EvmResult {
         let data = vector[63, 130, 122, 90];
@@ -98,6 +120,17 @@ module L2CrossDomainMessenger::l2_cross_domain_messenger {
     public fun relay_reserved_gas(
     ): EvmResult {
         let data = vector[140, 190, 238, 242];
+
+        let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
+        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
+        emit_evm_logs(&result);
+        result
+    }
+
+
+    public fun tx_base_gas(
+    ): EvmResult {
+        let data = vector[47, 125, 57, 34];
 
         let result = evm_view(@0x0, @L2CrossDomainMessenger, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));

@@ -1,14 +1,15 @@
 use {
     aptos_table_natives::{TableHandle, TableResolver},
     bytes::Bytes,
-    move_binary_format::errors::PartialVMResult,
+    move_binary_format::errors::{PartialVMResult, VMResult},
     move_core_types::{
         account_address::AccountAddress,
-        language_storage::{ModuleId, StructTag},
+        identifier::{IdentStr, Identifier},
+        language_storage::StructTag,
         metadata::Metadata,
         value::MoveTypeLayout,
     },
-    move_vm_types::resolver::{ModuleResolver, MoveResolver, ResourceResolver},
+    move_vm_types::{code::ModuleBytesStorage, resolver::ResourceResolver},
     std::{
         cell::RefCell,
         collections::{HashMap, hash_map::Entry},
@@ -20,7 +21,7 @@ use {
 #[derive(Debug, Default)]
 pub struct ResolverCache {
     resource_cache: HashMap<(AccountAddress, StructTag), Option<Bytes>>,
-    modules_cache: HashMap<ModuleId, Option<Bytes>>,
+    modules_cache: HashMap<(AccountAddress, Identifier), Option<Bytes>>,
     tables_cache: HashMap<(TableHandle, Vec<u8>), Option<Bytes>>,
 }
 
@@ -34,8 +35,9 @@ impl ResolverCache {
         bytes_len(&cache_key, &self.resource_cache)
     }
 
-    pub fn module_original_size(&self, id: &ModuleId) -> usize {
-        bytes_len(id, &self.modules_cache)
+    pub fn module_original_size(&self, address: &AccountAddress, module_name: &IdentStr) -> usize {
+        let cache_key = (*address, Identifier::from(module_name));
+        bytes_len(&cache_key, &self.modules_cache)
     }
 
     pub fn table_entry_original_size(&self, handle: &TableHandle, key: &[u8]) -> usize {
@@ -57,7 +59,7 @@ pub struct CachedResolver<'a, 'b, R> {
 
 impl<'a, 'b, R> CachedResolver<'a, 'b, R>
 where
-    R: MoveResolver + TableResolver,
+    R: ResourceResolver + TableResolver,
 {
     pub fn new(resolver: &'a R, cache: &'b mut ResolverCache) -> Self {
         Self {
@@ -102,27 +104,27 @@ where
     }
 }
 
-impl<R> ModuleResolver for CachedResolver<'_, '_, R>
+impl<R> ModuleBytesStorage for CachedResolver<'_, '_, R>
 where
-    R: ModuleResolver,
+    R: ModuleBytesStorage,
 {
-    fn get_module(&self, id: &ModuleId) -> PartialVMResult<Option<Bytes>> {
-        let cache_key = id.clone();
+    fn fetch_module_bytes(
+        &self,
+        address: &AccountAddress,
+        module_name: &IdentStr,
+    ) -> VMResult<Option<Bytes>> {
+        let cache_key = (*address, Identifier::from(module_name));
         match self.cache.borrow_mut().modules_cache.entry(cache_key) {
             Entry::Occupied(entry) => {
                 let cache_hit = entry.get();
                 Ok(cache_hit.clone())
             }
             Entry::Vacant(entry) => {
-                let bytes = self.inner.get_module(id)?;
+                let bytes = self.inner.fetch_module_bytes(address, module_name)?;
                 let bytes = entry.insert(bytes);
                 Ok(bytes.clone())
             }
         }
-    }
-
-    fn get_module_metadata(&self, module_id: &ModuleId) -> Vec<Metadata> {
-        self.inner.get_module_metadata(module_id)
     }
 }
 

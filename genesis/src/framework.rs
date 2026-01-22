@@ -1,29 +1,26 @@
 use {
-    crate::UmiVm,
+    crate::{
+        UmiVm,
+        vm::{RuntimeContext, Session},
+    },
     alloy::primitives::address,
     aptos_framework::{ReleaseBundle, ReleasePackage},
     aptos_types::vm_status::StatusCode,
     bytes::Bytes,
     move_binary_format::errors::{Location, PartialVMError, VMError},
     move_core_types::{
-        account_address::AccountAddress,
-        effects::{ChangeSet, Op},
-        ident_str,
-        language_storage::ModuleId,
+        account_address::AccountAddress, effects::Op, ident_str, language_storage::ModuleId,
         value::MoveValue,
     },
     move_vm_runtime::{
-        AsUnsyncCodeStorage, ModuleStorage, StagingModuleStorage, VerifiedModuleBundle,
-        module_traversal::{TraversalContext, TraversalStorage},
-        move_vm::MoveVM,
-        session::Session,
+        AsUnsyncCodeStorage, StagingModuleStorage, VerifiedModuleBundle, WithRuntimeEnvironment,
     },
-    move_vm_types::gas::UnmeteredGasMeter,
+    move_vm_types::{code::ModuleBytesStorage, gas::UnmeteredGasMeter, resolver::ResourceResolver},
     once_cell::sync::Lazy,
     std::{collections::BTreeMap, fs, path::PathBuf},
     sui_framework::SystemPackage,
     sui_types::base_types::ObjectID,
-    umi_state::{Changes, ResolverBasedModuleBytesStorage, State},
+    umi_state::{AllAccountChanges, Changes, State},
 };
 
 pub const CRATE_ROOT: &str = env!("CARGO_MANIFEST_DIR");
@@ -89,22 +86,18 @@ pub fn load_sui_framework_snapshot() -> &'static BTreeMap<ObjectID, SystemPackag
 }
 
 /// Initializes the blockchain state with Aptos and Sui frameworks.
-pub fn init_state(vm: &UmiVm, state: &mut impl State) -> ChangeSet {
+pub fn init_state(vm: &UmiVm, state: &mut impl State) -> Changes {
     deploy_framework(vm, state).expect("All bundle modules should be valid")
 }
 
-pub trait CreateMoveVm {
-    fn create_move_vm(&self) -> Result<MoveVM, VMError>;
-}
-
-fn deploy_framework(umi_vm: &UmiVm, state: &mut impl State) -> Result<ChangeSet, VMError> {
+fn deploy_framework(umi_vm: &UmiVm, state: &mut impl State) -> Result<Changes, VMError> {
     let mut aptos_changeset = deploy_aptos_framework(state, umi_vm)?;
     let eth_changeset = initialize_eth_token(state, umi_vm)?;
 
     let sui_changeset = deploy_sui_framework(state, umi_vm)?;
 
     aptos_changeset
-        .squash(eth_changeset)
+        .include(eth_changeset)
         .expect("Aptos and EthToken changes should not conflict");
 
     aptos_changeset
@@ -114,49 +107,47 @@ fn deploy_framework(umi_vm: &UmiVm, state: &mut impl State) -> Result<ChangeSet,
     Ok(aptos_changeset)
 }
 
-fn initialize_eth_token(state: &mut impl State, umi_vm: &UmiVm) -> Result<ChangeSet, VMError> {
-    let vm = umi_vm.create_move_vm()?;
-    // `init_module` doesn't produce any table changes, so we don't need the extensions
-    let mut session = vm.new_session(state.resolver());
-    let traversal_storage = TraversalStorage::new();
-    let mut traversal_context = TraversalContext::new(&traversal_storage);
-    let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
-    let code_storage = module_bytes_storage.as_unsync_code_storage(umi_vm);
+fn initialize_eth_token(state: &impl State, umi_vm: &UmiVm) -> Result<AllAccountChanges, VMError> {
+    let runtime_context = RuntimeContext::new(umi_vm, state.resolver());
+    let mut session = runtime_context.create_session();
     let module = ModuleId::new(FRAMEWORK_ADDRESS, ident_str!("eth_token").into());
     let function_name = ident_str!("init_module");
     let args = bcs::to_bytes(&MoveValue::Signer(FRAMEWORK_ADDRESS))
         .expect("Serialization of constant must succeed");
-    session.execute_function_bypass_visibility(
+    session.load_and_execute_function(
+        &mut UnmeteredGasMeter,
         &module,
         function_name,
-        Vec::new(),
+        &[],
         vec![args],
-        &mut UnmeteredGasMeter,
-        &mut traversal_context,
-        &code_storage,
     )?;
-    let change_set = session.finish(&code_storage)?;
-    Ok(change_set)
+
+    session
+        .into_effects()
+        .map_err(|e| e.finish(Location::Undefined))
 }
 
-fn initialize_package(
-    session: &mut Session,
-    module_storage: &impl ModuleStorage,
+fn initialize_package<E, S>(
+    session: &mut Session<'_, '_, '_, E, S>,
     addr: AccountAddress,
-    traversal_context: &mut TraversalContext,
     package: &ReleasePackage,
-) -> Result<(), VMError> {
+) -> Result<(), VMError>
+where
+    E: WithRuntimeEnvironment,
+    S: ModuleBytesStorage + ResourceResolver,
+{
     let serialization_failure = || -> VMError {
         PartialVMError::new(StatusCode::VALUE_SERIALIZATION_ERROR)
-            .with_message("Failed to serialize argument to `initialize` function.".into())
+            .with_message("Failed to serialize argument to `initialize` function.")
             .finish(Location::Undefined)
     };
     let module = &ModuleId::new(FRAMEWORK_ADDRESS, ident_str!("code").into());
     let function_name = ident_str!("initialize");
-    session.execute_function_bypass_visibility(
+    session.load_and_execute_function(
+        &mut UnmeteredGasMeter,
         module,
         function_name,
-        vec![],
+        &[],
         vec![
             MoveValue::Signer(FRAMEWORK_ADDRESS)
                 .simple_serialize()
@@ -166,24 +157,21 @@ fn initialize_package(
                 .ok_or_else(serialization_failure)?,
             bcs::to_bytes(package.package_metadata()).map_err(|_| serialization_failure())?,
         ],
-        &mut UnmeteredGasMeter,
-        traversal_context,
-        module_storage,
     )?;
     Ok(())
 }
 
-fn deploy_aptos_framework(state: &mut impl State, umi_vm: &UmiVm) -> Result<ChangeSet, VMError> {
+fn deploy_aptos_framework(state: &mut impl State, umi_vm: &UmiVm) -> Result<Changes, VMError> {
     let framework = load_aptos_framework_snapshot();
     // Iterate over the bundled packages in the Aptos framework
-    let mut framework_writes = ChangeSet::new();
+    let mut framework_writes = Changes::empty();
     for package in &framework.packages {
-        let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
-        let module_storage = module_bytes_storage.as_unsync_code_storage(umi_vm);
+        let runtime_context = RuntimeContext::new(umi_vm, state.resolver());
+        let module_storage = runtime_context.as_unsync_code_storage();
         let modules = package.sorted_code_and_modules();
         let package_writes = if package.name() == L2_PACKAGE_NAME {
             // L2 package have self-contained independent modules
-            let mut l2_writes = ChangeSet::new();
+            let mut l2_writes = Changes::empty();
             for (bytecode, module) in modules {
                 let code = bytecode.to_vec();
                 let sender = module.self_id().address;
@@ -229,7 +217,7 @@ fn deploy_aptos_framework(state: &mut impl State, umi_vm: &UmiVm) -> Result<Chan
         // We need to add changes on a package-by-package basis so that other packages in the framework
         // can link against previous ones, but also pass it outside for genesis image generation
         state
-            .apply(Changes::without_tables(package_writes.clone()))
+            .apply(package_writes.clone())
             .expect("State must work at genesis");
         framework_writes
             .squash(package_writes)
@@ -238,13 +226,8 @@ fn deploy_aptos_framework(state: &mut impl State, umi_vm: &UmiVm) -> Result<Chan
 
     // Initialization is done after actual publishing so that the resolver sees all the packages
     // for linking
-    let vm = umi_vm.create_move_vm()?;
-    let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
-    let code_storage = module_bytes_storage.as_unsync_code_storage(umi_vm);
-    // `initialize` doesn't produce any table changes either, so we don't need the extensions
-    let mut session = vm.new_session(state.resolver());
-    let traversal_storage = TraversalStorage::new();
-    let mut traversal_context = TraversalContext::new(&traversal_storage);
+    let runtime_context = RuntimeContext::new(umi_vm, state.resolver());
+    let mut session = runtime_context.create_session();
     for pack in &framework.packages {
         let addr = *pack
             .sorted_code_and_modules()
@@ -253,26 +236,22 @@ fn deploy_aptos_framework(state: &mut impl State, umi_vm: &UmiVm) -> Result<Chan
             .1
             .self_id()
             .address();
-        initialize_package(
-            &mut session,
-            &code_storage,
-            addr,
-            &mut traversal_context,
-            pack,
-        )?;
+        initialize_package(&mut session, addr, pack)?;
     }
-    let session_changes = session.finish(&code_storage)?;
+    let session_changes = session
+        .into_effects()
+        .map_err(|e| e.finish(Location::Undefined))?;
     framework_writes
-        .squash(session_changes)
+        .include(session_changes)
         .expect("Initialization logic should not conflict with module writes");
     Ok(framework_writes)
 }
 
-fn deploy_sui_framework(state: &mut impl State, umi_vm: &UmiVm) -> Result<ChangeSet, VMError> {
+fn deploy_sui_framework(state: &mut impl State, umi_vm: &UmiVm) -> Result<Changes, VMError> {
     let snapshots = load_sui_framework_snapshot();
-    let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
-    let module_storage = module_bytes_storage.as_unsync_code_storage(umi_vm);
-    let mut total_writes = ChangeSet::new();
+    let runtime_context = RuntimeContext::new(umi_vm, state.resolver());
+    let module_storage = runtime_context.as_unsync_code_storage();
+    let mut total_writes = Changes::empty();
 
     let stdlib = snapshots
         .get(&SUI_STDLIB_PACKAGE_ID)
@@ -290,15 +269,15 @@ fn deploy_sui_framework(state: &mut impl State, umi_vm: &UmiVm) -> Result<Change
     let bundle = staged_stdlib_storage.release_verified_module_bundle();
     let stdlib_writes = convert_bundle_into_module_ops(bundle)?;
     state
-        .apply(Changes::without_tables(stdlib_writes.clone()))
+        .apply(stdlib_writes.clone())
         .expect("State must work at genesis");
     total_writes
         .squash(stdlib_writes)
         .expect("Sui stdlib can be squashed with empty change set");
 
     // Storage needs to be redeclared to mask the first borrow
-    let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
-    let module_storage = module_bytes_storage.as_unsync_code_storage(umi_vm);
+    let runtime_context = RuntimeContext::new(umi_vm, state.resolver());
+    let module_storage = runtime_context.as_unsync_code_storage();
     let framework = snapshots
         .get(&SUI_FRAMEWORK_PACKAGE_ID)
         .expect("Sui Framework package should exist in snapshot")
@@ -315,7 +294,7 @@ fn deploy_sui_framework(state: &mut impl State, umi_vm: &UmiVm) -> Result<Change
     let bundle = staged_framework_storage.release_verified_module_bundle();
     let framework_writes = convert_bundle_into_module_ops(bundle)?;
     state
-        .apply(Changes::without_tables(framework_writes.clone()))
+        .apply(framework_writes.clone())
         .expect("State must work at genesis");
     total_writes
         .squash(framework_writes)
@@ -326,10 +305,11 @@ fn deploy_sui_framework(state: &mut impl State, umi_vm: &UmiVm) -> Result<Change
 
 fn convert_bundle_into_module_ops(
     bundle: VerifiedModuleBundle<ModuleId, Bytes>,
-) -> Result<ChangeSet, VMError> {
-    let mut writes = ChangeSet::new();
+) -> Result<Changes, VMError> {
+    let mut writes = Changes::empty();
     for (module_id, bytes) in bundle.into_iter() {
         writes
+            .accounts
             .add_module_op(module_id, Op::New(bytes))
             .expect("No duplicate modules in `VerifiedModuleBundle`");
     }
@@ -340,8 +320,8 @@ fn convert_bundle_into_module_ops(
 mod tests {
     use {super::*, crate::vm::UmiVm, umi_state::InMemoryState};
 
-    // Aptos framework has 145 modules and Sui has 69. They are kept mutually exclusive.
-    const APTOS_MODULES_LEN: usize = 145;
+    // Aptos framework has 158 modules and Sui has 69. They are kept mutually exclusive.
+    const APTOS_MODULES_LEN: usize = 158;
     const SUI_MODULES_LEN: usize = 69;
     const TOTAL_MODULES_LEN: usize = APTOS_MODULES_LEN + SUI_MODULES_LEN;
 
@@ -360,6 +340,6 @@ mod tests {
         let mut state = InMemoryState::default();
         let vm = UmiVm::new(&Default::default());
         let change_set = deploy_framework(&vm, &mut state).unwrap();
-        assert_eq!(change_set.modules().count(), TOTAL_MODULES_LEN);
+        assert_eq!(change_set.accounts.modules().count(), TOTAL_MODULES_LEN);
     }
 }

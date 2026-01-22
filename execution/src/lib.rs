@@ -1,4 +1,5 @@
 pub use gas::{CreateFjordL1GasFee, JovianGasFee};
+use move_vm_types::code::ModuleBytesStorage;
 
 pub use {
     alloy::primitives::U256,
@@ -25,10 +26,8 @@ use {
         language_storage::TypeTag,
         value::{MoveTypeLayout, MoveValue},
     },
-    move_vm_runtime::{
-        move_vm::MoveVM, native_extensions::NativeContextExtensions, session::Session,
-    },
-    move_vm_types::resolver::MoveResolver,
+    move_vm_runtime::native_extensions::NativeContextExtensions,
+    move_vm_types::resolver::ResourceResolver,
     op_alloy::consensus::TxDeposit,
     session_id::SessionId,
     std::ops::Deref,
@@ -40,7 +39,10 @@ use {
         },
         state::{BlockHashLookup, StorageTrieRepository},
     },
-    umi_genesis::config::GenesisConfig,
+    umi_genesis::{
+        config::GenesisConfig,
+        vm::{RuntimeContext, Session, UmiVm},
+    },
     umi_shared::primitives::{B256, ToEthAddress},
 };
 
@@ -54,9 +56,7 @@ mod deposited;
 mod eth_token;
 mod execute;
 mod gas;
-mod layout;
 mod nonces;
-mod table_changes;
 mod tag_validation;
 #[cfg(test)]
 mod tests;
@@ -65,16 +65,16 @@ const ADDRESS_LAYOUT: MoveTypeLayout = MoveTypeLayout::Address;
 const SIGNER_LAYOUT: MoveTypeLayout = MoveTypeLayout::Signer;
 const U256_LAYOUT: MoveTypeLayout = MoveTypeLayout::U256;
 
-pub fn create_vm_session<'l, 'r, S, L, B>(
-    vm: &'l MoveVM,
-    state: &'r S,
+pub fn create_vm_session<'ctx, 'state, S, L, B>(
+    runtime_context: &'ctx RuntimeContext<'state, &'ctx UmiVm, S>,
+    state: &'state S,
     session_id: SessionId,
-    storage_trie: &'r impl StorageTrieRepository,
-    eth_transfers_log: &'r L,
-    block_hash_lookup: &'r B,
-) -> Session<'r, 'l>
+    storage_trie: &'state impl StorageTrieRepository,
+    eth_transfers_log: &'state L,
+    block_hash_lookup: &'state B,
+) -> Session<'ctx, 'state, 'ctx, &'ctx UmiVm, S>
 where
-    S: MoveResolver + TableResolver,
+    S: ResourceResolver + ModuleBytesStorage + TableResolver,
     L: EthTransferLog,
     B: BlockHashLookup,
 {
@@ -96,6 +96,7 @@ where
             .unwrap_or_default(),
         session_id.chain_id,
         session_id.user_txn_context,
+        0, // TODO
     ));
 
     // Tables can be used
@@ -110,7 +111,10 @@ where
         block_hash_lookup,
     ));
 
-    vm.new_session_with_extensions(state, native_extensions)
+    let mut session = runtime_context.create_session();
+    session.with_native_extensions(native_extensions);
+
+    session
 }
 
 #[derive(Debug)]
@@ -164,7 +168,7 @@ impl<'input, S, ST, F, B, H> From<CanonicalExecutionInput<'input, S, ST, F, B, H
 }
 
 pub fn execute_transaction<
-    S: MoveResolver + TableResolver,
+    S: ResourceResolver + ModuleBytesStorage + TableResolver,
     ST: StorageTrieRepository,
     F: L2GasFee,
     B: BaseTokenAccounts,

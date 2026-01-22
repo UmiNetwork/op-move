@@ -1,6 +1,5 @@
 use {
     alloy::primitives::U256,
-    aptos_table_natives::TableResolver,
     move_core_types::{
         account_address::AccountAddress,
         ident_str,
@@ -8,13 +7,14 @@ use {
         language_storage::{ModuleId, StructTag},
         value::MoveValue,
     },
-    move_vm_runtime::{ModuleStorage, module_traversal::TraversalContext, session::Session},
+    move_vm_runtime::WithRuntimeEnvironment,
     move_vm_types::{
+        code::ModuleBytesStorage,
         gas::{GasMeter, UnmeteredGasMeter},
-        resolver::MoveResolver,
+        resolver::ResourceResolver,
     },
     umi_evm_ext::{EVM_NATIVE_ADDRESS, events::EthTransferLog},
-    umi_genesis::FRAMEWORK_ADDRESS,
+    umi_genesis::{FRAMEWORK_ADDRESS, vm::Session},
     umi_shared::{error::EthToken, primitives::ToMoveU256},
 };
 
@@ -42,33 +42,38 @@ pub struct TransferArgs<'a> {
 }
 
 pub trait BaseTokenAccounts {
-    fn charge_gas_cost<G: GasMeter, MS: ModuleStorage>(
+    fn charge_gas_cost<G, E, S>(
         &self,
         from: &AccountAddress,
         amount: U256,
-        session: &mut Session,
-        traversal_context: &mut TraversalContext,
+        session: &mut Session<E, S>,
         gas_meter: &mut G,
-        module_storage: &MS,
-    ) -> Result<(), umi_shared::error::Error>;
+    ) -> Result<(), umi_shared::error::Error>
+    where
+        G: GasMeter,
+        E: WithRuntimeEnvironment,
+        S: ResourceResolver + ModuleBytesStorage;
 
-    fn refund_gas_cost(
+    fn refund_gas_cost<E, S>(
         &self,
         to: &AccountAddress,
         amount: U256,
-        session: &mut Session,
-        traversal_context: &mut TraversalContext,
-        module_storage: &impl ModuleStorage,
-    ) -> Result<(), umi_shared::error::Error>;
+        session: &mut Session<E, S>,
+    ) -> Result<(), umi_shared::error::Error>
+    where
+        E: WithRuntimeEnvironment,
+        S: ResourceResolver + ModuleBytesStorage;
 
-    fn transfer<G: GasMeter, MS: ModuleStorage>(
+    fn transfer<G, E, S>(
         &self,
         args: TransferArgs<'_>,
-        session: &mut Session,
-        traversal_context: &mut TraversalContext,
+        session: &mut Session<E, S>,
         gas_meter: &mut G,
-        module_storage: &MS,
-    ) -> Result<(), umi_shared::error::Error>;
+    ) -> Result<(), umi_shared::error::Error>
+    where
+        G: GasMeter,
+        E: WithRuntimeEnvironment,
+        S: ResourceResolver + ModuleBytesStorage;
 }
 
 #[derive(Debug, Clone)]
@@ -83,15 +88,18 @@ impl UmiBaseTokenAccounts {
 }
 
 impl BaseTokenAccounts for UmiBaseTokenAccounts {
-    fn charge_gas_cost<G: GasMeter, MS: ModuleStorage>(
+    fn charge_gas_cost<G, E, S>(
         &self,
         from: &AccountAddress,
         amount: U256,
-        session: &mut Session,
-        traversal_context: &mut TraversalContext,
+        session: &mut Session<E, S>,
         gas_meter: &mut G,
-        module_storage: &MS,
-    ) -> Result<(), umi_shared::error::Error> {
+    ) -> Result<(), umi_shared::error::Error>
+    where
+        G: GasMeter,
+        E: WithRuntimeEnvironment,
+        S: ResourceResolver + ModuleBytesStorage,
+    {
         transfer_eth(
             TransferArgs {
                 from,
@@ -99,20 +107,20 @@ impl BaseTokenAccounts for UmiBaseTokenAccounts {
                 amount,
             },
             session,
-            traversal_context,
             gas_meter,
-            module_storage,
         )
     }
 
-    fn refund_gas_cost(
+    fn refund_gas_cost<E, S>(
         &self,
         to: &AccountAddress,
         amount: U256,
-        session: &mut Session,
-        traversal_context: &mut TraversalContext,
-        module_storage: &impl ModuleStorage,
-    ) -> Result<(), umi_shared::error::Error> {
+        session: &mut Session<E, S>,
+    ) -> Result<(), umi_shared::error::Error>
+    where
+        E: WithRuntimeEnvironment,
+        S: ResourceResolver + ModuleBytesStorage,
+    {
         let mut gas_meter = UnmeteredGasMeter;
         transfer_eth(
             TransferArgs {
@@ -121,32 +129,36 @@ impl BaseTokenAccounts for UmiBaseTokenAccounts {
                 amount,
             },
             session,
-            traversal_context,
             &mut gas_meter,
-            module_storage,
         )
     }
 
-    fn transfer<G: GasMeter, MS: ModuleStorage>(
+    fn transfer<G, E, S>(
         &self,
         args: TransferArgs<'_>,
-        session: &mut Session,
-        traversal_context: &mut TraversalContext,
+        session: &mut Session<E, S>,
         gas_meter: &mut G,
-        module_storage: &MS,
-    ) -> Result<(), umi_shared::error::Error> {
-        transfer_eth(args, session, traversal_context, gas_meter, module_storage)
+    ) -> Result<(), umi_shared::error::Error>
+    where
+        G: GasMeter,
+        E: WithRuntimeEnvironment,
+        S: ResourceResolver + ModuleBytesStorage,
+    {
+        transfer_eth(args, session, gas_meter)
     }
 }
 
-pub fn mint_eth<G: GasMeter>(
+pub fn mint_eth<G, E, S>(
     to: &AccountAddress,
     amount: U256,
-    session: &mut Session,
-    traversal_context: &mut TraversalContext,
+    session: &mut Session<E, S>,
     gas_meter: &mut G,
-    module_storage: &impl ModuleStorage,
-) -> Result<(), umi_shared::error::Error> {
+) -> Result<(), umi_shared::error::Error>
+where
+    G: GasMeter,
+    E: WithRuntimeEnvironment,
+    S: ResourceResolver + ModuleBytesStorage,
+{
     if amount.is_zero() {
         return Ok(());
     }
@@ -156,20 +168,18 @@ pub fn mint_eth<G: GasMeter>(
     let amount_arg =
         bcs::to_bytes(&MoveValue::U256(amount.to_move_u256())).expect("amount can serialize");
 
-    let function =
-        session.load_function(module_storage, &token_module_id, MINT_FUNCTION_NAME, &[])?;
-
+    let serialized_args = vec![
+        admin_arg.as_slice(),
+        to_arg.as_slice(),
+        amount_arg.as_slice(),
+    ];
     session
-        .execute_entry_function(
-            function,
-            vec![
-                admin_arg.as_slice(),
-                to_arg.as_slice(),
-                amount_arg.as_slice(),
-            ],
+        .load_and_execute_function(
             gas_meter,
-            traversal_context,
-            module_storage,
+            &token_module_id,
+            MINT_FUNCTION_NAME,
+            &[],
+            serialized_args,
         )
         .map_err(|e| {
             tracing::error!("mint_eth error: {e:?}");
@@ -179,13 +189,16 @@ pub fn mint_eth<G: GasMeter>(
     Ok(())
 }
 
-pub fn transfer_eth<G: GasMeter>(
+pub fn transfer_eth<G, E, S>(
     args: TransferArgs<'_>,
-    session: &mut Session,
-    traversal_context: &mut TraversalContext,
+    session: &mut Session<E, S>,
     gas_meter: &mut G,
-    module_storage: &impl ModuleStorage,
-) -> Result<(), umi_shared::error::Error> {
+) -> Result<(), umi_shared::error::Error>
+where
+    G: GasMeter,
+    E: WithRuntimeEnvironment,
+    S: ResourceResolver + ModuleBytesStorage,
+{
     if args.amount.is_zero() {
         return Ok(());
     }
@@ -196,36 +209,34 @@ pub fn transfer_eth<G: GasMeter>(
     let amount_arg =
         bcs::to_bytes(&MoveValue::U256(args.amount.to_move_u256())).expect("amount can serialize");
 
-    let function = session.load_function(
-        module_storage,
+    let serialized_args = vec![
+        admin_arg.as_slice(),
+        from_arg.as_slice(),
+        to_arg.as_slice(),
+        amount_arg.as_slice(),
+    ];
+    session.load_and_execute_function(
+        gas_meter,
         &token_module_id,
         TRANSFER_FUNCTION_NAME,
         &[],
-    )?;
-
-    session.execute_entry_function(
-        function,
-        vec![
-            admin_arg.as_slice(),
-            from_arg.as_slice(),
-            to_arg.as_slice(),
-            amount_arg.as_slice(),
-        ],
-        gas_meter,
-        traversal_context,
-        module_storage,
+        serialized_args,
     )?;
 
     Ok(())
 }
 
-pub fn replicate_transfers<G: GasMeter, L: EthTransferLog>(
+pub fn replicate_transfers<G, E, S, L>(
     eth_transfer_logger: &L,
-    session: &mut Session,
-    traversal_context: &mut TraversalContext,
+    session: &mut Session<E, S>,
     gas_meter: &mut G,
-    module_storage: &impl ModuleStorage,
-) -> Result<(), umi_shared::error::Error> {
+) -> Result<(), umi_shared::error::Error>
+where
+    G: GasMeter,
+    E: WithRuntimeEnvironment,
+    S: ResourceResolver + ModuleBytesStorage,
+    L: EthTransferLog,
+{
     // Transfer the transaction value from EVM native account to `origin`.
     // This step is needed because all EVM transactions start with the caller
     // transferring tokens to the EVM native account as part of `evm_call`.
@@ -244,9 +255,7 @@ pub fn replicate_transfers<G: GasMeter, L: EthTransferLog>(
                     amount: value,
                 },
                 session,
-                traversal_context,
                 gas_meter,
-                module_storage,
             )?;
         }
     }
@@ -259,9 +268,7 @@ pub fn replicate_transfers<G: GasMeter, L: EthTransferLog>(
                 amount: transfer.amount,
             },
             session,
-            traversal_context,
             gas_meter,
-            module_storage,
         )?;
     }
 
@@ -272,7 +279,7 @@ pub fn replicate_transfers<G: GasMeter, L: EthTransferLog>(
 /// Use it only for view methods as it does not use a VM session in the request pipeline.
 pub fn quick_get_eth_balance(
     account: &AccountAddress,
-    state: &(impl MoveResolver + TableResolver),
+    state: &(impl ResourceResolver + ModuleBytesStorage),
 ) -> Result<U256, umi_shared::error::Error> {
     let struct_tag = StructTag {
         address: FRAMEWORK_ADDRESS,
@@ -312,36 +319,30 @@ mod tests {
     use {super::*, umi_shared::error::Error};
 
     impl BaseTokenAccounts for () {
-        fn charge_gas_cost<G: GasMeter, MS: ModuleStorage>(
+        fn charge_gas_cost<G, E, S>(
             &self,
             _from: &AccountAddress,
             _amount: U256,
-            _session: &mut Session,
-            _traversal_context: &mut TraversalContext,
+            _session: &mut Session<E, S>,
             _gas_meter: &mut G,
-            _module_storage: &MS,
         ) -> Result<(), Error> {
             Ok(())
         }
 
-        fn transfer<G: GasMeter, MS: ModuleStorage>(
+        fn transfer<G, E, S>(
             &self,
             _args: TransferArgs<'_>,
-            _session: &mut Session,
-            _traversal_context: &mut TraversalContext,
+            _session: &mut Session<E, S>,
             _gas_meter: &mut G,
-            _module_storage: &MS,
         ) -> Result<(), Error> {
             Ok(())
         }
 
-        fn refund_gas_cost(
+        fn refund_gas_cost<E, S>(
             &self,
             _to: &AccountAddress,
             _amount: U256,
-            _session: &mut Session,
-            _traversal_context: &mut TraversalContext,
-            _module_storage: &impl ModuleStorage,
+            _session: &mut Session<E, S>,
         ) -> Result<(), Error> {
             Ok(())
         }

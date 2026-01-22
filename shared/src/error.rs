@@ -150,7 +150,7 @@ pub enum InvalidTransactionCause {
     ExhaustedAccount,
     #[error("Incorrect chain id")]
     IncorrectChainId,
-    #[error("Argument type not allowed in entry function: {0}")]
+    #[error("Argument type not allowed in entry function: {0:?}")]
     DisallowedEntryFunctionType(TypeTag),
     #[error("Insufficient intrinsic gas")]
     InsufficientIntrinsicGas,
@@ -340,7 +340,7 @@ mod tests {
             name: "Token".parse().unwrap(),
             type_args: vec![TypeTag::U8],
         }))),
-        "Argument type not allowed in entry function: 0x1::token::Token<u8>"
+        "Argument type not allowed in entry function: Struct(StructTag { address: 0000000000000000000000000000000000000000000000000000000000000001, module: Identifier(\"token\"), name: Identifier(\"Token\"), type_args: [U8] })"
     )]
     #[test_case(
         InvalidTransactionCause::InsufficientIntrinsicGas,

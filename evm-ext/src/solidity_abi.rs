@@ -1,14 +1,17 @@
 use {
     super::{EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE},
     crate::native_evm_context::FRAMEWORK_ADDRESS,
-    alloy::dyn_abi::{DynSolType, DynSolValue, Error},
+    alloy::{
+        dyn_abi::{DynSolType, DynSolValue, Error},
+        primitives::I256,
+    },
     aptos_gas_algebra::{GasExpression, InternalGasUnit},
     aptos_gas_schedule::{
         NativeGasParameters,
         gas_params::natives::aptos_framework::{TYPE_INFO_TYPE_OF_BASE, UTIL_FROM_BYTES_PER_BYTE},
     },
     aptos_native_interface::{
-        SafeNativeContext, SafeNativeError, SafeNativeResult, safely_pop_arg, safely_pop_type_arg,
+        SafeNativeContext, SafeNativeError, SafeNativeResult, safely_pop_arg,
     },
     aptos_types::vm_status::StatusCode,
     move_binary_format::errors::PartialVMError,
@@ -25,7 +28,10 @@ use {
     revm::primitives::U256,
     smallvec::{SmallVec, smallvec},
     std::{collections::VecDeque, sync::LazyLock},
-    umi_shared::primitives::{ToEthAddress, ToMoveAddress, ToMoveU256, ToU256},
+    umi_shared::{
+        move_value::value_to_move_value,
+        primitives::{ToEthAddress, ToMoveAddress, ToMoveU256, ToU256},
+    },
 };
 
 /// Marker struct defined in our framework for marking data as FixedBytes in the Solidity ABI.
@@ -58,7 +64,7 @@ static STRING_TAG: LazyLock<StructTag> = LazyLock::new(|| StructTag {
 /// such that it would be suitable for passing to a Solidity contract's function.
 pub fn abi_encode_params(
     context: &mut SafeNativeContext,
-    mut ty_args: Vec<Type>,
+    ty_args: &[Type],
     mut args: VecDeque<Value>,
 ) -> SafeNativeResult<SmallVec<[Value; 1]>> {
     debug_assert_eq!(
@@ -72,32 +78,38 @@ pub fn abi_encode_params(
         "abi_encode args: prefix bytes, arg to encode"
     );
 
-    // Safety: unwrap is safe because of the length check above
     let value = args
         .pop_back()
         .ok_or(SafeNativeError::InvariantViolation(PartialVMError::new(
             StatusCode::INDEX_OUT_OF_BOUNDS,
         )))?;
     let prefix = safely_pop_arg!(args, Vec<u8>);
-    let ty_arg = safely_pop_type_arg!(ty_args);
+    let ty_arg =
+        ty_args
+            .first()
+            .ok_or(SafeNativeError::InvariantViolation(PartialVMError::new(
+                StatusCode::INDEX_OUT_OF_BOUNDS,
+            )))?;
 
     // Charge for the lookup of the type (twice because we need to get annotated and not).
     context.charge(TYPE_INFO_TYPE_OF_BASE)?;
     context.charge(TYPE_INFO_TYPE_OF_BASE)?;
 
-    let undecorated_layout = context.type_to_type_layout(&ty_arg)?;
-    let annotated_layout = context.type_to_fully_annotated_layout(&ty_arg)?;
+    let undecorated_layout = context.type_to_type_layout(ty_arg)?;
+    let annotated_layout = context.type_to_fully_annotated_layout(ty_arg)?.ok_or(
+        SafeNativeError::InvariantViolation(PartialVMError::new(StatusCode::DATA_FORMAT_ERROR)),
+    )?;
 
     // It's not possible to construct a `MoveValue` using the annotated layout
     // (the aptos code panics), so we use the undecorated layout to construct the value
     // and then pass in the annotated layout to make use of when converting to a
     // Solidity value.
-    let mv = value.as_move_value(&undecorated_layout);
+    let mv = value_to_move_value(value, &undecorated_layout)?;
 
     // Charge gas for encoding. It is important to charge _before_ we do the work.
     context.charge(abi_encode_gas_cost(&mv)?)?;
 
-    let encoding = inner_abi_encode_params(mv, &annotated_layout);
+    let encoding = inner_abi_encode_params(mv, &annotated_layout)?;
 
     let result = Value::vector_u8(prefix.into_iter().chain(encoding));
     Ok(smallvec![result])
@@ -109,21 +121,28 @@ pub fn abi_encode_params(
 /// such that it would be suitable for using Solidity contract's return value.
 pub fn abi_decode_params(
     context: &mut SafeNativeContext,
-    mut ty_args: Vec<Type>,
+    ty_args: &[Type],
     mut args: VecDeque<Value>,
 ) -> SafeNativeResult<SmallVec<[Value; 1]>> {
     debug_assert_eq!(ty_args.len(), 1, "abi_decode arg type to decode into");
     debug_assert_eq!(args.len(), 1, "abi_decode arg to decode");
 
     let value = safely_pop_arg!(args, Vec<u8>);
-    let ty_arg = safely_pop_type_arg!(ty_args);
+    let ty_arg =
+        ty_args
+            .first()
+            .ok_or(SafeNativeError::InvariantViolation(PartialVMError::new(
+                StatusCode::INDEX_OUT_OF_BOUNDS,
+            )))?;
 
     // Charge for the lookup of the type.
     context.charge(TYPE_INFO_TYPE_OF_BASE)?;
     // Charge gas for decoding. It is important to charge _before_ we do the work.
     context.charge(abi_decode_gas_cost(&value))?;
 
-    let annotated_layout = context.type_to_fully_annotated_layout(&ty_arg)?;
+    let annotated_layout = context.type_to_fully_annotated_layout(ty_arg)?.ok_or(
+        SafeNativeError::InvariantViolation(PartialVMError::new(StatusCode::DATA_FORMAT_ERROR)),
+    )?;
     let result = inner_abi_decode_params(&value, &annotated_layout)
         .map_err(|_| SafeNativeError::Abort { abort_code: 0 })?;
     Ok(smallvec![result])
@@ -157,20 +176,23 @@ fn abi_decode_gas_cost(
 
 /// Encode the move value into bytes using the Solidity ABI
 /// such that it would be suitable for passing to a Solidity contract's function.
-fn inner_abi_encode_params(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> Vec<u8> {
+fn inner_abi_encode_params(
+    mv: MoveValue,
+    annotated_layout: &MoveTypeLayout,
+) -> SafeNativeResult<Vec<u8>> {
     // A couple special cases that we can handle easily
     match &mv {
         MoveValue::U8(x) => {
             let mut result = vec![0; 32];
             result[31] = *x;
-            return result;
+            return Ok(result);
         }
         MoveValue::U16(x) => {
             let mut result = vec![0; 32];
             let [a, b] = x.to_be_bytes();
             result[30] = a;
             result[31] = b;
-            return result;
+            return Ok(result);
         }
         MoveValue::U32(x) => {
             let mut result = vec![0; 32];
@@ -179,16 +201,20 @@ fn inner_abi_encode_params(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> 
             result[29] = b;
             result[30] = c;
             result[31] = d;
-            return result;
+            return Ok(result);
         }
         MoveValue::Vector(inner) if inner.is_empty() => {
             let mut result = vec![0; 64];
             result[31] = 32;
-            return result;
+            return Ok(result);
+        }
+        MoveValue::Closure(_) => {
+            // Closures are not supported by Solidity ABI
+            return Err(SafeNativeError::Abort { abort_code: 666 });
         }
         _ => (),
     }
-    move_value_to_sol_value(mv, annotated_layout).abi_encode_params()
+    Ok(move_value_to_sol_value(mv, annotated_layout).abi_encode_params())
 }
 
 /// Decode the Solidity ABI bytes to native value
@@ -205,6 +231,12 @@ fn move_value_to_sol_value(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> 
             DynSolValue::Address(evm_address)
         }
         MoveValue::Bool(b) => DynSolValue::Bool(b),
+        MoveValue::I8(x) => DynSolValue::Int(I256::unchecked_from(x), 8),
+        MoveValue::I16(x) => DynSolValue::Int(I256::unchecked_from(x), 16),
+        MoveValue::I32(x) => DynSolValue::Int(I256::unchecked_from(x), 32),
+        MoveValue::I64(x) => DynSolValue::Int(I256::unchecked_from(x), 64),
+        MoveValue::I128(x) => DynSolValue::Int(I256::unchecked_from(x), 128),
+        MoveValue::I256(x) => DynSolValue::Int(I256::from_le_bytes(x.to_le_bytes()), 256),
         MoveValue::U8(x) => DynSolValue::Uint(U256::from(x), 8),
         MoveValue::U16(x) => DynSolValue::Uint(U256::from(x), 16),
         MoveValue::U32(x) => DynSolValue::Uint(U256::from(x), 32),
@@ -291,12 +323,19 @@ fn move_value_to_sol_value(mv: MoveValue, annotated_layout: &MoveTypeLayout) -> 
                     .collect(),
             )
         }
+        MoveValue::Closure(_) => unreachable!("Case handled by `inner_abi_encode_params`"),
     }
 }
 
 fn layout_to_sol_type(layout: &MoveTypeLayout) -> Result<DynSolType, Error> {
     let sol_type = match layout {
         MoveTypeLayout::Bool => DynSolType::Bool,
+        MoveTypeLayout::I8 => DynSolType::Int(8),
+        MoveTypeLayout::I16 => DynSolType::Int(16),
+        MoveTypeLayout::I32 => DynSolType::Int(32),
+        MoveTypeLayout::I64 => DynSolType::Int(64),
+        MoveTypeLayout::I128 => DynSolType::Int(128),
+        MoveTypeLayout::I256 => DynSolType::Int(256),
         MoveTypeLayout::U8 => DynSolType::Uint(8),
         MoveTypeLayout::U16 => DynSolType::Uint(16),
         MoveTypeLayout::U32 => DynSolType::Uint(32),
@@ -353,19 +392,30 @@ fn layout_to_sol_type(layout: &MoveTypeLayout) -> Result<DynSolType, Error> {
             )
         }
         MoveTypeLayout::Native(_, native_layout) => layout_to_sol_type(native_layout)?,
+        MoveTypeLayout::Function => {
+            return Err(Error::SolTypes(alloy::sol_types::Error::custom(
+                "Move functions are not supported in Solidity ABI",
+            )));
+        }
     };
     Ok(sol_type)
 }
 
 fn sol_to_value(sv: DynSolValue, layout: &MoveTypeLayout) -> Result<Value, Error> {
+    fn err_msg<E: std::fmt::Debug>(e: E) -> Error {
+        Error::custom(format!("Number conversion failed: {e:?}"))
+    }
+
     let value = match (sv, layout) {
         (DynSolValue::Bool(b), MoveTypeLayout::Bool) => Value::bool(b),
         (DynSolValue::Uint(u, size), _) => match (size, layout) {
-            (8, MoveTypeLayout::U8) => Value::u8(u.to_move_u256().unchecked_as_u8()),
-            (16, MoveTypeLayout::U16) => Value::u16(u.to_move_u256().unchecked_as_u16()),
-            (32, MoveTypeLayout::U32) => Value::u32(u.to_move_u256().unchecked_as_u32()),
-            (64, MoveTypeLayout::U64) => Value::u64(u.to_move_u256().unchecked_as_u64()),
-            (128, MoveTypeLayout::U128) => Value::u128(u.to_move_u256().unchecked_as_u128()),
+            (8, MoveTypeLayout::U8) => Value::u8(u.to_move_u256().try_into().map_err(err_msg)?),
+            (16, MoveTypeLayout::U16) => Value::u16(u.to_move_u256().try_into().map_err(err_msg)?),
+            (32, MoveTypeLayout::U32) => Value::u32(u.to_move_u256().try_into().map_err(err_msg)?),
+            (64, MoveTypeLayout::U64) => Value::u64(u.to_move_u256().try_into().map_err(err_msg)?),
+            (128, MoveTypeLayout::U128) => {
+                Value::u128(u.to_move_u256().try_into().map_err(err_msg)?)
+            }
             (256, MoveTypeLayout::U256) => Value::u256(u.to_move_u256()),
             _ => {
                 return Err(Error::custom(
@@ -391,13 +441,12 @@ fn sol_to_value(sv: DynSolValue, layout: &MoveTypeLayout) -> Result<Value, Error
         (DynSolValue::String(s), MoveTypeLayout::Struct(_)) => {
             Value::struct_(Struct::pack(vec![Value::vector_u8(s.into_bytes())]))
         }
-        (DynSolValue::Array(a), MoveTypeLayout::Vector(inner_layout)) => {
-            Value::vector_for_testing_only(
-                a.into_iter()
-                    .map(|sv| sol_to_value(sv, inner_layout))
-                    .collect::<Result<Vec<_>, Error>>()?,
-            )
-        }
+        (DynSolValue::Array(a), MoveTypeLayout::Vector(inner_layout)) => Value::vector_unchecked(
+            a.into_iter()
+                .map(|sv| sol_to_value(sv, inner_layout))
+                .collect::<Result<Vec<_>, Error>>()?,
+        )
+        .map_err(|e| Error::custom(format!("Array conversion failed: {e:?}")))?,
         (DynSolValue::Tuple(t), MoveTypeLayout::Struct(struct_layout)) => {
             let fields = match struct_layout {
                 MoveStructLayout::Runtime(move_type_layouts) => move_type_layouts.clone(),
@@ -514,7 +563,8 @@ mod tests {
             .into();
         let message = format!("Took too long to encode value: {mv:#?}");
         let now = Instant::now();
-        let abi_encoded = inner_abi_encode_params(mv, &annotated_layout);
+        let abi_encoded = inner_abi_encode_params(mv, &annotated_layout)
+            .unwrap_or_else(|_| panic!("inner_abi_encode_params failed"));
         let duration = now.elapsed();
 
         assert_sufficient_gas(gas_cost, duration, message);
@@ -541,7 +591,10 @@ mod tests {
         assert_sufficient_gas(gas_cost, duration, message);
 
         let undecorated_layout = undecorate_layout(annotated_layout);
-        value.map(|v| v.as_move_value(&undecorated_layout))
+        value.and_then(|v| {
+            value_to_move_value(v, &undecorated_layout)
+                .map_err(|_| Error::custom("value_to_move_value failed"))
+        })
     }
 
     // Ensure enough gas was charged for the amount of computation done.
@@ -645,7 +698,7 @@ mod tests {
             MoveValue::U32(rng.r#gen()),
             MoveValue::U64(rng.r#gen()),
             MoveValue::U128(rng.r#gen()),
-            MoveValue::U256(rng.r#gen()),
+            MoveValue::U256(move_core_types::int256::U256::from_le_bytes(rng.r#gen())),
             MoveValue::Bool(rng.r#gen()),
             MoveValue::Signer(Address::from_slice(&rand_bytes(rng, 20)).to_move_address()),
             MoveValue::Address(Address::from_slice(&rand_bytes(rng, 20)).to_move_address()),
@@ -654,6 +707,12 @@ mod tests {
 
     fn construct_annotated_layout(mv: &MoveValue, rng: &mut ThreadRng) -> MoveTypeLayout {
         match mv {
+            MoveValue::I8(_) => MoveTypeLayout::I8,
+            MoveValue::I16(_) => MoveTypeLayout::I16,
+            MoveValue::I32(_) => MoveTypeLayout::I32,
+            MoveValue::I64(_) => MoveTypeLayout::I64,
+            MoveValue::I128(_) => MoveTypeLayout::I128,
+            MoveValue::I256(_) => MoveTypeLayout::I256,
             MoveValue::U8(_) => MoveTypeLayout::U8,
             MoveValue::U64(_) => MoveTypeLayout::U64,
             MoveValue::U128(_) => MoveTypeLayout::U128,
@@ -689,6 +748,7 @@ mod tests {
                     fields: field_layouts,
                 })
             }
+            MoveValue::Closure(_) => MoveTypeLayout::Function,
         }
     }
 

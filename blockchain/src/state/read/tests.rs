@@ -1,24 +1,23 @@
 use {
     super::*,
     alloy::hex,
-    move_core_types::{account_address::AccountAddress, effects::ChangeSet},
+    move_core_types::account_address::AccountAddress,
     move_table_extension::TableResolver,
-    move_vm_runtime::{
-        AsUnsyncCodeStorage,
-        module_traversal::{TraversalContext, TraversalStorage},
-    },
-    move_vm_types::{gas::UnmeteredGasMeter, resolver::MoveResolver},
+    move_vm_types::{code::ModuleBytesStorage, gas::UnmeteredGasMeter, resolver::ResourceResolver},
     std::{collections::HashMap, sync::Arc},
     umi_evm_ext::state::InMemoryStorageTrieRepository,
     umi_execution::{
         check_nonce, create_vm_session, increment_account_nonce, mint_eth, session_id::SessionId,
     },
-    umi_genesis::{CreateMoveVm, UmiVm, config::GenesisConfig},
+    umi_genesis::{
+        config::GenesisConfig,
+        vm::{RuntimeContext, UmiVm},
+    },
     umi_shared::primitives::{B256, U256},
-    umi_state::{Changes, InMemoryState, InMemoryTrieDb, ResolverBasedModuleBytesStorage, State},
+    umi_state::{AllAccountChanges, Changes, InMemoryState, InMemoryTrieDb, State},
 };
 
-struct StateSpy(InMemoryState, ChangeSet);
+struct StateSpy(InMemoryState, AllAccountChanges);
 
 impl State for StateSpy {
     type Err = <InMemoryState as State>::Err;
@@ -32,7 +31,7 @@ impl State for StateSpy {
         self.0.switch_state_root(root)
     }
 
-    fn resolver(&self) -> &(impl MoveResolver + TableResolver) {
+    fn resolver(&self) -> &(impl ResourceResolver + ModuleBytesStorage + TableResolver) {
         self.0.resolver()
     }
 
@@ -41,38 +40,26 @@ impl State for StateSpy {
     }
 }
 
-fn mint_one_eth(state: &mut impl State, addr: AccountAddress) -> ChangeSet {
+fn mint_one_eth(state: &mut impl State, addr: AccountAddress) -> AllAccountChanges {
     let evm_storage = InMemoryStorageTrieRepository::new();
     let umi_vm = UmiVm::new(&Default::default());
-    let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
-    let code_storage = module_bytes_storage.as_unsync_code_storage(&umi_vm);
-    let vm = umi_vm.create_move_vm().unwrap();
+    let runtime_context = RuntimeContext::new(&umi_vm, state.resolver());
     let mut session = create_vm_session(
-        &vm,
+        &runtime_context,
         state.resolver(),
         SessionId::default(),
         &evm_storage,
         &(),
         &(),
     );
-    let traversal_storage = TraversalStorage::new();
-    let mut traversal_context = TraversalContext::new(&traversal_storage);
     let mut gas_meter = UnmeteredGasMeter;
 
-    mint_eth(
-        &addr,
-        U256::from(1u64),
-        &mut session,
-        &mut traversal_context,
-        &mut gas_meter,
-        &code_storage,
-    )
-    .unwrap();
+    mint_eth(&addr, U256::from(1u64), &mut session, &mut gas_meter).unwrap();
 
-    let changes = session.finish(&code_storage).unwrap();
+    let changes = session.into_effects().unwrap();
 
     state
-        .apply(Changes::without_tables(changes.clone()))
+        .apply(Changes::from_account_changes(changes.clone()))
         .unwrap();
 
     changes
@@ -83,7 +70,7 @@ fn test_query_fetches_latest_balance() {
     let mut evm_storage = InMemoryStorageTrieRepository::new();
     let trie_db = Arc::new(InMemoryTrieDb::empty());
     let state = InMemoryState::empty(trie_db.clone());
-    let mut state = StateSpy(state, ChangeSet::new());
+    let mut state = StateSpy(state, AllAccountChanges::default());
 
     let genesis_config = GenesisConfig::default();
     let (changes, evm_storage_changes) = umi_genesis_image::load();
@@ -120,7 +107,7 @@ fn test_query_fetches_older_balance() {
     let mut evm_storage = InMemoryStorageTrieRepository::new();
     let trie_db = Arc::new(InMemoryTrieDb::empty());
     let state = InMemoryState::empty(trie_db.clone());
-    let mut state = StateSpy(state, ChangeSet::new());
+    let mut state = StateSpy(state, AllAccountChanges::default());
 
     let genesis_config = GenesisConfig::default();
     let (changes, evm_storage_changes) = umi_genesis_image::load();
@@ -162,7 +149,7 @@ fn test_query_fetches_latest_and_previous_balance() {
     let mut evm_storage = InMemoryStorageTrieRepository::new();
     let trie_db = Arc::new(InMemoryTrieDb::empty());
     let state = InMemoryState::empty(trie_db.clone());
-    let mut state = StateSpy(state, ChangeSet::new());
+    let mut state = StateSpy(state, AllAccountChanges::default());
 
     let genesis_config = GenesisConfig::default();
     let (changes, evm_storage_changes) = umi_genesis_image::load();
@@ -211,7 +198,7 @@ fn test_query_fetches_zero_balance_for_non_existent_account() {
     let mut evm_storage = InMemoryStorageTrieRepository::new();
     let trie_db = Arc::new(InMemoryTrieDb::empty());
     let state = InMemoryState::empty(trie_db.clone());
-    let mut state = StateSpy(state, ChangeSet::new());
+    let mut state = StateSpy(state, AllAccountChanges::default());
 
     let genesis_config = GenesisConfig::default();
     let (changes, evm_storage_changes) = umi_genesis_image::load();
@@ -240,46 +227,31 @@ fn test_query_fetches_zero_balance_for_non_existent_account() {
     assert_eq!(actual_balance, expected_balance);
 }
 
-fn inc_one_nonce(old_nonce: u64, state: &mut impl State, addr: AccountAddress) -> ChangeSet {
+fn inc_one_nonce(
+    old_nonce: u64,
+    state: &mut impl State,
+    addr: AccountAddress,
+) -> AllAccountChanges {
     let evm_storage = InMemoryStorageTrieRepository::new();
     let umi_vm = UmiVm::new(&Default::default());
-    let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
-    let code_storage = module_bytes_storage.as_unsync_code_storage(&umi_vm);
-    let vm = umi_vm.create_move_vm().unwrap();
+    let runtime_context = RuntimeContext::new(&umi_vm, state.resolver());
     let mut session = create_vm_session(
-        &vm,
+        &runtime_context,
         state.resolver(),
         SessionId::default(),
         &evm_storage,
         &(),
         &(),
     );
-    let traversal_storage = TraversalStorage::new();
-    let mut traversal_context = TraversalContext::new(&traversal_storage);
     let mut gas_meter = UnmeteredGasMeter;
 
-    check_nonce(
-        old_nonce,
-        &addr,
-        &mut session,
-        &mut traversal_context,
-        &mut gas_meter,
-        &code_storage,
-    )
-    .unwrap();
-    increment_account_nonce(
-        &addr,
-        &mut session,
-        &mut traversal_context,
-        &mut gas_meter,
-        &code_storage,
-    )
-    .unwrap();
+    check_nonce(old_nonce, &addr, &mut session, &mut gas_meter).unwrap();
+    increment_account_nonce(&addr, &mut session, &mut gas_meter).unwrap();
 
-    let changes = session.finish(&code_storage).unwrap();
+    let changes = session.into_effects().unwrap();
 
     state
-        .apply(Changes::without_tables(changes.clone()))
+        .apply(Changes::from_account_changes(changes.clone()))
         .unwrap();
 
     changes
@@ -290,7 +262,7 @@ fn test_query_fetches_latest_nonce() {
     let mut evm_storage = InMemoryStorageTrieRepository::new();
     let trie_db = Arc::new(InMemoryTrieDb::empty());
     let state = InMemoryState::empty(trie_db.clone());
-    let mut state = StateSpy(state, ChangeSet::new());
+    let mut state = StateSpy(state, AllAccountChanges::default());
 
     let genesis_config = GenesisConfig::default();
     let (changes, evm_storage_changes) = umi_genesis_image::load();
@@ -327,7 +299,7 @@ fn test_query_fetches_older_nonce() {
     let mut evm_storage = InMemoryStorageTrieRepository::new();
     let trie_db = Arc::new(InMemoryTrieDb::empty());
     let state = InMemoryState::empty(trie_db.clone());
-    let mut state = StateSpy(state, ChangeSet::new());
+    let mut state = StateSpy(state, AllAccountChanges::default());
 
     let genesis_config = GenesisConfig::default();
     let (changes, evm_storage_changes) = umi_genesis_image::load();
@@ -369,7 +341,7 @@ fn test_query_fetches_latest_and_previous_nonce() {
     let mut evm_storage = InMemoryStorageTrieRepository::new();
     let trie_db = Arc::new(InMemoryTrieDb::empty());
     let state = InMemoryState::empty(trie_db.clone());
-    let mut state = StateSpy(state, ChangeSet::new());
+    let mut state = StateSpy(state, AllAccountChanges::default());
 
     let genesis_config = GenesisConfig::default();
     let (changes, evm_storage_changes) = umi_genesis_image::load();
@@ -418,7 +390,7 @@ fn test_query_fetches_zero_nonce_for_non_existent_account() {
     let mut evm_storage = InMemoryStorageTrieRepository::new();
     let trie_db = Arc::new(InMemoryTrieDb::empty());
     let state = InMemoryState::empty(trie_db.clone());
-    let mut state = StateSpy(state, ChangeSet::new());
+    let mut state = StateSpy(state, AllAccountChanges::default());
 
     let genesis_config = GenesisConfig::default();
     let (changes, evm_storage_changes) = umi_genesis_image::load();

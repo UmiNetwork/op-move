@@ -138,6 +138,28 @@ module GasPriceOracle::gas_price_oracle {
         result
     }
 
+    struct GetOperatorFeeArgs {
+        gas_used: u256,
+    }
+
+    public fun get_operator_fee(
+        gas_used: u256,
+    ): EvmResult {
+        let arg_struct = GetOperatorFeeArgs {
+            gas_used,
+        };
+
+        let data = abi_encode_params(
+            vector[39, 90, 237, 210],
+            arg_struct,
+        );
+
+        let result = evm_view(@0x0, @GasPriceOracle, 0, data);
+        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
+        emit_evm_logs(&result);
+        result
+    }
+
 
     public fun is_ecotone(
     ): EvmResult {
@@ -153,6 +175,17 @@ module GasPriceOracle::gas_price_oracle {
     public fun is_fjord(
     ): EvmResult {
         let data = vector[150, 14, 58, 35];
+
+        let result = evm_view(@0x0, @GasPriceOracle, 0, data);
+        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
+        emit_evm_logs(&result);
+        result
+    }
+
+
+    public fun is_isthmus(
+    ): EvmResult {
+        let data = vector[181, 69, 1, 188];
 
         let result = evm_view(@0x0, @GasPriceOracle, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
@@ -212,6 +245,19 @@ module GasPriceOracle::gas_price_oracle {
     ): EvmResult {
         let _value = zero(get_metadata());
         let data = vector[142, 152, 177, 6];
+
+        let result = evm_call(caller, @GasPriceOracle, _value, data);
+        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
+        emit_evm_logs(&result);
+        result
+    }
+
+
+    public fun set_isthmus(
+        caller: &signer,
+    ): EvmResult {
+        let _value = zero(get_metadata());
+        let data = vector[41, 27, 3, 131];
 
         let result = evm_call(caller, @GasPriceOracle, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));

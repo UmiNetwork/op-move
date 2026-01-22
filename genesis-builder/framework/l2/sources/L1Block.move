@@ -161,9 +161,9 @@ module L1Block::l1_block {
     }
 
 
-    public fun sequence_number(
+    public fun operator_fee_constant(
     ): EvmResult {
-        let data = vector[100, 202, 35, 239];
+        let data = vector[22, 211, 188, 127];
 
         let result = evm_view(@0x0, @L1Block, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
@@ -171,34 +171,23 @@ module L1Block::l1_block {
         result
     }
 
-    struct SetGasPayingTokenArgs {
-        token: address,
-        decimals: u8,
-        name: Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>,
-        symbol: Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>,
+
+    public fun operator_fee_scalar(
+    ): EvmResult {
+        let data = vector[77, 93, 154, 42];
+
+        let result = evm_view(@0x0, @L1Block, 0, data);
+        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
+        emit_evm_logs(&result);
+        result
     }
 
-    public fun set_gas_paying_token(
-        caller: &signer,
-        token: address,
-        decimals: u8,
-        name: Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>,
-        symbol: Evm::evm::SolidityFixedBytes<Evm::evm::U5<Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1, Evm::evm::B1>>,
+
+    public fun sequence_number(
     ): EvmResult {
-        let _value = zero(get_metadata());
-        let arg_struct = SetGasPayingTokenArgs {
-            token,
-            decimals,
-            name,
-            symbol,
-        };
+        let data = vector[100, 202, 35, 239];
 
-        let data = abi_encode_params(
-            vector[113, 207, 170, 63],
-            arg_struct,
-        );
-
-        let result = evm_call(caller, @L1Block, _value, data);
+        let result = evm_view(@0x0, @L1Block, 0, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
         emit_evm_logs(&result);
         result
@@ -255,6 +244,19 @@ module L1Block::l1_block {
     ): EvmResult {
         let _value = zero(get_metadata());
         let data = vector[68, 10, 94, 32];
+
+        let result = evm_call(caller, @L1Block, _value, data);
+        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
+        emit_evm_logs(&result);
+        result
+    }
+
+
+    public fun set_l1_block_values_isthmus(
+        caller: &signer,
+    ): EvmResult {
+        let _value = zero(get_metadata());
+        let data = vector[9, 137, 153, 190];
 
         let result = evm_call(caller, @L1Block, _value, data);
         assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));

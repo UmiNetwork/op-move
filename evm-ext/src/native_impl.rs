@@ -60,7 +60,7 @@ const EVM_BASE_GAS: u64 = 21_000;
 pub fn append_evm_natives(natives: &mut NativeFunctionTable, builder: &SafeNativeBuilder) {
     type NativeFn = fn(
         &mut SafeNativeContext,
-        Vec<Type>,
+        &[Type],
         VecDeque<Value>,
     ) -> SafeNativeResult<SmallVec<[Value; 1]>>;
     let mut push_native = |name, f: NativeFn| {
@@ -77,7 +77,7 @@ pub fn append_evm_natives(natives: &mut NativeFunctionTable, builder: &SafeNativ
 
 fn evm_view(
     context: &mut SafeNativeContext,
-    ty_args: Vec<Type>,
+    ty_args: &[Type],
     args: VecDeque<Value>,
 ) -> SafeNativeResult<SmallVec<[Value; 1]>> {
     debug_assert!(ty_args.is_empty(), "No ty_args in EVM native");
@@ -110,7 +110,7 @@ fn evm_view(
 
 fn evm_call(
     context: &mut SafeNativeContext,
-    ty_args: Vec<Type>,
+    ty_args: &[Type],
     args: VecDeque<Value>,
 ) -> SafeNativeResult<SmallVec<[Value; 1]>> {
     debug_assert!(ty_args.is_empty(), "No ty_args in EVM native");
@@ -133,14 +133,14 @@ fn evm_call(
 
 fn evm_create(
     context: &mut SafeNativeContext,
-    ty_args: Vec<Type>,
+    ty_args: &[Type],
     mut args: VecDeque<Value>,
 ) -> SafeNativeResult<SmallVec<[Value; 1]>> {
     debug_assert!(ty_args.is_empty(), "No ty_args in EVM native");
     debug_assert_eq!(args.len(), 3, "EVM native args should be from, value, data");
 
     let data = safely_pop_arg!(args, Vec<u8>);
-    let value = safely_pop_arg!(args, move_core_types::u256::U256);
+    let value = safely_pop_arg!(args, move_core_types::int256::U256);
     let caller = safely_pop_arg!(args, AccountAddress);
 
     evm_transact_inner(
@@ -239,7 +239,7 @@ fn pop_evm_args(mut args: VecDeque<Value>) -> SafeNativeResult<EvmCallArgs> {
     );
 
     let data = safely_pop_arg!(args, Vec<u8>);
-    let value = safely_pop_arg!(args, move_core_types::u256::U256);
+    let value = safely_pop_arg!(args, move_core_types::int256::U256);
     let to = safely_pop_arg!(args, AccountAddress);
     let caller = safely_pop_arg!(args, AccountAddress);
 
@@ -252,7 +252,7 @@ fn pop_evm_args(mut args: VecDeque<Value>) -> SafeNativeResult<EvmCallArgs> {
 }
 
 fn get_gas_limit(context: &SafeNativeContext) -> u64 {
-    let internal_units: u64 = context.gas_balance().into();
+    let internal_units: u64 = context.legacy_gas_budget().into();
     internal_units
         .saturating_div(EVM_SCALE_FACTOR)
         .saturating_add(EVM_BASE_GAS)
@@ -322,7 +322,7 @@ fn construct_tx_env(
 struct EvmCallArgs {
     caller: AccountAddress,
     to: AccountAddress,
-    value: move_core_types::u256::U256,
+    value: move_core_types::int256::U256,
     data: Vec<u8>,
 }
 

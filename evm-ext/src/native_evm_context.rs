@@ -13,7 +13,10 @@ use {
     better_any::{Tid, TidAble},
     move_binary_format::errors::PartialVMError,
     move_core_types::account_address::AccountAddress,
-    move_vm_types::{resolver::MoveResolver, value_serde::ValueSerDeContext, values::VMValueCast},
+    move_vm_runtime::native_extensions::UnreachableSessionListener,
+    move_vm_types::{
+        resolver::ResourceResolver, value_serde::ValueSerDeContext, values::VMValueCast,
+    },
     revm::{
         DatabaseRef,
         context::BlockEnv,
@@ -40,7 +43,7 @@ pub struct HeaderForExecution {
 
 #[derive(Tid)]
 pub struct NativeEVMContext<'a> {
-    pub resolver: &'a dyn MoveResolver,
+    pub resolver: &'a dyn ResourceResolver,
     pub storage_trie: &'a dyn StorageTrieRepository,
     pub transfer_logs: &'a dyn EthTransferLog,
     // Keep the DB in `NativeEVMContext` so that the EVM storage is consistent
@@ -51,9 +54,12 @@ pub struct NativeEVMContext<'a> {
     pub block_header: HeaderForExecution,
 }
 
+// TODO: is this right? Or should the session listener have some logic?
+impl<'a> UnreachableSessionListener for NativeEVMContext<'a> {}
+
 impl<'a> NativeEVMContext<'a> {
     pub fn new(
-        state: &'a impl MoveResolver,
+        state: &'a impl ResourceResolver,
         storage_trie: &'a impl StorageTrieRepository,
         transfer_logs: &'a dyn EthTransferLog,
         block_header: HeaderForExecution,
@@ -94,7 +100,7 @@ impl<'a> NativeEVMContext<'a> {
 #[derive(Clone, Copy)]
 pub struct ResolverBackedDB<'a> {
     storage_trie: &'a dyn StorageTrieRepository,
-    resolver: &'a dyn MoveResolver,
+    resolver: &'a dyn ResourceResolver,
     block_hash_lookup: &'a dyn BlockHashLookup,
     current_block_number: u64,
 }
@@ -102,7 +108,7 @@ pub struct ResolverBackedDB<'a> {
 impl<'a> ResolverBackedDB<'a> {
     pub fn new(
         storage_trie: &'a dyn StorageTrieRepository,
-        resolver: &'a dyn MoveResolver,
+        resolver: &'a dyn ResourceResolver,
         block_hash_lookup: &'a dyn BlockHashLookup,
         current_block_number: u64,
     ) -> Self {
@@ -116,13 +122,12 @@ impl<'a> ResolverBackedDB<'a> {
 
     pub fn get_account(&self, address: &Address) -> Result<Option<state::Account>, PartialVMError> {
         let struct_tag = account_info_struct_tag(address);
-        let meta_data = self.resolver.get_module_metadata(&struct_tag.module_id());
         let resource = self
             .resolver
             .get_resource_bytes_with_metadata_and_layout(
                 &EVM_NATIVE_ADDRESS,
                 &struct_tag,
-                &meta_data,
+                &[],
                 None,
             )?
             .0;
@@ -196,13 +201,12 @@ impl DatabaseRef for ResolverBackedDB<'_> {
         }
 
         let struct_tag = code_hash_struct_tag(&code_hash);
-        let meta_data = self.resolver.get_module_metadata(&struct_tag.module_id());
         let resource = self
             .resolver
             .get_resource_bytes_with_metadata_and_layout(
                 &EVM_NATIVE_ADDRESS,
                 &struct_tag,
-                &meta_data,
+                &[],
                 None,
             )?
             .0
@@ -212,7 +216,7 @@ impl DatabaseRef for ResolverBackedDB<'_> {
                     struct_tag.name
                 ))
             })?;
-        let value = ValueSerDeContext::new()
+        let value = ValueSerDeContext::new(None)
             .deserialize(&resource, &CODE_LAYOUT)
             .expect("EVM account info must deserialize correctly.");
         let bytes: Vec<u8> = value.cast()?;

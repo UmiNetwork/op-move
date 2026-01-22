@@ -10,7 +10,7 @@ use {
         language_storage::StructTag,
     },
     move_vm_runtime::native_extensions::NativeContextExtensions,
-    move_vm_types::{resolver::MoveResolver, value_serde::ValueSerDeContext, values::Value},
+    move_vm_types::{resolver::ResourceResolver, value_serde::ValueSerDeContext, values::Value},
     revm::{
         bytecode::Bytecode,
         primitives::{Address, KECCAK_EMPTY, U256},
@@ -33,7 +33,7 @@ impl Changes {
 
 pub fn genesis_state_changes(
     genesis: alloy::genesis::Genesis,
-    resolver: &impl MoveResolver,
+    resolver: &impl ResourceResolver,
     storage_trie: &impl StorageTrieRepository,
 ) -> Result<Changes, Error> {
     let transaction_id = 0;
@@ -157,7 +157,7 @@ pub fn extract_evm_changes_from_native(
 fn add_account_changes(
     address: &Address,
     account: &Account,
-    resolver: &dyn MoveResolver,
+    resolver: &dyn ResourceResolver,
     prior_changes: &AccountChangeSet,
     result: &mut AccountChangeSet,
     storage_trie: &dyn StorageTrieRepository,
@@ -181,14 +181,8 @@ fn add_account_changes(
             return exists_in_prior_changes;
         }
         // If not in the prior changes then check the resolver
-        let meta_data = resolver.get_module_metadata(&struct_tag.module_id());
         resolver
-            .get_resource_bytes_with_metadata_and_layout(
-                &EVM_NATIVE_ADDRESS,
-                struct_tag,
-                &meta_data,
-                None,
-            )
+            .get_resource_bytes_with_metadata_and_layout(&EVM_NATIVE_ADDRESS, struct_tag, &[], None)
             .map(|x| x.0.is_some())
             .unwrap_or(false)
     };
@@ -228,7 +222,7 @@ fn add_account_changes(
     {
         let struct_tag = code_hash_struct_tag(&code_hash);
         let code_value = Value::vector_u8(code.original_bytes());
-        let code = ValueSerDeContext::new()
+        let code = ValueSerDeContext::new(None)
             .serialize(&code_value, &CODE_LAYOUT)
             .ok()
             .flatten()

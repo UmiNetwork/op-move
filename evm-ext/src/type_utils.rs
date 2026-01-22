@@ -11,9 +11,9 @@ use {
         language_storage::StructTag,
         value::{MoveStructLayout, MoveTypeLayout},
     },
-    move_vm_runtime::session::SerializedReturnValues,
+    move_vm_runtime::move_vm::SerializedReturnValues,
     move_vm_types::{
-        resolver::MoveResolver,
+        resolver::ResourceResolver,
         value_serde::ValueSerDeContext,
         values::{Struct, Value, Vector},
     },
@@ -91,16 +91,15 @@ pub fn code_hash_struct_tag(code_hash: &B256) -> StructTag {
 
 pub fn get_move_account_nonce(
     address: &AccountAddress,
-    resolver: &dyn MoveResolver,
+    resolver: &dyn ResourceResolver,
 ) -> Option<u64> {
     let tag: &StructTag = &ACCOUNT_STRUCT_TAG;
-    let metadata = resolver.get_module_metadata(&tag.module_id());
     let bytes = resolver
-        .get_resource_bytes_with_metadata_and_layout(address, tag, &metadata, Some(&ACCOUNT_LAYOUT))
+        .get_resource_bytes_with_metadata_and_layout(address, tag, &[], Some(&ACCOUNT_LAYOUT))
         .ok()?
         .0?;
 
-    let value = ValueSerDeContext::new()
+    let value = ValueSerDeContext::new(None)
         .deserialize(&bytes, &ACCOUNT_LAYOUT)
         .expect("Account resource layout is known");
 
@@ -157,9 +156,8 @@ pub fn evm_result_to_move_value(result: ExecutionResult) -> Value {
     let fields = [
         Value::bool(result.is_success()),
         Value::vector_u8(output),
-        // TODO: this method says it's for testing only, but it seems
-        // to be the only way to make a Vector of Structs.
-        Value::vector_for_testing_only(result.into_logs().into_iter().map(evm_log_to_move_value)),
+        Value::vector_unchecked(result.into_logs().into_iter().map(evm_log_to_move_value))
+            .expect("Logs vec has no special constructor"),
     ];
     Value::struct_(Struct::pack(fields))
 }
@@ -169,15 +167,15 @@ pub fn extract_evm_result(
 ) -> Result<EvmNativeOutcome, PartialVMError> {
     let malformed = || {
         PartialVMError::new(StatusCode::ABORT_TYPE_MISMATCH_ERROR)
-            .with_message("Malformed EVM native return value".into())
+            .with_message("Malformed EVM native return value")
     };
 
     let mut return_values = outcome.return_values.into_iter().map(|(bytes, layout)| {
-        ValueSerDeContext::new()
+        ValueSerDeContext::new(None)
             .deserialize(&bytes, &layout)
             .ok_or_else(|| {
                 PartialVMError::new(StatusCode::ABORT_TYPE_MISMATCH_ERROR)
-                    .with_message("Invalid bytes+layout combination given for EVM native".into())
+                    .with_message("Invalid bytes+layout combination given for EVM native")
             })
     });
 
@@ -189,7 +187,7 @@ pub fn extract_evm_result(
 
     if return_values.next().is_some() {
         return Err(PartialVMError::new(StatusCode::ABORT_TYPE_MISMATCH_ERROR)
-            .with_message("EVM native has only one return value.".into()));
+            .with_message("EVM native has only one return value."));
     }
 
     let is_success: bool = evm_result_fields.next().ok_or_else(malformed)?.value_as()?;
@@ -217,7 +215,7 @@ pub fn extract_evm_result(
                     .into_iter()
                     .map(|value| {
                         let topic = value
-                            .value_as::<move_core_types::u256::U256>()?
+                            .value_as::<move_core_types::int256::U256>()?
                             .to_le_bytes()
                             .into();
                         Ok(topic)
@@ -227,7 +225,7 @@ pub fn extract_evm_result(
             )
             .ok_or_else(|| {
                 PartialVMError::new(StatusCode::ABORT_TYPE_MISMATCH_ERROR)
-                    .with_message("Greater than 4 topics in EVM return value".into())
+                    .with_message("Greater than 4 topics in EVM return value")
             })?;
             Ok(log)
         })
@@ -235,7 +233,7 @@ pub fn extract_evm_result(
 
     if evm_result_fields.next().is_some() {
         return Err(PartialVMError::new(StatusCode::ABORT_TYPE_MISMATCH_ERROR)
-            .with_message("There are only 3 field in EVM return value.".into()));
+            .with_message("There are only 3 field in EVM return value."));
     }
 
     Ok(EvmNativeOutcome {

@@ -1,6 +1,5 @@
 use {
     crate::{Application, Dependencies, DependenciesThreadSafe, input::Command},
-    move_core_types::effects::ChangeSet,
     std::{fmt::Debug, ops::DerefMut},
     tokio::sync::mpsc::Receiver,
     umi_blockchain::{
@@ -8,13 +7,14 @@ use {
         state::InMemoryStateQueries,
     },
     umi_shared::{error::Error, primitives::B256},
+    umi_state::AllAccountChanges,
 };
 
 /// A function invoked on a completion of new transaction execution batch.
 pub type OnTxBatch<S> = dyn Fn(&mut S) -> Result<(), Error> + Send + Sync;
 
 /// A function invoked on an execution of a new transaction.
-pub type OnTx<S> = dyn Fn(&mut S, ChangeSet) -> Result<(), Error> + Send + Sync;
+pub type OnTx<S> = dyn Fn(&mut S, AllAccountChanges) -> Result<(), Error> + Send + Sync;
 
 /// A function invoked on an execution of a new payload.
 pub type OnPayload<S> = dyn Fn(&mut S, PayloadId, B256) -> Result<(), Error> + Send + Sync;

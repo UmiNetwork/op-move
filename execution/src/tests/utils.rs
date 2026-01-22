@@ -3,15 +3,14 @@ use {
     crate::transaction::UmiTxEnvelope,
     alloy::consensus::Sealed,
     aptos_types::transaction::ModuleBundle,
-    move_binary_format::errors::VMError,
-    move_compiler::{
+    legacy_move_compiler::{
         compiled_unit::AnnotatedCompiledUnit,
         shared::{NumberFormat, NumericalAddress},
     },
-    move_core_types::effects::ChangeSet,
+    move_binary_format::errors::VMError,
+    move_core_types::identifier::IdentStr,
     move_model::metadata::LanguageVersion,
-    move_vm_runtime::AsUnsyncCodeStorage,
-    move_vm_types::resolver::ResourceResolver,
+    move_vm_types::{code::ModuleBytesStorage, resolver::ResourceResolver},
     regex::Regex,
     std::{
         collections::{BTreeMap, BTreeSet},
@@ -21,8 +20,8 @@ use {
         EVM_NATIVE_ADDRESS, EvmNativeOutcome, extract_evm_changes, extract_evm_result,
         state::InMemoryStorageTrieRepository,
     },
-    umi_genesis::{CreateMoveVm, UmiVm, config::CHAIN_ID},
-    umi_state::{Changes, ResolverBasedModuleBytesStorage},
+    umi_genesis::{config::CHAIN_ID, vm::UmiVm},
+    umi_state::{AllAccountChanges, Changes},
 };
 
 /// Represents the base token state for a test transaction
@@ -148,7 +147,7 @@ impl TestContext {
         assert!(
             self.state
                 .resolver()
-                .get_module(&module_id)
+                .fetch_module_bytes(&self.move_address, IdentStr::new(module_name).unwrap())
                 .unwrap()
                 .is_some(),
             "Code should be deployed"
@@ -439,12 +438,10 @@ impl TestContext {
             type_args: Vec::new(),
         };
 
-        let module_id = ModuleId::new(self.move_address, struct_tag.name.clone());
-        let metadata = self.state.resolver().get_module_metadata(&module_id);
         let data = self
             .state
             .resolver()
-            .get_resource_bytes_with_metadata_and_layout(&address, &struct_tag, &metadata, None)
+            .get_resource_bytes_with_metadata_and_layout(&address, &struct_tag, &[], None)
             .unwrap()
             .0
             .unwrap();
@@ -486,27 +483,23 @@ impl TestContext {
     ///
     /// # Returns
     /// The transaction execution outcome, changeset and context extensions
-    pub fn quick_call<'a>(
-        &'a self,
+    pub fn quick_call(
+        &self,
         args: impl IntoIterator<Item = MoveValue>,
         module_name: &str,
         fn_name: &str,
-    ) -> (EvmNativeOutcome, ChangeSet, NativeContextExtensions<'a>) {
+    ) -> (EvmNativeOutcome, AllAccountChanges, umi_evm_ext::Changes) {
         let umi_vm = UmiVm::new(&Default::default());
-        let module_bytes_storage = ResolverBasedModuleBytesStorage::new(self.state.resolver());
-        let code_storage = module_bytes_storage.as_unsync_code_storage(&umi_vm);
-        let vm = umi_vm.create_move_vm().unwrap();
+        let runtime_context = RuntimeContext::new(&umi_vm, self.state.resolver());
         let session_id = SessionId::default();
         let mut session = create_vm_session(
-            &vm,
+            &runtime_context,
             self.state.resolver(),
             session_id,
             &self.evm_storage,
             &(),
             &(),
         );
-        let traversal_storage = TraversalStorage::new();
-        let mut traversal_context = TraversalContext::new(&traversal_storage);
         let mut gas_meter = UnmeteredGasMeter;
         let args = args
             .into_iter()
@@ -517,20 +510,13 @@ impl TestContext {
         let module_id = ModuleId::new(EVM_NATIVE_ADDRESS, module_name);
 
         let outcome = session
-            .execute_function_bypass_visibility(
-                &module_id,
-                &fn_name,
-                Vec::new(),
-                args,
-                &mut gas_meter,
-                &mut traversal_context,
-                &code_storage,
-            )
+            .load_and_execute_function(&mut gas_meter, &module_id, &fn_name, &[], args)
             .unwrap();
 
         let outcome = extract_evm_result(outcome).unwrap();
-        let (changes, extensions) = session.finish_with_extensions(&code_storage).unwrap();
-        (outcome, changes, extensions)
+        let (changes, extensions) = session.into_effects_with_extensions().unwrap();
+        let evm_changes = extract_evm_changes(&extensions).unwrap();
+        (outcome, changes, evm_changes)
     }
 
     pub fn quick_call_err(
@@ -540,20 +526,16 @@ impl TestContext {
         fn_name: &str,
     ) -> VMError {
         let umi_vm = UmiVm::new(&Default::default());
-        let module_bytes_storage = ResolverBasedModuleBytesStorage::new(self.state.resolver());
-        let code_storage = module_bytes_storage.as_unsync_code_storage(&umi_vm);
-        let vm = umi_vm.create_move_vm().unwrap();
+        let runtime_context = RuntimeContext::new(&umi_vm, self.state.resolver());
         let session_id = SessionId::default();
         let mut session = create_vm_session(
-            &vm,
+            &runtime_context,
             self.state.resolver(),
             session_id,
             &self.evm_storage,
             &(),
             &(),
         );
-        let traversal_storage = TraversalStorage::new();
-        let mut traversal_context = TraversalContext::new(&traversal_storage);
         let mut gas_meter = UnmeteredGasMeter;
         let args = args
             .into_iter()
@@ -564,15 +546,7 @@ impl TestContext {
         let module_id = ModuleId::new(EVM_NATIVE_ADDRESS, module_name);
 
         session
-            .execute_function_bypass_visibility(
-                &module_id,
-                &fn_name,
-                Vec::new(),
-                args,
-                &mut gas_meter,
-                &mut traversal_context,
-                &code_storage,
-            )
+            .load_and_execute_function(&mut gas_meter, &module_id, &fn_name, &[], args)
             .unwrap_err()
     }
 
@@ -584,13 +558,14 @@ impl TestContext {
         module_name: &str,
         fn_name: &str,
     ) -> EvmNativeOutcome {
-        let (outcome, mut changes, extensions) = self.quick_call(args, module_name, fn_name);
+        let (outcome, mut changes, evm_changes) = self.quick_call(args, module_name, fn_name);
+        changes
+            .squash(AllAccountChanges::from_change_set(evm_changes.accounts))
+            .unwrap();
 
-        let evm_changes = extract_evm_changes(&extensions).unwrap();
-        changes.squash(evm_changes.accounts).unwrap();
-        drop(extensions);
-
-        self.state.apply(Changes::without_tables(changes)).unwrap();
+        self.state
+            .apply(Changes::from_account_changes(changes))
+            .unwrap();
         self.evm_storage.apply(evm_changes.storage).unwrap();
         outcome
     }

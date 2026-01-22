@@ -1,6 +1,6 @@
 use {
     super::tag_validation::{validate_entry_type_tag, validate_entry_value},
-    crate::{ADDRESS_LAYOUT, SIGNER_LAYOUT, U256_LAYOUT, layout::has_value_invariants},
+    crate::{ADDRESS_LAYOUT, SIGNER_LAYOUT, U256_LAYOUT, tag_validation::TypeInvariants},
     alloy::primitives::Address,
     aptos_types::{
         transaction::{EntryFunction, ModuleBundle, Script},
@@ -9,22 +9,20 @@ use {
     move_binary_format::errors::PartialVMError,
     move_core_types::{
         account_address::AccountAddress,
-        effects::{ChangeSet, Op},
+        effects::Op,
         language_storage::{ModuleId, TypeTag},
         value::MoveValue,
     },
-    move_vm_runtime::{
-        CodeStorage, ModuleStorage, StagingModuleStorage, module_traversal::TraversalContext,
-        session::Session,
-    },
+    move_vm_runtime::{ModuleStorage, StagingModuleStorage, WithRuntimeEnvironment},
     move_vm_types::{
-        gas::GasMeter, loaded_data::runtime_types::Type, value_serde::ValueSerDeContext,
-        values::Value,
+        code::ModuleBytesStorage, gas::GasMeter, loaded_data::runtime_types::Type,
+        resolver::ResourceResolver, value_serde::ValueSerDeContext, values::Value,
     },
     umi_evm_ext::{
         CODE_LAYOUT, EVM_CALL_FN_NAME, EVM_CREATE_FN_NAME, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
         EvmNativeOutcome, extract_evm_result,
     },
+    umi_genesis::vm::Session,
     umi_shared::{
         error::{
             Error::{self, User},
@@ -32,6 +30,7 @@ use {
         },
         primitives::{ToMoveU256, U256},
     },
+    umi_state::AllAccountChanges,
 };
 
 pub(super) struct EvmExecutionArgs {
@@ -65,29 +64,32 @@ impl EvmExecutionArgs {
         ]
         .into_iter()
         .map(|(value, layout)| {
-            Ok(ValueSerDeContext::new()
+            Ok(ValueSerDeContext::new(None)
                 .serialize(&value, layout)?
                 .ok_or_else(|| {
                     PartialVMError::new(StatusCode::VALUE_SERIALIZATION_ERROR)
-                        .with_message("Failed to serialize EVM contract call args".into())
+                        .with_message("Failed to serialize EVM contract call args")
                 })?)
         })
         .collect()
     }
 }
 
-pub(super) fn execute_entry_function<G: GasMeter, MS: ModuleStorage>(
+pub(super) fn execute_entry_function<G, E, S>(
     entry_fn: EntryFunction,
     signer: &AccountAddress,
-    session: &mut Session,
-    traversal_context: &mut TraversalContext,
+    session: &mut Session<E, S>,
     gas_meter: &mut G,
-    module_storage: &MS,
-) -> umi_shared::error::Result<()> {
+) -> umi_shared::error::Result<()>
+where
+    G: GasMeter,
+    E: WithRuntimeEnvironment,
+    S: ResourceResolver + ModuleBytesStorage,
+{
     let (module_id, function_name, ty_args, args) = entry_fn.into_inner();
 
     // Validate signer params match the actual signer
-    let function = session.load_function(module_storage, &module_id, &function_name, &ty_args)?;
+    let function = session.load_function(gas_meter, &module_id, &function_name, &ty_args)?;
     if function.param_tys().len() != args.len() {
         Err(InvalidTransactionCause::MismatchedArgumentCount)?;
     }
@@ -100,36 +102,37 @@ pub(super) fn execute_entry_function<G: GasMeter, MS: ModuleStorage>(
         // the time a module is deployed. If a module has been successfully deployed
         // then we know the recursion is bounded to a reasonable degree (less than depth 255).
         // See `test_deeply_nested_type`.
-        let tag = session.get_type_tag(ty, module_storage)?;
-        validate_entry_type_tag(&tag)?;
-        let layout = session.get_type_layout_from_ty(ty, module_storage)?;
+        let tag = session.get_type_tag(ty)?;
+        let type_invariants = validate_entry_type_tag(&tag)?;
         // Check layout for value-based invariants and only deserialize if necessary.
-        if has_value_invariants(&layout) {
-            let arg = ValueSerDeContext::new()
+        if let TypeInvariants::RequiresCheck(layout) = type_invariants {
+            let arg = ValueSerDeContext::new(None)
                 .deserialize(bytes, &layout)
-                .ok_or(InvalidTransactionCause::FailedArgumentDeserialization)?
-                .as_move_value(&layout);
+                .ok_or(InvalidTransactionCause::FailedArgumentDeserialization)?;
+            let arg = umi_shared::move_value::value_to_move_value(arg, &layout)?;
             // Note: no recursion limit is needed in this function because we have already
             // constructed the recursive types `Type`, `TypeTag`, `MoveTypeLayout` and `MoveValue` so
             // the values must have respected whatever recursion limit is present in MoveVM.
-            validate_entry_value(&tag, &arg, signer, session, module_storage)?;
+            validate_entry_value(&tag, &arg, signer, session, gas_meter)?;
         }
     }
 
-    let function = session.load_function(module_storage, &module_id, &function_name, &ty_args)?;
-    session.execute_entry_function(function, args, gas_meter, traversal_context, module_storage)?;
+    session.execution_function(gas_meter, function, args)?;
     Ok(())
 }
 
-pub(super) fn execute_script<G: GasMeter, CS: CodeStorage>(
+pub(super) fn execute_script<G, E, S>(
     script: Script,
     signer: &AccountAddress,
-    session: &mut Session,
-    traversal_context: &mut TraversalContext,
+    session: &mut Session<E, S>,
     gas_meter: &mut G,
-    code_storage: &CS,
-) -> umi_shared::error::Result<()> {
-    let function = session.load_script(code_storage, script.code(), script.ty_args())?;
+) -> umi_shared::error::Result<()>
+where
+    G: GasMeter,
+    E: WithRuntimeEnvironment,
+    S: ResourceResolver + ModuleBytesStorage,
+{
+    let function = session.load_script(gas_meter, script.code(), script.ty_args())?;
     let serialized_signer = MoveValue::Signer(*signer).simple_serialize().ok_or(
         Error::script_tx_invariant_violation(ScriptTransaction::ArgsMustSerialize),
     )?;
@@ -138,7 +141,7 @@ pub(super) fn execute_script<G: GasMeter, CS: CodeStorage>(
         let mut given_args = script.args().iter();
         for ty in function.param_tys() {
             let ty = strip_reference(ty)?;
-            let tag = session.get_type_tag(ty, code_storage)?;
+            let tag = session.get_type_tag(ty)?;
 
             // Script arguments cannot encode signers so we implicitly
             // insert the known signer to all script parameters that take
@@ -164,26 +167,22 @@ pub(super) fn execute_script<G: GasMeter, CS: CodeStorage>(
 
         result
     };
-    session.execute_script(
-        script.code(),
-        script.ty_args().to_vec(),
-        args,
-        gas_meter,
-        traversal_context,
-        code_storage,
-    )?;
+    session.execution_function(gas_meter, function, args)?;
     Ok(())
 }
 
-pub(super) fn deploy_evm_contract<G: GasMeter, MS: ModuleStorage>(
+pub(super) fn deploy_evm_contract<G, E, S>(
     bytecode: Vec<u8>,
     value: U256,
     signer: AccountAddress,
-    session: &mut Session,
-    traversal_context: &mut TraversalContext,
+    session: &mut Session<E, S>,
     gas_meter: &mut G,
-    module_storage: &MS,
-) -> umi_shared::error::Result<Address> {
+) -> umi_shared::error::Result<Address>
+where
+    G: GasMeter,
+    E: WithRuntimeEnvironment,
+    S: ResourceResolver + ModuleBytesStorage,
+{
     let module = ModuleId::new(EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE.into());
     let function_name = EVM_CREATE_FN_NAME;
     let args = vec![
@@ -198,15 +197,7 @@ pub(super) fn deploy_evm_contract<G: GasMeter, MS: ModuleStorage>(
             .unwrap_or_default(),
     ];
     let outcome = session
-        .execute_function_bypass_visibility(
-            &module,
-            function_name,
-            Vec::new(),
-            args,
-            gas_meter,
-            traversal_context,
-            module_storage,
-        )
+        .load_and_execute_function(gas_meter, &module, function_name, &[], args)
         .map_err(|e| User(UserError::Vm(e)))?;
 
     let evm_outcome = extract_evm_result(outcome)?;
@@ -221,25 +212,20 @@ pub(super) fn deploy_evm_contract<G: GasMeter, MS: ModuleStorage>(
     Ok(address)
 }
 
-pub(super) fn execute_evm_contract<G: GasMeter, MS: ModuleStorage>(
+pub(super) fn execute_evm_contract<G, E, S>(
     args: EvmExecutionArgs,
-    session: &mut Session,
-    traversal_context: &mut TraversalContext,
+    session: &mut Session<E, S>,
     gas_meter: &mut G,
-    module_storage: &MS,
-) -> umi_shared::error::Result<EvmNativeOutcome> {
+) -> umi_shared::error::Result<EvmNativeOutcome>
+where
+    G: GasMeter,
+    E: WithRuntimeEnvironment,
+    S: ResourceResolver + ModuleBytesStorage,
+{
     let module = ModuleId::new(EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE.into());
     let function_name = EVM_CALL_FN_NAME;
     let outcome = session
-        .execute_function_bypass_visibility(
-            &module,
-            function_name,
-            Vec::new(),
-            args.encode()?,
-            gas_meter,
-            traversal_context,
-            module_storage,
-        )
+        .load_and_execute_function(gas_meter, &module, function_name, &[], args.encode()?)
         .map_err(|e| User(UserError::Vm(e)))?;
 
     let evm_outcome = extract_evm_result(outcome)?;
@@ -269,17 +255,17 @@ pub(super) fn deploy_module(
     bundle: ModuleBundle,
     address: AccountAddress,
     module_storage: &impl ModuleStorage,
-) -> umi_shared::error::Result<ChangeSet> {
+) -> umi_shared::error::Result<AllAccountChanges> {
     let staged_module_storage =
         StagingModuleStorage::create(&address, module_storage, bundle.into_bytes())?;
     let bundle = staged_module_storage.release_verified_module_bundle();
 
-    let mut writes = ChangeSet::new();
+    let mut writes = AllAccountChanges::default();
     for (module_id, bytes) in bundle.into_iter() {
         let addr = module_id.address();
         let name = module_id.name();
 
-        let module_exists = module_storage.check_module_exists(addr, name)?;
+        let module_exists = module_storage.unmetered_check_module_exists(addr, name)?;
         let op = if module_exists {
             Op::Modify(bytes)
         } else {

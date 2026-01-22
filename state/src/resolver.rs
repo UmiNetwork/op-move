@@ -6,19 +6,20 @@ use {
     move_binary_format::{
         CompiledModule,
         deserializer::DeserializerConfig,
-        errors::PartialVMError,
+        errors::{Location, PartialVMError, VMError},
         file_format_common::{IDENTIFIER_SIZE_MAX, VERSION_MAX},
     },
     move_bytecode_utils::compiled_module_viewer::CompiledModuleView,
     move_core_types::{
         account_address::AccountAddress,
+        identifier::IdentStr,
         language_storage::{ModuleId, StructTag},
         metadata::Metadata,
         value::MoveTypeLayout,
         vm_status::StatusCode,
     },
     move_table_extension::{TableHandle, TableResolver},
-    move_vm_types::resolver::{ModuleResolver, ResourceResolver},
+    move_vm_types::{code::ModuleBytesStorage, resolver::ResourceResolver},
     umi_shared::primitives::KeyHashable,
 };
 
@@ -45,15 +46,13 @@ impl<D: DB> EthTrieResolver<D> {
     pub const fn trie_mut(&mut self) -> &mut EthTrie<D> {
         &mut self.tree
     }
-}
 
-impl<D: DB> ModuleResolver for EthTrieResolver<D> {
-    fn get_module_metadata(&self, _module_id: &ModuleId) -> Vec<Metadata> {
-        Vec::new()
-    }
-
-    fn get_module(&self, id: &ModuleId) -> Result<Option<Bytes>, PartialVMError> {
-        let state_key = StateKey::module(id.address(), id.name());
+    fn get_module(
+        &self,
+        address: &AccountAddress,
+        name: &IdentStr,
+    ) -> Result<Option<Bytes>, PartialVMError> {
+        let state_key = StateKey::module(address, name);
         let key_hash = TreeKey::StateKey(state_key).key_hash();
         let value = self.tree.get(key_hash.0.as_slice()).map_err(trie_err)?;
 
@@ -113,13 +112,24 @@ impl<D: DB> CompiledModuleView for EthTrieResolver<D> {
     type Item = CompiledModule;
 
     fn view_compiled_module(&self, id: &ModuleId) -> anyhow::Result<Option<Self::Item>> {
-        Ok(match self.get_module(id)? {
+        Ok(match self.get_module(id.address(), id.name())? {
             Some(bytes) => {
                 let config = DeserializerConfig::new(VERSION_MAX, IDENTIFIER_SIZE_MAX);
                 Some(CompiledModule::deserialize_with_config(&bytes, &config)?)
             }
             None => None,
         })
+    }
+}
+
+impl<D: DB> ModuleBytesStorage for EthTrieResolver<D> {
+    fn fetch_module_bytes(
+        &self,
+        address: &AccountAddress,
+        module_name: &IdentStr,
+    ) -> Result<Option<Bytes>, VMError> {
+        self.get_module(address, module_name)
+            .map_err(|e| e.finish(Location::Undefined))
     }
 }
 
