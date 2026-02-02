@@ -96,7 +96,8 @@ where
             .unwrap_or_default(),
         session_id.chain_id,
         session_id.user_txn_context,
-        0, // TODO
+        // TODO(#584): support monotonically increasing counter.
+        0,
     ));
 
     // Tables can be used

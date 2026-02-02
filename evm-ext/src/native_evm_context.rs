@@ -54,7 +54,9 @@ pub struct NativeEVMContext<'a> {
     pub block_header: HeaderForExecution,
 }
 
-// TODO: is this right? Or should the session listener have some logic?
+// As of Aptos version 1.39.2 session-related logic is not implemented
+// for Aptos natives (including, e.g. tables extension), so we also ignore
+// it here for our custom native. This may need to change in the future.
 impl<'a> UnreachableSessionListener for NativeEVMContext<'a> {}
 
 impl<'a> NativeEVMContext<'a> {

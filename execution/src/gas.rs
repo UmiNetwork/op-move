@@ -29,7 +29,9 @@ pub fn new_gas_meter(
         genesis_config.gas_costs.storage.clone(),
         false,
         gas_limit,
-        // TODO: should we make use of the kill switch functionality?
+        // We intentionally ignore the kill switch for now because have no
+        // use for it. It might be useful for a future feature though, for
+        // example payload building timeout as described in issue #511.
         &NoopBlockSynchronizationKillSwitch {},
     ))
 }

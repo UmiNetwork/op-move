@@ -45,7 +45,7 @@ impl SessionId {
             chain_id,
             maybe_entry_fn.map(EntryFunction::as_entry_function_payload),
             None,
-            // TODO: what is this?
+            // TODO(#584): support monotonically increasing counter.
             TransactionIndexKind::NotAvailable,
         );
         Ok(Self {
@@ -74,7 +74,7 @@ impl SessionId {
             chain_id,
             None,
             None,
-            // TODO: what is this?
+            // TODO(#584): support monotonically increasing counter.
             TransactionIndexKind::NotAvailable,
         );
         Self {
