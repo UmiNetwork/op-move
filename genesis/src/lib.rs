@@ -1,16 +1,14 @@
 pub use {
-    framework::{CreateMoveVm, FRAMEWORK_ADDRESS, load_aptos_framework_snapshot},
+    framework::{FRAMEWORK_ADDRESS, load_aptos_framework_snapshot},
     serde::{
         SerdeAccountChanges, SerdeAllChanges, SerdeChanges, SerdeOp, SerdeTableChange,
         SerdeTableChangeSet, SerdeTableInfo,
     },
-    vm::UmiVm,
 };
 
 use {
-    self::config::GenesisConfig,
+    self::{config::GenesisConfig, vm::UmiVm},
     alloy::primitives::B256,
-    move_core_types::effects::ChangeSet,
     std::sync::Arc,
     umi_evm_ext::state::{
         InMemoryDb, InMemoryStorageTrieRepository, StorageTrieRepository, StorageTriesChanges,
@@ -25,7 +23,8 @@ mod framework;
 mod bridged_tokens;
 mod l2_contracts;
 mod serde;
-mod vm;
+mod table_changes;
+pub mod vm;
 
 /// Function to compute the initial state root from scratch in memory
 /// (ignoring the `initial_state_root` field) using the given config.
@@ -62,17 +61,17 @@ pub fn build(
             .expect("Bridged tokens must deploy");
     }
 
-    let mut changes = ChangeSet::new();
+    let mut changes = Changes::empty();
 
     changes
         .squash(changes_framework)
         .expect("Framework changes should not be in conflict");
 
     changes
-        .squash(changes_l2.accounts)
+        .squash(Changes::without_tables(changes_l2.accounts))
         .expect("L2 contract changes should not be in conflict");
 
-    (Changes::without_tables(changes), changes_l2.storage)
+    (changes, changes_l2.storage)
 }
 
 pub fn apply(

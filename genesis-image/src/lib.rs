@@ -5,7 +5,10 @@ pub fn load() -> (Changes, StorageTriesChanges) {
     let contents: SerdeAllChanges = bcs::from_bytes(contents).expect("File should be bcs encoded");
 
     (
-        Changes::new(contents.changes.into(), contents.tables.into()),
+        Changes {
+            accounts: contents.changes.into(),
+            tables: contents.tables.into(),
+        },
         contents.evm_storage.into(),
     )
 }

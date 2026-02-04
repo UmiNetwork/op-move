@@ -8,7 +8,7 @@ use {
         account_address::AccountAddress, identifier::Identifier, language_storage::StructTag,
     },
     move_table_extension::TableResolver,
-    move_vm_types::resolver::MoveResolver,
+    move_vm_types::{code::ModuleBytesStorage, resolver::ResourceResolver},
     serde::{Serialize, de::DeserializeOwned},
     std::sync::Arc,
     umi_evm_ext::state::{self, StorageTrieRepository},
@@ -107,7 +107,10 @@ impl<R: HashToStateRootIndex, D: DB> StateQueries for EthTrieStateQueries<R, D> 
     fn resolver_at(
         &self,
         hash: B256,
-    ) -> Result<impl MoveResolver + TableResolver + CompiledModuleView + '_, state::Error> {
+    ) -> Result<
+        impl ResourceResolver + ModuleBytesStorage + TableResolver + CompiledModuleView + '_,
+        state::Error,
+    > {
         Ok(EthTrieResolver::new(self.trie_at(hash)?))
     }
 }

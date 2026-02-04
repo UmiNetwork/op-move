@@ -11,37 +11,33 @@ use {
     aptos_types::vm_status::StatusCode,
     move_binary_format::errors::PartialVMError,
     move_core_types::language_storage::ModuleId,
-    move_vm_runtime::{
-        AsUnsyncCodeStorage,
-        module_traversal::{TraversalContext, TraversalStorage},
+    move_vm_types::{
+        code::ModuleBytesStorage, resolver::ResourceResolver, value_serde::ValueSerDeContext,
+        values::Value,
     },
-    move_vm_types::{resolver::MoveResolver, value_serde::ValueSerDeContext, values::Value},
     umi_evm_ext::{
         self, CODE_LAYOUT, EVM_DEPOSIT_FN_NAME, EVM_NATIVE_ADDRESS, EVM_NATIVE_MODULE,
         events::EthTransfersLogger,
         extract_evm_changes, extract_evm_result,
         state::{BlockHashLookup, StorageTrieRepository},
     },
-    umi_genesis::{CreateMoveVm, UmiVm},
+    umi_genesis::vm::{RuntimeContext, UmiVm},
     umi_shared::{
         error::{Error, UserError},
         primitives::{ToMoveAddress, ToMoveU256},
     },
-    umi_state::ResolverBasedModuleBytesStorage,
 };
 
 #[tracing::instrument(level = "debug", skip(input))]
 pub(super) fn execute_deposited_transaction<
-    S: MoveResolver + TableResolver,
+    S: ResourceResolver + ModuleBytesStorage + TableResolver,
     ST: StorageTrieRepository,
     H: BlockHashLookup,
 >(
     input: DepositExecutionInput<S, ST, H>,
 ) -> umi_shared::error::Result<TransactionExecutionOutcome> {
     let umi_vm = UmiVm::new(input.genesis_config);
-    let module_bytes_storage = ResolverBasedModuleBytesStorage::new(input.state);
-    let code_storage = module_bytes_storage.as_unsync_code_storage(&umi_vm);
-    let vm = umi_vm.create_move_vm()?;
+    let runtime_context = RuntimeContext::new(&umi_vm, input.state);
     let session_id = SessionId::new_from_deposited(
         input.tx,
         input.tx_hash,
@@ -50,15 +46,13 @@ pub(super) fn execute_deposited_transaction<
     );
     let eth_transfers_log = EthTransfersLogger::default();
     let mut session = create_vm_session(
-        &vm,
+        &runtime_context,
         input.state,
         session_id,
         input.storage_trie,
         &eth_transfers_log,
         input.block_hash_lookup,
     );
-    let traversal_storage = TraversalStorage::new();
-    let mut traversal_context = TraversalContext::new(&traversal_storage);
     // The type of `tx.gas` is essentially `[u64; 1]` so taking the 0th element
     // is a 1:1 mapping to `u64`.
     let mut gas_meter = new_gas_meter(input.genesis_config, input.tx.gas_limit);
@@ -83,26 +77,18 @@ pub(super) fn execute_deposited_transaction<
     ]
     .into_iter()
     .map(|(value, layout)| {
-        Ok(ValueSerDeContext::new()
+        Ok(ValueSerDeContext::new(None)
             .serialize(&value, layout)?
             .ok_or_else(|| {
                 PartialVMError::new(StatusCode::VALUE_SERIALIZATION_ERROR)
-                    .with_message("Failed to serialize EVM deposit args".into())
+                    .with_message("Failed to serialize EVM deposit args")
             })?)
     })
     .collect();
     let outcome = args
         .and_then(|args| {
             session
-                .execute_function_bypass_visibility(
-                    &module,
-                    function_name,
-                    Vec::new(),
-                    args,
-                    &mut gas_meter,
-                    &mut traversal_context,
-                    &code_storage,
-                )
+                .load_and_execute_function(&mut gas_meter, &module, function_name, &[], args)
                 .map_err(Error::from)
         })
         .and_then(|values| {
@@ -122,18 +108,10 @@ pub(super) fn execute_deposited_transaction<
                     &EVM_NATIVE_ADDRESS,
                     U256::from(mint_amount),
                     &mut session,
-                    &mut traversal_context,
                     &mut gas_meter,
-                    &code_storage,
                 )?;
             }
-            eth_token::replicate_transfers(
-                &eth_transfers_log,
-                &mut session,
-                &mut traversal_context,
-                &mut gas_meter,
-                &code_storage,
-            )?;
+            eth_token::replicate_transfers(&eth_transfers_log, &mut session, &mut gas_meter)?;
 
             Ok(evm_outcome.logs)
         });
@@ -146,17 +124,21 @@ pub(super) fn execute_deposited_transaction<
         }
     };
 
-    let (mut changes, mut extensions) = session.finish_with_extensions(&code_storage)?;
-    let events = extensions.remove::<NativeEventContext>().into_events();
+    let (mut changes, mut extensions) = session.into_effects_with_extensions()?;
+    let events = extensions
+        .remove::<NativeEventContext>()
+        .legacy_into_events();
     let mut logs = events.logs();
     logs.extend(evm_logs);
     let gas_used = total_gas_used(&gas_meter, input.genesis_config);
     let evm_changes = extract_evm_changes(&extensions)?;
     changes
-        .squash(evm_changes.accounts)
+        .squash(umi_state::AllAccountChanges::from_change_set(
+            evm_changes.accounts,
+        ))
         .expect("EVM changes must merge with other session changes");
     let changes = Changes::new(
-        umi_state::Changes::without_tables(changes),
+        umi_state::Changes::from_account_changes(changes),
         evm_changes.storage,
     );
 

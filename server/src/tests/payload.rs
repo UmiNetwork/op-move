@@ -79,7 +79,7 @@ async fn test_sending_the_same_payload_twice_produces_one_block() -> anyhow::Res
             execution_payload: ExecutionPayloadV3 {
                 parent_hash: block_hash,
                 fee_recipient: Address::new(hex!("4200000000000000000000000000000000000011")),
-                state_root: B256::new(hex!("0482a97d8a072b8c8fdb2a0b6897f00b9f5445bc30a36d449df43da2564d3350")),
+                state_root: B256::new(hex!("71498fc46ebc4c1e0ae9acc94ceac53cb1647cba9440279846e862dc0dc039df")),
                 receipts_root: B256::new(hex!("c496a834569d2ba3d4359ec588d41c58a176f6f6b39d1ea5aa1e2bb10736f297")),
                 logs_bloom: B2048::new(hex!("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")),
                 prev_randao: B256::new(hex!("dd9b0c0d88d7d9e5fe6718d97f5f2cfd9d825cf6265a39c08650de249e138339")),
@@ -89,7 +89,7 @@ async fn test_sending_the_same_payload_twice_produces_one_block() -> anyhow::Res
                 timestamp: U64::from_limbs([1747148047]),
                 extra_data: Bytes::from_hex("0x01000000fa000000060000000000000000").unwrap(),
                 base_fee_per_gas: U256::ZERO,
-                block_hash: B256::new(hex!("0x7cbbfeb1e08534429e9faa6c5c5754693422c04fbe418cc30e5d9f4bb8ad8388")),
+                block_hash: B256::new(hex!("0xaba7b40279ddb173b50e1ccaf2f7d6c6994e964a5f4300d54b54d280bbd75cba")),
                 transactions: vec![Bytes::from_iter(DEPOSIT_TX)],
                 withdrawals: vec![],
                 blob_gas_used: U64::ZERO,

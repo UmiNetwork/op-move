@@ -2,7 +2,7 @@
 
 use {
     crate::state::{MoveResourceResponse, MoveValueResponse},
-    aptos_api_types::{Address, HexEncodedBytes, U64, U128, U256},
+    aptos_api_types::{Address, HexEncodedBytes, I64, I128, I256, U64, U128, U256},
     move_bytecode_utils::compiled_module_viewer::CompiledModuleView,
     move_core_types::{
         language_storage::{StructTag, TypeTag},
@@ -81,6 +81,24 @@ impl<'a, V: CompiledModuleView> UmiMoveConverter<'a, V> {
             MoveTypeLayout::U256 => serde_json::from_value::<U256>(value)
                 .map_err(incorrect_type_layout)?
                 .into(),
+            MoveTypeLayout::I8 => {
+                MoveValue::I8(serde_json::from_value(value).map_err(incorrect_type_layout)?)
+            }
+            MoveTypeLayout::I16 => {
+                MoveValue::I16(serde_json::from_value(value).map_err(incorrect_type_layout)?)
+            }
+            MoveTypeLayout::I32 => {
+                MoveValue::I32(serde_json::from_value(value).map_err(incorrect_type_layout)?)
+            }
+            MoveTypeLayout::I64 => serde_json::from_value::<I64>(value)
+                .map_err(incorrect_type_layout)?
+                .into(),
+            MoveTypeLayout::I128 => serde_json::from_value::<I128>(value)
+                .map_err(incorrect_type_layout)?
+                .into(),
+            MoveTypeLayout::I256 => serde_json::from_value::<I256>(value)
+                .map_err(incorrect_type_layout)?
+                .into(),
             MoveTypeLayout::Address => serde_json::from_value::<Address>(value)
                 .map_err(incorrect_type_layout)?
                 .into(),
@@ -90,8 +108,8 @@ impl<'a, V: CompiledModuleView> UmiMoveConverter<'a, V> {
             MoveTypeLayout::Struct(struct_layout) => {
                 self.try_into_vm_value_struct(struct_layout, value)?
             }
-            MoveTypeLayout::Signer | MoveTypeLayout::Native(..) => {
-                // Signer and Native types are not supported
+            MoveTypeLayout::Signer | MoveTypeLayout::Native(..) | MoveTypeLayout::Function => {
+                // Signer, Native and Function types are not supported
                 return Err(UserError::IncorrectTypeLayout.into());
             }
         };

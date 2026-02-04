@@ -2,7 +2,7 @@ use {
     self::erc20_factory::OptimismMintableERC20Factory::OptimismMintableERC20Created,
     super::*,
     alloy::{rpc::types::TransactionReceipt, sol_types::SolEvent},
-    move_vm_runtime::session::SerializedReturnValues,
+    move_vm_runtime::move_vm::SerializedReturnValues,
     umi_evm_ext::{
         erc20::abi_bindings::Erc20, extract_evm_result, EVM_NATIVE_ADDRESS,
         EVM_NATIVE_OUTCOME_LAYOUT,

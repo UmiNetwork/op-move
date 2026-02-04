@@ -13,30 +13,6 @@
             "extension": {
               "vec": []
             },
-            "name": "cmp",
-            "source": "0x",
-            "source_map": "0x"
-          },
-          {
-            "extension": {
-              "vec": []
-            },
-            "name": "fixed_point32",
-            "source": "0x",
-            "source_map": "0x"
-          },
-          {
-            "extension": {
-              "vec": []
-            },
-            "name": "hash",
-            "source": "0x",
-            "source_map": "0x"
-          },
-          {
-            "extension": {
-              "vec": []
-            },
             "name": "mem",
             "source": "0x",
             "source_map": "0x"
@@ -46,6 +22,14 @@
               "vec": []
             },
             "name": "vector",
+            "source": "0x",
+            "source_map": "0x"
+          },
+          {
+            "extension": {
+              "vec": []
+            },
+            "name": "cmp",
             "source": "0x",
             "source_map": "0x"
           },
@@ -109,13 +93,45 @@
             "extension": {
               "vec": []
             },
+            "name": "fixed_point32",
+            "source": "0x",
+            "source_map": "0x"
+          },
+          {
+            "extension": {
+              "vec": []
+            },
+            "name": "hash",
+            "source": "0x",
+            "source_map": "0x"
+          },
+          {
+            "extension": {
+              "vec": []
+            },
             "name": "string",
+            "source": "0x",
+            "source_map": "0x"
+          },
+          {
+            "extension": {
+              "vec": []
+            },
+            "name": "result",
+            "source": "0x",
+            "source_map": "0x"
+          },
+          {
+            "extension": {
+              "vec": []
+            },
+            "name": "reflect",
             "source": "0x",
             "source_map": "0x"
           }
         ],
         "name": "MoveStdlib",
-        "source_digest": "404CC1071988E2C1FC44F66662F5E506D06EE1A5BD664051AF925409D47ADEEF",
+        "source_digest": "4C4245849DBC13D6FD2ED656F42DFD19BC7473E3A44BD3C8A34FFA382C152517",
         "upgrade_number": "0",
         "upgrade_policy": {
           "policy": 1
@@ -133,22 +149,6 @@
         },
         "manifest": "0x1f8b08000000000002ff658f410ac2301045f739c510d7c67a00172e7427082e4bb1b11925344d42266aa1f4ee4e28ba71fb3effcd9f3aeaaed70f6c84d703c20ee43ee640976c9cbd49f1c24436f8c2b7aa529514a2d6c62424426a046553a26adc4aa14beffa4fee89c5ef90fa1f3f8c197dd1d217c10a8e21c139053e083980f594b5cf566784769ab831cf2d538809ddd3a0e21d06237a83beb365ca89abcb6a964ee042a75dd12bb519385ad3f211cce20349c99c93f3000000",
         "modules": [
-          {
-            "extension": {
-              "vec": []
-            },
-            "name": "bls12381_algebra",
-            "source": "0x",
-            "source_map": "0x"
-          },
-          {
-            "extension": {
-              "vec": []
-            },
-            "name": "bn254_algebra",
-            "source": "0x",
-            "source_map": "0x"
-          },
           {
             "extension": {
               "vec": []
@@ -225,6 +225,22 @@
             "extension": {
               "vec": []
             },
+            "name": "bls12381_algebra",
+            "source": "0x",
+            "source_map": "0x"
+          },
+          {
+            "extension": {
+              "vec": []
+            },
+            "name": "bn254_algebra",
+            "source": "0x",
+            "source_map": "0x"
+          },
+          {
+            "extension": {
+              "vec": []
+            },
             "name": "capability",
             "source": "0x",
             "source_map": "0x"
@@ -281,6 +297,22 @@
             "extension": {
               "vec": []
             },
+            "name": "keyless",
+            "source": "0x",
+            "source_map": "0x"
+          },
+          {
+            "extension": {
+              "vec": []
+            },
+            "name": "federated_keyless",
+            "source": "0x",
+            "source_map": "0x"
+          },
+          {
+            "extension": {
+              "vec": []
+            },
             "name": "fixed_point64",
             "source": "0x",
             "source_map": "0x"
@@ -322,6 +354,38 @@
               "vec": []
             },
             "name": "multi_ed25519",
+            "source": "0x",
+            "source_map": "0x"
+          },
+          {
+            "extension": {
+              "vec": []
+            },
+            "name": "secp256r1",
+            "source": "0x",
+            "source_map": "0x"
+          },
+          {
+            "extension": {
+              "vec": []
+            },
+            "name": "secp256k1",
+            "source": "0x",
+            "source_map": "0x"
+          },
+          {
+            "extension": {
+              "vec": []
+            },
+            "name": "single_key",
+            "source": "0x",
+            "source_map": "0x"
+          },
+          {
+            "extension": {
+              "vec": []
+            },
+            "name": "multi_key",
             "source": "0x",
             "source_map": "0x"
           },
@@ -385,14 +449,6 @@
             "extension": {
               "vec": []
             },
-            "name": "secp256k1",
-            "source": "0x",
-            "source_map": "0x"
-          },
-          {
-            "extension": {
-              "vec": []
-            },
             "name": "smart_table",
             "source": "0x",
             "source_map": "0x"
@@ -415,7 +471,7 @@
           }
         ],
         "name": "AptosStdlib",
-        "source_digest": "2E50A16A5CEA0EE363544444CE511B9D23BD8E5A95D0989F524A8721A43EC854",
+        "source_digest": "1972381389D436CAB370066B82F07619E41D5DAD3C3806FE439D72D86722BA64",
         "upgrade_number": "0",
         "upgrade_policy": {
           "policy": 1
@@ -449,14 +505,6 @@
             "extension": {
               "vec": []
             },
-            "name": "transaction_context",
-            "source": "0x",
-            "source_map": "0x"
-          },
-          {
-            "extension": {
-              "vec": []
-            },
             "name": "chain_status",
             "source": "0x",
             "source_map": "0x"
@@ -466,6 +514,14 @@
               "vec": []
             },
             "name": "timestamp",
+            "source": "0x",
+            "source_map": "0x"
+          },
+          {
+            "extension": {
+              "vec": []
+            },
+            "name": "transaction_context",
             "source": "0x",
             "source_map": "0x"
           },
@@ -857,6 +913,14 @@
             "extension": {
               "vec": []
             },
+            "name": "base16",
+            "source": "0x",
+            "source_map": "0x"
+          },
+          {
+            "extension": {
+              "vec": []
+            },
             "name": "randomness",
             "source": "0x",
             "source_map": "0x"
@@ -881,7 +945,23 @@
             "extension": {
               "vec": []
             },
+            "name": "common_account_abstractions_utils",
+            "source": "0x",
+            "source_map": "0x"
+          },
+          {
+            "extension": {
+              "vec": []
+            },
             "name": "delegation_pool",
+            "source": "0x",
+            "source_map": "0x"
+          },
+          {
+            "extension": {
+              "vec": []
+            },
+            "name": "ethereum_derivable_account",
             "source": "0x",
             "source_map": "0x"
           },
@@ -898,6 +978,14 @@
               "vec": []
             },
             "name": "vesting",
+            "source": "0x",
+            "source_map": "0x"
+          },
+          {
+            "extension": {
+              "vec": []
+            },
+            "name": "nonce_validation",
             "source": "0x",
             "source_map": "0x"
           },
@@ -977,13 +1065,29 @@
             "extension": {
               "vec": []
             },
+            "name": "solana_derivable_account",
+            "source": "0x",
+            "source_map": "0x"
+          },
+          {
+            "extension": {
+              "vec": []
+            },
             "name": "staking_proxy",
+            "source": "0x",
+            "source_map": "0x"
+          },
+          {
+            "extension": {
+              "vec": []
+            },
+            "name": "sui_derivable_account",
             "source": "0x",
             "source_map": "0x"
           }
         ],
         "name": "AptosFramework",
-        "source_digest": "F09041F7B9853DD03D112484AAAB1D6DEAA270CC287C1891DA755E915D30CFE6",
+        "source_digest": "6870AD4185ACB0209D22E74404A52CD85E609880BC0EAAFA0D743DA1B813C7F6",
         "upgrade_number": "0",
         "upgrade_policy": {
           "policy": 1

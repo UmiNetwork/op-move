@@ -5,7 +5,7 @@ pub use {
 
 use {
     alloy::consensus::{Receipt, ReceiptWithBloom},
-    move_core_types::{account_address::AccountAddress, u256::U256 as MoveU256},
+    move_core_types::{account_address::AccountAddress, int256::U256 as MoveU256},
     op_alloy::consensus::{OpDepositReceipt, OpReceipt, OpReceiptEnvelope},
 };
 
@@ -85,13 +85,13 @@ pub trait ToMoveU256 {
 
 impl ToMoveU256 for B256 {
     fn to_move_u256(self) -> MoveU256 {
-        MoveU256::from_le_bytes(&self.0)
+        MoveU256::from_le_bytes(self.0)
     }
 }
 
 impl ToMoveU256 for U256 {
     fn to_move_u256(self) -> MoveU256 {
-        MoveU256::from_le_bytes(&self.to_le_bytes())
+        MoveU256::from_le_bytes(self.to_le_bytes())
     }
 }
 

@@ -330,7 +330,7 @@ impl<'db, D: Dependencies<'db>> GenesisStateExt for Application<'db, D> {
             #[cfg(not(test))]
             {
                 umi_genesis::build(
-                    &umi_genesis::UmiVm::new(genesis_config),
+                    &umi_genesis::vm::UmiVm::new(genesis_config),
                     genesis_config,
                     &self.evm_storage,
                 )

@@ -5,96 +5,221 @@ use {
         ident_str,
         identifier::IdentStr,
         language_storage::{StructTag, TypeTag},
-        value::{MoveStruct, MoveValue},
+        value::{MoveStruct, MoveStructLayout, MoveTypeLayout, MoveValue},
     },
-    move_vm_runtime::{ModuleStorage, session::Session},
-    move_vm_types::loaded_data::runtime_types::Type,
+    move_vm_runtime::WithRuntimeEnvironment,
+    move_vm_types::{
+        code::ModuleBytesStorage, gas::GasMeter, loaded_data::runtime_types::Type,
+        resolver::ResourceResolver,
+    },
+    umi_genesis::vm::Session,
     umi_shared::error::{EntryFunctionValue, Error, InvalidTransactionCause},
 };
 
-const ALLOWED_STRUCTS: [MoveStructInfo<'static>; 5] = [
-    MoveStructInfo {
-        address: AccountAddress::ONE,
-        module: ident_str!("string"),
-        name: ident_str!("String"),
-    },
-    MoveStructInfo {
-        address: AccountAddress::ONE,
-        module: ident_str!("object"),
-        name: ident_str!("Object"),
-    },
-    MoveStructInfo {
-        address: AccountAddress::ONE,
-        module: ident_str!("option"),
-        name: ident_str!("Option"),
-    },
-    MoveStructInfo {
-        address: AccountAddress::ONE,
-        module: ident_str!("fixed_point32"),
-        name: ident_str!("FixedPoint32"),
-    },
-    MoveStructInfo {
-        address: AccountAddress::ONE,
-        module: ident_str!("fixed_point64"),
-        name: ident_str!("FixedPoint64"),
-    },
+const ALLOWED_STRUCTS: [(MoveStructInfo<'static>, AllowedStructKind); 5] = [
+    (
+        MoveStructInfo {
+            address: AccountAddress::ONE,
+            module: ident_str!("string"),
+            name: ident_str!("String"),
+        },
+        AllowedStructKind::String,
+    ),
+    (
+        MoveStructInfo {
+            address: AccountAddress::ONE,
+            module: ident_str!("object"),
+            name: ident_str!("Object"),
+        },
+        AllowedStructKind::Object,
+    ),
+    (
+        MoveStructInfo {
+            address: AccountAddress::ONE,
+            module: ident_str!("option"),
+            name: ident_str!("Option"),
+        },
+        AllowedStructKind::Option,
+    ),
+    (
+        MoveStructInfo {
+            address: AccountAddress::ONE,
+            module: ident_str!("fixed_point32"),
+            name: ident_str!("FixedPoint32"),
+        },
+        AllowedStructKind::FixedPoint32,
+    ),
+    (
+        MoveStructInfo {
+            address: AccountAddress::ONE,
+            module: ident_str!("fixed_point64"),
+            name: ident_str!("FixedPoint64"),
+        },
+        AllowedStructKind::FixedPoint64,
+    ),
 ];
+
+/// Marker type to indicate if a type has invariants that
+/// need to be checked before making the concrete value.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TypeInvariants {
+    RequiresCheck(MoveTypeLayout),
+    NoInvariant,
+}
 
 /// Only certain types are allowed to be used as arguments for entry functions.
 /// This function ensures only allowed types are present.
 /// The reason for this restriction is to respect the invariants that Move contracts
 /// may have around their types. For example token types and capability types should
 /// only be created under specific conditions, not directly deserialized from raw bytes.
-pub fn validate_entry_type_tag(tag: &TypeTag) -> umi_shared::error::Result<()> {
+pub fn validate_entry_type_tag(tag: &TypeTag) -> umi_shared::error::Result<TypeInvariants> {
     let mut current_tag = tag;
+    let mut default_type_invariants = TypeInvariantsBuilder::NoInvariant;
+    let mut partial_layout = PartialMoveTypeLayout::Hole;
     loop {
         match current_tag {
             TypeTag::Vector(inner) => {
                 // Vectors are allowed iff they hold other allowed types,
-                // so we must check the inner type.
+                // so we must check the inner type. The default type invariant
+                // flag does not change because Vector does not have any inherent
+                // checked invariants.
                 current_tag = inner;
+                partial_layout = PartialMoveTypeLayout::Vector(Box::new(partial_layout));
             }
             TypeTag::Struct(struct_tag) => {
                 let info = MoveStructInfo::from_tag(struct_tag);
 
-                if !ALLOWED_STRUCTS.contains(&info) {
+                let Some(struct_kind) = ALLOWED_STRUCTS.iter().find_map(|(allowed_info, kind)| {
+                    if allowed_info == &info {
+                        Some(kind)
+                    } else {
+                        None
+                    }
+                }) else {
                     return Err(Error::InvalidTransaction(
                         InvalidTransactionCause::DisallowedEntryFunctionType(tag.clone()),
                     ));
-                }
+                };
 
-                match struct_tag.type_args.as_slice() {
-                    [] => {
-                        // No type parameters => nothing more to check
-                        return Ok(());
+                match struct_kind {
+                    // Strings and Objects have invariants to check
+                    AllowedStructKind::String => {
+                        // String struct has a single field which is Vec<u8>
+                        let string_layout =
+                            MoveTypeLayout::Struct(MoveStructLayout::Runtime(vec![
+                                MoveTypeLayout::Vector(Box::new(MoveTypeLayout::U8)),
+                            ]));
+                        let layout = partial_layout.fill_with(string_layout);
+                        return Ok(TypeInvariants::RequiresCheck(layout));
                     }
-                    [inner_type] => {
-                        if info.name == ALLOWED_STRUCTS[2].name {
-                            // Option<T> is allowed iff T is allowed.
-                            current_tag = inner_type;
-                        } else {
-                            // For Object<T> we do not need to validate the inner type
-                            // because no value for that type is actually created (it's phantom).
-                            // No other allowed types have type parameters.
-                            return Ok(());
-                        }
+                    AllowedStructKind::Object => {
+                        // Object struct has a single field which is Address
+                        let object_layout =
+                            MoveTypeLayout::Struct(MoveStructLayout::Runtime(vec![
+                                MoveTypeLayout::Address,
+                            ]));
+                        let layout = partial_layout.fill_with(object_layout);
+                        return Ok(TypeInvariants::RequiresCheck(layout));
                     }
-                    _ => unreachable!("No allowed type has more than 1 type parameter"),
+                    // Fixed-point types have no extra checks
+                    AllowedStructKind::FixedPoint32 => {
+                        // FixedPoint32 struct has a single field which is u64
+                        let fp32_layout = MoveTypeLayout::Struct(MoveStructLayout::Runtime(vec![
+                            MoveTypeLayout::U64,
+                        ]));
+                        let layout = partial_layout.fill_with(fp32_layout);
+                        return Ok(default_type_invariants.build(layout));
+                    }
+                    AllowedStructKind::FixedPoint64 => {
+                        // FixedPoint64 struct has a single field which is u128
+                        let fp64_layout = MoveTypeLayout::Struct(MoveStructLayout::Runtime(vec![
+                            MoveTypeLayout::U128,
+                        ]));
+                        let layout = partial_layout.fill_with(fp64_layout);
+                        return Ok(default_type_invariants.build(layout));
+                    }
+                    // Option<T> is allowed iff the inner T is allowed and
+                    // it always requires an invariant check.
+                    AllowedStructKind::Option => {
+                        let inner_type = struct_tag.type_args.first().ok_or(
+                            Error::entry_fn_invariant_violation(
+                                EntryFunctionValue::OptionHasInnerType,
+                            ),
+                        )?;
+                        current_tag = inner_type;
+                        default_type_invariants = TypeInvariantsBuilder::RequiresCheck;
+                        partial_layout = PartialMoveTypeLayout::Option(Box::new(partial_layout));
+                    }
                 }
             }
-            TypeTag::Address
-            | TypeTag::Bool
-            | TypeTag::Signer
-            | TypeTag::U128
-            | TypeTag::U16
-            | TypeTag::U256
-            | TypeTag::U32
-            | TypeTag::U64
-            | TypeTag::U8 => {
-                // Primitive types are allowed.
-                // Note that signer is an allowed type because
-                // the value is checked in `crate::signer`.
-                return Ok(());
+            TypeTag::Signer => {
+                let layout = partial_layout.fill_with(MoveTypeLayout::Signer);
+                // Signer is allowed, but requires checking the value
+                // matches the real transaction signature.
+                return Ok(TypeInvariants::RequiresCheck(layout));
+            }
+            TypeTag::Address => {
+                let layout = partial_layout.fill_with(MoveTypeLayout::Address);
+                return Ok(default_type_invariants.build(layout));
+            }
+            TypeTag::Bool => {
+                let layout = partial_layout.fill_with(MoveTypeLayout::Bool);
+                return Ok(default_type_invariants.build(layout));
+            }
+            TypeTag::U8 => {
+                let layout = partial_layout.fill_with(MoveTypeLayout::U8);
+                return Ok(default_type_invariants.build(layout));
+            }
+            TypeTag::U16 => {
+                let layout = partial_layout.fill_with(MoveTypeLayout::U16);
+                return Ok(default_type_invariants.build(layout));
+            }
+            TypeTag::U32 => {
+                let layout = partial_layout.fill_with(MoveTypeLayout::U32);
+                return Ok(default_type_invariants.build(layout));
+            }
+            TypeTag::U64 => {
+                let layout = partial_layout.fill_with(MoveTypeLayout::U64);
+                return Ok(default_type_invariants.build(layout));
+            }
+            TypeTag::U128 => {
+                let layout = partial_layout.fill_with(MoveTypeLayout::U128);
+                return Ok(default_type_invariants.build(layout));
+            }
+            TypeTag::U256 => {
+                let layout = partial_layout.fill_with(MoveTypeLayout::U256);
+                return Ok(default_type_invariants.build(layout));
+            }
+            TypeTag::I8 => {
+                let layout = partial_layout.fill_with(MoveTypeLayout::I8);
+                return Ok(default_type_invariants.build(layout));
+            }
+            TypeTag::I16 => {
+                let layout = partial_layout.fill_with(MoveTypeLayout::I16);
+                return Ok(default_type_invariants.build(layout));
+            }
+            TypeTag::I32 => {
+                let layout = partial_layout.fill_with(MoveTypeLayout::I32);
+                return Ok(default_type_invariants.build(layout));
+            }
+            TypeTag::I64 => {
+                let layout = partial_layout.fill_with(MoveTypeLayout::I64);
+                return Ok(default_type_invariants.build(layout));
+            }
+            TypeTag::I128 => {
+                let layout = partial_layout.fill_with(MoveTypeLayout::I128);
+                return Ok(default_type_invariants.build(layout));
+            }
+            TypeTag::I256 => {
+                let layout = partial_layout.fill_with(MoveTypeLayout::I256);
+                return Ok(default_type_invariants.build(layout));
+            }
+            TypeTag::Function(..) => {
+                // We will conservatively disallow function types for now.
+                // This could be revisited in the future.
+                return Err(Error::InvalidTransaction(
+                    InvalidTransactionCause::DisallowedEntryFunctionType(tag.clone()),
+                ));
             }
         }
     }
@@ -103,13 +228,18 @@ pub fn validate_entry_type_tag(tag: &TypeTag) -> umi_shared::error::Result<()> {
 /// Some allowed types have restrictions on what values those types can take.
 /// This function ensures the values are properly constructed for the types they
 /// are meant to be.
-pub fn validate_entry_value(
+pub fn validate_entry_value<G, E, S>(
     tag: &TypeTag,
     value: &MoveValue,
     expected_signer: &AccountAddress,
-    session: &mut Session,
-    module_storage: &impl ModuleStorage,
-) -> umi_shared::error::Result<()> {
+    session: &mut Session<E, S>,
+    gas_meter: &mut G,
+) -> umi_shared::error::Result<()>
+where
+    G: GasMeter,
+    E: WithRuntimeEnvironment,
+    S: ResourceResolver + ModuleBytesStorage,
+{
     let mut stack = Vec::with_capacity(10);
     stack.push((tag, value));
 
@@ -132,10 +262,10 @@ pub fn validate_entry_value(
             (TypeTag::Struct(struct_tag), MoveValue::Struct(struct_value)) => {
                 let info = MoveStructInfo::from_tag(struct_tag);
 
-                if info.name == ALLOWED_STRUCTS[0].name {
+                if info.name == ALLOWED_STRUCTS[0].0.name {
                     validate_string(struct_value)?;
                     continue;
-                } else if info.name == ALLOWED_STRUCTS[1].name {
+                } else if info.name == ALLOWED_STRUCTS[1].0.name {
                     let inner_type =
                         struct_tag
                             .type_args
@@ -143,11 +273,11 @@ pub fn validate_entry_value(
                             .ok_or(Error::entry_fn_invariant_violation(
                                 EntryFunctionValue::ObjectStructHasTypeParameter,
                             ))?;
-                    validate_object(struct_value, inner_type, session, module_storage)?;
+                    validate_object(struct_value, inner_type, session, gas_meter)?;
                     // We don't need to push the inner type on the stack for validation
                     // because a value of it is not actually constructed.
                     continue;
-                } else if info.name == ALLOWED_STRUCTS[2].name {
+                } else if info.name == ALLOWED_STRUCTS[2].0.name {
                     if let Some(inner_value) = validate_option(struct_value)? {
                         let inner_tag = struct_tag.type_args.first().ok_or(
                             Error::entry_fn_invariant_violation(
@@ -157,8 +287,8 @@ pub fn validate_entry_value(
                         stack.push((inner_tag, inner_value));
                     };
                     continue;
-                } else if info.name == ALLOWED_STRUCTS[3].name
-                    || info.name == ALLOWED_STRUCTS[4].name
+                } else if info.name == ALLOWED_STRUCTS[3].0.name
+                    || info.name == ALLOWED_STRUCTS[4].0.name
                 {
                     // FixedPoint data structures have no invariants to check.
                     continue;
@@ -175,6 +305,54 @@ pub fn validate_entry_value(
     }
 
     Ok(())
+}
+
+/// A flag to make it easy to match on which allowed struct we are dealing with.
+enum AllowedStructKind {
+    String,
+    Object,
+    Option,
+    FixedPoint32,
+    FixedPoint64,
+}
+
+enum PartialMoveTypeLayout {
+    Hole,
+    Vector(Box<PartialMoveTypeLayout>),
+    Option(Box<PartialMoveTypeLayout>),
+}
+
+impl PartialMoveTypeLayout {
+    fn fill_with(self, layout: MoveTypeLayout) -> MoveTypeLayout {
+        match self {
+            Self::Hole => layout,
+            Self::Option(inner) => {
+                let inner_layout = inner.fill_with(layout);
+                // TODO: Option is an enum now, but maybe this type layout will still work?
+                MoveTypeLayout::Struct(MoveStructLayout::Runtime(vec![MoveTypeLayout::Vector(
+                    Box::new(inner_layout),
+                )]))
+            }
+            Self::Vector(inner) => {
+                let inner_layout = inner.fill_with(layout);
+                MoveTypeLayout::Vector(Box::new(inner_layout))
+            }
+        }
+    }
+}
+
+enum TypeInvariantsBuilder {
+    RequiresCheck,
+    NoInvariant,
+}
+
+impl TypeInvariantsBuilder {
+    fn build(self, layout: MoveTypeLayout) -> TypeInvariants {
+        match self {
+            Self::RequiresCheck => TypeInvariants::RequiresCheck(layout),
+            Self::NoInvariant => TypeInvariants::NoInvariant,
+        }
+    }
 }
 
 /// String must be utf-8 encoded bytes.
@@ -237,27 +415,32 @@ fn validate_option(value: &MoveStruct) -> umi_shared::error::Result<Option<&Move
 
 // Based on
 // https://github.com/aptos-labs/aptos-core/blob/aptos-node-v1.14.0/aptos-move/framework/aptos-framework/sources/object.move#L192
-fn validate_object(
+fn validate_object<G, E, S>(
     value: &MoveStruct,
     inner_type: &TypeTag,
-    session: &mut Session,
-    module_storage: &impl ModuleStorage,
-) -> umi_shared::error::Result<()> {
+    session: &mut Session<E, S>,
+    gas_meter: &mut G,
+) -> umi_shared::error::Result<()>
+where
+    G: GasMeter,
+    E: WithRuntimeEnvironment,
+    S: ResourceResolver + ModuleBytesStorage,
+{
     let inner = value.optional_variant_and_fields().1.first().ok_or(
         Error::entry_fn_invariant_violation(EntryFunctionValue::ObjectStructHasField),
     )?;
 
     match inner {
         MoveValue::Address(addr) => {
-            let object_core = get_object_core_type(session, module_storage)?;
-            if !resource_exists(session, *addr, &object_core, module_storage) {
+            let object_core = get_object_core_type(session, gas_meter)?;
+            if !resource_exists(session, gas_meter, addr, &object_core) {
                 return Err(InvalidTransactionCause::InvalidObject.into());
             }
 
-            let inner_type = session.load_type(inner_type, module_storage).map_err(|_| {
+            let inner_type = session.load_ty_arg(inner_type, gas_meter).map_err(|_| {
                 Error::entry_fn_invariant_violation(EntryFunctionValue::ObjectInnerTypeExists)
             })?;
-            if !resource_exists(session, *addr, &inner_type, module_storage) {
+            if !resource_exists(session, gas_meter, addr, &inner_type) {
                 return Err(InvalidTransactionCause::InvalidObject.into());
             }
 
@@ -270,32 +453,40 @@ fn validate_object(
 }
 
 #[inline]
-fn resource_exists(
-    session: &mut Session,
-    addr: AccountAddress,
+fn resource_exists<G, E, S>(
+    session: &mut Session<E, S>,
+    gas_meter: &mut G,
+    addr: &AccountAddress,
     ty: &Type,
-    module_storage: &impl ModuleStorage,
-) -> bool {
+) -> bool
+where
+    G: GasMeter,
+    E: WithRuntimeEnvironment,
+    S: ResourceResolver + ModuleBytesStorage,
+{
     session
-        .load_resource(module_storage, addr, ty)
-        .and_then(|(value, _)| value.exists())
+        .check_resource_exists(gas_meter, addr, ty)
         .unwrap_or(false)
 }
 
 #[inline]
-fn get_object_core_type(
-    session: &mut Session,
-    module_storage: &impl ModuleStorage,
-) -> umi_shared::error::Result<Type> {
+fn get_object_core_type<G, E, S>(
+    session: &mut Session<E, S>,
+    gas_meter: &mut G,
+) -> umi_shared::error::Result<Type>
+where
+    G: GasMeter,
+    E: WithRuntimeEnvironment,
+    S: ResourceResolver + ModuleBytesStorage,
+{
     let type_tag = TypeTag::Struct(Box::new(StructTag {
-        address: ALLOWED_STRUCTS[1].address,
-        module: ALLOWED_STRUCTS[1].module.into(),
+        address: ALLOWED_STRUCTS[1].0.address,
+        module: ALLOWED_STRUCTS[1].0.module.into(),
         name: ident_str!("ObjectCore").into(),
         type_args: Vec::new(),
     }));
-    session
-        .load_type(&type_tag, module_storage)
-        .map_err(|_| Error::entry_fn_invariant_violation(EntryFunctionValue::ObjectCoreTypeExists))
+    let ty = session.load_ty_arg(&type_tag, gas_meter)?;
+    Ok(ty)
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -322,11 +513,11 @@ mod tests {
         crate::{create_vm_session, session_id::SessionId, tests::EVM_ADDRESS},
         alloy::primitives::address,
         move_core_types::value::MoveStruct,
-        move_vm_runtime::AsUnsyncCodeStorage,
+        move_vm_types::gas::UnmeteredGasMeter,
         umi_evm_ext::state::InMemoryStorageTrieRepository,
-        umi_genesis::{CreateMoveVm, UmiVm},
+        umi_genesis::vm::{RuntimeContext, UmiVm},
         umi_shared::primitives::ToMoveAddress,
-        umi_state::{InMemoryState, ResolverBasedModuleBytesStorage, State},
+        umi_state::{InMemoryState, State},
     };
 
     #[test]
@@ -524,13 +715,11 @@ mod tests {
         ];
 
         let umi_vm = UmiVm::new(&Default::default());
-        let vm = umi_vm.create_move_vm().unwrap();
         let state = InMemoryState::default();
-        let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
-        let code_storage = module_bytes_storage.as_unsync_code_storage(&umi_vm);
+        let runtime_context = RuntimeContext::new(&umi_vm, state.resolver());
         let evm_storage = InMemoryStorageTrieRepository::new();
         let mut session = create_vm_session(
-            &vm,
+            &runtime_context,
             state.resolver(),
             SessionId::default(),
             &evm_storage,
@@ -543,7 +732,7 @@ mod tests {
                 test_case,
                 &correct_signer,
                 &mut session,
-                &code_storage,
+                &mut UnmeteredGasMeter,
             )
             .map_err(|_| ());
             assert_eq!(
@@ -612,13 +801,11 @@ mod tests {
         ];
 
         let umi_vm = UmiVm::new(&Default::default());
-        let vm = umi_vm.create_move_vm().unwrap();
         let state = InMemoryState::default();
-        let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
-        let code_storage = module_bytes_storage.as_unsync_code_storage(&umi_vm);
+        let runtime_context = RuntimeContext::new(&umi_vm, state.resolver());
         let evm_storage = InMemoryStorageTrieRepository::new();
         let mut session = create_vm_session(
-            &vm,
+            &runtime_context,
             state.resolver(),
             SessionId::default(),
             &evm_storage,
@@ -631,7 +818,7 @@ mod tests {
                 test_case,
                 &AccountAddress::ZERO,
                 &mut session,
-                &code_storage,
+                &mut UnmeteredGasMeter,
             )
             .map_err(|_| ());
             assert_eq!(

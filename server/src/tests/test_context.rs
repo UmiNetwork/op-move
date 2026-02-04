@@ -322,7 +322,7 @@ impl TestContext<'static> {
         resource: &StructTag,
         block: BlockNumberOrTag,
     ) -> anyhow::Result<MoveResourceResponse> {
-        let resource_str = format!("0x{}", resource.to_canonical_string());
+        let resource_str = resource.to_canonical_string();
         let request = serde_json::json!({
             "jsonrpc": "2.0",
             "id": 12,

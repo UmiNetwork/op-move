@@ -1,33 +1,26 @@
 pub mod nodes;
 
-mod diff;
 mod in_memory;
 mod resolver;
 mod skip_list;
 mod state;
 
 pub use {
-    diff::Changes,
     in_memory::InMemoryState,
     resolver::EthTrieResolver,
     skip_list::{Listable, SkipListIterator},
     state::EthTrieState,
     umi_evm_ext::state::InMemoryDb as InMemoryTrieDb,
+    umi_shared::diff::{AllAccountChanges, Changes, SingleAccountChanges},
 };
 
 use {
     alloy::hex::FromHex,
     aptos_types::state_store::{state_key::StateKey, state_value::StateValue},
-    bytes::Bytes,
     eth_trie::{DB, EthTrie, Trie, TrieError},
-    move_binary_format::errors::{Location, VMResult},
-    move_core_types::{
-        account_address::AccountAddress,
-        identifier::IdentStr,
-        language_storage::{ModuleId, StructTag},
-    },
+    move_core_types::language_storage::StructTag,
     move_table_extension::TableResolver,
-    move_vm_types::{code::ModuleBytesStorage, resolver::MoveResolver},
+    move_vm_types::{code::ModuleBytesStorage, resolver::ResourceResolver},
     nodes::{TreeKey, TreeValue},
     rand::{SeedableRng, rngs::StdRng},
     std::{collections::HashMap, fmt::Debug},
@@ -38,7 +31,7 @@ use {
 /// A global blockchain state trait.
 ///
 /// This trait is defined by these operations:
-/// * [`resolver`]: Creates [`MoveResolver`] that can resolve both resources and modules.
+/// * [`resolver`]: Creates [`ResourceResolver`] that can resolve resources.
 /// * [`state_root`]: Returns current state root.
 /// * [`apply`]: Applies changes produced by a transaction on the state trie.
 ///
@@ -57,9 +50,9 @@ pub trait State {
     /// the canonical head.
     fn switch_state_root(&mut self, root: B256) -> Result<(), Self::Err>;
 
-    /// Returns a reference to a [`MoveResolver`] that can resolve both resources and modules on
+    /// Returns a reference to a [`ResourceResolver`] that can resolve both resources and modules on
     /// the current blockchain state.
-    fn resolver(&self) -> &(impl MoveResolver + TableResolver);
+    fn resolver(&self) -> &(impl ResourceResolver + ModuleBytesStorage + TableResolver);
 
     /// Retrieves the value of the root node of the merkle trie that holds the blockchain state.
     fn state_root(&self) -> B256;
@@ -226,39 +219,12 @@ pub fn is_evm_storage_or_account_key(k: &StructTag) -> bool {
         && k.name.as_str().starts_with(ACCOUNT_INFO_PREFIX)
 }
 
-pub struct ResolverBasedModuleBytesStorage<'a, R> {
-    resolver: &'a R,
-}
-
-impl<'a, R: MoveResolver> ResolverBasedModuleBytesStorage<'a, R> {
-    pub fn new(resolver: &'a R) -> Self {
-        Self { resolver }
-    }
-}
-
-impl<R: MoveResolver> ModuleBytesStorage for ResolverBasedModuleBytesStorage<'_, R> {
-    fn fetch_module_bytes(
-        &self,
-        address: &AccountAddress,
-        module_name: &IdentStr,
-    ) -> VMResult<Option<Bytes>> {
-        let module_id = ModuleId::new(*address, module_name.to_owned());
-        self.resolver
-            .get_module(&module_id)
-            .map_err(|e| e.finish(Location::Module(module_id)))
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use {
         super::*,
         bytes::Bytes,
-        move_core_types::{
-            account_address::AccountAddress,
-            effects::{AccountChanges, Op},
-            identifier::Identifier,
-        },
+        move_core_types::{account_address::AccountAddress, effects::Op, identifier::Identifier},
     };
 
     #[test]
@@ -276,7 +242,10 @@ mod tests {
 
         change_set
             .accounts
-            .add_account_changeset(AccountAddress::new([0; 32]), AccountChanges::new())
+            .add_account_changeset(
+                AccountAddress::new([0; 32]),
+                SingleAccountChanges::default(),
+            )
             .unwrap();
 
         state.apply(change_set).unwrap();
@@ -293,14 +262,17 @@ mod tests {
 
         change_set
             .accounts
-            .add_account_changeset(AccountAddress::new([0; 32]), AccountChanges::new())
+            .add_account_changeset(
+                AccountAddress::new([0; 32]),
+                SingleAccountChanges::default(),
+            )
             .unwrap();
         state.apply(change_set).unwrap();
         let old_state_root = state.state_root();
 
         let mut change_set = Changes::empty();
 
-        let mut account_change_set = AccountChanges::new();
+        let mut account_change_set = SingleAccountChanges::default();
         account_change_set
             .add_module_op(
                 Identifier::new("lala").unwrap(),
@@ -322,7 +294,7 @@ mod tests {
         let mut state = InMemoryState::default();
         let mut change_set = Changes::empty();
 
-        let mut account_change_set = AccountChanges::new();
+        let mut account_change_set = SingleAccountChanges::default();
         account_change_set
             .add_module_op(
                 Identifier::new("lala").unwrap(),
@@ -342,7 +314,7 @@ mod tests {
 
         let mut change_set = Changes::empty();
 
-        let mut account_change_set = AccountChanges::new();
+        let mut account_change_set = SingleAccountChanges::default();
         account_change_set
             .add_module_op(
                 Identifier::new("lala").unwrap(),

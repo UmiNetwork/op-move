@@ -66,7 +66,7 @@ fn test_evm() {
         vec![
             bcs::to_bytes(&signer_arg).unwrap(),
             bcs::to_bytes(&to_arg).unwrap(),
-            ValueSerDeContext::new()
+            ValueSerDeContext::new(None)
                 .serialize(&data_input_arg, &CODE_LAYOUT)
                 .unwrap()
                 .unwrap(),

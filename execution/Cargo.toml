@@ -21,6 +21,7 @@ aptos-gas-schedule.workspace = true
 aptos-table-natives.workspace = true
 aptos-types.workspace = true
 aptos-vm.workspace = true
+aptos-vm-types.workspace = true
 bcs.workspace = true
 bytes.workspace = true
 fastlz.workspace = true
@@ -41,7 +42,7 @@ tracing.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true
-move-compiler.workspace = true
+legacy-move-compiler.workspace = true
 move-compiler-v2.workspace = true
 move-model.workspace = true
 umi-genesis-image.workspace = true

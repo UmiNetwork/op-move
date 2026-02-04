@@ -1,9 +1,9 @@
 #[cfg(any(feature = "test-doubles", test))]
 pub use test_doubles::TestDependencies;
+use umi_state::AllAccountChanges;
 
 use {
     crate::mempool::Mempool,
-    move_core_types::effects::ChangeSet,
     umi_blockchain::payload::PayloadId,
     umi_execution::resolver_cache::ResolverCache,
     umi_genesis::config::GenesisConfig,
@@ -128,7 +128,7 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
         }
     }
 
-    pub fn on_tx(&mut self, changes: ChangeSet) -> Result<(), Error> {
+    pub fn on_tx(&mut self, changes: AllAccountChanges) -> Result<(), Error> {
         (self.on_tx)(self, changes)
     }
 }
@@ -214,7 +214,9 @@ pub trait Dependencies<'db> {
         + ?Sized;
 
     /// A function invoked on an execution of a new transaction.
-    type OnTx: Fn(&mut Application<'db, Self>, ChangeSet) -> Result<(), Error> + 'db + ?Sized;
+    type OnTx: Fn(&mut Application<'db, Self>, AllAccountChanges) -> Result<(), Error>
+        + 'db
+        + ?Sized;
 
     /// A function invoked on a completion of new transaction execution batch.
     type OnTxBatch: Fn(&mut Application<'db, Self>) -> Result<(), Error> + 'db + ?Sized;

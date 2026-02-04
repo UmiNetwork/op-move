@@ -17,27 +17,25 @@ use {
     },
     alloy::rpc::types::TransactionRequest,
     move_table_extension::TableResolver,
-    move_vm_runtime::{
-        AsUnsyncCodeStorage,
-        module_traversal::{TraversalContext, TraversalStorage},
-    },
-    move_vm_types::resolver::MoveResolver,
+    move_vm_types::{code::ModuleBytesStorage, resolver::ResourceResolver},
     std::time::{SystemTime, UNIX_EPOCH},
     umi_evm_ext::{
         HeaderForExecution,
         state::{BlockHashLookup, StorageTrieRepository},
     },
-    umi_genesis::{CreateMoveVm, UmiVm, config::GenesisConfig},
+    umi_genesis::{
+        config::GenesisConfig,
+        vm::{RuntimeContext, UmiVm},
+    },
     umi_shared::{
         error::{Error::InvalidTransaction, InvalidTransactionCause},
         primitives::{B256, ToMoveAddress, U256},
     },
-    umi_state::ResolverBasedModuleBytesStorage,
 };
 
 pub fn simulate_transaction(
     request: TransactionRequest,
-    state: &(impl MoveResolver + TableResolver),
+    state: &(impl ResourceResolver + ModuleBytesStorage + TableResolver),
     storage_trie: &impl StorageTrieRepository,
     genesis_config: &GenesisConfig,
     base_token: &impl BaseTokenAccounts,
@@ -82,7 +80,7 @@ pub fn simulate_transaction(
 
 pub fn call_transaction(
     request: TransactionRequest,
-    state: &(impl MoveResolver + TableResolver),
+    state: &(impl ResourceResolver + ModuleBytesStorage + TableResolver),
     storage_trie: &impl StorageTrieRepository,
     block_header: HeaderForExecution,
     genesis_config: &GenesisConfig,
@@ -96,9 +94,7 @@ pub fn call_transaction(
     let tx_data = TransactionData::parse_from(&tx)?;
 
     let umi_vm = UmiVm::new(genesis_config);
-    let vm = umi_vm.create_move_vm()?;
-    let module_storage_bytes = ResolverBasedModuleBytesStorage::new(state);
-    let code_storage = module_storage_bytes.as_unsync_code_storage(&umi_vm);
+    let runtime_context = RuntimeContext::new(&umi_vm, state);
     let session_id = SessionId::new_from_canonical(
         &tx,
         tx_data.maybe_entry_fn(),
@@ -107,35 +103,35 @@ pub fn call_transaction(
         block_header,
         tx_data.script_hash(),
     )?;
-    let mut session =
-        create_vm_session(&vm, state, session_id, storage_trie, &(), block_hash_lookup);
-    let traversal_storage = TraversalStorage::new();
-    let mut traversal_context = TraversalContext::new(&traversal_storage);
+    let mut session = create_vm_session(
+        &runtime_context,
+        state,
+        session_id,
+        storage_trie,
+        &(),
+        block_hash_lookup,
+    );
     let mut gas_meter = new_gas_meter(genesis_config, tx.gas_limit());
 
     verify_transaction(CanonicalVerificationInput {
         tx: &tx,
         session: &mut session,
-        traversal_context: &mut traversal_context,
         gas_meter: &mut gas_meter,
         genesis_config,
         l1_cost: U256::ZERO,
         l2_cost: U256::ZERO,
         operator_cost: U256::ZERO,
         base_token,
-        module_storage: &code_storage,
     })?;
 
     match tx_data {
         TransactionData::EntryFunction(entry_fn) => {
-            let outcome = session.execute_function_bypass_visibility(
+            let outcome = session.load_and_execute_function(
+                &mut gas_meter,
                 entry_fn.module(),
                 entry_fn.function(),
-                entry_fn.ty_args().to_vec(),
+                entry_fn.ty_args(),
                 entry_fn.args().to_vec(),
-                &mut gas_meter,
-                &mut traversal_context,
-                &code_storage,
             )?;
             // Only return the results of the transaction in bytes without the Move value layout.
             // Sending just the bytes works better when it comes to parsing on the client side.
@@ -152,9 +148,7 @@ pub fn call_transaction(
                 script,
                 &tx.signer.to_move_address(),
                 &mut session,
-                &mut traversal_context,
                 &mut gas_meter,
-                &code_storage,
             )?;
             Ok(vec![])
         }
@@ -167,9 +161,7 @@ pub fn call_transaction(
                     tx.data.to_vec(),
                 ),
                 &mut session,
-                &mut traversal_context,
                 &mut gas_meter,
-                &code_storage,
             )?;
             Ok(outcome.output)
         }
@@ -182,9 +174,7 @@ pub fn call_transaction(
                     data,
                 ),
                 &mut session,
-                &mut traversal_context,
                 &mut gas_meter,
-                &code_storage,
             )?;
             Ok(outcome.output)
         }

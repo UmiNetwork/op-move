@@ -13,11 +13,7 @@ use {
         rpc::types::FeeHistory,
         signers::local::PrivateKeySigner,
     },
-    move_core_types::{account_address::AccountAddress, effects::ChangeSet},
-    move_vm_runtime::{
-        AsUnsyncCodeStorage,
-        module_traversal::{TraversalContext, TraversalStorage},
-    },
+    move_core_types::account_address::AccountAddress,
     move_vm_types::gas::UnmeteredGasMeter,
     std::sync::Arc,
     test_case::test_case,
@@ -41,14 +37,14 @@ use {
         transaction::{NormalizedEthTransaction, UmiTxEnvelope},
     },
     umi_genesis::{
-        CreateMoveVm, UmiVm,
         config::{CHAIN_ID, GenesisConfig},
+        vm::{RuntimeContext, UmiVm},
     },
     umi_shared::{
         error::{Error, UserError},
         primitives::{Address, B256, ToMoveAddress, U64, U256},
     },
-    umi_state::{Changes, InMemoryState, InMemoryTrieDb, ResolverBasedModuleBytesStorage, State},
+    umi_state::{AllAccountChanges, Changes, InMemoryState, InMemoryTrieDb, State},
 };
 
 /// The address corresponding to this private key is 0x8fd379246834eac74B8419FfdA202CF8051F7A03
@@ -175,34 +171,22 @@ fn mint_eth(
     evm_storage: &impl StorageTrieRepository,
     addr: AccountAddress,
     amount: U256,
-) -> ChangeSet {
+) -> AllAccountChanges {
     let umi_vm = UmiVm::new(&Default::default());
-    let module_bytes_storage = ResolverBasedModuleBytesStorage::new(state.resolver());
-    let code_storage = module_bytes_storage.as_unsync_code_storage(&umi_vm);
-    let vm = umi_vm.create_move_vm().unwrap();
+    let runtime_context = RuntimeContext::new(&umi_vm, state.resolver());
     let mut session = create_vm_session(
-        &vm,
+        &runtime_context,
         state.resolver(),
         SessionId::default(),
         evm_storage,
         &(),
         &(),
     );
-    let traversal_storage = TraversalStorage::new();
-    let mut traversal_context = TraversalContext::new(&traversal_storage);
     let mut gas_meter = UnmeteredGasMeter;
 
-    umi_execution::mint_eth(
-        &addr,
-        amount,
-        &mut session,
-        &mut traversal_context,
-        &mut gas_meter,
-        &code_storage,
-    )
-    .unwrap();
+    umi_execution::mint_eth(&addr, amount, &mut session, &mut gas_meter).unwrap();
 
-    session.finish(&code_storage).unwrap()
+    session.into_effects().unwrap()
 }
 
 fn create_app_with_fake_queries(
@@ -271,7 +255,7 @@ fn create_app_with_fake_queries(
     evm_storage.apply(evm_storage_changes).unwrap();
     let changes_addition = mint_eth(&state, &evm_storage, addr, initial_balance);
     state
-        .apply(Changes::without_tables(changes_addition))
+        .apply(Changes::from_account_changes(changes_addition))
         .unwrap();
 
     let (receipt_reader, receipt_memory) = receipt_memory::new();

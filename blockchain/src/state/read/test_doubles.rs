@@ -6,7 +6,7 @@ use {
         account_address::AccountAddress, identifier::Identifier, language_storage::StructTag,
     },
     move_table_extension::TableResolver,
-    move_vm_types::resolver::MoveResolver,
+    move_vm_types::{code::ModuleBytesStorage, resolver::ResourceResolver},
     std::{collections::HashMap, convert::Infallible, sync::Arc},
     umi_evm_ext::state::{self, StorageTrieRepository},
     umi_shared::{
@@ -84,7 +84,10 @@ impl StateQueries for MockStateQueries {
     fn resolver_at(
         &self,
         _: B256,
-    ) -> Result<impl MoveResolver + TableResolver + CompiledModuleView + '_, state::Error> {
+    ) -> Result<
+        impl ResourceResolver + ModuleBytesStorage + TableResolver + CompiledModuleView + '_,
+        state::Error,
+    > {
         Ok(EthTrieResolver::new(EthTrie::new(Arc::new(MemoryDB::new(
             true,
         )))))

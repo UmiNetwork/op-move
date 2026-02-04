@@ -14,14 +14,13 @@ use {
     move_bytecode_utils::compiled_module_viewer::CompiledModuleView,
     move_core_types::{
         account_address::AccountAddress,
-        identifier::Identifier,
-        language_storage::{ModuleId, StructTag},
+        identifier::{IdentStr, Identifier},
+        language_storage::StructTag,
         vm_status::StatusCode,
     },
     move_table_extension::{TableHandle, TableResolver},
     move_vm_types::{
-        resolver::{ModuleResolver, MoveResolver, ResourceResolver},
-        value_serde::ValueSerDeContext,
+        code::ModuleBytesStorage, resolver::ResourceResolver, value_serde::ValueSerDeContext,
         values::VMValueCast,
     },
     std::{error, str::FromStr},
@@ -112,11 +111,10 @@ pub trait StateQueries {
         let resolver = self.resolver_at(hash)?;
         let struct_tag = account_info_struct_tag(&address);
 
-        let meta_data = resolver.get_module_metadata(&struct_tag.module_id());
         let (Some(resource), _) = resolver.get_resource_bytes_with_metadata_and_layout(
             &EVM_NATIVE_ADDRESS,
             &struct_tag,
-            &meta_data,
+            &[],
             None,
         )?
         else {
@@ -133,12 +131,11 @@ pub trait StateQueries {
         }
 
         let struct_tag = code_hash_struct_tag(&code_hash);
-        let meta_data = resolver.get_module_metadata(&struct_tag.module_id());
         let resource = resolver
             .get_resource_bytes_with_metadata_and_layout(
                 &EVM_NATIVE_ADDRESS,
                 &struct_tag,
-                &meta_data,
+                &[],
                 None,
             )?
             .0
@@ -148,7 +145,7 @@ pub trait StateQueries {
                     struct_tag.name
                 ))
             })?;
-        let value = ValueSerDeContext::new()
+        let value = ValueSerDeContext::new(None)
             .deserialize(&resource, &CODE_LAYOUT)
             .expect("EVM bytecode should be deserializable");
         let bytes: Vec<u8> = value.cast()?;
@@ -162,12 +159,14 @@ pub trait StateQueries {
         name: &str,
         hash: B256,
     ) -> Result<Option<MoveModuleResponse>, state::Error> {
-        let Ok(ident) = Identifier::new(name) else {
+        let Ok(ident) = IdentStr::new(name) else {
             return Ok(None);
         };
-        let module_id = ModuleId::new(account, ident);
         let resolver = self.resolver_at(hash)?;
-        let Some(bytes) = resolver.get_module(&module_id)? else {
+        let Some(bytes) = resolver
+            .fetch_module_bytes(&account, ident)
+            .map_err(|e| e.to_partial())?
+        else {
             return Ok(None);
         };
 
@@ -217,13 +216,11 @@ pub trait StateQueries {
         request: TableItemRequest,
         hash: B256,
     ) -> Result<Option<MoveValueResponse>, umi_shared::error::Error> {
-        let key_type = request
-            .key_type
+        let key_type = (&request.key_type)
             .try_into()
             .map_err(|_| UserError::IncorrectTypeLayout)?;
 
-        let value_type = request
-            .value_type
+        let value_type = (&request.value_type)
             .try_into()
             .map_err(|_| UserError::IncorrectTypeLayout)?;
 
@@ -300,7 +297,10 @@ pub trait StateQueries {
     fn resolver_at(
         &self,
         hash: B256,
-    ) -> Result<impl MoveResolver + TableResolver + CompiledModuleView + '_, state::Error>;
+    ) -> Result<
+        impl ResourceResolver + ModuleBytesStorage + TableResolver + CompiledModuleView + '_,
+        state::Error,
+    >;
 }
 
 pub trait HashToStateRootIndex {
@@ -311,7 +311,7 @@ pub trait HashToStateRootIndex {
 
 pub fn evm_storage_root_from_trie_and_resolver(
     account: Address,
-    resolver: &impl MoveResolver,
+    resolver: &(impl ResourceResolver + ModuleBytesStorage),
     storage_trie: &impl StorageTrieRepository,
 ) -> Result<B256, state::Error> {
     // Read account info to get the storage root
@@ -328,7 +328,7 @@ pub fn proof_from_trie_and_resolver(
     address: Address,
     storage_slots: &[U256],
     tree: &mut EthTrie<impl DB>,
-    resolver: &impl MoveResolver,
+    resolver: &(impl ResourceResolver + ModuleBytesStorage),
     storage_trie: &impl StorageTrieRepository,
 ) -> Result<ProofResponse, state::Error> {
     let evm_db = ResolverBackedDB::new(storage_trie, resolver, &(), 0);

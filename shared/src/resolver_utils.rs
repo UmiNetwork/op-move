@@ -1,14 +1,12 @@
 use {
+    crate::diff::AllAccountChanges,
     bytes::Bytes,
-    move_binary_format::errors::PartialVMResult,
+    move_binary_format::errors::{PartialVMResult, VMResult},
     move_core_types::{
-        account_address::AccountAddress,
-        effects::ChangeSet,
-        language_storage::{ModuleId, StructTag},
-        metadata::Metadata,
-        value::MoveTypeLayout,
+        account_address::AccountAddress, identifier::IdentStr, language_storage::StructTag,
+        metadata::Metadata, value::MoveTypeLayout,
     },
-    move_vm_types::resolver::{ModuleResolver, ResourceResolver},
+    move_vm_types::{code::ModuleBytesStorage, resolver::ResourceResolver},
 };
 
 /// Resolver derived from a pair of existing resolvers.
@@ -50,25 +48,29 @@ impl<T: ResourceResolver, U: ResourceResolver> ResourceResolver for PairedResolv
     }
 }
 
-impl<T: ModuleResolver, U: ModuleResolver> ModuleResolver for PairedResolvers<'_, T, U> {
-    fn get_module_metadata(&self, _module_id: &ModuleId) -> Vec<Metadata> {
-        Vec::new()
-    }
-
-    fn get_module(&self, id: &ModuleId) -> PartialVMResult<Option<Bytes>> {
-        self.primary
-            .get_module(id)
-            .or_else(|_| self.secondary.get_module(id))
+impl<T: ModuleBytesStorage, U: ModuleBytesStorage> ModuleBytesStorage
+    for PairedResolvers<'_, T, U>
+{
+    fn fetch_module_bytes(
+        &self,
+        address: &AccountAddress,
+        module_name: &IdentStr,
+    ) -> VMResult<Option<Bytes>> {
+        let primary_result = self.primary.fetch_module_bytes(address, module_name);
+        match primary_result {
+            Ok(Some(bytes)) => Ok(Some(bytes)),
+            Ok(None) | Err(_) => self.secondary.fetch_module_bytes(address, module_name),
+        }
     }
 }
 
 /// Resolver which looks up resources and modules based on a given change set.
 pub struct ChangesBasedResolver<'a> {
-    changes: &'a ChangeSet,
+    changes: &'a AllAccountChanges,
 }
 
 impl<'a> ChangesBasedResolver<'a> {
-    pub fn new(changes: &'a ChangeSet) -> Self {
+    pub fn new(changes: &'a AllAccountChanges) -> Self {
         Self { changes }
     }
 }
@@ -92,17 +94,17 @@ impl ResourceResolver for ChangesBasedResolver<'_> {
     }
 }
 
-impl ModuleResolver for ChangesBasedResolver<'_> {
-    fn get_module_metadata(&self, _module_id: &ModuleId) -> Vec<Metadata> {
-        Vec::new()
-    }
-
-    fn get_module(&self, id: &ModuleId) -> PartialVMResult<Option<Bytes>> {
+impl ModuleBytesStorage for ChangesBasedResolver<'_> {
+    fn fetch_module_bytes(
+        &self,
+        address: &AccountAddress,
+        module_name: &IdentStr,
+    ) -> VMResult<Option<Bytes>> {
         let bytes = self
             .changes
             .accounts()
-            .get(id.address())
-            .and_then(|account| account.modules().get(id.name()))
+            .get(address)
+            .and_then(|account| account.modules().get(module_name))
             .and_then(|op| op.clone().ok());
         Ok(bytes)
     }

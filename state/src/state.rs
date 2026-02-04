@@ -2,7 +2,7 @@ use {
     crate::{Changes, EthTrieResolver, InsertChangeSetIntoMerkleTrie, State},
     eth_trie::{DB, EthTrie, TrieError},
     move_table_extension::TableResolver,
-    move_vm_types::resolver::MoveResolver,
+    move_vm_types::{code::ModuleBytesStorage, resolver::ResourceResolver},
     std::sync::Arc,
     umi_evm_ext::state::DbWithRoot,
     umi_shared::primitives::B256,
@@ -74,7 +74,7 @@ impl<D: DbWithRoot> State for EthTrieState<D> {
         Ok(())
     }
 
-    fn resolver(&self) -> &(impl MoveResolver + TableResolver) {
+    fn resolver(&self) -> &(impl ResourceResolver + ModuleBytesStorage + TableResolver) {
         &self.resolver
     }
 

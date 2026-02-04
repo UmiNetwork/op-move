@@ -3,21 +3,19 @@ use {
     bytes::Bytes,
     move_core_types::{
         account_address::AccountAddress,
-        effects::{AccountChanges, ChangeSet, Op},
+        effects::Op,
         identifier::Identifier,
         language_storage::{ModuleId, StructTag, TypeTag},
         value::MoveTypeLayout,
     },
     move_table_extension::{TableHandle, TableInfo},
-    std::{
-        collections::{BTreeMap, BTreeSet},
-        sync::Arc,
-    },
+    std::collections::{BTreeMap, BTreeSet},
     umi_evm_ext::state::{StorageTrieChanges, StorageTriesChanges},
     umi_shared::primitives::{Address, B256},
+    umi_state::{AllAccountChanges, SingleAccountChanges},
 };
 
-pub type TableEntry = (Bytes, Option<Arc<MoveTypeLayout>>);
+pub type TableEntry = (Bytes, Option<triomphe::Arc<MoveTypeLayout>>);
 
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, serde::Serialize, serde::Deserialize)]
 pub enum SerdeOp<T> {
@@ -40,8 +38,8 @@ pub struct SerdeChanges<Module, Resource> {
     accounts: BTreeMap<AccountAddress, SerdeAccountChanges<Module, Resource>>,
 }
 
-impl From<ChangeSet> for SerdeChanges<Bytes, Bytes> {
-    fn from(value: ChangeSet) -> Self {
+impl From<AllAccountChanges> for SerdeChanges<Bytes, Bytes> {
+    fn from(value: AllAccountChanges) -> Self {
         Self {
             accounts: value
                 .into_inner()
@@ -52,9 +50,9 @@ impl From<ChangeSet> for SerdeChanges<Bytes, Bytes> {
     }
 }
 
-impl From<SerdeChanges<Bytes, Bytes>> for ChangeSet {
+impl From<SerdeChanges<Bytes, Bytes>> for AllAccountChanges {
     fn from(value: SerdeChanges<Bytes, Bytes>) -> Self {
-        let mut set = Self::new();
+        let mut set = Self::default();
 
         for (acc, changes) in value.accounts {
             for (id, op) in changes.modules {
@@ -71,8 +69,8 @@ impl From<SerdeChanges<Bytes, Bytes>> for ChangeSet {
     }
 }
 
-impl From<AccountChanges<Bytes, Bytes>> for SerdeAccountChanges<Bytes, Bytes> {
-    fn from(value: AccountChanges<Bytes, Bytes>) -> Self {
+impl From<SingleAccountChanges> for SerdeAccountChanges<Bytes, Bytes> {
+    fn from(value: SingleAccountChanges) -> Self {
         let (modules, resources) = value.into_inner();
 
         Self {

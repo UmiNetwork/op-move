@@ -1,6 +1,6 @@
 use {
     crate::transaction::NormalizedEthTransaction,
-    aptos_types::transaction::EntryFunction,
+    aptos_types::transaction::{EntryFunction, user_transaction_context::TransactionIndexKind},
     aptos_vm::move_vm_ext::UserTransactionContext,
     op_alloy::consensus::TxDeposit,
     umi_evm_ext::HeaderForExecution,
@@ -45,6 +45,8 @@ impl SessionId {
             chain_id,
             maybe_entry_fn.map(EntryFunction::as_entry_function_payload),
             None,
+            // TODO(#584): support monotonically increasing counter.
+            TransactionIndexKind::NotAvailable,
         );
         Ok(Self {
             txn_hash: tx_hash.0,
@@ -72,6 +74,8 @@ impl SessionId {
             chain_id,
             None,
             None,
+            // TODO(#584): support monotonically increasing counter.
+            TransactionIndexKind::NotAvailable,
         );
         Self {
             txn_hash: tx_hash.0,

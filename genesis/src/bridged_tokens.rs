@@ -71,7 +71,8 @@ pub fn deploy_bridged_tokens(
     mut l2_changes: Changes,
     tokens: Vec<BridgedToken>,
 ) -> Result<Changes> {
-    let resolver = ChangesBasedResolver::new(&l2_changes.accounts);
+    let lifted_changes = umi_state::Changes::without_tables(l2_changes.accounts.clone());
+    let resolver = ChangesBasedResolver::new(&lifted_changes.accounts);
     let trie_storage = InMemoryStorageTrieRepository::new();
     trie_storage.apply(l2_changes.storage.clone())?;
     let block_header = HeaderForExecution::default();

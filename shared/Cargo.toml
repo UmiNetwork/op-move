@@ -12,7 +12,9 @@ test-doubles = []
 workspace = true
 
 [dependencies]
+anyhow.workspace = true
 alloy.workspace = true
+aptos-table-natives.workspace = true
 bcs.workspace = true
 bytes.workspace = true
 move-binary-format.workspace = true

@@ -110,6 +110,28 @@ module OptimismMintableERC20Factory::optimism_mintable_erc20_factory {
         result
     }
 
+    struct DeploymentsArgs {
+        key: address,
+    }
+
+    public fun deployments(
+        key: address,
+    ): EvmResult {
+        let arg_struct = DeploymentsArgs {
+            key,
+        };
+
+        let data = abi_encode_params(
+            vector[49, 107, 55, 57],
+            arg_struct,
+        );
+
+        let result = evm_view(@0x0, @OptimismMintableERC20Factory, 0, data);
+        assert!(is_result_success(&result), error::aborted(ENOT_SUCCESS));
+        emit_evm_logs(&result);
+        result
+    }
+
     struct InitializeArgs {
         bridge: address,
     }

@@ -166,8 +166,8 @@ fn test_deeply_nested_type() {
         result.push(x);
         result.push(module_bytes[36] + y);
 
-        // Copy next 17 bytes
-        for b in &module_bytes[37..54] {
+        // Copy next 19 bytes
+        for b in &module_bytes[37..56] {
             result.push(*b);
         }
 
@@ -177,7 +177,7 @@ fn test_deeply_nested_type() {
         result.push(0);
 
         // Copy remaining bytes
-        for b in &module_bytes[54..] {
+        for b in &module_bytes[56..] {
             result.push(*b);
         }
 

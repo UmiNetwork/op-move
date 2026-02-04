@@ -5,7 +5,9 @@ use {
     aptos_gas_schedule::gas_params::natives::aptos_framework::{
         CODE_REQUEST_PUBLISH_BASE, CODE_REQUEST_PUBLISH_PER_BYTE,
     },
+    aptos_vm_types::resolver::NoopBlockSynchronizationKillSwitch,
     move_core_types::{account_address::AccountAddress, ident_str},
+    move_vm_types::gas::DependencyKind,
     op_alloy::rpc_types::L1BlockInfo,
     umi_genesis::config::GenesisConfig,
     umi_shared::primitives::{U256, u32_to_u256, u64_to_u256},
@@ -20,13 +22,17 @@ const OPERATOR_FEE_SCALING_FACTOR: U256 = u32_to_u256(100);
 pub fn new_gas_meter(
     genesis_config: &GenesisConfig,
     gas_limit: u64,
-) -> StandardGasMeter<StandardGasAlgebra> {
+) -> StandardGasMeter<StandardGasAlgebra<'static, NoopBlockSynchronizationKillSwitch>> {
     StandardGasMeter::new(StandardGasAlgebra::new(
         genesis_config.gas_costs.version,
         genesis_config.gas_costs.vm.clone(),
         genesis_config.gas_costs.storage.clone(),
         false,
         gas_limit,
+        // We intentionally ignore the kill switch for now because have no
+        // use for it. It might be useful for a future feature though, for
+        // example payload building timeout as described in issue #511.
+        &NoopBlockSynchronizationKillSwitch {},
     ))
 }
 
@@ -68,7 +74,12 @@ pub fn charge_new_module_processing<G: AptosGasMeter>(
     // Note: the name does not matter because it is not used in the
     // standard gas meter implementation.
     gas_meter
-        .charge_dependency(true, address, ident_str!("does_not_matter"), module_size)
+        .charge_dependency(
+            DependencyKind::New,
+            address,
+            ident_str!("does_not_matter"),
+            module_size,
+        )
         .map_err(umi_shared::error::Error::from)?;
 
     Ok(())

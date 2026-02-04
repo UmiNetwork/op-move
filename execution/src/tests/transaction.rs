@@ -12,7 +12,7 @@ fn test_move_event_converts_to_eth_log_successfully() {
         name: Identifier::new("test").unwrap(),
         type_args: vec![],
     }));
-    let event = ContractEvent::V2(ContractEventV2::new(type_tag, data));
+    let event = ContractEvent::V2(ContractEventV2::new(type_tag, data).unwrap());
 
     let actual_log = {
         let mut tmp = Vec::with_capacity(1);
@@ -22,7 +22,7 @@ fn test_move_event_converts_to_eth_log_successfully() {
     let expected_log = Log::new_unchecked(
         address!("6666777788889999aaaabbbbccccddddeeeeffff"),
         vec![keccak256(
-            "0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff::umi::test",
+            "0x111122223333444455556666777788889999aaaabbbbccccddddeeeeffff::umi::test",
         )],
         Bytes::from([0u8, 1, 2, 3]),
     );
