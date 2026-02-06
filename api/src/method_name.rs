@@ -32,6 +32,7 @@ pub enum MethodName {
     ListModules,
     ListResources,
     Accounts,
+    FaucetDeposit,
 }
 
 impl MethodName {
@@ -47,6 +48,7 @@ impl MethodName {
                 | Self::NewPayloadV3
                 | Self::GetPayloadV4
                 | Self::NewPayloadV4
+                | Self::FaucetDeposit
         )
     }
 }
@@ -90,6 +92,8 @@ impl FromStr for MethodName {
             "mv_listModules" => Self::ListModules,
             "mv_listResources" => Self::ListResources,
             "mv_getTableItem" => Self::GetTableItem,
+
+            "faucet_deposit" => Self::FaucetDeposit,
 
             other => {
                 return Err(JsonRpcError::invalid_method(other));

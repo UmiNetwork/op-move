@@ -162,6 +162,7 @@ where
         // eth_accounts: Returns a list of addresses owned by client.
         // We do not support owning addresses in our client, so always return an empty list.
         Accounts => Ok(serde_json::Value::Array(Vec::new())),
+        FaucetDeposit => faucet_deposit::execute(request),
     };
 
     gauge!("rpc_inflight_requests", "method" => method_str.clone()).decrement(1.0);

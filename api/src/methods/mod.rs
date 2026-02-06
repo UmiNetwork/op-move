@@ -3,6 +3,7 @@ pub mod call;
 pub mod chain_id;
 pub mod client_version;
 pub mod estimate_gas;
+pub mod faucet_deposit;
 pub mod fee_history;
 pub mod forkchoice_updated;
 pub mod gas_price;

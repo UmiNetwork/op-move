@@ -18,6 +18,7 @@ alloy-trie.workspace = true
 metrics.workspace = true
 move-core-types.workspace = true
 move-table-extension.workspace = true
+op-alloy.workspace = true
 umi-app.workspace = true
 umi-blockchain.workspace = true
 umi-evm-ext.workspace = true
