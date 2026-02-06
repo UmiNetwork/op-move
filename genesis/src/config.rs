@@ -6,7 +6,7 @@ use {
     aptos_vm_types::storage::StorageGasParameters,
     move_core_types::{account_address::AccountAddress, gas_algebra::GasQuantity},
     std::{fs::File, path::Path},
-    umi_shared::primitives::B256,
+    umi_shared::primitives::{B256, ToMoveAddress},
 };
 
 pub const CHAIN_ID: u64 = 404;
@@ -92,6 +92,7 @@ impl GenesisConfig {
 
 impl Default for GenesisConfig {
     fn default() -> Self {
+        let treasury = alloy::primitives::address!("0x48B2704BE153c147AF31Da274a5132e8A38f4B82");
         let path = Path::new(env!("CARGO_MANIFEST_DIR"))
             .parent()
             .expect("Cargo manifest has a parent directory")
@@ -102,7 +103,7 @@ impl Default for GenesisConfig {
                 "8730d114b0a4b0cd3cdbd4c582dcd487c84bdfea3060f5377a3a84303694de8b"
             )),
             gas_costs: GasCosts::default(),
-            treasury: AccountAddress::ONE, // todo: fill in the real address
+            treasury: treasury.to_move_address(), // todo: fill in the real address
             l2_contract_genesis: serde_json::from_str(DEFAULT_L2_CONTRACT_GENESIS)
                 .expect("Default L2 contract genesis should be JSON encoded `Genesis` struct"),
             token_list: bridged_tokens::parse_token_list(&path).expect("Tokens list should parse"),
