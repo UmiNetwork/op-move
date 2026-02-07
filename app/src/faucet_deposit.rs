@@ -24,10 +24,10 @@ pub fn get_requests() -> Vec<(Address, u128)> {
 }
 
 pub fn new_tx(parent_hash: B256, address: Address, amount: u128) -> NormalizedExtendedTxEnvelope {
-    let mut source_pre_image = vec![0; 32 + 20 + 32];
+    let mut source_pre_image = vec![0; 32 + 20 + 16];
     source_pre_image[0..32].copy_from_slice(parent_hash.as_ref());
     source_pre_image[32..52].copy_from_slice(address.as_ref());
-    source_pre_image[52..84].copy_from_slice(&amount.to_be_bytes());
+    source_pre_image[52..68].copy_from_slice(&amount.to_be_bytes());
 
     let source_hash = alloy::primitives::keccak256(&source_pre_image);
     let deposit_tx = TxDeposit {
@@ -50,4 +50,13 @@ pub fn push_request(address: Address, amount: u128) {
     };
 
     queue.push((address, amount));
+}
+
+#[test]
+fn test_new_tx() {
+    let address = Address::random();
+    let amount = 123;
+    let tx = new_tx(Default::default(), address, amount);
+    assert_eq!(tx.as_deposit().unwrap().from, address);
+    assert_eq!(tx.as_deposit().unwrap().mint, amount);
 }
