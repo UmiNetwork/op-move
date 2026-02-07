@@ -75,7 +75,7 @@ async fn inner_execute_v3<'reader>(
     let head_block_hash = forkchoice_state.head_block_hash;
 
     // If `payload_attributes` are present then tell state to start producing a new block
-    let (payload_id, block_build_command) = if let Some(mut attrs) = payload_attributes {
+    let (payload_id, block_build_command) = if let Some(attrs) = payload_attributes {
         let payload_id =
             payload_id_generator.new_payload_id(attrs.to_payload_id_input(&head_block_hash));
         let block_build_command = if matches!(
@@ -94,12 +94,6 @@ async fn inner_execute_v3<'reader>(
             let head_block = app.block_by_hash(head_block_hash, false)?;
             if attrs.timestamp <= head_block.0.header.timestamp {
                 return Err(JsonRpcError::invalid_attributes());
-            }
-            let faucet_deposits = crate::methods::faucet_deposit::get_requests();
-            for (address, amount) in faucet_deposits {
-                let deposit_tx =
-                    crate::methods::faucet_deposit::new_tx(head_block_hash, address, amount);
-                attrs.transactions.push(deposit_tx);
             }
             Some(Command::StartBlockBuild {
                 payload_attributes: attrs,

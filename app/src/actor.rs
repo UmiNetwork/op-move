@@ -63,6 +63,10 @@ impl<'actor, 'app, D: Dependencies<'app>> CommandActor<'actor, 'app, D> {
             Command::ForkchoiceUpdate { state, payload_id } => {
                 app.forkchoice_update(state, payload_id)
             }
+            Command::FaucetDeposit { address, amount } => {
+                crate::faucet_deposit::push_request(address, amount);
+                Ok(())
+            }
         }
     }
 

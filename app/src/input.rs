@@ -85,13 +85,17 @@ pub enum Command {
         state: ForkchoiceState,
         payload_id: Option<PayloadId>,
     },
+    FaucetDeposit {
+        address: Address,
+        amount: u128,
+    },
 }
 
 impl Command {
     pub fn payload_id(&self) -> Option<PayloadId> {
         match self {
             Self::StartBlockBuild { payload_id, .. } => Some(*payload_id),
-            Self::AddTransaction { .. } => None,
+            Self::AddTransaction { .. } | Self::FaucetDeposit { .. } => None,
             Self::ForkchoiceUpdate { payload_id, .. } => *payload_id,
         }
     }

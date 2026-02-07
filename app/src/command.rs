@@ -69,23 +69,6 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
         let attributes_txs_len = attributes.transactions.len();
         let no_tx_pool = attributes.no_tx_pool.unwrap_or(false);
 
-        let transactions = if no_tx_pool {
-            // Though it is a relatively rare event without follower nodes, `op-node` can demand
-            // to rebuild a block deterministically from payload attributes only. This also happens
-            // when an L2 reorg is triggered. We log it for diagnostic purposes.
-            tracing::warn!(
-                "Building from payload attributes only, with no mempool txs: {attributes:?}"
-            );
-            attributes.transactions.to_vec()
-        } else {
-            attributes
-                .transactions
-                .iter()
-                .cloned()
-                .chain(self.mem_pool.iter().cloned().map(Into::into))
-                .collect::<Vec<_>>()
-        };
-
         let parent = self
             .block_repository
             .get_forkchoice_state(&self.storage)
@@ -97,6 +80,31 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
                 UnrecoverableAppFailure
             })?
             .expect("Block repository is non-empty (must always at least contain genesis)");
+        let parent_hash = parent.hash;
+
+        let transactions = if no_tx_pool {
+            // Though it is a relatively rare event without follower nodes, `op-node` can demand
+            // to rebuild a block deterministically from payload attributes only. This also happens
+            // when an L2 reorg is triggered. We log it for diagnostic purposes.
+            tracing::warn!(
+                "Building from payload attributes only, with no mempool txs: {attributes:?}"
+            );
+            attributes.transactions.to_vec()
+        } else {
+            let faucet_deposits =
+                crate::faucet_deposit::get_requests()
+                    .into_iter()
+                    .map(|(address, amount)| {
+                        crate::faucet_deposit::new_tx(parent_hash, address, amount)
+                    });
+            attributes
+                .transactions
+                .iter()
+                .cloned()
+                .chain(faucet_deposits)
+                .chain(self.mem_pool.iter().cloned().map(Into::into))
+                .collect::<Vec<_>>()
+        };
 
         let new_transactions = transactions
             .into_iter()

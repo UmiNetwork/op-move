@@ -17,6 +17,7 @@ mod actor;
 mod block_hash;
 mod command;
 mod dependency;
+mod faucet_deposit;
 mod mempool;
 mod query;
 mod queue;
