@@ -282,14 +282,10 @@ impl<'app, D: Dependencies<'app>> Application<'app, D> {
             new_transactions
                 .iter()
                 .skip(attributes_txs_len)
-                .try_for_each(|tx| {
-                    let tx = tx.as_canonical().ok_or_else(|| {
-                        tracing::error!("Failure during `start_block_build`. Deposit transaction encountered outside of payload attributes in mempool removal.");
-                        UnrecoverableAppFailure
-                    })?;
+                .filter_map(|tx| tx.as_canonical())
+                .for_each(|tx| {
                     self.mem_pool.remove_by_nonce(tx.nonce, tx.signer);
-                    Ok(())
-                })?;
+                });
 
             tracing::debug!(
                 "Removed {} mempool transactions after successful block building",
