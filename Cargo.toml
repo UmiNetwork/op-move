@@ -4,6 +4,7 @@ members = [
   "api",
   "app",
   "blockchain",
+  "dispute-game-monitor",
   "evm-ext",
   "execution",
   "genesis",

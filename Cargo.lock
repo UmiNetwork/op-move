@@ -13426,6 +13426,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "umi-dispute-game-monitor"
+version = "0.1.0"
+dependencies = [
+ "alloy",
+ "anyhow",
+ "clap 4.5.54",
+ "tokio",
+ "tracing",
+ "tracing-subscriber 0.3.22",
+]
+
+[[package]]
 name = "umi-evm-ext"
 version = "0.1.0"
 dependencies = [

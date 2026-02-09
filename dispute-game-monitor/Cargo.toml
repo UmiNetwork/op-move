@@ -1,0 +1,20 @@
+[package]
+name = "umi-dispute-game-monitor"
+description = "Simple tool to monitor and automatically resolve OP Stack dispute games."
+version = "0.1.0"
+edition.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+alloy.workspace = true
+anyhow.workspace = true
+clap.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[[bin]]
+name = "op-dispute-monitor"
+path = "src/main.rs"
