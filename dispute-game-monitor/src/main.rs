@@ -13,7 +13,7 @@ async fn main() -> anyhow::Result<()> {
     let config: Config = args.try_into()?;
 
     let (state, provider) = initialize(&config).await?;
-    monitor_loop(config, state, provider).await;
+    monitor_loop(config, state, provider).await?;
 
     Ok(())
 }

@@ -13432,6 +13432,7 @@ dependencies = [
  "alloy",
  "anyhow",
  "clap 4.5.54",
+ "serde_json",
  "tokio",
  "tracing",
  "tracing-subscriber 0.3.22",

@@ -6,7 +6,7 @@ use {
                 self,
                 DisputeGameFactory::{DisputeGameFactoryInstance, gameAtIndexReturn},
             },
-            permissioned_dispute_game::{self},
+            permissioned_dispute_game,
         },
         state::State,
     },
@@ -68,11 +68,30 @@ pub async fn initialize(config: &Config) -> anyhow::Result<(State, impl Provider
         "Latest in-progress game: index={index} address={}",
         game_info.proxy_
     );
+    let can_resolve_secs = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(u64::MAX);
     while index < game_count {
-        state.push(
-            game_info.proxy_,
-            game_info.timestamp_ + MAX_GAME_DURATION.as_secs(),
-        );
+        let resolve_time = game_info.timestamp_ + MAX_GAME_DURATION.as_secs();
+        let resolve_outcome = if resolve_time < can_resolve_secs {
+            try_resolve_game(&game_info.proxy_, config).await
+        } else {
+            ResolveOutcome::ClaimResolveFailed(anyhow::Error::msg("Not ready."))
+        };
+        match resolve_outcome {
+            ResolveOutcome::ClaimResolveFailed(_) => {
+                tracing::info!(
+                    "Adding in-progress game to queue: index={index} address={}",
+                    game_info.proxy_
+                );
+                state.push(game_info.proxy_, resolve_time);
+            }
+            ResolveOutcome::Success => (),
+            ResolveOutcome::GameResolveFailed(e) => {
+                anyhow::bail!("Error resolving permissioned dispute game: {e:?}");
+            }
+        }
         index += 1;
         if index < game_count {
             game_info = get_game_at_index(&game_factory, index).await?;
@@ -82,7 +101,7 @@ pub async fn initialize(config: &Config) -> anyhow::Result<(State, impl Provider
     Ok((state, provider))
 }
 
-pub async fn monitor_loop<P>(config: Config, mut state: State, provider: P)
+pub async fn monitor_loop<P>(config: Config, mut state: State, provider: P) -> anyhow::Result<()>
 where
     P: Provider + 'static,
 {
@@ -93,23 +112,22 @@ where
 
         let now = SystemTime::now();
         while let Some((address, timestamp)) = state.awaiting_resolution.front()
-            && &now < timestamp
+            && timestamp < &now
         {
-            tracing::info!("Attempting to resolve game at address {address}...");
-
-            if let Err(e) =
-                challenger::resolve_claim(address, &config.rpc_url, &config.signer).await
-            {
-                tracing::warn!("Error resolving claim on permissioned dispute game: {e:?}");
-                continue 'outer;
+            match try_resolve_game(address, &config).await {
+                ResolveOutcome::Success => (),
+                ResolveOutcome::ClaimResolveFailed(e) => {
+                    tracing::warn!("Error resolving claim on permissioned dispute game: {e:?}");
+                    // We leave this game in the queue to try again in the future.
+                    break;
+                }
+                ResolveOutcome::GameResolveFailed(e) => {
+                    // This is an error because we do not want to leave the game
+                    // in this half-resolved state. Manual intervention is required
+                    // to fix it before continuing.
+                    anyhow::bail!("Error resolving permissioned dispute game: {e:?}");
+                }
             }
-
-            if let Err(e) = challenger::resolve_game(address, &config.rpc_url, &config.signer).await
-            {
-                tracing::warn!("Error resolving permissioned dispute game: {e:?}");
-            }
-
-            tracing::info!("Game at address {address} fully resolved.");
             state.awaiting_resolution.pop_front();
         }
 
@@ -150,6 +168,21 @@ where
             index += 1;
         }
     }
+}
+
+async fn try_resolve_game(address: &Address, config: &Config) -> ResolveOutcome {
+    tracing::info!("Attempting to resolve game at address {address}...");
+
+    if let Err(e) = challenger::resolve_claim(address, &config.rpc_url, &config.signer).await {
+        return ResolveOutcome::ClaimResolveFailed(e);
+    }
+
+    if let Err(e) = challenger::resolve_game(address, &config.rpc_url, &config.signer).await {
+        return ResolveOutcome::GameResolveFailed(e);
+    }
+
+    tracing::info!("Game at address {address} fully resolved.");
+    ResolveOutcome::Success
 }
 
 async fn latest_in_progress_game<P: Provider + Copy>(
@@ -221,6 +254,12 @@ async fn game_status<P: Provider>(
         .await
         .context("Failed to query status of permissioned dispute game contract")?;
     status.try_into()
+}
+
+enum ResolveOutcome {
+    Success,
+    ClaimResolveFailed(anyhow::Error),
+    GameResolveFailed(anyhow::Error),
 }
 
 #[repr(u8)]
